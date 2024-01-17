@@ -1,9 +1,5 @@
-//
-// Created by pierre on 1/17/24.
-//
-
 #include <unity.h>
-#include "dummy.h"
+#include <stdlite.h>
 
 
 void setUp(void) {
