@@ -6,7 +6,7 @@ stdlite_exe = executable(
     sources: files(
         'main.c'
     ),
-    dependencies: stdlite_lib_deps,
+    dependencies: stdlite_lib_dep,
     c_args: exe_args,
     link_language: 'c',
     install: true,

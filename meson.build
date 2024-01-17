@@ -4,7 +4,7 @@ project('stdlite', 'c',
 )
 
 # configure dependencies
-project_deps = []
+project_dep = []
 
 # fetch sources and includes
 srcs = []
@@ -25,11 +25,14 @@ stdlite_lib = library(
   include_directories : includes,
 )
 
-stdlite_lib_deps = declare_dependency(
+stdlite_lib_dep = declare_dependency(
   link_with: stdlite_lib,
   include_directories: includes,
-  dependencies: project_deps,
+  dependencies: project_dep,
 )
 
 # app
 subdir('app')
+
+# tests
+subdir('tests')
