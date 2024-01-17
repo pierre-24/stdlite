@@ -1,0 +1,29 @@
+name: Run test suite
+
+env:
+  BUILD_DIR: _build
+  CC: gcc
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          sudo apt-get install build-essentials
+          sudo apt install meson ninja-build
+      - name: Configure (with Meson)
+        run: >-
+          meson setup ${{ env.BUILD_DIR }}
+          --buildtype=debug
+      - name: Run unit tests (with Meson)
+        run: >-
+          meson test
+          -C ${{ env.BUILD_DIR }}
