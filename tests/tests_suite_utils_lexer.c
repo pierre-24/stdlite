@@ -30,7 +30,7 @@ void test_lexer_ok() {
         stdl_lexer_advance(lx, 1);
     }
 
-    _OK(stdl_lexer_delete(lx));
+    STDL_OK(stdl_lexer_delete(lx));
     fclose(stream);
 }
 
@@ -60,7 +60,7 @@ void test_lexer_line_ok() {
         }
     }
 
-    _OK(stdl_lexer_delete(lx));
+    STDL_OK(stdl_lexer_delete(lx));
     fclose(stream);
 }
 

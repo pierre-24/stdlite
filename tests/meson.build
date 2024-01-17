@@ -7,12 +7,13 @@ tests_to_run = [
 
 foreach t: tests_to_run
     test('tests_suite_' + t,
-         executable(
-             'tests_suite_' +  t,
-             files('tests_suite_' +  t + '.c'),
-             dependencies: [stdlite_lib_dep, unity_dep],
-             install: false
-         )
+        executable(
+            'tests_suite_' +  t,
+            files('tests_suite_' +  t + '.c'),
+            dependencies: [stdlite_lib_dep, unity_dep],
+            install: false,
+            build_by_default: false,
+        )
     )
 endforeach
 
