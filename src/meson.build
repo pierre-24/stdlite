@@ -1,3 +1,3 @@
 srcs += files(
-    'dummy.c',
+    'utils/lexer.c',
 )
