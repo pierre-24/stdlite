@@ -21,7 +21,7 @@ jobs:
           version: latest
       - name: Install other dependencies
         run: |
-          sudo apt install meson ninja-build
+          sudo apt-get install meson ninja-build
       - name: Configure (with Meson)
         run: >-
           meson setup ${{ env.BUILD_DIR }}
