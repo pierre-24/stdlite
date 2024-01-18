@@ -1,6 +1,7 @@
 #ifndef TESTS_SUITE_H
 #define TESTS_SUITE_H
 
+#define UNITY_INCLUDE_DOUBLE
 #include <unity.h>
 
 #include <stdlite/errors.h>

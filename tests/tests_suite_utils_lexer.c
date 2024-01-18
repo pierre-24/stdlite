@@ -4,18 +4,19 @@
 
 #include "tests_suite.h"
 
+FILE* stream;
 
 void setUp(void) {
+    stream = tmpfile();
 }
 
 void tearDown(void) {
+    fclose(stream);
 }
 
 void test_lexer_ok() {
     char* str = "ab[-9]=3!";
     int l = strlen(str);
-
-    FILE* stream = tmpfile();
     fputs(str, stream);
     rewind(stream);
 
@@ -35,14 +36,12 @@ void test_lexer_ok() {
     TEST_ASSERT_EQUAL_INT(STDL_TK_EOF, lx->current_tk_type);
 
     STDL_OK(stdl_lexer_delete(lx));
-    fclose(stream);
 }
 
 void test_lexer_line_ok() {
     char* str = "a\nb1\ncde\nf2\0";
     int l = strlen(str);
 
-    FILE* stream = tmpfile();
     fputs(str, stream);
     rewind(stream);
 
@@ -65,12 +64,4 @@ void test_lexer_line_ok() {
     }
 
     STDL_OK(stdl_lexer_delete(lx));
-    fclose(stream);
-}
-
-int main(void) {
-    UNITY_BEGIN();
-    RUN_TEST(test_lexer_ok);
-    RUN_TEST(test_lexer_line_ok);
-    return UNITY_END();
 }

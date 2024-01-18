@@ -12,8 +12,19 @@ enum {
 
     // specific errors
     STDL_ERR_UTIL_LEXER,
+    STDL_ERR_UTIL_PARSER,
 
     STDL_ERR_LAST
 };
+
+void stdl_set_debug_level(const int level);
+void stdl_debug_msg(char *file, int line, char *format, ...);
+void stdl_warning_msg(char *file, int line, char *format, ...);
+void stdl_error_msg(char *file, int line, char *format, ...) ;
+
+
+#define RETURN_ON_ERROR(a) if((a) != STDL_ERR_OK) \
+return (a);
+
 
 #endif //STDL_ERRORS_H
