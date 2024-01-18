@@ -1,8 +1,8 @@
 #include <string.h>
 
-#include "tests_suite.h"
-
 #include <stdlite/utils/lexer.h>
+
+#include "tests_suite.h"
 
 
 void setUp(void) {
@@ -23,19 +23,23 @@ void test_lexer_ok() {
     TEST_ASSERT_NOT_NULL(lx);
 
     stdl_token_type tab[] = {
-        STDL_TK_ALPHA, STDL_TK_ALPHA, STDL_TK_CHAR, STDL_TK_DASH, STDL_TK_DIGIT, STDL_TK_CHAR, STDL_TK_EQ, STDL_TK_DIGIT, STDL_TK_CHAR, STDL_TK_EOS};
+        STDL_TK_ALPHA, STDL_TK_ALPHA, STDL_TK_CHAR, STDL_TK_DASH, STDL_TK_DIGIT, STDL_TK_CHAR, STDL_TK_EQ, STDL_TK_DIGIT, STDL_TK_CHAR, STDL_TK_EOF};
 
     for(int i=0; i <= l; i++) {
-        TEST_ASSERT_EQUAL_INT(lx->current_tk_type, tab[i]);
+        TEST_ASSERT_EQUAL_INT(tab[i], lx->current_tk_type);
         stdl_lexer_advance(lx, 1);
     }
+
+    // if one continue to advance, it results in an error
+    STDL_NOK(stdl_lexer_advance(lx, 1));
+    TEST_ASSERT_EQUAL_INT(STDL_TK_EOF, lx->current_tk_type);
 
     STDL_OK(stdl_lexer_delete(lx));
     fclose(stream);
 }
 
 void test_lexer_line_ok() {
-    char* str = "a\nb1\ncde\nf2";
+    char* str = "a\nb1\ncde\nf2\0";
     int l = strlen(str);
 
     FILE* stream = tmpfile();
@@ -48,8 +52,8 @@ void test_lexer_line_ok() {
     int line = 1, pos_in_line = 0;
 
     for(int i=0; i < l; i++) {
-        TEST_ASSERT_EQUAL_INT(lx->current_line, line);
-        TEST_ASSERT_EQUAL_INT(lx->current_pos_in_line, pos_in_line);
+        TEST_ASSERT_EQUAL_INT(line, lx->current_line);
+        TEST_ASSERT_EQUAL_INT(pos_in_line, lx->current_pos_in_line);
 
         stdl_lexer_advance(lx, 1);
         if(lx->current_tk_value == '\n') {

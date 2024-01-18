@@ -19,7 +19,7 @@ typedef enum stdl_token_type_ {
     STDL_TK_PLUS, // "+"
     STDL_TK_EQ, // =
 
-    STDL_TK_EOS, // → end of string
+    STDL_TK_EOF, // → end of string
 
     STDL_TK_CHAR, // anything but what is before
 
