@@ -33,9 +33,76 @@ int lexer_translator[] = {
     -1
 };
 
-int _stdl_lexer_advance(stdl_lexer *lx, int shift) {
-    assert(lx != NULL && lx->stream != NULL);
+/**
+ * Create a new lexer, provided that `input` is a valide `FILE*`.
+ * \param input A valid `FILE*`.
+ * \return a `stdl_lexer` object
+ */
+stdl_lexer* stdl_lexer_new(FILE *input) {
+    assert(input != NULL);
+
+    // go ahead
+    stdl_lexer* lx = malloc(sizeof(stdl_lexer));
+    if (lx != NULL) {
+        lx->stream = NULL;
+        lx->file = input;
+
+        lx->stream = malloc(STDL_LEXER_STREAM_BUFF_SIZE * sizeof(char));
+        if(lx->stream == NULL) {
+            stdl_lexer_delete(lx);
+            lx = NULL;
+        }
+        else {
+            // read first bytes
+            size_t n = fread(lx->stream, 1, STDL_LEXER_STREAM_BUFF_SIZE, input);
+            if(n != STDL_LEXER_STREAM_BUFF_SIZE) // shorter than expected!
+                lx->stream[n] = '\0';
+
+            lx->pos_in_stream = 0;
+            lx->current_line = 1;
+            lx->current_pos_in_line = 0;
+
+            stdl_lexer_advance(lx, 0);
+        }
+    }
+
+    return lx;
+}
+
+/**
+ * Free the lexer
+ * \param lx a valid lexer
+ * \return `STDL_ERR_OK`
+ */
+int stdl_lexer_delete(stdl_lexer *lx) {
+    assert(lx != NULL);
+
+    if(lx->stream != NULL)
+        free(lx->stream);
+
+    free(lx);
+
+    return STDL_ERR_OK;
+}
+
+/**
+ * Advance to the next token
+ * \param lx a valid lexer
+ * \param shift How much to advance. Valid choices are 0 or 1.
+ * \return `STDL_ERR_OK`
+ */
+int stdl_lexer_advance(stdl_lexer *lx, int shift) {
+    assert(lx != NULL && lx->file != NULL && lx->stream != NULL);
     assert(shift == 0 || shift == 1);
+
+    if(lx->pos_in_stream == STDL_LEXER_STREAM_BUFF_SIZE - 1) { // need to read next bytes
+        lx->stream[0] = lx->stream[STDL_LEXER_STREAM_BUFF_SIZE - 1]; // wrap around
+        lx->pos_in_stream = 0;
+
+        size_t n = fread(lx->stream + 1, 1, STDL_LEXER_STREAM_BUFF_SIZE - 1, lx->file);
+        if(n != STDL_LEXER_STREAM_BUFF_SIZE - 1) // shorter than expected!
+            lx->stream[n + 1] = '\0';
+    }
 
     char c = lx->stream[lx->pos_in_stream + shift];
     stdl_token_type t = STDL_TK_CHAR;
@@ -68,65 +135,12 @@ int _stdl_lexer_advance(stdl_lexer *lx, int shift) {
     return STDL_ERR_OK;
 }
 
-
-stdl_lexer* stdl_lexer_new(FILE *input) {
-    assert(input != NULL);
-
-    // go ahead
-    stdl_lexer* lx = malloc(sizeof(stdl_lexer));
-    if (lx != NULL) {
-        lx->stream = NULL;
-        lx->file = input;
-
-        lx->stream = malloc(STDL_LEXER_STREAM_BUFF_SIZE * sizeof(char));
-        if(lx->stream == NULL) {
-            stdl_lexer_delete(lx);
-            lx = NULL;
-        }
-        else {
-            // read first bytes
-            size_t n = fread(lx->stream, 1, STDL_LEXER_STREAM_BUFF_SIZE, input);
-            if(n != STDL_LEXER_STREAM_BUFF_SIZE) // shorter than expected!
-                lx->stream[n] = '\0';
-
-            lx->pos_in_stream = 0;
-            lx->current_line = 1;
-            lx->current_pos_in_line = 0;
-
-            _stdl_lexer_advance(lx, 0);
-
-        }
-    }
-
-    return lx;
-}
-
-int stdl_lexer_delete(stdl_lexer *lx) {
-    assert(lx != NULL);
-
-    if(lx->stream != NULL)
-        free(lx->stream);
-
-    free(lx);
-
-    return STDL_ERR_OK;
-}
-
-int stdl_lexer_advance(stdl_lexer *lx, int shift) {
-    assert(lx != NULL && lx->file != NULL && lx->stream != NULL);
-
-    if(lx->pos_in_stream == STDL_LEXER_STREAM_BUFF_SIZE - 1) { // need to read next bytes
-        lx->stream[0] = lx->stream[STDL_LEXER_STREAM_BUFF_SIZE - 1]; // wrap around
-        lx->pos_in_stream = 0;
-
-        size_t n = fread(lx->stream + 1, 1, STDL_LEXER_STREAM_BUFF_SIZE - 1, lx->file);
-        if(n != STDL_LEXER_STREAM_BUFF_SIZE - 1) // shorter than expected!
-            lx->stream[n + 1] = '\0';
-    }
-
-    return _stdl_lexer_advance(lx, shift);
-}
-
+/**
+ * If the current token type is of `type`, advance to the next token. Otherwise, return an error.
+ * \param lx A valid lexer.
+ * \param t Type of the token
+ * \return `STDL_ERR_OK` if the current token was of the correct type, `STDL_ERR_UTIL_LEXER` otherwise.
+ */
 int stdl_lexer_eat(stdl_lexer *lx, stdl_token_type t) {
     assert(lx != NULL);
 
@@ -136,6 +150,12 @@ int stdl_lexer_eat(stdl_lexer *lx, stdl_token_type t) {
     return stdl_lexer_advance(lx, 1);
 }
 
+/**
+ * If the current token type is of `type`, advance to the next token. Otherwise, do nothing.
+ * \param lx A valid lexer.
+ * \param t Type of the token
+ * \return `STDL_ERR_OK`.
+ */
 int stdl_lexer_skip(stdl_lexer *lx, stdl_token_type t) {
     assert(lx != NULL);
 
@@ -145,6 +165,11 @@ int stdl_lexer_skip(stdl_lexer *lx, stdl_token_type t) {
     return STDL_ERR_OK;
 }
 
+/**
+ * Skip all tokens that are `STDL_TK_WHITESPACE` or `STDL_TK_NL`.
+ * \param lx A valid lexer.
+ * \return `STDL_ERR_OK`.
+ */
 int stdl_lexer_skip_whitespace_and_nl(stdl_lexer *lx) {
     assert(lx != NULL);
 
