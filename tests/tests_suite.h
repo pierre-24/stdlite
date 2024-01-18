@@ -6,8 +6,8 @@
 
 #include <stdlite/errors.h>
 
-#define STDL_OK(v) TEST_ASSERT_EQUAL_INT(v, STDL_ERR_OK)
-#define STDL_NOK(v) TEST_ASSERT_NOT_EQUAL_INT(v, STDL_ERR_OK)
+#define STDL_OK(v) TEST_ASSERT_EQUAL_INT(STDL_ERR_OK, v)
+#define STDL_NOK(v) TEST_ASSERT_NOT_EQUAL_INT(STDL_ERR_OK, v)
 
 
 #endif //TESTS_SUITE_H

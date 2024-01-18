@@ -109,7 +109,7 @@ void test_read_real_ok() {
 
         lx = stdl_lexer_new(stream);
         TEST_ASSERT_NOT_NULL(lx);
-        STDL_OK(stdl_parser_get_real(lx, &actual));
+        STDL_OK(stdl_parser_get_number(lx, &actual));
 
         TEST_ASSERT_EQUAL_DOUBLE(expected, actual);
 
@@ -120,7 +120,7 @@ void test_read_real_ok() {
 
         lx = stdl_lexer_new(stream);
         TEST_ASSERT_NOT_NULL(lx);
-        STDL_OK(stdl_parser_get_real(lx, &actual));
+        STDL_OK(stdl_parser_get_number(lx, &actual));
 
         TEST_ASSERT_EQUAL_DOUBLE(expected, actual);
 
@@ -153,7 +153,7 @@ void test_read_real_many_notations_ok() {
 
         lx = stdl_lexer_new(stream);
         TEST_ASSERT_NOT_NULL(lx);
-        STDL_OK(stdl_parser_get_real(lx, &actual));
+        STDL_OK(stdl_parser_get_number(lx, &actual));
 
         TEST_ASSERT_EQUAL_DOUBLE(expected, actual);
 
@@ -178,7 +178,7 @@ void test_read_real_many_notations_ok() {
 
         lx = stdl_lexer_new(stream);
         TEST_ASSERT_NOT_NULL(lx);
-        STDL_OK(stdl_parser_get_real(lx, &actual));
+        STDL_OK(stdl_parser_get_number(lx, &actual));
 
         TEST_ASSERT_EQUAL_DOUBLE(expected, actual);
 
@@ -205,7 +205,7 @@ void test_read_non_real_ko() {
 
         lx = stdl_lexer_new(stream);
         TEST_ASSERT_NOT_NULL(lx);
-        STDL_NOK(stdl_parser_get_real(lx, &actual)); // that does not works!
+        STDL_NOK(stdl_parser_get_number(lx, &actual)); // that does not works!
 
         STDL_OK(stdl_lexer_delete(lx));
     }

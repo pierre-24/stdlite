@@ -147,7 +147,7 @@ int stdl_parser_get_integer(stdl_lexer* lx, long *result) {
  * @return `STDL_ERR_OK` if real number was read, `STDL_ERR_UTIL_PARSER` otherwise.
  * @ingroup base_parser
  */
-int stdl_parser_get_real(stdl_lexer* lx, double* result) {
+int stdl_parser_get_number(stdl_lexer* lx, double* result) {
     assert(lx != NULL && result != NULL);
 
     if(lx->current_tk_type != STDL_TK_DIGIT && lx->current_tk_type != STDL_TK_PLUS && lx->current_tk_type != STDL_TK_DASH && lx->current_tk_type != STDL_TK_DOT) {

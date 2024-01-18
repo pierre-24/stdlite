@@ -8,11 +8,12 @@
 
 /**
  * Parse the info of a section in FCHK.
+ * Stops at the beginning of the value (if scalar) or of the size (if vector).
  * @param lx a valid lexer
  * @param[out] name the name of the section
  * @param[out] type the type of section. Valid outputs are `I`, `R`, and `C`.
  * @param[out] is_scalar `1` if the section is a scalar
- * @return `STDL_ERR_OK`
+ * @return `STDL_ERR_OK` if everything was ok, error code otherwise
  * @ingroup fchk_parser
  */
 int stdl_fchk_parser_get_section_info(stdl_lexer* lx, char** name, char* type, int* is_scalar) {
@@ -92,11 +93,126 @@ int stdl_fchk_parser_get_section_info(stdl_lexer* lx, char** name, char* type, i
     return STDL_ERR_OK;
 }
 
-int stdl_fchk_parser_get_vector_int(stdl_lexer* lx, size_t* sz, int** vector) {
+
+int _get_vec_sz(stdl_lexer* lx, size_t* sz) {
+    assert(lx != NULL && sz != NULL);
+
+    if (lx->current_tk_type != STDL_TK_DIGIT) {
+        stdl_error_msg_parser(__FILE__, __LINE__, lx, "expected FCHK vector to start with DIGIT");
+        return STDL_ERR_UTIL_FCHK;
+    }
+
+    long sz_read = -1;
+    int err;
+
+    err = stdl_parser_get_integer(lx, &sz_read);
+    RETURN_ON_ERROR(err);
+
+    if (sz_read < 0) {
+        stdl_error_msg_parser(__FILE__, __LINE__, lx, "size of the vector is <0");
+        return STDL_ERR_UTIL_FCHK;
+    }
+
+    err = stdl_lexer_skip_whitespace_and_nl(lx);
+    RETURN_ON_ERROR(err);
+
+    *sz = (size_t) sz_read;
     return STDL_ERR_OK;
 }
 
-int stdl_fchk_parser_get_vector_real(stdl_lexer* lx, size_t* sz, double** vector) {
+/**
+ * Parse a vector of integers in FCHK.
+ * Expect the lexer to have stopped right before the size of the vector.
+ * @param lx a valid lexer
+ * @param[out] sz size of the vector
+ * @param[out] vector the vector, if any. Caller is responsible for free'ing it.
+ * @return `STDL_ERR_OK` if everything was ok, error code otherwise
+ * @ingroup fchk_parser
+ */
+int stdl_fchk_parser_get_vector_ints(stdl_lexer* lx, size_t* sz, long **vector) {
+    assert(lx != NULL && sz != NULL && vector != NULL);
+
+    // get vector size
+    int err = _get_vec_sz(lx, sz);
+    RETURN_ON_ERROR(err);
+
+    // allocate vector
+    *vector = malloc((*sz) * sizeof(long));
+    if(*vector == NULL)
+        return STDL_ERR_MALLOC;
+
+    size_t i = 0;
+    long x;
+    while (i < *sz) {
+        err = stdl_parser_get_integer(lx, &x);
+
+        if(err == STDL_ERR_OK)  {
+            (*vector)[i] = x;
+
+            if(i % 6 == 5 && lx->current_tk_type != STDL_TK_NL) {
+                stdl_error_msg_parser(__FILE__, __LINE__, lx, "expected 6 integer per line!");
+                err = STDL_ERR_UTIL_FCHK;
+            } else
+                err = stdl_lexer_skip_whitespace_and_nl(lx);
+        }
+
+        if(err != STDL_ERR_OK) {
+            free(*vector);
+            return err;
+        }
+
+        i++;
+    }
+
+    // ok, we should be at the next section
+    return STDL_ERR_OK;
+}
+
+/**
+ * Parse a vector of real numbers in FCHK.
+ * Expect the lexer to have stopped right before the size of the vector.
+ * @param lx a valid lexer
+ * @param[out] sz size of the vector
+ * @param[out] vector the vector, if any. Caller is responsible for free'ing it.
+ * @return `STDL_ERR_OK` if everything was ok, error code otherwise
+ * @ingroup fchk_parser
+ */
+int stdl_fchk_parser_get_vector_numbers(stdl_lexer* lx, size_t* sz, double** vector) {
+    assert(lx != NULL && sz != NULL && vector != NULL);
+
+    // get vector size
+    int err = _get_vec_sz(lx, sz);
+    RETURN_ON_ERROR(err);
+
+    // allocate vector
+    *vector = malloc((*sz) * sizeof(double));
+    if(*vector == NULL)
+        return STDL_ERR_MALLOC;
+
+    size_t i = 0;
+    double x;
+    while (i < *sz) {
+        err = stdl_parser_get_number(lx, &x);
+
+        if(err == STDL_ERR_OK)  {
+            (*vector)[i] = x;
+
+            if(i % 5 == 4 && lx->current_tk_type != STDL_TK_NL) {
+                stdl_error_msg_parser(__FILE__, __LINE__, lx, "expected 5 real numbers per line!");
+                err = STDL_ERR_UTIL_FCHK;
+            } else
+                err = stdl_lexer_skip_whitespace_and_nl(lx);
+        }
+
+        if(err != STDL_ERR_OK) {
+            free(*vector);
+            return err;
+        }
+
+        i++;
+    }
+
+    // now, we should be at the next section
     return STDL_ERR_OK;
 }
 
