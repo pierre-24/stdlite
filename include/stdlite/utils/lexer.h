@@ -13,13 +13,11 @@ typedef enum stdl_token_type_ {
     STDL_TK_ALPHA, // [a-zA-Z]
     STDL_TK_COMMA, // ","
     STDL_TK_DOT, // "."
-    STDL_TK_LBRACKET, // "["
-    STDL_TK_RBRACKET, // "]"
     STDL_TK_ESCAPE, // "\"
     STDL_TK_QUOTE, // "
     STDL_TK_DASH, // "-"
     STDL_TK_PLUS, // "+"
-    STDL_TK_COMMENT, // "#"
+    STDL_TK_EQ, // =
 
     STDL_TK_EOS, // → end of string
 

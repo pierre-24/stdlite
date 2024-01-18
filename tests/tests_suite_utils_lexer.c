@@ -12,7 +12,7 @@ void tearDown(void) {
 }
 
 void test_lexer_ok() {
-    char* str = "ab[-9]!";
+    char* str = "ab[-9]=3!";
     int l = strlen(str);
 
     FILE* stream = tmpfile();
@@ -23,7 +23,7 @@ void test_lexer_ok() {
     TEST_ASSERT_NOT_NULL(lx);
 
     stdl_token_type tab[] = {
-        STDL_TK_ALPHA, STDL_TK_ALPHA, STDL_TK_LBRACKET, STDL_TK_DASH, STDL_TK_DIGIT, STDL_TK_RBRACKET, STDL_TK_CHAR, STDL_TK_EOS};
+        STDL_TK_ALPHA, STDL_TK_ALPHA, STDL_TK_CHAR, STDL_TK_DASH, STDL_TK_DIGIT, STDL_TK_CHAR, STDL_TK_EQ, STDL_TK_DIGIT, STDL_TK_CHAR, STDL_TK_EOS};
 
     for(int i=0; i <= l; i++) {
         TEST_ASSERT_EQUAL_INT(lx->current_tk_type, tab[i]);
