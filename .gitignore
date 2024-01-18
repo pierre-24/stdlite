@@ -83,3 +83,5 @@ compile_commands.json
 # custom
 buildDir/
 docs/API/
+venv/
+site/

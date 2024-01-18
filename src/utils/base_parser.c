@@ -60,7 +60,7 @@ int stdl_grow_string(char** str, int sz, int* fac) {
 }
 
 /**
- * Store the current token value in a string, increase its size by 1, then grow it. $\alpha = 2x$.
+ * Store the current token value in a string, increase its size by 1, then grow it.
  * Also advance the lexer to the next token
  * @param lx a valid lexer
  * @param str str pointer to a non-`NULL` string. Caller is responsible for free'ing it.
