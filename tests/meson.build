@@ -5,6 +5,7 @@ runner_gen = unity_proj.get_variable('gen_test_runner')  # generate a runner cor
 tests_to_run = [
     'utils_lexer',
     'utils_base_parser',
+    'utils_fchk_parser',
 ]
 
 foreach t: tests_to_run

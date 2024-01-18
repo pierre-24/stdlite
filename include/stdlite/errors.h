@@ -13,6 +13,7 @@ enum {
     // specific errors
     STDL_ERR_UTIL_LEXER,
     STDL_ERR_UTIL_PARSER,
+    STDL_ERR_UTIL_FCHK,
 
     STDL_ERR_LAST
 };

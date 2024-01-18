@@ -241,11 +241,10 @@ void test_read_litterals_ok() {
     TEST_ASSERT_NOT_NULL(lx);
 
     char* expected;
+    char* actual = NULL;
 
     for(int i=0; i < 3; i++) {
         expected = test_litterals[i];
-
-        char* actual = NULL;
 
         // read
         STDL_OK(stdl_parser_get_literal(lx, isalpha, &actual));

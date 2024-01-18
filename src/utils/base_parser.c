@@ -91,7 +91,7 @@ int stdl_parser_store_value_and_grow_string(stdl_lexer* lx, char** str, int* sz,
 /**
  * Parse an integer, if any.
  * @param lx a valid lexer
- * @param result the resulting integer if there was something to read
+ * @param[out] result the resulting integer if there was something to read
  * @return `STDL_ERR_OK` if integer was read, `STDL_ERR_UTIL_PARSER` otherwise.
  * @ingroup base_parser
  */
@@ -143,7 +143,7 @@ int stdl_parser_get_integer(stdl_lexer* lx, long *result) {
 /**
  * Parse a real number matching `(PLUS|DASH)? DIGIT* (DOT DIGIT*)? (('E'|'e') (PLUS|MINUS)* DIGIT*)?` (as a `double`), if any.
  * @param lx a valid lexer
- * @param result the resulting real number if there was something to read
+ * @param[out] result the resulting real number if there was something to read
  * @return `STDL_ERR_OK` if real number was read, `STDL_ERR_UTIL_PARSER` otherwise.
  * @ingroup base_parser
  */
@@ -225,7 +225,7 @@ int stdl_parser_get_real(stdl_lexer* lx, double* result) {
  * Put the stream of tokens in `result` as long as `predicate` is true.
  * @param lx a valid lexer
  * @param predicate a predicate, called for each token, of the form `bool predicate(int c)`, where `c` is the current token value.
- * @param result the resulting string. Caller is responsible for free'ing it.
+ * @param[out] result the resulting string. Caller is responsible for free'ing it.
  * @return `STDL_ERR_OK` if everything went well.
  * @ingroup base_parser
  */
