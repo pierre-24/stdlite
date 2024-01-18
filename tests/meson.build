@@ -1,4 +1,4 @@
-unity_proj = subproject('Unity', default_options: {'support_double': true})
+unity_proj = subproject('Unity', default_options: ['support_double=true'])
 unity_dep = unity_proj.get_variable('unity_dep')
 runner_gen = unity_proj.get_variable('gen_test_runner')  # generate a runner corresponding to test suite
 
