@@ -37,6 +37,7 @@ int lexer_translator[] = {
  * This object has to be free'd after use.
  * @param input A valid `FILE*`.
  * @return a `stdl_lexer` object.
+ * @ingroup lexer
  */
 stdl_lexer *stdl_lexer_new(FILE *input) {
     assert(input != NULL);
@@ -70,9 +71,10 @@ stdl_lexer *stdl_lexer_new(FILE *input) {
 }
 
 /**
- * Free the lexer
+ * Free the lexer.
  * @param lx a valid lexer
  * @return `STDL_ERR_OK`
+ * @ingroup lexer
  */
 int stdl_lexer_delete(stdl_lexer *lx) {
     assert(lx != NULL);
@@ -90,6 +92,7 @@ int stdl_lexer_delete(stdl_lexer *lx) {
  * @param lx a valid lexer
  * @param shift How much to advance. Valid choices are 0 or 1.
  * @return `STDL_ERR_OK` if current token is not `STDL_TK_EOF`, `STDL_ERR_UTIL_LEXER` otherwise.
+ * @ingroup lexer
  */
 int stdl_lexer_advance(stdl_lexer *lx, int shift) {
     assert(lx != NULL && lx->file != NULL && lx->stream != NULL);
@@ -146,6 +149,7 @@ int stdl_lexer_advance(stdl_lexer *lx, int shift) {
  * @param lx A valid lexer.
  * @param t Type of the token
  * @return `STDL_ERR_OK` if the current token was of the correct type, `STDL_ERR_UTIL_LEXER` otherwise.
+ * @ingroup lexer
  */
 int stdl_lexer_eat(stdl_lexer *lx, stdl_token_type t) {
     assert(lx != NULL);
@@ -161,6 +165,7 @@ int stdl_lexer_eat(stdl_lexer *lx, stdl_token_type t) {
  * @param lx A valid lexer.
  * @param t Type of the token
  * @return `STDL_ERR_OK`.
+ * @ingroup lexer
  */
 int stdl_lexer_skip(stdl_lexer *lx, stdl_token_type t) {
     assert(lx != NULL);
@@ -175,6 +180,7 @@ int stdl_lexer_skip(stdl_lexer *lx, stdl_token_type t) {
  * Skip all tokens that are `STDL_TK_WHITESPACE` or `STDL_TK_NL`.
  * @param lx A valid lexer.
  * @return `STDL_ERR_OK`.
+ * @ingroup lexer
  */
 int stdl_lexer_skip_whitespace_and_nl(stdl_lexer *lx) {
     assert(lx != NULL);

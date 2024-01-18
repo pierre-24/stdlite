@@ -5,6 +5,10 @@
 
 #define STDL_LEXER_STREAM_BUFF_SIZE 1024
 
+/**
+ * Token types
+ * @ingroup lexer
+ */
 typedef enum stdl_token_type_ {
     STDL_TK_WHITESPACE, // space (U+0020), horizontal tab (U+0009)
     STDL_TK_NL, // linefeed (\n, U+000A)
@@ -26,6 +30,10 @@ typedef enum stdl_token_type_ {
     STDL_TK_LAST
 } stdl_token_type;
 
+/**
+ * Lexer object
+ * @ingroup lexer
+ */
 typedef struct stdl_lexer_ {
     // streaming
     FILE* file;

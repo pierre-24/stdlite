@@ -81,4 +81,5 @@ compile_commands.json
 # End of https://www.toptal.com/developers/gitignore/api/c,meson
 
 # custom
-buildDir
+buildDir/
+docs/API/

@@ -1,0 +1,22 @@
+title: Public API documentation
+description: This section describes the public API of `stdlite`.
+output: docs/API
+files:
+  - "src/*.c"
+  - "src/**/*.c"
+  - "include/*.h"
+  - "include/**/*.h"
+groups:
+  - name: errors
+    title: Error definition and handling
+    description: Handling of errors, warning, and debugs.
+  - name: utilities
+    title: Utilities
+    description: Utility functions, not directly required to use the library.
+    groups:
+      - name: lexer
+        title: Lexer
+        description: A character per character lexer, that assign types to certain kind of characters.
+      - name: base_parser
+        title: Basic parser utilities
+        description: Basic parser utilities to extract string, integer and real numbers from files.

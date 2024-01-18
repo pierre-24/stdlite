@@ -1,0 +1,34 @@
+site_name: stdlite
+site_description:  Light-weight sTD-DFT library
+repo_url: "https://github.com/pierre-24/stdlite"
+edit_uri: "blob/dev/docs/"
+repo_name: "pierre-24/stdlite"
+theme:
+  name: material
+  custom_dir: docs/overrides
+  features:
+    - navigation.indexes
+
+markdown_extensions:
+  - def_list
+  - attr_list
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - toc:
+      permalink: "¤"
+plugins:
+  - search
+extra_css:
+  - stylesheets/doxide.css
+  - https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js
+  - javascripts/katex.js
+
