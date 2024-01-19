@@ -80,8 +80,11 @@ compile_commands.json
 
 # End of https://www.toptal.com/developers/gitignore/api/c,meson
 
-# custom
+# Meson build dirs (in CLion & Github Actions)
 buildDir/
-docs/API/
+_build/
+
+# Documentation
 venv/
+docs/API/
 site/
