@@ -123,6 +123,7 @@ int _get_vec_sz(stdl_lexer* lx, size_t* sz) {
 /**
  * Parse a vector of integers in FCHK.
  * Expect the lexer to have stopped right before the size of the vector.
+ * Read lines in format `6I12`.
  * @param lx a valid lexer
  * @param[out] sz size of the vector
  * @param[out] vector the vector, if any. Caller is responsible for free'ing it.
@@ -171,6 +172,7 @@ int stdl_fchk_parser_get_vector_ints(stdl_lexer* lx, size_t* sz, long **vector) 
 /**
  * Parse a vector of real numbers in FCHK.
  * Expect the lexer to have stopped right before the size of the vector.
+ * Read lines in format `5E16.8`.
  * @param lx a valid lexer
  * @param[out] sz size of the vector
  * @param[out] vector the vector, if any. Caller is responsible for free'ing it.
@@ -216,7 +218,76 @@ int stdl_fchk_parser_get_vector_numbers(stdl_lexer* lx, size_t* sz, double** vec
     return STDL_ERR_OK;
 }
 
-int stdl_fchk_parser_get_vector_string(stdl_lexer* lx, size_t* sz, double** vector) {
+/**
+ * Parse a vector of strings in FCHK and merge everything in one (long) string.
+ * Expect the lexer to have stopped right before the size of the vector.
+ * Read lines in format `5A12`.
+ * @param lx a valid lexer
+ * @param[out] sz size of the vector
+ * @param[out] out the string, if any. Caller is responsible for free'ing it.
+ * @return `STDL_ERR_OK` if everything was ok, error code otherwise
+ * @ingroup fchk_parser
+ */
+int stdl_fchk_parser_get_vector_string(stdl_lexer* lx, size_t* sz, char **out) {
+
+    assert(lx != NULL && sz != NULL && out != NULL);
+
+    // get vector size
+    int err = _get_vec_sz(lx, sz);
+    RETURN_ON_ERROR(err);
+
+    // allocate string
+    *out = malloc(((*sz) * 12 + 1) * sizeof(char));
+    if(*out == NULL)
+        return STDL_ERR_MALLOC;
+
+    size_t i = 0, j;
+    while (i < *sz) {
+        j = 0;
+        while (j < 12) {
+            (*out)[i * 12 + j] = lx->current_tk_value;
+            err = stdl_lexer_advance(lx, 1);
+
+            if(err != STDL_ERR_OK) {
+                free(*out);
+                return err;
+            }
+
+            j++;
+        }
+
+        if(i % 5 == 4) {
+            if (lx->current_tk_type != STDL_TK_NL) {
+                stdl_error_msg_parser(__FILE__, __LINE__, lx, "expected 5 packs of 12 characters per line!");
+                err = STDL_ERR_UTIL_FCHK;
+            } else
+                err = stdl_lexer_advance(lx, 1);
+        }
+
+        if(err != STDL_ERR_OK) {
+            free(*out);
+            return err;
+        }
+
+        i++;
+    }
+
+    // almost there
+    if(lx->current_tk_type != STDL_TK_EOF) {
+        if(lx->current_tk_type != STDL_TK_NL) {
+            stdl_error_msg_parser(__FILE__, __LINE__, lx, "string should ends with NL");
+            err = STDL_ERR_UTIL_FCHK;
+        } else
+            err =stdl_lexer_advance(lx, 1);
+
+        if(err != STDL_ERR_OK) {
+            free(*out);
+            return err;
+        }
+    }
+
+    (*out)[(*sz) * 12] = '\0';
+
     return STDL_ERR_OK;
 }
 

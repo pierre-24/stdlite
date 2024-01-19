@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include <stdlite/utils/fchk_parser.h>
 
@@ -128,6 +129,35 @@ void test_parser_vector_numbers() {
     }
 
     free(values);
+
+    STDL_OK(stdl_lexer_delete(lx));
+}
+
+
+void test_parser_string() {
+    char* sec =
+            "6\n"
+            "#p wB97XD/6-311+G(d) Opt=tight freq scrf=(SMD,solvent=aceton\n"
+            "itrile)     ";
+
+    char* expected = "#p wB97XD/6-311+G(d) Opt=tight freq scrf=(SMD,solvent=acetonitrile)     ";
+
+    rewind(stream);
+    fputs(sec, stream);
+    rewind(stream);
+
+    stdl_lexer* lx = stdl_lexer_new(stream);
+    TEST_ASSERT_NOT_NULL(lx);
+
+    char* actual;
+    size_t sz;
+    STDL_OK(stdl_fchk_parser_get_vector_string(lx, &sz, &actual));
+
+    TEST_ASSERT_EQUAL_INT(6, sz);
+    TEST_ASSERT_EQUAL_STRING(expected, actual);
+    TEST_ASSERT_EQUAL_INT(6 * 12, strlen(actual));
+
+    free(actual);
 
     STDL_OK(stdl_lexer_delete(lx));
 }
