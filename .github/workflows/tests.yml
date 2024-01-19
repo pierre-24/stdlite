@@ -29,6 +29,7 @@ jobs:
       - name: Run unit tests (with Meson)
         run: >-
           meson test
+          --print-errorlogs
           -C ${{ env.BUILD_DIR }}
       - name: Memcheck (with Meson & Valgdrind)
         run: >-
