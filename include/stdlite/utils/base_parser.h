@@ -3,7 +3,12 @@
 
 #include <stdlite/utils/lexer.h>
 
-#define STR_MULT 128
+/**
+ * Multiplier for string growth.
+ * @ingroup base_parser
+ * */
+#define STDL_STR_MULT 128
+
 int stdl_grow_string(char** str, int sz, int* fac);
 
 void stdl_error_msg_parser(char *file, int line, stdl_lexer* lx, char *format, ...);

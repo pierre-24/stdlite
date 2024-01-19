@@ -25,21 +25,25 @@ int stdl_fchk_parser_get_section_info(stdl_lexer* lx, char** name, char* type, i
     }
 
     // read up the 40 next characters (name)
-    int err;
+    int err = STDL_ERR_OK;
     char buff[41]; // 40 + '\0'
     int i = 0, last_alnum = 0;
+
     while (i < 40) {
         if(lx->current_tk_type == STDL_TK_NL || lx->current_tk_type == STDL_TK_EOF)  {
             stdl_error_msg_parser(__FILE__, __LINE__, lx, "unexpected end in section name");
-            return STDL_ERR_UTIL_FCHK;
+            err = STDL_ERR_UTIL_FCHK;
         }
 
-        buff[i] = lx->current_tk_value;
+        if(err == STDL_ERR_OK) {
+            buff[i] = lx->current_tk_value;
 
-        if(isalnum(lx->current_tk_value))
-            last_alnum = i;
+            if(isalnum(lx->current_tk_value))
+                last_alnum = i;
 
-        err = stdl_lexer_advance(lx, 1);
+            err = stdl_lexer_advance(lx, 1);
+        }
+
         RETURN_ON_ERROR(err);
         i++;
     }
@@ -50,39 +54,42 @@ int stdl_fchk_parser_get_section_info(stdl_lexer* lx, char** name, char* type, i
         if (i == 3) {
             if(lx->current_tk_type != STDL_TK_ALPHA || (lx->current_tk_value != 'I' && lx->current_tk_value != 'R' && lx->current_tk_value != 'C')) {
                 stdl_error_msg_parser(__FILE__, __LINE__, lx, "expecting data type to be I/R/C");
-                return STDL_ERR_UTIL_FCHK;
-            }
-
-            *type = lx->current_tk_value;
+                err = STDL_ERR_UTIL_FCHK;
+            } else
+                *type = lx->current_tk_value;
         }
 
-        err = stdl_lexer_advance(lx, 1);
-        RETURN_ON_ERROR(err);
+        if(err == STDL_ERR_OK)
+            err = stdl_lexer_advance(lx, 1);
 
+        RETURN_ON_ERROR(err);
         i++;
     }
 
     // time to know if it is a scalar or a vector
     if (lx->current_tk_type == STDL_TK_NL || lx->current_tk_type == STDL_TK_EOF) {
-        stdl_error_msg_parser(__FILE__, __LINE__, lx, "line is too short to check for scalar/vector");
-        return STDL_ERR_UTIL_FCHK;
-    }
+        stdl_error_msg_parser(__FILE__, __LINE__, lx, "line is too short to check for kind (scalar/vector)");
+        err = STDL_ERR_UTIL_FCHK;
+    } else {
+        *is_scalar = lx->current_tk_type != STDL_TK_ALPHA || lx->current_tk_value != 'N';
 
-    *is_scalar = lx->current_tk_type != STDL_TK_ALPHA || lx->current_tk_value != 'N';
+        // just advance to the value/size
+        if(!(*is_scalar)) { // skip '='
+            err = stdl_lexer_eat(lx, STDL_TK_ALPHA);
 
-    // just advance to the value/size
-    if(!(*is_scalar)) { // skip '='
-        err = stdl_lexer_eat(lx, STDL_TK_ALPHA);
-        RETURN_ON_ERROR(err);
+            if(err == STDL_ERR_OK)
+                err = stdl_lexer_eat(lx, STDL_TK_EQ);
 
-        err = stdl_lexer_eat(lx, STDL_TK_EQ);
-        if(err != STDL_ERR_OK) {
-            stdl_error_msg_parser(__FILE__, __LINE__, lx, "expected EQ after 'N'");
-            return STDL_ERR_UTIL_FCHK;
+            if(err != STDL_ERR_OK) {
+                stdl_error_msg_parser(__FILE__, __LINE__, lx, "expected EQ after 'N'");
+                err = STDL_ERR_UTIL_FCHK;
+            }
         }
     }
 
-    err = stdl_lexer_skip(lx, isspace);
+    if(err == STDL_ERR_OK)
+        err = stdl_lexer_skip(lx, isspace);
+
     RETURN_ON_ERROR(err);
 
     // ok, normally we are good. Time to copy the name
@@ -96,8 +103,55 @@ int stdl_fchk_parser_get_section_info(stdl_lexer* lx, char** name, char* type, i
     return STDL_ERR_OK;
 }
 
+int _skip_NL(stdl_lexer* lx) {
+    /* Skips a NL. Stops right after.
+     */
+    int err = STDL_ERR_OK;
+
+    if(lx->current_tk_type != STDL_TK_EOF) {
+        err = stdl_lexer_eat(lx, STDL_TK_NL);
+        if(err != STDL_ERR_OK) {
+            stdl_error_msg_parser(__FILE__, __LINE__, lx, "expected NL");
+            err = STDL_ERR_UTIL_FCHK;
+        }
+    }
+
+    return err;
+}
+
+/**
+ * Parse a scalar integer.
+ * @param lx a valid lexer
+ * @param[out] value the value, if any.
+ * @return `STDL_ERR_OK` if everything was ok, error code otherwise
+ * @ingroup fchk_parser
+ */
+int stdl_fchk_parser_get_scalar_int(stdl_lexer* lx, long *value) {
+    int err = stdl_parser_get_integer(lx, value);
+    if(err == STDL_ERR_OK)
+        err = _skip_NL(lx);
+
+    return err;
+}
+
+/**
+ * Parse a scalar real number.
+ * @param lx a valid lexer
+ * @param[out] value the value, if any.
+ * @return `STDL_ERR_OK` if everything was ok, error code otherwise
+ * @ingroup fchk_parser
+ */
+int stdl_fchk_parser_get_scalar_number(stdl_lexer* lx, double* value) {
+    int err = stdl_parser_get_number(lx, value);
+    if(err == STDL_ERR_OK)
+        err = _skip_NL(lx);
+
+    return err;
+}
 
 int _get_vec_sz(stdl_lexer* lx, size_t* sz) {
+    /* Reads the size. Stops after NL.
+     */
     assert(lx != NULL && sz != NULL);
 
     if (lx->current_tk_type != STDL_TK_DIGIT) {
@@ -116,14 +170,12 @@ int _get_vec_sz(stdl_lexer* lx, size_t* sz) {
         return STDL_ERR_UTIL_FCHK;
     }
 
-    err = stdl_lexer_eat(lx, STDL_TK_NL); // TODO: thus, position the cursor at the beginning of next line!
-    if(err != STDL_ERR_OK)  {
-        stdl_error_msg_parser(__FILE__, __LINE__, lx, "size must be followed by NL");
-        return STDL_ERR_UTIL_FCHK;
-    }
+    err = _skip_NL(lx);
 
-    *sz = (size_t) sz_read;
-    return STDL_ERR_OK;
+    if(err == STDL_ERR_OK)
+        *sz = (size_t) sz_read;
+
+    return err;
 }
 
 /**
@@ -151,16 +203,16 @@ int stdl_fchk_parser_get_vector_ints(stdl_lexer* lx, size_t* sz, long **vector) 
     size_t i = 0;
     long x;
     while (i < *sz) {
-        err = stdl_parser_get_integer(lx, &x);
+        err = stdl_lexer_skip(lx, isspace);
+
+        if(err == STDL_ERR_OK)
+            err = stdl_parser_get_integer(lx, &x);
 
         if(err == STDL_ERR_OK)  {
             (*vector)[i] = x;
 
-            if(i % 6 == 5 && lx->current_tk_type != STDL_TK_NL) {
-                stdl_error_msg_parser(__FILE__, __LINE__, lx, "expected 6 integer per line!");
-                err = STDL_ERR_UTIL_FCHK;
-            } else
-                err = stdl_lexer_skip_whitespace_and_nl(lx);
+            if(i % 6 == 5 && i != *sz - 1)
+                err = _skip_NL(lx);
         }
 
         if(err != STDL_ERR_OK) {
@@ -169,6 +221,14 @@ int stdl_fchk_parser_get_vector_ints(stdl_lexer* lx, size_t* sz, long **vector) 
         }
 
         i++;
+    }
+
+    // skip last NL, if any
+    err = _skip_NL(lx);
+
+    if(err != STDL_ERR_OK) {
+        free(*vector);
+        return err;
     }
 
     // ok, we should be at the next section
@@ -200,16 +260,16 @@ int stdl_fchk_parser_get_vector_numbers(stdl_lexer* lx, size_t* sz, double** vec
     size_t i = 0;
     double x;
     while (i < *sz) {
-        err = stdl_parser_get_number(lx, &x);
+        err = stdl_lexer_skip(lx, isspace);
+        if(err == STDL_ERR_OK) {
+            err = stdl_parser_get_number(lx, &x);
+        }
 
         if(err == STDL_ERR_OK)  {
             (*vector)[i] = x;
 
-            if(i % 5 == 4 && lx->current_tk_type != STDL_TK_NL) {
-                stdl_error_msg_parser(__FILE__, __LINE__, lx, "expected 5 real numbers per line!");
-                err = STDL_ERR_UTIL_FCHK;
-            } else
-                err = stdl_lexer_skip_whitespace_and_nl(lx);
+            if(i % 5 == 4 && i != *sz - 1)
+                err = _skip_NL(lx);
         }
 
         if(err != STDL_ERR_OK) {
@@ -218,6 +278,14 @@ int stdl_fchk_parser_get_vector_numbers(stdl_lexer* lx, size_t* sz, double** vec
         }
 
         i++;
+    }
+
+    // skip last NL, if any
+    err = _skip_NL(lx);
+
+    if(err != STDL_ERR_OK) {
+        free(*vector);
+        return err;
     }
 
     // now, we should be at the next section
@@ -248,26 +316,16 @@ int stdl_fchk_parser_get_vector_string(stdl_lexer* lx, size_t* sz, char **out) {
 
     size_t i = 0, j;
     while (i < *sz) {
+        // read the 12 characters of a pack
         j = 0;
-        while (j < 12) {
+        while (j < 12 && err == STDL_ERR_OK) {
             (*out)[i * 12 + j] = lx->current_tk_value;
             err = stdl_lexer_advance(lx, 1);
-
-            if(err != STDL_ERR_OK) {
-                free(*out);
-                return err;
-            }
-
             j++;
         }
 
-        if(i % 5 == 4) {
-            if (lx->current_tk_type != STDL_TK_NL) {
-                stdl_error_msg_parser(__FILE__, __LINE__, lx, "expected 5 packs of 12 characters per line!");
-                err = STDL_ERR_UTIL_FCHK;
-            } else
-                err = stdl_lexer_advance(lx, 1);
-        }
+        if(err == STDL_ERR_OK && i % 5 == 4 && i != *sz - 1)
+            err = _skip_NL(lx);
 
         if(err != STDL_ERR_OK) {
             free(*out);
@@ -277,18 +335,12 @@ int stdl_fchk_parser_get_vector_string(stdl_lexer* lx, size_t* sz, char **out) {
         i++;
     }
 
-    // almost there
-    if(lx->current_tk_type != STDL_TK_EOF) {
-        if(lx->current_tk_type != STDL_TK_NL) {
-            stdl_error_msg_parser(__FILE__, __LINE__, lx, "string should ends with NL");
-            err = STDL_ERR_UTIL_FCHK;
-        } else
-            err =stdl_lexer_advance(lx, 1);
+    // skip last NL if any
+    err = _skip_NL(lx);
 
-        if(err != STDL_ERR_OK) {
-            free(*out);
-            return err;
-        }
+    if(err != STDL_ERR_OK) {
+        free(*out);
+        return err;
     }
 
     (*out)[(*sz) * 12] = '\0';
@@ -344,6 +396,8 @@ int stdl_fchk_parser_skip_section(stdl_lexer* lx, char type, int is_scalar) {
 
 /**
  * Skip the beginning of FCHK.
+ * Skip *i.e.*, the two first lines (beginning of title section + type, method, basis),
+ * since this is info one can found in other places of the file anyway.
  * @param lx a valid lexer
  * @return `STDL_ERR_OK` if everything was ok, error code otherwise
  * @ingroup fchk_parser

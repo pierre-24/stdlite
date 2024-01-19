@@ -68,8 +68,6 @@ void test_parse_section_info_ok() {
 }
 
 void test_parse_incorrect_section_info_ko() {
-    TEST_IGNORE();
-
     char* incorrect[] = {
             "Multi", // too short
             "Multiplicity                               ", // too short
@@ -85,7 +83,7 @@ void test_parse_incorrect_section_info_ko() {
     char type;
     stdl_lexer* lx;
 
-    for(int i=0; i < 5; i++) {
+    for(int i=0; i < 7; i++) {
         rewind(stream);
         fputs(incorrect[i], stream);
         rewind(stream);
@@ -101,16 +99,16 @@ void test_parse_incorrect_section_info_ko() {
     }
 }
 
-void test_parser_vector_ints() {
+void test_parser_vector_ints_ok() {
     char* fmt =
             "%d\n"
             "           0           1           2           3           4           5\n"
             "           6           7";
-    int to_test[] = {1, 2, 5, 7};
+    int to_test[] = {6, 8};
 
     stdl_lexer* lx;
 
-    for(int i = 0; i < 4; i++) {
+    for(int i = 0; i < 2; i++) {
         int mx = to_test[i];
         rewind(stream);
         fprintf(stream, fmt, mx);
@@ -135,7 +133,35 @@ void test_parser_vector_ints() {
 
 }
 
-void test_parser_vector_numbers() {
+void test_parser_incorrect_vector_ints_ko() {
+    char* incorrect[] = {
+            "2", // just a number
+            "2\n", // no value
+            "2\n1", // missing one value
+            "2\n1  x", // value is not integer
+            "2\n 1 1x", // should end with \n
+    };
+
+    stdl_lexer* lx;
+    long* values;
+    size_t sz;
+
+    for(int i = 0; i < 5; i++) {
+        rewind(stream);
+        fputs(incorrect[i], stream);
+        rewind(stream);
+
+        lx = stdl_lexer_new(stream);
+        TEST_ASSERT_NOT_NULL(lx);
+
+        STDL_NOK(stdl_fchk_parser_get_vector_ints(lx, &sz, &values));
+
+        STDL_OK(stdl_lexer_delete(lx));
+    }
+
+}
+
+void test_parser_vector_numbers_ok() {
     char* sec =
             "9\n"
             "  1.38394898E-17  1.38394898E-17  2.26016022E-01  2.09095447E-16  1.43961729E+00\n"
@@ -168,8 +194,37 @@ void test_parser_vector_numbers() {
     STDL_OK(stdl_lexer_delete(lx));
 }
 
+void test_parser_incorrect_vector_numbers_ko() {
+    char* incorrect[] = {
+            "2", // just a number
+            "2\n", // no value
+            "2\n1.", // missing one value
+            "2\n1.  x", // value is not integer
+            "2\n 1. 1.e", // incorrect number
+            "2\n 1. 1.x", // should end with \n
+    };
 
-void test_parser_string() {
+    stdl_lexer* lx;
+    double* values;
+    size_t sz;
+
+    for(int i = 0; i < 6; i++) {
+        rewind(stream);
+        fputs(incorrect[i], stream);
+        rewind(stream);
+
+        lx = stdl_lexer_new(stream);
+        TEST_ASSERT_NOT_NULL(lx);
+
+        STDL_NOK(stdl_fchk_parser_get_vector_numbers(lx, &sz, &values));
+
+        STDL_OK(stdl_lexer_delete(lx));
+    }
+
+}
+
+
+void test_parser_vector_string_ok() {
     char* sec =
             "6\n"
             "#p wB97XD/6-311+G(d) Opt=tight freq scrf=(SMD,solvent=aceton\n"
@@ -197,9 +252,9 @@ void test_parser_string() {
     STDL_OK(stdl_lexer_delete(lx));
 }
 
-void test_read_fchk() {
-    char cwd[PATH_MAX], fchk_path[PATH_MAX];
-    TEST_ASSERT_NOT_NULL(getcwd(cwd, PATH_MAX));
+void test_read_fchk_skip_all_ok() {
+    char cwd[512], fchk_path[1024];
+    TEST_ASSERT_NOT_NULL(getcwd(cwd, 512));
 
     sprintf(fchk_path, "%s/../../tests/test_files/water.fchk", cwd);
 
@@ -208,7 +263,7 @@ void test_read_fchk() {
 
     char* name = NULL;
     char type;
-    int is_scalar = -1;
+    int is_scalar = -1, nsections = 0;
 
     stdl_lexer* lx = stdl_lexer_new(f);
     TEST_ASSERT_NOT_NULL(lx);
@@ -217,11 +272,83 @@ void test_read_fchk() {
 
     while (lx->current_tk_type != STDL_TK_EOF) {
         STDL_OK(stdl_fchk_parser_get_section_info(lx, &name, &type, &is_scalar));
-        printf("line=%d -- name='%s' (%s of %c)\n", lx->current_line, name, is_scalar? "scalar" : "vector", type);
         free(name);
 
         STDL_OK(stdl_fchk_parser_skip_section(lx, type, is_scalar));
+        nsections++;
     }
+
+    TEST_ASSERT_EQUAL_INT(86, nsections);
+
+    STDL_OK(stdl_lexer_delete(lx));
+
+    fclose(f);
+}
+
+void test_read_fchk_read_all_section_ok() {
+    char cwd[512], fchk_path[1024];
+    TEST_ASSERT_NOT_NULL(getcwd(cwd, 512));
+
+    sprintf(fchk_path, "%s/../../tests/test_files/water.fchk", cwd);
+
+    FILE* f = fopen(fchk_path, "r");
+    TEST_ASSERT_NOT_NULL(f);
+
+    char* name = NULL;
+    char type;
+    int is_scalar = -1, nsections = 0;
+    long an_integer;
+    long* vector_integers = NULL;
+    double a_number;
+    double* vector_numbers = NULL;
+    char* a_string;
+    size_t sz;
+
+    stdl_lexer* lx = stdl_lexer_new(f);
+    TEST_ASSERT_NOT_NULL(lx);
+
+    STDL_OK(stdl_fchk_parser_skip_begin(lx));
+
+    while (lx->current_tk_type != STDL_TK_EOF) {
+        STDL_OK(stdl_fchk_parser_get_section_info(lx, &name, &type, &is_scalar));
+        free(name);
+
+        if(is_scalar) {
+            switch (type) {
+                case 'I':
+                    STDL_OK(stdl_fchk_parser_get_scalar_int(lx, &an_integer));
+                    break;
+                case 'R':
+                    STDL_OK(stdl_fchk_parser_get_scalar_number(lx, &a_number));
+                    break;
+                default:
+                    TEST_FAIL_MESSAGE("Unknown type for scalar");
+                    break;
+            }
+        } else {
+            switch (type) {
+                case 'I':
+                    STDL_OK(stdl_fchk_parser_get_vector_ints(lx, &sz, &vector_integers));
+                    free(vector_integers);
+                    break;
+                case 'R':
+                    STDL_OK(stdl_fchk_parser_get_vector_numbers(lx, &sz, &vector_numbers));
+                    free(vector_numbers);
+                    break;
+                case 'C':
+                    STDL_OK(stdl_fchk_parser_get_vector_string(lx, &sz, &a_string));
+                    free(a_string);
+                    break;
+                default:
+                    TEST_FAIL_MESSAGE("Unknown type for vector");
+                    break;
+            }
+        }
+
+        nsections++;
+    }
+
+    TEST_ASSERT_EQUAL_INT(86, nsections);
 
     STDL_OK(stdl_lexer_delete(lx));
 

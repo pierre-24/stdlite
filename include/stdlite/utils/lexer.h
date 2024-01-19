@@ -3,52 +3,90 @@
 
 #include <stdio.h>
 
+/**
+ * Buffer size for the lexer.
+ * @ingroup lexer
+ * */
 #define STDL_LEXER_STREAM_BUFF_SIZE 1024
 
 /**
- * Token types
+ * Enum for the different token types.
+ * To be used in the context of parsing files.
  * @ingroup lexer
  */
-typedef enum stdl_token_type_ {
-    STDL_TK_WHITESPACE, // space (U+0020), horizontal tab (U+0009)
-    STDL_TK_NL, // linefeed (\n, U+000A)
-    STDL_TK_CR, // carriage return (\r, U+000D)
-    STDL_TK_DIGIT, // [0-9]
-    STDL_TK_ALPHA, // [a-zA-Z]
-    STDL_TK_COMMA, // ","
-    STDL_TK_DOT, // "."
-    STDL_TK_ESCAPE, // "\"
-    STDL_TK_QUOTE, // "
-    STDL_TK_DASH, // "-"
-    STDL_TK_PLUS, // "+"
-    STDL_TK_EQ, // =
-
-    STDL_TK_EOF, // → end of string
-
-    STDL_TK_CHAR, // anything but what is before
+enum stdl_token_type_ {
+    /// Space (`0x20`), horizontal tab (`0x9`)
+    STDL_TK_WHITESPACE,
+    /// Linefeed (`\n`, `U+000A`)
+    STDL_TK_NL,
+    /// Carriage return (`\r`, `U+000D`)
+    STDL_TK_CR,
+    /// Digit, `[0-9]`
+    STDL_TK_DIGIT,
+    /// Alpha character, `[a-zA-Z]`
+    STDL_TK_ALPHA,
+    /// Comma, `,`
+    STDL_TK_COMMA,
+    /// Dot, `.`
+    STDL_TK_DOT,
+    /// Escape character, `\`
+    STDL_TK_ESCAPE,
+    /// Quote, `"`
+    STDL_TK_QUOTE,
+    /// Dash, `-`
+    STDL_TK_DASH,
+    /// Plus, `+`
+    STDL_TK_PLUS,
+    /// Equal, `=`
+    STDL_TK_EQ,
+    /// End of file, `0x0`
+    STDL_TK_EOF,
+    /// Anything else.
+    STDL_TK_CHAR,
 
     STDL_TK_LAST
-} stdl_token_type;
+};
 
 /**
- * Lexer object
+ * `typedef` for `stdl_token_type`.
  * @ingroup lexer
  */
-typedef struct stdl_lexer_ {
-    // streaming
-    FILE* file;
-    char* stream;
+typedef enum stdl_token_type_ stdl_token_type;
+
+
+/**
+ * A structure that represent a lexer.
+ * This object contains a buffer, `stream`, that is automatically filled by `stdl_lexer_advance` when it gets close to the end.
+ * @ingroup lexer
+ */
+struct stdl_lexer_ {
+    /** Current position of the token in the temporary buffer. */
     int pos_in_stream;
 
-    // position in file
-    int current_line;
+    /** Current position of the token in the line. */
     int current_pos_in_line;
 
-    // current token
-    char current_tk_value;
-    stdl_token_type current_tk_type;
-} stdl_lexer;
+    /** Current line in the file. */
+    int current_line;
 
+    /** Current token value, equals to `lx->stream[lx->pos_in_stream]`. */
+    char current_tk_value;
+
+    /** Current token type. */
+    stdl_token_type current_tk_type;
+
+    /** The file from which character are read. */
+    FILE* file;
+
+    /** Temporary buffer. */
+    char* stream;
+};
+
+/**
+ * `typedef` for `stdl_lexer`.
+ * @ingroup lexer
+ */
+typedef struct stdl_lexer_ stdl_lexer;
 
 stdl_lexer* stdl_lexer_new(FILE* input);
 int stdl_lexer_delete(stdl_lexer *lx);

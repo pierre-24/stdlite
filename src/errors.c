@@ -54,7 +54,7 @@ void stdl_warning_msg(char *file, int line, char *format, ...) {
 
     va_list arglist;
 
-    printf("WARNING (%s:%d): ", file, line);
+    printf("WARN (%s:%d): ", file, line);
     va_start(arglist, format);
     vprintf(format, arglist);
     va_end(arglist);

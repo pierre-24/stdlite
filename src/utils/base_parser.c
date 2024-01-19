@@ -13,20 +13,21 @@ void stdl_error_msg_parser(char *file, int line, stdl_lexer* lx, char *format, .
 
     char buff[64];
 
-    fprintf(stderr, "ERROR (%s:%d): ", file, line);
+    fprintf(stderr, "ERROR (%s:%d):", file, line);
 
-    sprintf(buff, isgraph(lx->current_tk_value) ? "`%c`": "0x%x", lx->current_tk_value);
+    sprintf(buff, isgraph(lx->current_tk_value) ? "%c": "0x%x", lx->current_tk_value);
+    fprintf(stderr, "file@%d+%d(%s=%d): ", lx->current_line, lx->current_pos_in_line, buff, lx->current_tk_type);
+
 
     va_start(arglist, format);
     vfprintf(stderr, format, arglist);
     va_end(arglist);
-    fprintf(stderr, " (from token@%d:%d = {type=%d, value=%s})", lx->current_line, lx->current_pos_in_line, lx->current_tk_type, buff);
     fprintf(stderr, "\n");
 }
 
 /**
  * Allocate a string, and grow it from time to time if its size (given by `sz`) gets too large.
- * Actually allocates `fac * STR_MULT` bytes, and increases `fac` by one each time the size gets too large.
+ * Actually allocates `fac * STDL_STR_MULT` bytes, and increases `fac` by one each time the size gets too large.
  * @param str str pointer to a non-`NULL` string. Caller is responsible for free'ing it.
  * @param sz current size of said string
  * @param fac scaling factor, increase periodically. Set to 0 to initialize the string
@@ -39,16 +40,16 @@ int stdl_grow_string(char** str, int sz, int* fac) {
     char* buff;
     if(*fac == 0) {
         (*fac)++;
-        buff = malloc(*fac * STR_MULT * sizeof(char));
+        buff = malloc(*fac * STDL_STR_MULT * sizeof(char));
         if (buff == NULL) {
             *str = NULL;
             return STDL_ERR_MALLOC;
         } else
             *str = buff;
 
-    } else if(sz == *fac * STR_MULT) {
+    } else if(sz == *fac * STDL_STR_MULT) {
         (*fac)++;
-        buff = realloc(*str, (*fac) * STR_MULT * sizeof(char));
+        buff = realloc(*str, (*fac) * STDL_STR_MULT * sizeof(char));
         if (buff == NULL) {
             *str = NULL;
             return STDL_ERR_MALLOC;
