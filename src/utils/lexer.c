@@ -161,17 +161,18 @@ int stdl_lexer_eat(stdl_lexer *lx, stdl_token_type t) {
 }
 
 /**
- * If the current token type is of `type`, advance to the next token. Otherwise, do nothing.
+ * Skip tokens while `predicate` is true (and one does not hit `EOF`).
  * @param lx A valid lexer.
- * @param t Type of the token
+ * @param predicate predicate of the form `int predicate(int c)`, where `c` is the current token value
  * @return `STDL_ERR_OK`.
  * @ingroup lexer
  */
-int stdl_lexer_skip(stdl_lexer *lx, stdl_token_type t) {
+int stdl_lexer_skip(stdl_lexer *lx, int (*predicate)(int)) {
     assert(lx != NULL);
 
-    while (lx->current_tk_type == t)
-        stdl_lexer_advance(lx, 1);
+    int err = STDL_ERR_OK;
+    while (lx->current_tk_type != STDL_TK_EOF && predicate(lx->current_tk_value) && err == STDL_ERR_OK)
+        err = stdl_lexer_advance(lx, 1);
 
     return STDL_ERR_OK;
 }
@@ -185,9 +186,10 @@ int stdl_lexer_skip(stdl_lexer *lx, stdl_token_type t) {
 int stdl_lexer_skip_whitespace_and_nl(stdl_lexer *lx) {
     assert(lx != NULL);
 
-    while (lx->current_tk_type == STDL_TK_WHITESPACE || lx->current_tk_type == STDL_TK_NL) {
-        stdl_lexer_advance(lx, 1);
+    int err = STDL_ERR_OK;
+    while ((lx->current_tk_type == STDL_TK_WHITESPACE || lx->current_tk_type == STDL_TK_NL) && err == STDL_ERR_OK) {
+        err = stdl_lexer_advance(lx, 1);
     }
 
-    return STDL_ERR_OK;
+    return err;
 }

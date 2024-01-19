@@ -55,7 +55,7 @@ int stdl_lexer_delete(stdl_lexer *lx);
 
 int stdl_lexer_advance(stdl_lexer *lx, int shift);
 int stdl_lexer_eat(stdl_lexer *lx, stdl_token_type t);
-int stdl_lexer_skip(stdl_lexer *lx, stdl_token_type t);
+int stdl_lexer_skip(stdl_lexer *lx, int (*predicate)(int));
 int stdl_lexer_skip_whitespace_and_nl(stdl_lexer *lx);
 
 #endif //STDL_LEXER_H

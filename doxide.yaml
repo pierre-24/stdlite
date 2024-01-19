@@ -45,3 +45,5 @@ groups:
           ```c
           #include <stdlite/utils/fchk_parser.h>
           ```
+          
+          While this parser contains some safeguards, it works better if the FCHK is correctly formatted.

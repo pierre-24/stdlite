@@ -13,7 +13,7 @@ void stdl_error_msg_parser(char *file, int line, stdl_lexer* lx, char *format, .
 
     char buff[64];
 
-    fprintf(stderr, "ERROR (%s:%d) :: ", file, line);
+    fprintf(stderr, "ERROR (%s:%d): ", file, line);
 
     sprintf(buff, isgraph(lx->current_tk_value) ? "`%c`": "0x%x", lx->current_tk_value);
 

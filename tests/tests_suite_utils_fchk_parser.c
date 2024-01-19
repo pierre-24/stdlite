@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <stdlite/utils/fchk_parser.h>
 
@@ -64,6 +65,40 @@ void test_parse_section_info_ok() {
     free(title);
 
     STDL_OK(stdl_lexer_delete(lx));
+}
+
+void test_parse_incorrect_section_info_ko() {
+    TEST_IGNORE();
+
+    char* incorrect[] = {
+            "Multi", // too short
+            "Multiplicity                               ", // too short
+            "Multiplicity                               I   ", // too short
+            " Multiplicity                               I                1", // begin with space
+            "Multiplicity                               Q                1", // incorrect type
+            "Multiplicity                                I                1", // incorrect position for type
+            "Atomic numbers                             I   N            3", // missing "="
+    };
+
+    char* title = NULL;
+    int is_scalar = -1;
+    char type;
+    stdl_lexer* lx;
+
+    for(int i=0; i < 5; i++) {
+        rewind(stream);
+        fputs(incorrect[i], stream);
+        rewind(stream);
+
+        lx = stdl_lexer_new(stream);
+        TEST_ASSERT_NOT_NULL(lx);
+
+        STDL_NOK(stdl_fchk_parser_get_section_info(lx, &title, &type, &is_scalar));
+
+        free(title);
+
+        STDL_OK(stdl_lexer_delete(lx));
+    }
 }
 
 void test_parser_vector_ints() {
@@ -160,4 +195,35 @@ void test_parser_string() {
     free(actual);
 
     STDL_OK(stdl_lexer_delete(lx));
+}
+
+void test_read_fchk() {
+    char cwd[PATH_MAX], fchk_path[PATH_MAX];
+    TEST_ASSERT_NOT_NULL(getcwd(cwd, PATH_MAX));
+
+    sprintf(fchk_path, "%s/../../tests/test_files/water.fchk", cwd);
+
+    FILE* f = fopen(fchk_path, "r");
+    TEST_ASSERT_NOT_NULL(f);
+
+    char* name = NULL;
+    char type;
+    int is_scalar = -1;
+
+    stdl_lexer* lx = stdl_lexer_new(f);
+    TEST_ASSERT_NOT_NULL(lx);
+
+    STDL_OK(stdl_fchk_parser_skip_begin(lx));
+
+    while (lx->current_tk_type != STDL_TK_EOF) {
+        STDL_OK(stdl_fchk_parser_get_section_info(lx, &name, &type, &is_scalar));
+        printf("line=%d -- name='%s' (%s of %c)\n", lx->current_line, name, is_scalar? "scalar" : "vector", type);
+        free(name);
+
+        STDL_OK(stdl_fchk_parser_skip_section(lx, type, is_scalar));
+    }
+
+    STDL_OK(stdl_lexer_delete(lx));
+
+    fclose(f);
 }

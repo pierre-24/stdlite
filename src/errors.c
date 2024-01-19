@@ -17,7 +17,7 @@ void stdl_set_debug_level(const int level) {
 
 /**
  * Print a debug message in `stdout`, if `DEBUG_LVL` is above 1.
- * @param file source file (use `__FILE__` )
+ * @param file source file (use `__FILE__`)
  * @param line line (use `__LINE__`)
  * @param format format of the string
  * @param ... extra parameters
@@ -31,7 +31,7 @@ void stdl_debug_msg(char *file, int line, char *format, ...) {
 
     va_list arglist;
 
-    printf("DEBUG (%s:%d) :: ", file, line);
+    printf("DEBUG (%s:%d): ", file, line);
     va_start(arglist, format);
     vprintf(format, arglist);
     va_end(arglist);
@@ -40,7 +40,7 @@ void stdl_debug_msg(char *file, int line, char *format, ...) {
 
 /**
  * Print a warning message in `stdout`, if `DEBUG_LVL` is above 0.
- * @param file source file (use `__FILE__` )
+ * @param file source file (use `__FILE__`)
  * @param line line (use `__LINE__`)
  * @param format format of the string
  * @param ... extra parameters
@@ -54,7 +54,7 @@ void stdl_warning_msg(char *file, int line, char *format, ...) {
 
     va_list arglist;
 
-    printf("WARNING (%s:%d) :: ", file, line);
+    printf("WARNING (%s:%d): ", file, line);
     va_start(arglist, format);
     vprintf(format, arglist);
     va_end(arglist);
@@ -63,7 +63,7 @@ void stdl_warning_msg(char *file, int line, char *format, ...) {
 
 /**
  * Print an error message in `stderr`.
- * @param file source file (use `__FILE__` )
+ * @param file source file (use `__FILE__`)
  * @param line line (use `__LINE__`)
  * @param format format of the string
  * @param ... extra parameters
@@ -74,7 +74,7 @@ void stdl_error_msg(char *file, int line, char *format, ...) {
 
     va_list arglist;
 
-    fprintf(stderr, "ERROR (%s:%d) :: ", file, line);
+    fprintf(stderr, "ERROR (%s:%d): ", file, line);
     va_start(arglist, format);
     vfprintf(stderr, format, arglist);
     va_end(arglist);
