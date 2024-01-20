@@ -50,6 +50,7 @@ void stdl_set_debug_level(const int level);
 /**
  * Get the value of `DEBUG_LVL`.
  * @return the debug level
+ * @ingroup errors
  */
 int stdl_get_debug_level();
 
