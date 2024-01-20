@@ -256,7 +256,7 @@ void test_read_fchk_skip_all_ok() {
     char cwd[512], fchk_path[1024];
     TEST_ASSERT_NOT_NULL(getcwd(cwd, 512));
 
-    sprintf(fchk_path, "%s/../tests/test_files/water.fchk", cwd);
+    sprintf(fchk_path, "%s/../tests/test_files/water_sto3g.fchk", cwd);
 
     FILE* f = fopen(fchk_path, "r");
     TEST_ASSERT_NOT_NULL(f);
@@ -289,7 +289,7 @@ void test_read_fchk_read_all_section_ok() {
     char cwd[512], fchk_path[1024];
     TEST_ASSERT_NOT_NULL(getcwd(cwd, 512));
 
-    sprintf(fchk_path, "%s/../tests/test_files/water.fchk", cwd);
+    sprintf(fchk_path, "%s/../tests/test_files/water_631g.fchk", cwd);
 
     FILE* f = fopen(fchk_path, "r");
     TEST_ASSERT_NOT_NULL(f);
