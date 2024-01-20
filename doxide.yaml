@@ -4,34 +4,34 @@ description: |
   
   ## Basic principles
   
-  Every object, enum, or function that belongs to the public library API starts with `stdl_`.
+  + Unless otherwise mentioned, everything inputs and outputs are (to be) given in [atomic units](https://en.wikipedia.org/wiki/Atomic_units) (of energy [hartree], of length [bohr], etc).
   
-  The user is required delete all objects created within the library by using the provided deletor functions to avoid memory leaks.
+   + Every object, enum, or function that belongs to the public library API starts with `stdl_`.
   
-  Except for constructors, each function return an error code (see [error codes](./errors/stdl_error_code_)) or `STDL_ERR_OK` if everything went well. 
-  
-  For example,
-  
-  ```c
-  #include <stdlite/utils/base_parser.h>
-  
-  int an_integer;
-  FILE* f = open("tmp.txt");
-  
-  if(f != NULL) {
-    stdl_lexer* lexer = stdl_lexer_new(f); // creator
-  
-    if(lexer != NULL) {
-      if(stdl_parser_get_integer(lx, &an_integer) == STDL_ERR_OK) {
-        printf("read: %d\n", an_integer);
+  + The user is required delete all objects created within the library by using the provided deletor functions to avoid memory leaks.
+    Furthermore, except for constructors, each function return an error code (see [error codes](./errors/stdl_error_code_)) or `STDL_ERR_OK` if everything went well. 
+    For example,
+    
+    ```c
+    #include <stdlite/utils/base_parser.h>
+    
+    int an_integer;
+    FILE* f = open("tmp.txt");
+    
+    if(f != NULL) {
+      stdl_lexer* lexer = stdl_lexer_new(f); // creator
+    
+      if(lexer != NULL) {
+        if(stdl_parser_get_integer(lx, &an_integer) == STDL_ERR_OK) {
+          printf("read: %d\n", an_integer);
+        }
+      
+        stdl_lexer_delete(lx); // deletor
       }
-    
-      stdl_lexer_delete(lx); // deletor
+      
+      fclose(f);
     }
-    
-    fclose(f);
-  }
-  ```
+    ```
 output: docs/API
 files:
   - "src/*.c"
@@ -39,6 +39,16 @@ files:
   - "include/*.h"
   - "include/**/*.h"
 groups:
+  - name: basis
+    title: Basis set
+    description: |
+      Describe a set of basis functions, centered on atoms.
+      
+      ```c
+      #include <stdlite/basis.h>
+      ```
+      
+      Follows the structure of [`libcint`](https://github.com/sunqm/libcint/blob/master/doc/program_ref.txt), so that it can be used to compute extra integrals.
   - name: errors
     title: Error definition and handling
     description: |
@@ -52,6 +62,14 @@ groups:
       
       By default `DEBUG_LVL=1`, which allows errors and warnings to be printed. 
       To shut down every messages, use `stdl_set_debug_level(-1)`.
+  - name: wavefunction
+    title: Wavefunction results
+    description: |
+      Store the result of a QC calculation, which is the input for subsequent (s)TD-DFT calculations.
+      
+      ```c
+      #include <stdlite/wavefunction.h>
+      ```
   - name: utilities
     title: Utilities
     description: Utility functions, not directly required to use the library.

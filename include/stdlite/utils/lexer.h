@@ -47,10 +47,6 @@ enum stdl_token_type_ {
     STDL_TK_LAST
 };
 
-/**
- * `typedef` for `stdl_token_type`.
- * @ingroup lexer
- */
 typedef enum stdl_token_type_ stdl_token_type;
 
 
@@ -82,10 +78,6 @@ struct stdl_lexer_ {
     char* stream;
 };
 
-/**
- * `typedef` for `stdl_lexer`.
- * @ingroup lexer
- */
 typedef struct stdl_lexer_ stdl_lexer;
 
 /**
