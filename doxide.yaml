@@ -1,5 +1,33 @@
 title: Public API documentation
-description: This section describes the public API of `libstdlite`.
+description: |
+  This section describes the public API of `libstdlite`.
+  
+  The API user is required delete all objects created in the library by using the provided deletor functions to avoid memory leaks.
+  
+  Except for constructors, each function return an error code (see [errors](./errors/)) or `STDL_ERR_OK` if everything went well. 
+  
+  For example,
+  
+  ```c
+  #include <stdlite/utils/base_parser.h>
+  
+  int an_integer;
+  FILE* f = open("tmp.txt");
+  
+  if(f != NULL) {
+    stdl_lexer* lexer = stdl_lexer_new(f); // creator
+  
+    if(lexer != NULL) {
+      if(stdl_parser_get_integer(lx, &an_integer) == STDL_ERR_OK) {
+        printf("read: %d\n", an_integer);
+      }
+    
+      stdl_lexer_delete(lx); // deletor
+    }
+    
+    fclose(f);
+  }
+  ```
 output: docs/API
 files:
   - "src/*.c"

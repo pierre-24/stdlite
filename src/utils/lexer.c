@@ -32,13 +32,7 @@ int lexer_translator[] = {
     -1
 };
 
-/**
- * Create a new lexer object (`stdl_lexer*`), provided that `input` is a valid `FILE*`.
- * This object has to be free'd after use.
- * @param input A valid `FILE*`.
- * @return a `stdl_lexer` object.
- * @ingroup lexer
- */
+
 stdl_lexer *stdl_lexer_new(FILE *input) {
     assert(input != NULL);
 
@@ -70,12 +64,7 @@ stdl_lexer *stdl_lexer_new(FILE *input) {
     return lx;
 }
 
-/**
- * Free the lexer.
- * @param lx a valid lexer
- * @return `STDL_ERR_OK`
- * @ingroup lexer
- */
+
 int stdl_lexer_delete(stdl_lexer *lx) {
     assert(lx != NULL);
 
@@ -87,13 +76,7 @@ int stdl_lexer_delete(stdl_lexer *lx) {
     return STDL_ERR_OK;
 }
 
-/**
- * Advance to the next token, except if there are no more token to extract (current token is EOF).
- * @param lx a valid lexer
- * @param shift How much to advance. Valid choices are 0 or 1.
- * @return `STDL_ERR_OK` if current token is not `STDL_TK_EOF`, `STDL_ERR_UTIL_LEXER` otherwise.
- * @ingroup lexer
- */
+
 int stdl_lexer_advance(stdl_lexer *lx, int shift) {
     assert(lx != NULL && lx->file != NULL && lx->stream != NULL);
     assert(shift == 0 || shift == 1);
@@ -144,13 +127,7 @@ int stdl_lexer_advance(stdl_lexer *lx, int shift) {
     return STDL_ERR_OK;
 }
 
-/**
- * If the current token type is of `type`, advance to the next token. Otherwise, return an error.
- * @param lx A valid lexer.
- * @param t Type of the token
- * @return `STDL_ERR_OK` if the current token was of the correct type, `STDL_ERR_UTIL_LEXER` otherwise.
- * @ingroup lexer
- */
+
 int stdl_lexer_eat(stdl_lexer *lx, stdl_token_type t) {
     assert(lx != NULL);
 
@@ -160,13 +137,7 @@ int stdl_lexer_eat(stdl_lexer *lx, stdl_token_type t) {
     return stdl_lexer_advance(lx, 1);
 }
 
-/**
- * Skip tokens while `predicate` is true (and one does not hit `EOF`).
- * @param lx A valid lexer.
- * @param predicate predicate of the form `int predicate(int c)`, where `c` is the current token value
- * @return `STDL_ERR_OK`.
- * @ingroup lexer
- */
+
 int stdl_lexer_skip(stdl_lexer *lx, int (*predicate)(int)) {
     assert(lx != NULL);
 
@@ -177,12 +148,7 @@ int stdl_lexer_skip(stdl_lexer *lx, int (*predicate)(int)) {
     return STDL_ERR_OK;
 }
 
-/**
- * Skip all tokens that are `STDL_TK_WHITESPACE` or `STDL_TK_NL`.
- * @param lx A valid lexer.
- * @return `STDL_ERR_OK`.
- * @ingroup lexer
- */
+
 int stdl_lexer_skip_whitespace_and_nl(stdl_lexer *lx) {
     assert(lx != NULL);
 

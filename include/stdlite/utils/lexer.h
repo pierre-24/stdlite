@@ -88,12 +88,56 @@ struct stdl_lexer_ {
  */
 typedef struct stdl_lexer_ stdl_lexer;
 
+/**
+ * Create a new lexer object (`stdl_lexer*`), provided that `input` is a valid `FILE*`.
+ * This object has to be free'd after use.
+ * @param input A valid `FILE*`.
+ * @return a `stdl_lexer` object.
+ * @ingroup lexer
+ */
 stdl_lexer* stdl_lexer_new(FILE* input);
+
+/**
+ * Free the lexer.
+ * @param lx a valid lexer
+ * @return `STDL_ERR_OK`
+ * @ingroup lexer
+ */
 int stdl_lexer_delete(stdl_lexer *lx);
 
+/**
+ * Advance to the next token, except if there are no more token to extract (current token is EOF).
+ * @param lx a valid lexer
+ * @param shift How much to advance. Valid choices are 0 or 1.
+ * @return `STDL_ERR_OK` if current token is not `STDL_TK_EOF`, `STDL_ERR_UTIL_LEXER` otherwise.
+ * @ingroup lexer
+ */
 int stdl_lexer_advance(stdl_lexer *lx, int shift);
+
+/**
+ * If the current token type is of `type`, advance to the next token. Otherwise, return an error.
+ * @param lx A valid lexer.
+ * @param t Type of the token
+ * @return `STDL_ERR_OK` if the current token was of the correct type, `STDL_ERR_UTIL_LEXER` otherwise.
+ * @ingroup lexer
+ */
 int stdl_lexer_eat(stdl_lexer *lx, stdl_token_type t);
+
+/**
+ * Skip tokens while `predicate` is true (and one does not hit `EOF`).
+ * @param lx A valid lexer.
+ * @param predicate predicate of the form `int predicate(int c)`, where `c` is the current token value
+ * @return `STDL_ERR_OK`.
+ * @ingroup lexer
+ */
 int stdl_lexer_skip(stdl_lexer *lx, int (*predicate)(int));
+
+/**
+ * Skip all tokens that are `STDL_TK_WHITESPACE` or `STDL_TK_NL`.
+ * @param lx A valid lexer.
+ * @return `STDL_ERR_OK`.
+ * @ingroup lexer
+ */
 int stdl_lexer_skip_whitespace_and_nl(stdl_lexer *lx);
 
 #endif //STDL_LEXER_H

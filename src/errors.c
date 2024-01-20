@@ -4,25 +4,16 @@
 
 #include "stdlite/errors.h"
 
-int DEBUG_LVL = 1; // by default, warnings
+int DEBUG_LVL = 1; // by default, warnings & errors
 
-/**
- * Set `DEBUG_LVL`.
- * @param level any number, the larger the more messages one get.
- * @ingroup errors
- */
 void stdl_set_debug_level(const int level) {
     DEBUG_LVL = level;
 }
 
-/**
- * Print a debug message in `stdout`, if `DEBUG_LVL` is above 1.
- * @param file source file (use `__FILE__`)
- * @param line line (use `__LINE__`)
- * @param format format of the string
- * @param ... extra parameters
- * @ingroup errors
- */
+int stdl_get_debug_level() {
+    return DEBUG_LVL;
+}
+
 void stdl_debug_msg(char *file, int line, char *format, ...) {
     assert(file != NULL && format != NULL);
 
@@ -38,14 +29,6 @@ void stdl_debug_msg(char *file, int line, char *format, ...) {
     printf("\n");
 }
 
-/**
- * Print a warning message in `stdout`, if `DEBUG_LVL` is above 0.
- * @param file source file (use `__FILE__`)
- * @param line line (use `__LINE__`)
- * @param format format of the string
- * @param ... extra parameters
- * @ingroup errors
- */
 void stdl_warning_msg(char *file, int line, char *format, ...) {
     assert(file != NULL && format != NULL);
 
@@ -61,16 +44,11 @@ void stdl_warning_msg(char *file, int line, char *format, ...) {
     printf("\n");
 }
 
-/**
- * Print an error message in `stderr`.
- * @param file source file (use `__FILE__`)
- * @param line line (use `__LINE__`)
- * @param format format of the string
- * @param ... extra parameters
- * @ingroup errors
- */
 void stdl_error_msg(char *file, int line, char *format, ...) {
     assert(file != NULL && format != NULL);
+
+    if(DEBUG_LVL < 0)
+        return;
 
     va_list arglist;
 
