@@ -119,7 +119,7 @@ void test_parser_vector_ints_ok() {
 
         long* values;
         size_t sz;
-        STDL_OK(stdl_fchk_parser_get_vector_ints(lx, &sz, &values));
+        STDL_OK(stdl_fchk_parser_get_vector_integers(lx, &sz, &values));
 
         TEST_ASSERT_EQUAL_INT(mx, sz);
         for (long j = 0; j < mx; ++j) {
@@ -154,7 +154,7 @@ void test_parser_incorrect_vector_ints_ko() {
         lx = stdl_lexer_new(stream);
         TEST_ASSERT_NOT_NULL(lx);
 
-        STDL_NOK(stdl_fchk_parser_get_vector_ints(lx, &sz, &values));
+        STDL_NOK(stdl_fchk_parser_get_vector_integers(lx, &sz, &values));
 
         STDL_OK(stdl_lexer_delete(lx));
     }
@@ -268,7 +268,7 @@ void test_read_fchk_skip_all_ok() {
     stdl_lexer* lx = stdl_lexer_new(f);
     TEST_ASSERT_NOT_NULL(lx);
 
-    STDL_OK(stdl_fchk_parser_skip_begin(lx));
+    STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
     while (lx->current_tk_type != STDL_TK_EOF) {
         STDL_OK(stdl_fchk_parser_get_section_info(lx, &name, &type, &is_scalar));
@@ -307,7 +307,7 @@ void test_read_fchk_read_all_section_ok() {
     stdl_lexer* lx = stdl_lexer_new(f);
     TEST_ASSERT_NOT_NULL(lx);
 
-    STDL_OK(stdl_fchk_parser_skip_begin(lx));
+    STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
     while (lx->current_tk_type != STDL_TK_EOF) {
         STDL_OK(stdl_fchk_parser_get_section_info(lx, &name, &type, &is_scalar));
@@ -316,7 +316,7 @@ void test_read_fchk_read_all_section_ok() {
         if(is_scalar) {
             switch (type) {
                 case 'I':
-                    STDL_OK(stdl_fchk_parser_get_scalar_int(lx, &an_integer));
+                    STDL_OK(stdl_fchk_parser_get_scalar_integer(lx, &an_integer));
                     break;
                 case 'R':
                     STDL_OK(stdl_fchk_parser_get_scalar_number(lx, &a_number));
@@ -328,7 +328,7 @@ void test_read_fchk_read_all_section_ok() {
         } else {
             switch (type) {
                 case 'I':
-                    STDL_OK(stdl_fchk_parser_get_vector_ints(lx, &sz, &vector_integers));
+                    STDL_OK(stdl_fchk_parser_get_vector_integers(lx, &sz, &vector_integers));
                     free(vector_integers);
                     break;
                 case 'R':
@@ -349,6 +349,27 @@ void test_read_fchk_read_all_section_ok() {
     }
 
     TEST_ASSERT_EQUAL_INT(86, nsections);
+
+    STDL_OK(stdl_lexer_delete(lx));
+
+    fclose(f);
+}
+
+void test_extract_wavefunction_ok() {
+    char cwd[512], fchk_path[1024];
+    TEST_ASSERT_NOT_NULL(getcwd(cwd, 512));
+
+    sprintf(fchk_path, "%s/../tests/test_files/water_sto3g.fchk", cwd);
+
+    FILE* f = fopen(fchk_path, "r");
+    TEST_ASSERT_NOT_NULL(f);
+
+    stdl_lexer* lx = stdl_lexer_new(f);
+    TEST_ASSERT_NOT_NULL(lx);
+
+    STDL_OK(stdl_fchk_parser_skip_intro(lx));
+
+    stdl_fchk_parser_extract_wavefunction(lx);
 
     STDL_OK(stdl_lexer_delete(lx));
 

@@ -2,6 +2,7 @@
 #define STDL_FCHK_PARSER_H
 
 #include <stdlite/utils/base_parser.h>
+#include <stdlite/wavefunction.h>
 
 /**
  * Skip the beginning of FCHK.
@@ -11,7 +12,7 @@
  * @return `STDL_ERR_OK` if everything was ok, error code otherwise
  * @ingroup fchk_parser
  */
-int stdl_fchk_parser_skip_begin(stdl_lexer* lx);
+int stdl_fchk_parser_skip_intro(stdl_lexer* lx);
 
 /**
  * Parse the info of a section in FCHK.
@@ -32,7 +33,7 @@ int stdl_fchk_parser_get_section_info(stdl_lexer* lx, char** name, char* type, i
  * @return `STDL_ERR_OK` if everything was ok, error code otherwise
  * @ingroup fchk_parser
  */
-int stdl_fchk_parser_get_scalar_int(stdl_lexer* lx, long *value);
+int stdl_fchk_parser_get_scalar_integer(stdl_lexer* lx, long *value);
 
 /**
  * Parse a scalar real number.
@@ -53,7 +54,23 @@ int stdl_fchk_parser_get_scalar_number(stdl_lexer* lx, double* value);
  * @return `STDL_ERR_OK` if everything was ok, error code otherwise
  * @ingroup fchk_parser
  */
-int stdl_fchk_parser_get_vector_ints(stdl_lexer* lx, size_t* sz, long **vector);
+int stdl_fchk_parser_get_vector_integers(stdl_lexer* lx, size_t* sz, long **vector);
+
+/**
+ * Parse a vector of integers in FCHK.
+ * Expect the lexer to have stopped right before the size of the vector.
+ * Read lines in format `6I12`.
+ *
+ * @note Immediate version: `*vector` must be have been allocated.
+ * This version is to be used when one knows in advance the shape of the data (because, *e.g.*, it was given by another section) and tries to avoid copy.
+ *
+ * @param lx a valid lexer
+ * @param sz expected size of the vector, will be checked.
+ * @param[in,out] vector the vector, which will be filled.
+ * @return `STDL_ERR_OK` if everything was ok, error code otherwise
+ * @ingroup fchk_parser
+ */
+int stdl_fchk_parser_get_vector_integers_immediate(stdl_lexer* lx, size_t sz, long **vector);
 
 /**
  * Parse a vector of real numbers in FCHK.
@@ -66,6 +83,22 @@ int stdl_fchk_parser_get_vector_ints(stdl_lexer* lx, size_t* sz, long **vector);
  * @ingroup fchk_parser
  */
 int stdl_fchk_parser_get_vector_numbers(stdl_lexer* lx, size_t* sz, double** vector);
+
+/**
+ * Parse a vector of real numbers in FCHK.
+ * Expect the lexer to have stopped right before the size of the vector.
+ * Read lines in format `5E16.8`.
+ *
+ * @note Immediate version: `*vector` must be have been allocated.
+ * This version is to be used when one knows in advance the shape of the data (because, *e.g.*, it was given by another section) and tries to avoid copy.
+ *
+ * @param lx a valid lexer
+ * @param sz expected size of the vector, will be checked.
+ * @param[in,out] vector the vector, which will be filled.
+ * @return `STDL_ERR_OK` if everything was ok, error code otherwise
+ * @ingroup fchk_parser
+ */
+int stdl_fchk_parser_get_vector_numbers_immediate(stdl_lexer* lx, size_t sz, double** vector);
 
 /**
  * Parse a vector of strings in FCHK and merge everything in one (long) string.
@@ -89,5 +122,17 @@ int stdl_fchk_parser_get_vector_string(stdl_lexer* lx, size_t* sz, char **out);
  * @ingroup fchk_parser
  */
 int stdl_fchk_parser_skip_section(stdl_lexer* lx, char type, int is_scalar);
+
+
+/**
+ * Extract a `stdl_wavefunction` from a FCHK.
+ * Requires to re-compute the overlap matrix as this is not available in the FCHK.
+ * @param lx a valid lexer, opened on a FCHK where the introduction has been skipped (with `stdl_fchk_parser_skip_intro()`).
+ * @return if everything went well, a valid `stdl_wavefunction`, `NULL` otherwise.
+ *
+ * @ingroup fchk_parser
+ */
+stdl_wavefunction* stdl_fchk_parser_extract_wavefunction(stdl_lexer* lx);
+
 
 #endif //STDL_FCHK_PARSER_H

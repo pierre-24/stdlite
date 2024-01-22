@@ -85,8 +85,4 @@ void stdl_warning_msg(char *file, int line, char *format, ...);
 void stdl_error_msg(char *file, int line, char *format, ...) ;
 
 
-#define RETURN_ON_ERROR(a) if((a) != STDL_ERR_OK) \
-return (a);
-
-
 #endif //STDL_ERRORS_H

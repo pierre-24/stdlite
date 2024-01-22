@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "stdlite/errors.h"
+#include "stdlite/utils/utils.h"
 #include "stdlite/utils/lexer.h"
 
 int lexer_translator[] = {
@@ -68,9 +69,7 @@ stdl_lexer *stdl_lexer_new(FILE *input) {
 int stdl_lexer_delete(stdl_lexer *lx) {
     assert(lx != NULL);
 
-    if (lx->stream != NULL)
-        free(lx->stream);
-
+    STDL_FREE_IFUSED(lx->stream);
     free(lx);
 
     return STDL_ERR_OK;

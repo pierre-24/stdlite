@@ -5,6 +5,7 @@
 
 #include "stdlite/utils/base_parser.h"
 #include "stdlite/errors.h"
+#include "stdlite/utils/utils.h"
 
 
 void stdl_error_msg_parser(char *file, int line, stdl_lexer* lx, char *format, ...) {
@@ -67,11 +68,11 @@ int stdl_parser_store_value_and_grow_string(stdl_lexer* lx, char** str, int* sz,
 
     // advance lexer
     err = stdl_lexer_advance(lx, 1);
-    RETURN_ON_ERROR(err);
+    STDL_RETURN_ON_ERROR(err);
 
     // grow string
     err = stdl_grow_string(str, *sz, fac);
-    RETURN_ON_ERROR(err);
+    STDL_RETURN_ON_ERROR(err);
 
     return STDL_ERR_OK;
 }
@@ -89,7 +90,7 @@ int stdl_parser_get_integer(stdl_lexer* lx, long *result) {
     int sz = 0, fac = 0;
 
     err = stdl_grow_string(&str, sz, &fac);
-    RETURN_ON_ERROR(err);
+    STDL_RETURN_ON_ERROR(err);
 
     // store first token
     err = stdl_parser_store_value_and_grow_string(lx, &str, &sz, &fac);
@@ -135,7 +136,7 @@ int stdl_parser_get_number(stdl_lexer* lx, double* result) {
     int sz = 0, fac = 0, dot_found = lx->current_tk_type == STDL_TK_DOT, exp_found = 0;
 
     err = stdl_grow_string(&str, sz, &fac);
-    RETURN_ON_ERROR(err);
+    STDL_RETURN_ON_ERROR(err);
 
     // store first token
     err = stdl_parser_store_value_and_grow_string(lx, &str, &sz, &fac);
@@ -203,7 +204,7 @@ int stdl_parser_get_literal(stdl_lexer* lx, int (*predicate)(int), char** result
     int sz = 0, fac = 0;
 
     err = stdl_grow_string(result, sz, &fac);
-    RETURN_ON_ERROR(err);
+    STDL_RETURN_ON_ERROR(err);
 
     while(lx->current_tk_type != STDL_TK_EOF && predicate((int) lx->current_tk_value)) {
         err = stdl_parser_store_value_and_grow_string(lx, result, &sz, &fac);
