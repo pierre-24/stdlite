@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include <stdlite/utils/fchk_parser.h>
+#include <stdlite/matrix.h>
 
 #include "tests_suite.h"
 
@@ -376,6 +377,8 @@ void test_extract_wavefunction_ok() {
     TEST_ASSERT_EQUAL_INT(7, wf->nao); // O[1s,2s,2px,2py,2pz] + H[1s] + H[1s]
     TEST_ASSERT_EQUAL_INT(7, wf->nmo);
     TEST_ASSERT_EQUAL_INT(10, wf->nelec);
+
+    stdl_matrix_numbers_print(wf->nao, wf->nao, wf->S, 1);
 
     STDL_OK(stdl_wavefunction_delete(wf));
     STDL_OK(stdl_lexer_delete(lx));

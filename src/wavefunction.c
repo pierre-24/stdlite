@@ -18,7 +18,7 @@ stdl_wavefunction *stdl_wavefunction_new(size_t natm, size_t nelec, size_t nao, 
         wf->atm = wf->S = wf->C = wf->e = NULL;
         wf->aotoatm = NULL;
 
-        wf->atm = malloc(3 * sizeof(double));
+        wf->atm = malloc(4 * natm * sizeof(double));
         if(wf->atm == NULL) {
             stdl_wavefunction_delete(wf);
             return NULL;

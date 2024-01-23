@@ -7,7 +7,6 @@
 #include "stdlite/utils/fchk_parser.h"
 #include "stdlite.h"
 
-
 int stdl_fchk_parser_get_section_info(stdl_lexer* lx, char** name, char* type, int* is_scalar) {
     assert(lx != NULL && name != NULL && type != NULL && is_scalar != NULL);
 
@@ -649,7 +648,7 @@ stdl_wavefunction *stdl_fchk_parser_wavefunction_new(stdl_lexer *lx) {
 
    // at that point, we should have read everything
     if(finished) {
-
+        memcpy(wf->atm, atm, 4 * natm * sizeof(double));
     } else
         stdl_error_msg_parser(__FILE__, __LINE__, lx, "FCHK was missing certain sections (dt=0x%x, wf=0x%x)", dt, wf);
 
@@ -659,7 +658,6 @@ stdl_wavefunction *stdl_fchk_parser_wavefunction_new(stdl_lexer *lx) {
         wf = NULL;
     }
 
-    // free remaining
     STDL_FREE_IF_USED(atm);
     if(dt != NULL)
         _fchk_data_delete(dt);
