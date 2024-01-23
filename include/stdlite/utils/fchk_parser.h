@@ -125,14 +125,16 @@ int stdl_fchk_parser_skip_section(stdl_lexer* lx, char type, int is_scalar);
 
 
 /**
- * Extract a `stdl_wavefunction` from a FCHK.
- * Requires to re-compute the overlap matrix as this is not available in the FCHK.
- * @param lx a valid lexer, opened on a FCHK where the introduction has been skipped (with `stdl_fchk_parser_skip_intro()`).
- * @return if everything went well, a valid `stdl_wavefunction`, `NULL` otherwise.
- *
+ * Create a `stdl_wavefunction` from the info in a FCHK file.
+ * Expects that the introduction has been skipped (with `stdl_fchk_parser_skip_intro()`).
+ * Expects that the section comes in the order in which Gaussian prints them.
+ * The FCHK is read up to the "Alpha MO coefficients" section.
+ * Then, it computes the overlap matrix (`S`) as this is not available in the FCHK.
+ * @param lx a valid lexer, opened on a FCHK?
+ * @return if everything went well, a valid `stdl_wavefunction` (caller is responsible for free'ing it), `NULL` otherwise.
  * @ingroup fchk_parser
  */
-stdl_wavefunction* stdl_fchk_parser_extract_wavefunction(stdl_lexer* lx);
+stdl_wavefunction* stdl_fchk_parser_wavefunction_new(stdl_lexer* lx);
 
 
 #endif //STDL_FCHK_PARSER_H

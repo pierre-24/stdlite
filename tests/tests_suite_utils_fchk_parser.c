@@ -369,8 +369,15 @@ void test_extract_wavefunction_ok() {
 
     STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
-    stdl_fchk_parser_extract_wavefunction(lx);
+    stdl_wavefunction * wf = stdl_fchk_parser_wavefunction_new(lx);
+    TEST_ASSERT_NOT_NULL(wf);
 
+    TEST_ASSERT_EQUAL_INT(3, wf->natm);
+    TEST_ASSERT_EQUAL_INT(7, wf->nao); // O[1s,2s,2px,2py,2pz] + H[1s] + H[1s]
+    TEST_ASSERT_EQUAL_INT(7, wf->nmo);
+    TEST_ASSERT_EQUAL_INT(10, wf->nelec);
+
+    STDL_OK(stdl_wavefunction_delete(wf));
     STDL_OK(stdl_lexer_delete(lx));
 
     fclose(f);

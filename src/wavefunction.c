@@ -5,7 +5,7 @@
 #include "stdlite/utils/utils.h"
 
 stdl_wavefunction *stdl_wavefunction_new(size_t natm, size_t nelec, size_t nao, size_t nmo) {
-    assert(natm > 0 && nao > 0 && nmo > 0 && nmo <= nao && nmo >= 2 * nelec);
+    assert(natm > 0 && nao > 0 && nmo > 0 && nmo <= nao && 2*nmo >= nelec);
 
     stdl_wavefunction* wf = malloc(sizeof(stdl_wavefunction));
 
@@ -55,11 +55,11 @@ stdl_wavefunction *stdl_wavefunction_new(size_t natm, size_t nelec, size_t nao, 
 int stdl_wavefunction_delete(stdl_wavefunction *wf) {
     assert(wf != NULL);
 
-    STDL_FREE_IFUSED(wf->atm);
-    STDL_FREE_IFUSED(wf->e);
-    STDL_FREE_IFUSED(wf->aotoatm);
-    STDL_FREE_IFUSED(wf->S);
-    STDL_FREE_IFUSED(wf->C);
+    STDL_FREE_IF_USED(wf->atm);
+    STDL_FREE_IF_USED(wf->e);
+    STDL_FREE_IF_USED(wf->aotoatm);
+    STDL_FREE_IF_USED(wf->S);
+    STDL_FREE_IF_USED(wf->C);
 
     free(wf);
 

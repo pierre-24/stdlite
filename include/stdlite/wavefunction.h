@@ -27,7 +27,7 @@ struct stdl_wavefunction_ {
     /// Number of AO.
     size_t nao;
 
-    /// Number of MO. Should fulfill `2 * nelec <= nmo <= nao`.
+    /// Number of MO. Should fulfill `nelec <= 2*nmo <= 2*nao`.
     size_t nmo;
 
     /// `size_t[nao]`, 0-based list of corresponding atom for each AO.
@@ -50,7 +50,7 @@ typedef struct stdl_wavefunction_ stdl_wavefunction;
  * @param natm number of atom (should be >0)
  * @param nelec number of electrons (should be >0)
  * @param nao number of atomic orbitals (should be >0)
- * @param nmo number of molecular orbitals (should fulfill `2 * nelec <= nmo <= nao`)
+ * @param nmo number of molecular orbitals (should fulfill `nelec <= 2*nmo <= 2*nao`)
  * @return The initialized wavefunction object, if any, with all array initialized to their respective size.
  * @ingroup wavefunction
  */

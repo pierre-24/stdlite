@@ -69,7 +69,7 @@ stdl_lexer *stdl_lexer_new(FILE *input) {
 int stdl_lexer_delete(stdl_lexer *lx) {
     assert(lx != NULL);
 
-    STDL_FREE_IFUSED(lx->stream);
+    STDL_FREE_IF_USED(lx->stream);
     free(lx);
 
     return STDL_ERR_OK;

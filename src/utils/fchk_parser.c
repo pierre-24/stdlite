@@ -435,13 +435,13 @@ struct _fchk_data_basis {
 
 
 void _fchk_data_delete(struct _fchk_data_basis* dt) {
-    STDL_FREE_IFUSED(dt->shell_types);
-    STDL_FREE_IFUSED(dt->prims_per_shell);
-    STDL_FREE_IFUSED(dt->bastoatm);
+    STDL_FREE_IF_USED(dt->shell_types);
+    STDL_FREE_IF_USED(dt->prims_per_shell);
+    STDL_FREE_IF_USED(dt->bastoatm);
 
-    STDL_FREE_IFUSED(dt->exps);
-    STDL_FREE_IFUSED(dt->contraction_coefs);
-    STDL_FREE_IFUSED(dt->contraction_coefs_sp);
+    STDL_FREE_IF_USED(dt->exps);
+    STDL_FREE_IF_USED(dt->contraction_coefs);
+    STDL_FREE_IF_USED(dt->contraction_coefs_sp);
 
     free(dt);
 }
@@ -470,7 +470,7 @@ struct _fchk_data_basis* _fchk_data_new(size_t nbas, size_t nprims) {
         dt->prims_per_shell = malloc(nbas * sizeof(long));
         dt->bastoatm = malloc(nbas * sizeof(long));
 
-        if(dt->shell_types == NULL || dt->prims_per_shell == NULL || dt->bastoatm) {
+        if(dt->shell_types == NULL || dt->prims_per_shell == NULL || dt->bastoatm == NULL) {
             _fchk_data_delete(dt);
             return NULL;
         }
@@ -489,14 +489,60 @@ struct _fchk_data_basis* _fchk_data_new(size_t nbas, size_t nprims) {
     return dt;
 }
 
-stdl_wavefunction *stdl_fchk_parser_extract_wavefunction(stdl_lexer *lx) {
+// Get the number of ao, given the type of each basis function.
+// According to the Gaussian documentation, `0=s, 1=p, -1=sp, 2=6d, -2=5d, 3=10f, -3=7f`.
+// In most of the case, `nao=nmo`.
+size_t _get_nao(size_t nbas, long* shell_types) {
+    size_t total = 0;
+
+    for (size_t i = 0; i < nbas; ++i) {
+        switch (shell_types[i]) {
+            case 0:
+                total += 1;
+                break;
+            // cartesian's
+            case 1: // 3p
+                total += 3;
+                break;
+            case 2: // 6d
+                total += 6;
+                break;
+            case 3: // 10f
+                total += 10;
+                break;
+            case 4: // 15g
+                total += 10;
+                break;
+            // spherical's
+            case -1: // sp
+                total += 4;
+                break;
+            case -2: // 5d
+                total += 5;
+                break;
+            case -3: // 7f
+                total += 7;
+                break;
+            case -4: // 9g
+                total += 7;
+                break;
+            default:
+                stdl_error_msg(__FILE__, __LINE__, "encountered shell type=%d, but it was not taken into account. This will cause issues.", shell_types[i]);
+                return 0;
+        }
+    }
+
+    return total;
+}
+
+stdl_wavefunction *stdl_fchk_parser_wavefunction_new(stdl_lexer *lx) {
     assert(lx != NULL);
 
     // useful variables
     int error = STDL_ERR_OK;
     char* name = NULL;
     char type;
-    int is_scalar;
+    int is_scalar, finished = 0;
 
     // extracted from file
     long an_integer;
@@ -508,7 +554,7 @@ stdl_wavefunction *stdl_fchk_parser_extract_wavefunction(stdl_lexer *lx) {
     double* atm = NULL; // [natm*4]
 
     // read the file and extract what is required
-    while (lx->current_tk_type != STDL_TK_EOF && error == STDL_ERR_OK) {
+    while (lx->current_tk_type != STDL_TK_EOF && error == STDL_ERR_OK  && !finished) {
         error = stdl_fchk_parser_get_section_info(lx, &name, &type, &is_scalar);
 
         if(error == STDL_ERR_OK) {
@@ -558,6 +604,9 @@ stdl_wavefunction *stdl_fchk_parser_extract_wavefunction(stdl_lexer *lx) {
             } else if(strcmp("Shell types", name) == 0) {
                 /* Note: assume that "Number of primitive shells" was read before. */
                 error = stdl_fchk_parser_get_vector_integers_immediate(lx, nbas, &(dt->shell_types));
+                if(error == STDL_ERR_OK) {
+                    nao = _get_nao(nbas, dt->shell_types);
+                }
             } else if(strcmp("Number of primitives per shell", name) == 0) {
                 /* Note: assume that "Number of primitive shells" was read before. */
                 error = stdl_fchk_parser_get_vector_integers_immediate(lx, nbas, &(dt->prims_per_shell));
@@ -573,30 +622,46 @@ stdl_wavefunction *stdl_fchk_parser_extract_wavefunction(stdl_lexer *lx) {
             } else if(strcmp("P(S=P) Contraction coefficients", name) == 0) {
                 /* Note: assume that "Number of primitive shells" was read before. */
                 error = stdl_fchk_parser_get_vector_numbers_immediate(lx, nprims, &(dt->contraction_coefs_sp));
+            } /* --- nmo, C, e --- */
+            else if(strcmp("Number of independent functions", name) == 0) {
+                error = stdl_fchk_parser_get_scalar_integer(lx, &an_integer);
+                if(error == STDL_ERR_OK)
+                    nmo = (size_t) an_integer;
+            } else if(strcmp("Alpha Orbital Energies", name) == 0) {
+                /* Note: assume that "Number of independent functions" was read before. */
+                wf = stdl_wavefunction_new(natm, nelec, nao, nmo);
+                if(wf != NULL)
+                    error = stdl_fchk_parser_get_vector_numbers_immediate(lx, nmo, &(wf->e));
+                else
+                    error = STDL_ERR_MALLOC;
+            } else if(strcmp("Alpha MO coefficients", name) == 0) {
+                /* Note: assume that "Number of independent functions" was read before. */
+                error = stdl_fchk_parser_get_vector_numbers_immediate(lx, nmo * nao, &(wf->C));
+
+                // Normally, there is nothing else to read!
+                finished = 1;
             } /* --- OTHERS: --- */
             else // not interesting, skip section
                 stdl_fchk_parser_skip_section(lx, type, is_scalar);
 
             free(name);
         }
-
-        if(error != STDL_ERR_OK) {
-            STDL_FREE_IFUSED(atm);
-
-            if(dt != NULL)
-                _fchk_data_delete(dt);
-
-            if(wf != NULL)
-                stdl_wavefunction_delete(wf);
-
-            return NULL;
-        }
     }
 
-    assert(dt != NULL); // TODO: remove that!
+   // at that point, we should have read everything
+    if(finished) {
+
+    } else
+        stdl_error_msg_parser(__FILE__, __LINE__, lx, "FCHK was missing certain sections (dt=0x%x, wf=0x%x)", dt, wf);
+
+    // clean up if needed
+    if((!finished || error != STDL_ERR_OK) && wf != NULL) {
+        stdl_wavefunction_delete(wf);
+        wf = NULL;
+    }
 
     // free remaining
-    STDL_FREE_IFUSED(atm);
+    STDL_FREE_IF_USED(atm);
     if(dt != NULL)
         _fchk_data_delete(dt);
 
