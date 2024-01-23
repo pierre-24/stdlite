@@ -5,7 +5,7 @@
 
 #include "stdlite/utils/base_parser.h"
 #include "stdlite/errors.h"
-#include "stdlite/utils/utils.h"
+#include "stdlite.h"
 
 
 void stdl_error_msg_parser(char *file, int line, stdl_lexer* lx, char *format, ...) {

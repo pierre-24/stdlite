@@ -2,8 +2,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+#include "stdlite.h"
 #include "stdlite/errors.h"
-#include "stdlite/utils/utils.h"
 #include "stdlite/utils/lexer.h"
 
 int lexer_translator[] = {

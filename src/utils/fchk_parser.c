@@ -5,8 +5,7 @@
 
 #include "stdlite/errors.h"
 #include "stdlite/utils/fchk_parser.h"
-#include "stdlite/utils/utils.h"
-#include "stdlite/utils/utils.h"
+#include "stdlite.h"
 
 
 int stdl_fchk_parser_get_section_info(stdl_lexer* lx, char** name, char* type, int* is_scalar) {

@@ -2,7 +2,7 @@
 
 #include "stdlite/wavefunction.h"
 #include "stdlite/errors.h"
-#include "stdlite/utils/utils.h"
+#include "stdlite.h"
 
 stdl_wavefunction *stdl_wavefunction_new(size_t natm, size_t nelec, size_t nao, size_t nmo) {
     assert(natm > 0 && nao > 0 && nmo > 0 && nmo <= nao && 2*nmo >= nelec);
