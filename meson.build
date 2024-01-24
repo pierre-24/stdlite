@@ -3,8 +3,18 @@ project('stdlite', 'c',
   default_options : ['warning_level=3'],
 )
 
+cc = meson.get_compiler('c')
+
 # configure dependencies
 project_dep = []
+
+libcint_dep = cc.find_library('libcint', required: false)
+if not libcint_dep.found()
+  libcint_proj = subproject('libcint', default_options: [])
+  libcint_dep = libcint_proj.get_variable('libcint_dep')
+endif
+
+project_dep += libcint_dep
 
 # fetch sources and includes
 srcs = []
