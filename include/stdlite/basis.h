@@ -35,7 +35,7 @@ struct stdl_basis_ {
      * - `bas[i*8+0]`: corresponding atom (0-based index)
      * - `bas[i*8+1]`: angular momentum
      * - `bas[i*8+2]`: number of primitive GTO, `nprim`,
-     * - `bas[i*8+3]`: number of contracted GTO (smaller than the previous number), `ncont`,
+     * - `bas[i*8+3]`: number of contracted GTO, `ncont`,
      * - `bas[i*8+4]`: not relevant here
      * - `bas[i*8+5]`: offset at which the `nprim` exponents of GTO are found in `env`,
      * - `bas[i*8+6]`: offset at which the `nprim*ncont` contraction coefficients of GTO are found in `env`,
@@ -65,11 +65,19 @@ typedef struct stdl_basis_ stdl_basis;
 stdl_basis* stdl_basis_new(int natm, int nbas, size_t env_size);
 
 /**
- * Delete the basis
- * @param bs
+ * Delete the basis set.
+ * @param bs a valid basis set
  * @return `STDL_ERR_OK`
  * @ingroup basis
  */
 int stdl_basis_delete(stdl_basis* bs);
+
+/**
+ * Print the content of the basis set.
+ * @param bs a valid basis set
+ * @return `STDL_ERR_OK`
+ * @ingroup basis
+ */
+int stdl_basis_print(stdl_basis* bs);
 
 #endif //STDLITE_BASIS_H

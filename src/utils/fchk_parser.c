@@ -6,6 +6,8 @@
 #include "stdlite/errors.h"
 #include "stdlite/utils/fchk_parser.h"
 #include "stdlite.h"
+#include "stdlite/basis.h"
+#include "stdlite/matrix.h"
 
 int stdl_fchk_parser_get_section_info(stdl_lexer* lx, char** name, char* type, int* is_scalar) {
     assert(lx != NULL && name != NULL && type != NULL && is_scalar != NULL);
@@ -417,17 +419,15 @@ int stdl_fchk_parser_skip_intro(stdl_lexer* lx) {
 struct _fchk_data_basis {
     size_t
         nbas, // number of basis functions
-        nprims // number of primitives, nprim >= nbas
+        nprim // number of primitives, nprim >= nbas
         ;
     long
         *shell_types,  // [nbas]
         *prims_per_shell, // [nbas]
-        *bastoatm // [nbas]
+        *bastoatm // [nbas], 1-based list
         ;
     double
-        *exps, // [nprims]
-        *contraction_coefs, // [nprims]
-        *contraction_coefs_sp // [nprims]
+        *benv // [3 * nprim]
         ;
 };
 
@@ -437,9 +437,7 @@ void _fchk_data_delete(struct _fchk_data_basis* dt) {
     STDL_FREE_IF_USED(dt->prims_per_shell);
     STDL_FREE_IF_USED(dt->bastoatm);
 
-    STDL_FREE_IF_USED(dt->exps);
-    STDL_FREE_IF_USED(dt->contraction_coefs);
-    STDL_FREE_IF_USED(dt->contraction_coefs_sp);
+    STDL_FREE_IF_USED(dt->benv);
 
     free(dt);
 }
@@ -452,16 +450,14 @@ struct _fchk_data_basis* _fchk_data_new(size_t nbas, size_t nprims) {
 
     if(dt != NULL) {
         dt->nbas = nbas;
-        dt->nprims = nprims;
+        dt->nprim = nprims;
 
         // ints
         dt->shell_types = NULL;
         dt->prims_per_shell = NULL;
 
         // doubles
-        dt->exps = NULL;
-        dt->contraction_coefs = NULL;
-        dt->contraction_coefs_sp = NULL;
+        dt->benv = NULL;
 
         // ints
         dt->shell_types = malloc(nbas * sizeof(long));
@@ -474,17 +470,62 @@ struct _fchk_data_basis* _fchk_data_new(size_t nbas, size_t nprims) {
         }
 
         // doubles
-        dt->exps = malloc(nprims * sizeof(double));
-        dt->contraction_coefs = malloc(nprims * sizeof(double));
-        dt->contraction_coefs_sp = malloc(nprims * sizeof(double));
+        dt->benv = malloc(3 * nprims * sizeof(double));
 
-        if(dt->exps == NULL || dt->contraction_coefs == NULL || dt->contraction_coefs_sp == NULL) {
+        if(dt->benv == NULL) {
             _fchk_data_delete(dt);
             return NULL;
         }
     }
 
     return dt;
+}
+
+int _make_overlap_matrix(stdl_wavefunction* wf, struct _fchk_data_basis* dt) {
+    size_t env_size = wf->natm * 3 /* coordinates */ + 3 * dt->nprim /* exp + 2 * contractions */;
+
+    int nbas = dt->nbas; // TODO: sp!
+
+    stdl_basis* bs = stdl_basis_new((int) wf->natm, nbas, env_size);
+
+    if(bs != NULL) {
+        // atoms
+        for(size_t i=0; i < wf->natm; i++) {
+            bs->atm[i * 6 + 0] = (int) wf->atm[i * 4 + 0];
+            bs->atm[i * 6 + 1] = (int) (i * 3);
+
+            bs->env[i * 3 + 0] = wf->atm[i*4 + 1];
+            bs->env[i * 3 + 1] = wf->atm[i*4 + 2];
+            bs->env[i * 3 + 2] = wf->atm[i*4 + 3];
+        }
+
+        // copy the rest in env
+        size_t offset_exps = 3 * wf->natm, offset_coefs = 3 * wf->natm + dt->nprim, offset_coefs_sp = 3 * wf->natm + 2 * dt->nprim;
+        memcpy(&(bs->env[offset_exps]), dt->benv, 3 * dt->nprim * sizeof(double));
+
+        // TODO: normalization!
+
+        size_t offset_bas = 0;
+        int iprim = 0;
+
+        // basis
+        for(size_t i=0; i < dt->nbas; i++) {
+            bs->bas[(offset_bas + i) * 8 + 0] = (int) dt->bastoatm[i] - 1; // Gaussian gives a 1-based list
+            bs->bas[(offset_bas + i) * 8 + 1] = (dt->shell_types[i] == -1) ? 0 : abs((int) dt->shell_types[i]);
+            bs->bas[(offset_bas + i) * 8 + 2] = (int) dt->prims_per_shell[i];
+            bs->bas[(offset_bas + i) * 8 + 3] = 1;
+            bs->bas[(offset_bas + i) * 8 + 5] = offset_exps + iprim;
+            bs->bas[(offset_bas + i) * 8 + 6] = offset_coefs + iprim;
+
+            iprim += (int) dt->prims_per_shell[i];
+        }
+
+        stdl_basis_print(bs);
+        stdl_basis_delete(bs);
+    } else
+        return STDL_ERR_MALLOC;
+
+    return STDL_ERR_OK;
 }
 
 // Get the number of ao, given the type of each basis function.
@@ -545,7 +586,7 @@ stdl_wavefunction *stdl_fchk_parser_wavefunction_new(stdl_lexer *lx) {
     // extracted from file
     long an_integer;
     double* a_vector = NULL;
-    size_t a_size, nelec = 0, natm = 0, nao = 0, nmo = 0, nbas = 0, nprims = 0;
+    size_t a_size, nelec = 0, natm = 0, nao = 0, nmo = 0, nbas = 0, nprim = 0;
 
     struct _fchk_data_basis* dt = NULL;
     stdl_wavefunction* wf = NULL;
@@ -594,8 +635,8 @@ stdl_wavefunction *stdl_fchk_parser_wavefunction_new(stdl_lexer *lx) {
                 /* Note: assume that "Number of contracted shells" was read before. */
                 error = stdl_fchk_parser_get_scalar_integer(lx, &an_integer);
                 if(error == STDL_ERR_OK) {
-                    nprims = (size_t) an_integer;
-                    dt = _fchk_data_new(nbas, nprims);
+                    nprim = (size_t) an_integer;
+                    dt = _fchk_data_new(nbas, nprim);
                     if(dt == NULL)
                         error = STDL_ERR_MALLOC;
                 }
@@ -613,13 +654,15 @@ stdl_wavefunction *stdl_fchk_parser_wavefunction_new(stdl_lexer *lx) {
                 error = stdl_fchk_parser_get_vector_integers_immediate(lx, nbas, &(dt->bastoatm));
             } else if(strcmp("Primitive exponents", name) == 0) {
                 /* Note: assume that "Number of primitive shells" was read before. */
-                error = stdl_fchk_parser_get_vector_numbers_immediate(lx, nprims, &(dt->exps));
+                error = stdl_fchk_parser_get_vector_numbers_immediate(lx, nprim, &(dt->benv));
             } else if(strcmp("Contraction coefficients", name) == 0) {
                 /* Note: assume that "Number of primitive shells" was read before. */
-                error = stdl_fchk_parser_get_vector_numbers_immediate(lx, nprims, &(dt->contraction_coefs));
+                double* ptr = &(dt->benv[nprim]);
+                error = stdl_fchk_parser_get_vector_numbers_immediate(lx, nprim, &ptr);
             } else if(strcmp("P(S=P) Contraction coefficients", name) == 0) {
                 /* Note: assume that "Number of primitive shells" was read before. */
-                error = stdl_fchk_parser_get_vector_numbers_immediate(lx, nprims, &(dt->contraction_coefs_sp));
+                double* ptr = &(dt->benv[2 * nprim]);
+                error = stdl_fchk_parser_get_vector_numbers_immediate(lx, nprim, &ptr);
             } /* --- nmo, C, e --- */
             else if(strcmp("Number of independent functions", name) == 0) {
                 error = stdl_fchk_parser_get_scalar_integer(lx, &an_integer);
@@ -648,7 +691,13 @@ stdl_wavefunction *stdl_fchk_parser_wavefunction_new(stdl_lexer *lx) {
 
    // at that point, we should have read everything
     if(finished) {
+        // copy geometry where it belongs
         memcpy(wf->atm, atm, 4 * natm * sizeof(double));
+        free(atm);
+        atm = NULL;
+
+        // create basis
+        _make_overlap_matrix(wf, dt);
     } else
         stdl_error_msg_parser(__FILE__, __LINE__, lx, "FCHK was missing certain sections (dt=0x%x, wf=0x%x)", dt, wf);
 
