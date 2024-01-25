@@ -62,14 +62,14 @@ typedef struct stdl_basis_ stdl_basis;
 /**
  * Create a new basis set.
  * Initialize all the arrays.
- * @param bs Basis set to be created
+ * @param bs_ptr Basis set object to be created.
  * @param natm Number of atoms
  * @param nbas Number of basis functions
  * @param env_size size of the `env` array, with `env_size > 3*natm`.
  * @return `STDL_ERR_OK` if everything went well.
  * @ingroup basis
  */
-int stdl_basis_new(stdl_basis **bs, int natm, int nbas, size_t env_size, int use_spherical);
+int stdl_basis_new(stdl_basis **bs_ptr, int natm, int nbas, size_t env_size, int use_spherical);
 
 /**
  * Delete the basis set.
@@ -82,6 +82,7 @@ int stdl_basis_delete(stdl_basis* bs);
 /**
  * Print the content of the basis set.
  * @param bs a valid basis set
+ * @param denormalize If set tpo 0, prints the actual coefficients stored in `env`. If not, prints without normalization.
  * @return `STDL_ERR_OK`
  * @ingroup basis
  */

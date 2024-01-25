@@ -4,47 +4,47 @@
 #include "stdlite/errors.h"
 #include "stdlite.h"
 
-int stdl_wavefunction_new(stdl_wavefunction **wf, size_t natm, size_t nelec, size_t nao, size_t nmo) {
-    assert(wf != NULL && natm > 0 && nao > 0 && nmo > 0 && nmo <= nao && 2*nmo >= nelec);
+int stdl_wavefunction_new(stdl_wavefunction **wf_ptr, size_t natm, size_t nelec, size_t nao, size_t nmo) {
+    assert(wf_ptr != NULL && natm > 0 && nao > 0 && nmo > 0 && nmo <= nao && 2 * nmo >= nelec);
 
-    *wf = malloc(sizeof(stdl_wavefunction));
+    *wf_ptr = malloc(sizeof(stdl_wavefunction));
 
-    if(*wf != NULL) {
-        (*wf)->natm = natm;
-        (*wf)->nao = nao;
-        (*wf)->nmo = nmo;
-        (*wf)->nelec = nelec;
+    if(*wf_ptr != NULL) {
+        (*wf_ptr)->natm = natm;
+        (*wf_ptr)->nao = nao;
+        (*wf_ptr)->nmo = nmo;
+        (*wf_ptr)->nelec = nelec;
 
-        (*wf)->atm = (*wf)->S = (*wf)->C = (*wf)->e = NULL;
-        (*wf)->aotoatm = NULL;
+        (*wf_ptr)->atm = (*wf_ptr)->S = (*wf_ptr)->C = (*wf_ptr)->e = NULL;
+        (*wf_ptr)->aotoatm = NULL;
 
-        (*wf)->atm = malloc(4 * natm * sizeof(double));
-        if((*wf)->atm == NULL) {
-            stdl_wavefunction_delete(*wf);
+        (*wf_ptr)->atm = malloc(4 * natm * sizeof(double));
+        if((*wf_ptr)->atm == NULL) {
+            stdl_wavefunction_delete(*wf_ptr);
             return STDL_ERR_MALLOC;
         }
 
-        (*wf)->e = malloc(nao * sizeof(double));
-        if((*wf)->e == NULL){
-            stdl_wavefunction_delete(*wf);
+        (*wf_ptr)->e = malloc(nao * sizeof(double));
+        if((*wf_ptr)->e == NULL){
+            stdl_wavefunction_delete(*wf_ptr);
             return STDL_ERR_MALLOC;
         }
 
-        (*wf)->aotoatm = malloc(nao * sizeof(size_t));
-        if((*wf)->aotoatm == NULL){
-            stdl_wavefunction_delete(*wf);
+        (*wf_ptr)->aotoatm = malloc(nao * sizeof(size_t));
+        if((*wf_ptr)->aotoatm == NULL){
+            stdl_wavefunction_delete(*wf_ptr);
             return STDL_ERR_MALLOC;
         }
 
-        (*wf)->S = malloc(nao * nao * sizeof(double));
-        if((*wf)->S == NULL) {
-            stdl_wavefunction_delete(*wf);
+        (*wf_ptr)->S = malloc(nao * nao * sizeof(double));
+        if((*wf_ptr)->S == NULL) {
+            stdl_wavefunction_delete(*wf_ptr);
             return STDL_ERR_MALLOC;
         }
 
-        (*wf)->C = malloc(nao * nmo * sizeof(double));
-        if((*wf)->C == NULL) {
-            stdl_wavefunction_delete(*wf);
+        (*wf_ptr)->C = malloc(nao * nmo * sizeof(double));
+        if((*wf_ptr)->C == NULL) {
+            stdl_wavefunction_delete(*wf_ptr);
             return STDL_ERR_MALLOC;
         }
 

@@ -5,29 +5,29 @@
 #include "stdlite.h"
 
 
-int stdl_basis_new(stdl_basis **bs, int natm, int nbas, size_t env_size, int use_spherical) {
-    assert(bs != NULL && natm > 0 && nbas > 0 && env_size > 0);
+int stdl_basis_new(stdl_basis **bs_ptr, int natm, int nbas, size_t env_size, int use_spherical) {
+    assert(bs_ptr != NULL && natm > 0 && nbas > 0 && env_size > 0);
 
-    *bs = malloc(sizeof(stdl_basis));
+    *bs_ptr = malloc(sizeof(stdl_basis));
 
-    if(*bs != NULL) {
-        (*bs)->natm = natm;
-        (*bs)->nbas = nbas;
-        (*bs)->use_spherical = use_spherical;
+    if(*bs_ptr != NULL) {
+        (*bs_ptr)->natm = natm;
+        (*bs_ptr)->nbas = nbas;
+        (*bs_ptr)->use_spherical = use_spherical;
 
-        (*bs)->atm = (*bs)->bas = NULL;
-        (*bs)->env = NULL;
+        (*bs_ptr)->atm = (*bs_ptr)->bas = NULL;
+        (*bs_ptr)->env = NULL;
 
-        (*bs)->atm = malloc(6 * natm * sizeof(int));
-        (*bs)->bas = malloc(8 * nbas * sizeof(int));
-        if((*bs)->atm == NULL || (*bs)->bas == NULL) {
-            stdl_basis_delete(*bs);
+        (*bs_ptr)->atm = malloc(6 * natm * sizeof(int));
+        (*bs_ptr)->bas = malloc(8 * nbas * sizeof(int));
+        if((*bs_ptr)->atm == NULL || (*bs_ptr)->bas == NULL) {
+            stdl_basis_delete(*bs_ptr);
             return STDL_ERR_MALLOC;
         }
 
-        (*bs)->env = malloc(env_size * sizeof(double));
-        if((*bs)->env == NULL) {
-            stdl_basis_delete(*bs);
+        (*bs_ptr)->env = malloc(env_size * sizeof(double));
+        if((*bs_ptr)->env == NULL) {
+            stdl_basis_delete(*bs_ptr);
             return STDL_ERR_MALLOC;
         }
 
@@ -72,14 +72,14 @@ char _toc(int i) {
 int stdl_basis_print(stdl_basis *bs, int denormalize) {
     assert(bs != NULL);
 
-    printf("-- basis set containing %d (%s) basis functions on %d atoms --\n", bs->nbas, bs->use_spherical? "spherical": "cartesian", bs->natm);
+    printf("-- basis set containing %d (%s) basis functions, on %d centers --\n", bs->nbas, bs->use_spherical? "spherical": "cartesian", bs->natm);
     if(denormalize)
-        printf("-- note: coefficients are not normalized --\n");
+        printf("-- note: coefficients that are printed are denormalized --\n");
 
     for(int i=0; i < bs->nbas; i++) {
         int nprim = bs->bas[i*8+2], ncont = bs->bas[i*8+3];
-        printf("%d -- %c-type function, centered on atom #%d.\n", i + 1, _toc(bs->bas[i*8+1]), bs->bas[i*8+0] + 1);
-        printf("  Defined by %d GTOs and %d cGTOs:\n", nprim, ncont);
+        printf("%d -- %c-type cGTOs (%d*%d AOs), centered on atom #%d.\n", i + 1, _toc(bs->bas[i*8+1]), ncont, CINTcgtos_cart(i, bs->bas), bs->bas[i*8+0] + 1);
+        printf("  Defines %d cGTOs composed of %d GTOs:\n", ncont, nprim);
         printf("      (exp)          (conts)\n");
         for(int j=0; j < bs->bas[i*8+2]; j++){
             printf("  %.8e", bs->env[bs->bas[i*8+5]+j]);

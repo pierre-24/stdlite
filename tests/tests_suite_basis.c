@@ -22,9 +22,25 @@ void test_basis_functions_ovlp_ok() {
 
     stdl_wavefunction * wf = NULL;
     stdl_basis* bs = NULL;
-    STDL_OK(stdl_fchk_parser_wavefunction_new(&wf, &bs, lx));
-
+    STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
     STDL_OK(stdl_wavefunction_delete(wf));
+
+    stdl_basis_print(bs, 1);
+
+    // check that all functions are normalized
+    double* buf = malloc(3 * 3 * sizeof(double));
+
+    for(int i=0; i < bs->nbas; i++) {
+        int1e_ovlp_cart(buf, NULL, (int[]) {i, i}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
+        int n = CINTcgtos_cart(i, bs->bas);
+        for(int j=0; j < n; j++) {
+            TEST_ASSERT_DOUBLE_WITHIN(1e-8, 1.f, buf[j * n + j]);
+        }
+    }
+
+    free(buf);
+
+    STDL_OK(stdl_basis_delete(bs));
     STDL_OK(stdl_lexer_delete(lx));
 
     fclose(f);

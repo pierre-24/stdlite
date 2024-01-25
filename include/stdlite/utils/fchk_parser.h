@@ -126,18 +126,18 @@ int stdl_fchk_parser_skip_section(stdl_lexer* lx, char type, int is_scalar);
 
 
 /**
- * Extract a wavefunction (`stdl_wavefunction`) and a basis set (`stdl_basis`) from the info in a FCHK file.
+ * Extract a wavefunction (`stdl_wavefunction`) and a basis set (`stdl_basis`) from a FCHK file.
  * Expects that the introduction has been skipped (with `stdl_fchk_parser_skip_intro()`).
  * Expects that the section comes in the order in which Gaussian prints them.
  * The FCHK is read up to the "Alpha MO coefficients" section.
  * Then, it computes the overlap matrix (`S`) as this is not available in the FCHK.
- * @param wf a wavefunction to be created
- * @param bs a basis set to be created
+ * @param wf_ptr a wavefunction to be created
+ * @param bs_ptr a basis set to be created
  * @param lx a valid lexer, opened on a FCHK
  * @return if everything went well, `STDL_ERR_OK`.
  * @ingroup fchk_parser
  */
-int stdl_fchk_parser_wavefunction_new(stdl_wavefunction **wf, stdl_basis **bs, stdl_lexer *lx);
+int stdl_fchk_parser_extract(stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr, stdl_lexer *lx);
 
 
 #endif //STDL_FCHK_PARSER_H

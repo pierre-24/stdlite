@@ -47,7 +47,7 @@ typedef struct stdl_wavefunction_ stdl_wavefunction;
 
 /**
  * Create a new wavefunction.
- * @param wf wavefunction to be initialized
+ * @param wf_ptr wavefunction object to be initialized
  * @param natm number of atom (should be >0)
  * @param nelec number of electrons (should be >0)
  * @param nao number of atomic orbitals (should be >0)
@@ -55,7 +55,7 @@ typedef struct stdl_wavefunction_ stdl_wavefunction;
  * @return `SDTL_ERR_OK` if everything was ok.
  * @ingroup wavefunction
  */
-int stdl_wavefunction_new(stdl_wavefunction **wf, size_t natm, size_t nelec, size_t nao, size_t nmo);
+int stdl_wavefunction_new(stdl_wavefunction **wf_ptr, size_t natm, size_t nelec, size_t nao, size_t nmo);
 
 /**
  * Free the wavefunction.
