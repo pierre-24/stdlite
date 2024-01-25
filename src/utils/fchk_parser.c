@@ -531,8 +531,6 @@ int _make_overlap_matrix(stdl_wavefunction* wf, struct _fchk_data_basis* dt) {
         size_t offset_exps = 3 * wf->natm, offset_coefs = 3 * wf->natm + dt->nprim, offset_coefs_sp = 3 * wf->natm + 2 * dt->nprim;
         memcpy(&(bs->env[offset_exps]), dt->benv, 2 * dt->nprim * sizeof(double));
 
-        // TODO: normalization!
-
         size_t offset_bas = 0;
         int iprim = 0, ipprim=0;
 
@@ -578,6 +576,8 @@ int _make_overlap_matrix(stdl_wavefunction* wf, struct _fchk_data_basis* dt) {
         int shls[] = {0, 0};
         int1e_ovlp_cart(buf, NULL, shls, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
         printf("overlp <%d|%d> = %f\n", shls[0], shls[1], buf[0]);
+
+        free(buf);
 
         stdl_basis_delete(bs);
     } else
