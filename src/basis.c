@@ -5,7 +5,7 @@
 #include "stdlite.h"
 
 
-stdl_basis *stdl_basis_new(int natm, int nbas, size_t env_size) {
+stdl_basis *stdl_basis_new(int natm, int nbas, size_t env_size, int use_spherical) {
     assert(natm > 0 && nbas > 0 && env_size > 0);
 
     stdl_basis* bs = malloc(sizeof(stdl_basis));
@@ -13,6 +13,7 @@ stdl_basis *stdl_basis_new(int natm, int nbas, size_t env_size) {
     if(bs != NULL) {
         bs->natm = natm;
         bs->nbas = nbas;
+        bs->use_spherical = use_spherical;
 
         bs->atm = bs->bas = NULL;
         bs->env = NULL;
@@ -58,6 +59,10 @@ char _toc(int i) {
             return 'f';
         case 4:
             return 'g';
+        case 5:
+            return 'h';
+        case 6:
+            return 'i';
         default:
             return '?';
     }
@@ -66,10 +71,10 @@ char _toc(int i) {
 int stdl_basis_print(stdl_basis *bs) {
     assert(bs != NULL);
 
-    printf("-- basis set containing %d basis functions on %d atoms --\n", bs->nbas, bs->natm);
+    printf("-- basis set containing %d (%s) basis functions on %d atoms--\n", bs->nbas, bs->use_spherical? "spherical": "cartesian", bs->natm);
     for(int i=0; i < bs->nbas; i++) {
         int nprim = bs->bas[i*8+2], ncont = bs->bas[i*8+3];
-        printf("%d -- %c-like function, centered on atom #%d.\n", i + 1, _toc(bs->bas[i*8+1]), bs->bas[i*8+0] + 1);
+        printf("%d -- %c-type function, centered on atom #%d.\n", i + 1, _toc(bs->bas[i*8+1]), bs->bas[i*8+0] + 1);
         printf("  Defined by %d GTOs and %d cGTOs:\n", nprim, ncont);
         printf("      (exp)          (conts)\n");
         for(int j=0; j < bs->bas[i*8+2]; j++){

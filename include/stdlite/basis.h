@@ -27,6 +27,9 @@ struct stdl_basis_ {
     /// Number of basis functions
     int nbas;
 
+    /// Indicates that spherical functions should be assumed.
+    int use_spherical;
+
     /**
      * `int[nbas*8]`, list of basis functions.
      *
@@ -62,7 +65,7 @@ typedef struct stdl_basis_ stdl_basis;
  * @return The initialized basis set object, if any, with all array initialized to their respective size.
  * @ingroup basis
  */
-stdl_basis* stdl_basis_new(int natm, int nbas, size_t env_size);
+stdl_basis *stdl_basis_new(int natm, int nbas, size_t env_size, int use_spherical);
 
 /**
  * Delete the basis set.

@@ -482,11 +482,40 @@ struct _fchk_data_basis* _fchk_data_new(size_t nbas, size_t nprims) {
 }
 
 int _make_overlap_matrix(stdl_wavefunction* wf, struct _fchk_data_basis* dt) {
-    size_t env_size = wf->natm * 3 /* coordinates */ + 3 * dt->nprim /* exp + 2 * contractions */;
 
-    int nbas = dt->nbas; // TODO: sp!
+    int nbas = dt->nbas;
+    int extra_coefs = 0;
+    int fct_type = 0;
 
-    stdl_basis* bs = stdl_basis_new((int) wf->natm, nbas, env_size);
+
+    for(int i=0; i < (int) dt->nbas; i++) {
+        if(dt->shell_types[i] == -1) { // count extra p function due to sp
+            nbas += 1;
+            extra_coefs += (int) dt->prims_per_shell[i];
+        }
+
+        if(dt->shell_types[i] < -1) {
+            if(fct_type == 1) {
+                stdl_error_msg(__FILE__, __LINE__, "mixing cartesian and spherical basis functions is not supported");
+                return STDL_ERR_UTIL_FCHK;
+            }
+            fct_type = -1;
+        } else if(dt->shell_types[i] > 0) {
+            if(fct_type == -1) {
+                stdl_error_msg(__FILE__, __LINE__, "mixing cartesian and spherical basis functions is not supported");
+                return STDL_ERR_UTIL_FCHK;
+            }
+            fct_type = 1;
+        }
+    }
+
+    if(fct_type == 0)
+        fct_type = 1;
+
+    size_t env_size = wf->natm * 3 /* coordinates */ + 2 * dt->nprim /* exp + contractions */ + extra_coefs /* sp functions */;
+    stdl_debug_msg(__FILE__, __LINE__, "%d atoms and %d basis functions (including sp→s,p) = %ld bytes of env", wf->natm, nbas, env_size);
+
+    stdl_basis* bs = stdl_basis_new((int) wf->natm, nbas, env_size, fct_type == -1);
 
     if(bs != NULL) {
         // atoms
@@ -499,14 +528,14 @@ int _make_overlap_matrix(stdl_wavefunction* wf, struct _fchk_data_basis* dt) {
             bs->env[i * 3 + 2] = wf->atm[i*4 + 3];
         }
 
-        // copy the rest in env
+        // copy exps and coefs
         size_t offset_exps = 3 * wf->natm, offset_coefs = 3 * wf->natm + dt->nprim, offset_coefs_sp = 3 * wf->natm + 2 * dt->nprim;
-        memcpy(&(bs->env[offset_exps]), dt->benv, 3 * dt->nprim * sizeof(double));
+        memcpy(&(bs->env[offset_exps]), dt->benv, 2 * dt->nprim * sizeof(double));
 
         // TODO: normalization!
 
         size_t offset_bas = 0;
-        int iprim = 0;
+        int iprim = 0, ipprim=0;
 
         // basis
         for(size_t i=0; i < dt->nbas; i++) {
@@ -514,8 +543,24 @@ int _make_overlap_matrix(stdl_wavefunction* wf, struct _fchk_data_basis* dt) {
             bs->bas[(offset_bas + i) * 8 + 1] = (dt->shell_types[i] == -1) ? 0 : abs((int) dt->shell_types[i]);
             bs->bas[(offset_bas + i) * 8 + 2] = (int) dt->prims_per_shell[i];
             bs->bas[(offset_bas + i) * 8 + 3] = 1;
-            bs->bas[(offset_bas + i) * 8 + 5] = offset_exps + iprim;
-            bs->bas[(offset_bas + i) * 8 + 6] = offset_coefs + iprim;
+            bs->bas[(offset_bas + i) * 8 + 5] = (int) offset_exps + iprim;
+            bs->bas[(offset_bas + i) * 8 + 6] = (int) offset_coefs + iprim;
+
+            if(dt->shell_types[i] == -1) { // sp
+                offset_bas += 1;
+
+                bs->bas[(offset_bas + i) * 8 + 0] = (int) dt->bastoatm[i] - 1; // Gaussian gives a 1-based list
+                bs->bas[(offset_bas + i) * 8 + 1] = 1;
+                bs->bas[(offset_bas + i) * 8 + 2] = (int) dt->prims_per_shell[i];
+                bs->bas[(offset_bas + i) * 8 + 3] = 1;
+                bs->bas[(offset_bas + i) * 8 + 5] = (int) offset_exps + iprim;
+                bs->bas[(offset_bas + i) * 8 + 6] = (int) offset_coefs_sp + ipprim;
+
+                // copy p-coefs
+                memcpy(&(bs->env[offset_coefs_sp + ipprim]), &(dt->benv[2 * dt->nprim + iprim]), 3 * sizeof(double));
+
+                ipprim += (int) dt->prims_per_shell[i];
+            }
 
             iprim += (int) dt->prims_per_shell[i];
         }
@@ -529,7 +574,7 @@ int _make_overlap_matrix(stdl_wavefunction* wf, struct _fchk_data_basis* dt) {
 }
 
 // Get the number of ao, given the type of each basis function.
-// According to the Gaussian documentation, `0=s, 1=p, -1=sp, 2=6d, -2=5d, 3=10f, -3=7f`.
+// According to the Gaussian documentation, `0=s, 1=p, -1=sp, 2=6d, -2=5d, 3=10f, -3=7f` (and so all).
 // In most of the case, `nao=nmo`.
 size_t _get_nao(size_t nbas, long* shell_types) {
     size_t total = 0;
@@ -550,7 +595,13 @@ size_t _get_nao(size_t nbas, long* shell_types) {
                 total += 10;
                 break;
             case 4: // 15g
-                total += 10;
+                total += 15;
+                break;
+            case 5: // 21h
+                total += 21;
+                break;
+            case 6: // 28i
+                total += 28;
                 break;
             // spherical's
             case -1: // sp
@@ -563,7 +614,13 @@ size_t _get_nao(size_t nbas, long* shell_types) {
                 total += 7;
                 break;
             case -4: // 9g
-                total += 7;
+                total += 9;
+                break;
+            case -5: // 11h
+                total += 11;
+                break;
+            case -6: // 13i
+                total += 13;
                 break;
             default:
                 stdl_error_msg(__FILE__, __LINE__, "encountered shell type=%d, but it was not taken into account. This will cause issues.", shell_types[i]);
@@ -597,6 +654,8 @@ stdl_wavefunction *stdl_fchk_parser_wavefunction_new(stdl_lexer *lx) {
         error = stdl_fchk_parser_get_section_info(lx, &name, &type, &is_scalar);
 
         if(error == STDL_ERR_OK) {
+            stdl_debug_msg(__FILE__, __LINE__, "FCHK: section `%s`", name);
+
             if(strcmp("Number of electrons", name) == 0) {
                 error = stdl_fchk_parser_get_scalar_integer(lx, &an_integer);
                 if(error == STDL_ERR_OK)
@@ -645,6 +704,8 @@ stdl_wavefunction *stdl_fchk_parser_wavefunction_new(stdl_lexer *lx) {
                 error = stdl_fchk_parser_get_vector_integers_immediate(lx, nbas, &(dt->shell_types));
                 if(error == STDL_ERR_OK) {
                     nao = _get_nao(nbas, dt->shell_types);
+                    if(nao != nmo)
+                        stdl_warning_msg(__FILE__, __LINE__, "number of MO (%d) and AO (%d) does not match", nmo, nao);
                 }
             } else if(strcmp("Number of primitives per shell", name) == 0) {
                 /* Note: assume that "Number of primitive shells" was read before. */
