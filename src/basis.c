@@ -5,34 +5,35 @@
 #include "stdlite.h"
 
 
-stdl_basis *stdl_basis_new(int natm, int nbas, size_t env_size, int use_spherical) {
-    assert(natm > 0 && nbas > 0 && env_size > 0);
+int stdl_basis_new(stdl_basis **bs, int natm, int nbas, size_t env_size, int use_spherical) {
+    assert(bs != NULL && natm > 0 && nbas > 0 && env_size > 0);
 
-    stdl_basis* bs = malloc(sizeof(stdl_basis));
+    *bs = malloc(sizeof(stdl_basis));
 
-    if(bs != NULL) {
-        bs->natm = natm;
-        bs->nbas = nbas;
-        bs->use_spherical = use_spherical;
+    if(*bs != NULL) {
+        (*bs)->natm = natm;
+        (*bs)->nbas = nbas;
+        (*bs)->use_spherical = use_spherical;
 
-        bs->atm = bs->bas = NULL;
-        bs->env = NULL;
+        (*bs)->atm = (*bs)->bas = NULL;
+        (*bs)->env = NULL;
 
-        bs->atm = malloc(6 * natm * sizeof(int));
-        bs->bas = malloc(8 * nbas * sizeof(int));
-        if(bs->atm == NULL || bs->bas == NULL) {
-            stdl_basis_delete(bs);
-            return NULL;
+        (*bs)->atm = malloc(6 * natm * sizeof(int));
+        (*bs)->bas = malloc(8 * nbas * sizeof(int));
+        if((*bs)->atm == NULL || (*bs)->bas == NULL) {
+            stdl_basis_delete(*bs);
+            return STDL_ERR_MALLOC;
         }
 
-        bs->env = malloc(env_size * sizeof(double));
-        if(bs->env == NULL) {
-            stdl_basis_delete(bs);
-            return NULL;
+        (*bs)->env = malloc(env_size * sizeof(double));
+        if((*bs)->env == NULL) {
+            stdl_basis_delete(*bs);
+            return STDL_ERR_MALLOC;
         }
-    }
 
-    return bs;
+        return STDL_ERR_OK;
+    } else
+        return STDL_ERR_MALLOC;
 }
 
 int stdl_basis_delete(stdl_basis *bs) {

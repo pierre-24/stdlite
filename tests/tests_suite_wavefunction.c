@@ -15,13 +15,14 @@ void test_extract_wavefunction_from_fchk_ok() {
     FILE* f = fopen(fchk_path, "r");
     TEST_ASSERT_NOT_NULL(f);
 
-    stdl_lexer* lx = stdl_lexer_new(f);
-    TEST_ASSERT_NOT_NULL(lx);
+    stdl_lexer* lx = NULL;
+    STDL_OK(stdl_lexer_new(&lx, f));
 
     STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
-    stdl_wavefunction * wf = stdl_fchk_parser_wavefunction_new(lx);
-    TEST_ASSERT_NOT_NULL(wf);
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    STDL_OK(stdl_fchk_parser_wavefunction_new(&wf, &bs, lx));
 
     TEST_ASSERT_EQUAL_INT(3, wf->natm);
     TEST_ASSERT_EQUAL_INT(7, wf->nao); // O[1s,2s,2px,2py,2pz] + H[1s] + H[1s]

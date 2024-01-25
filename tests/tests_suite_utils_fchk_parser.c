@@ -23,21 +23,18 @@ void test_parse_section_info_ok() {
     char* title = NULL;
     int is_scalar = -1;
     char type;
-    stdl_lexer* lx;
+    stdl_lexer* lx = NULL;
 
     rewind(stream);
     fputs(scalar, stream);
     rewind(stream);
 
-    lx = stdl_lexer_new(stream);
-    TEST_ASSERT_NOT_NULL(lx);
-
+    STDL_OK(stdl_lexer_new(&lx, stream));
     STDL_OK(stdl_fchk_parser_get_section_info(lx, &title, &type, &is_scalar));
 
     TEST_ASSERT_EQUAL_STRING("Multiplicity", title);
     TEST_ASSERT_EQUAL_CHAR('I', type);
     TEST_ASSERT_EQUAL_INT(1, is_scalar);
-
     TEST_ASSERT_EQUAL_INT(STDL_TK_DIGIT, lx->current_tk_type);
 
     free(title);
@@ -51,15 +48,12 @@ void test_parse_section_info_ok() {
     fputs(vector, stream);
     rewind(stream);
 
-    lx = stdl_lexer_new(stream);
-    TEST_ASSERT_NOT_NULL(lx);
-
+    STDL_OK(stdl_lexer_new(&lx, stream));
     STDL_OK(stdl_fchk_parser_get_section_info(lx, &title, &type, &is_scalar));
 
     TEST_ASSERT_EQUAL_STRING("Atomic numbers", title);
     TEST_ASSERT_EQUAL_CHAR('I', type);
     TEST_ASSERT_EQUAL_INT(0, is_scalar);
-
     TEST_ASSERT_EQUAL_INT(STDL_TK_DIGIT, lx->current_tk_type);
 
     free(title);
@@ -81,16 +75,14 @@ void test_parse_incorrect_section_info_ko() {
     char* title = NULL;
     int is_scalar = -1;
     char type;
-    stdl_lexer* lx;
+    stdl_lexer* lx = NULL;
 
     for(int i=0; i < 7; i++) {
         rewind(stream);
         fputs(incorrect[i], stream);
         rewind(stream);
 
-        lx = stdl_lexer_new(stream);
-        TEST_ASSERT_NOT_NULL(lx);
-
+        STDL_OK(stdl_lexer_new(&lx, stream));
         STDL_NOK(stdl_fchk_parser_get_section_info(lx, &title, &type, &is_scalar));
 
         free(title);
@@ -106,7 +98,9 @@ void test_parser_vector_ints_ok() {
             "           6           7";
     int to_test[] = {6, 8};
 
-    stdl_lexer* lx;
+    long* values;
+    size_t sz;
+    stdl_lexer* lx = NULL;
 
     for(int i = 0; i < 2; i++) {
         int mx = to_test[i];
@@ -114,11 +108,7 @@ void test_parser_vector_ints_ok() {
         fprintf(stream, fmt, mx);
         rewind(stream);
 
-        lx = stdl_lexer_new(stream);
-        TEST_ASSERT_NOT_NULL(lx);
-
-        long* values;
-        size_t sz;
+        STDL_OK(stdl_lexer_new(&lx, stream));
         STDL_OK(stdl_fchk_parser_get_vector_integers(lx, &sz, &values));
 
         TEST_ASSERT_EQUAL_INT(mx, sz);
@@ -142,20 +132,17 @@ void test_parser_incorrect_vector_ints_ko() {
             "2\n 1 1x", // should end with \n
     };
 
-    stdl_lexer* lx;
     long* values;
     size_t sz;
+    stdl_lexer* lx = NULL;
 
     for(int i = 0; i < 5; i++) {
         rewind(stream);
         fputs(incorrect[i], stream);
         rewind(stream);
 
-        lx = stdl_lexer_new(stream);
-        TEST_ASSERT_NOT_NULL(lx);
-
+        STDL_OK(stdl_lexer_new(&lx, stream));
         STDL_NOK(stdl_fchk_parser_get_vector_integers(lx, &sz, &values));
-
         STDL_OK(stdl_lexer_delete(lx));
     }
 
@@ -177,11 +164,11 @@ void test_parser_vector_numbers_ok() {
     fputs(sec, stream);
     rewind(stream);
 
-    stdl_lexer* lx = stdl_lexer_new(stream);
-    TEST_ASSERT_NOT_NULL(lx);
-
     double* values;
     size_t sz;
+    stdl_lexer* lx = NULL;
+
+    STDL_OK(stdl_lexer_new(&lx, stream));
     STDL_OK(stdl_fchk_parser_get_vector_numbers(lx, &sz, &values));
 
     TEST_ASSERT_EQUAL_INT(9, sz);
@@ -204,20 +191,17 @@ void test_parser_incorrect_vector_numbers_ko() {
             "2\n 1. 1.x", // should end with \n
     };
 
-    stdl_lexer* lx;
     double* values;
     size_t sz;
+    stdl_lexer* lx = NULL;
 
     for(int i = 0; i < 6; i++) {
         rewind(stream);
         fputs(incorrect[i], stream);
         rewind(stream);
 
-        lx = stdl_lexer_new(stream);
-        TEST_ASSERT_NOT_NULL(lx);
-
+        STDL_OK(stdl_lexer_new(&lx, stream));
         STDL_NOK(stdl_fchk_parser_get_vector_numbers(lx, &sz, &values));
-
         STDL_OK(stdl_lexer_delete(lx));
     }
 
@@ -236,8 +220,8 @@ void test_parser_vector_string_ok() {
     fputs(sec, stream);
     rewind(stream);
 
-    stdl_lexer* lx = stdl_lexer_new(stream);
-    TEST_ASSERT_NOT_NULL(lx);
+    stdl_lexer* lx = NULL;
+    STDL_OK(stdl_lexer_new(&lx, stream));
 
     char* actual;
     size_t sz;
@@ -265,8 +249,8 @@ void test_read_fchk_skip_all_ok() {
     char type;
     int is_scalar = -1, nsections = 0;
 
-    stdl_lexer* lx = stdl_lexer_new(f);
-    TEST_ASSERT_NOT_NULL(lx);
+    stdl_lexer* lx = NULL;
+    STDL_OK(stdl_lexer_new(&lx, f));
 
     STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
@@ -304,8 +288,8 @@ void test_read_fchk_read_all_section_ok() {
     char* a_string;
     size_t sz;
 
-    stdl_lexer* lx = stdl_lexer_new(f);
-    TEST_ASSERT_NOT_NULL(lx);
+    stdl_lexer* lx = NULL;
+    STDL_OK(stdl_lexer_new(&lx, f));
 
     STDL_OK(stdl_fchk_parser_skip_intro(lx));
 

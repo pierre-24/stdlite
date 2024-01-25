@@ -84,10 +84,11 @@ typedef struct stdl_lexer_ stdl_lexer;
  * Create a new lexer object (`stdl_lexer*`), provided that `input` is a valid `FILE*`.
  * This object has to be free'd after use.
  * @param input A valid `FILE*`.
- * @return a `stdl_lexer` object.
+ * @param lx a `stdl_lexer` object.
+ * @return `STDL_ERR_OK` if everything went well
  * @ingroup lexer
  */
-stdl_lexer* stdl_lexer_new(FILE* input);
+int stdl_lexer_new(stdl_lexer **lx, FILE *input);
 
 /**
  * Free the lexer.

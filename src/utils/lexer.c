@@ -34,35 +34,37 @@ int lexer_translator[] = {
 };
 
 
-stdl_lexer *stdl_lexer_new(FILE *input) {
-    assert(input != NULL);
+int stdl_lexer_new(stdl_lexer **lx, FILE *input) {
+    assert(lx != NULL && input != NULL);
 
     // go ahead
-    stdl_lexer *lx = malloc(sizeof(stdl_lexer));
-    if (lx != NULL) {
-        lx->stream = NULL;
-        lx->file = input;
+    *lx = malloc(sizeof(stdl_lexer));
+    if (*lx != NULL) {
+        (*lx)->stream = NULL;
+        (*lx)->file = input;
 
-        lx->stream = malloc(STDL_LEXER_STREAM_BUFF_SIZE * sizeof(char));
-        if (lx->stream == NULL) {
-            stdl_lexer_delete(lx);
-            lx = NULL;
+        (*lx)->stream = malloc(STDL_LEXER_STREAM_BUFF_SIZE * sizeof(char));
+        if ((*lx)->stream == NULL) {
+            stdl_lexer_delete(*lx);
+            return STDL_ERR_MALLOC;
         } else {
             // read first bytes
-            size_t n = fread(lx->stream, 1, STDL_LEXER_STREAM_BUFF_SIZE, input);
+            size_t n = fread((*lx)->stream, 1, STDL_LEXER_STREAM_BUFF_SIZE, input);
             if (n != STDL_LEXER_STREAM_BUFF_SIZE) // shorter than expected!
-                lx->stream[n] = '\0';
+                (*lx)->stream[n] = '\0';
 
-            lx->pos_in_stream = 0;
-            lx->current_line = 1;
-            lx->current_pos_in_line = 0;
-            lx->current_tk_value = lx->stream[0];
+            (*lx)->pos_in_stream = 0;
+            (*lx)->current_line = 1;
+            (*lx)->current_pos_in_line = 0;
+            (*lx)->current_tk_value = (*lx)->stream[0];
 
-            stdl_lexer_advance(lx, 0);
+            stdl_lexer_advance(*lx, 0);
         }
-    }
 
-    return lx;
+        return STDL_ERR_OK;
+    } else
+        return STDL_ERR_MALLOC;
+
 }
 
 

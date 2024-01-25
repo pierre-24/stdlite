@@ -482,10 +482,8 @@ struct _fchk_data_basis* _fchk_data_new(size_t nbas, size_t nprims) {
 
 int _make_overlap_matrix(stdl_wavefunction* wf, struct _fchk_data_basis* dt) {
 
-    int nbas = dt->nbas;
-    int extra_coefs = 0;
-    int fct_type = 0;
-
+    int nbas = dt->nbas, extra_coefs = 0, fct_type = 0, error;
+    stdl_basis* bs = NULL;
 
     for(int i=0; i < (int) dt->nbas; i++) {
         if(dt->shell_types[i] == -1) { // count extra p function due to sp
@@ -514,74 +512,72 @@ int _make_overlap_matrix(stdl_wavefunction* wf, struct _fchk_data_basis* dt) {
     size_t env_size = wf->natm * 3 /* coordinates */ + 2 * dt->nprim /* exp + contractions */ + extra_coefs /* sp functions */;
     stdl_debug_msg(__FILE__, __LINE__, "%d atoms and %d basis functions (including sp→s,p) = %ld bytes of env", wf->natm, nbas, env_size);
 
-    stdl_basis* bs = stdl_basis_new((int) wf->natm, nbas, env_size, fct_type == -1);
+    error = stdl_basis_new(&bs, (int) wf->natm, nbas, env_size, fct_type == -1);
+    STDL_RETURN_ON_ERROR(error);
 
-    if(bs != NULL) {
-        // atoms
-        for(size_t i=0; i < wf->natm; i++) {
-            bs->atm[i * 6 + 0] = (int) wf->atm[i * 4 + 0];
-            bs->atm[i * 6 + 1] = (int) (i * 3);
+    // atoms
+    for(size_t i=0; i < wf->natm; i++) {
+        bs->atm[i * 6 + 0] = (int) wf->atm[i * 4 + 0];
+        bs->atm[i * 6 + 1] = (int) (i * 3);
 
-            bs->env[i * 3 + 0] = wf->atm[i*4 + 1];
-            bs->env[i * 3 + 1] = wf->atm[i*4 + 2];
-            bs->env[i * 3 + 2] = wf->atm[i*4 + 3];
-        }
+        bs->env[i * 3 + 0] = wf->atm[i*4 + 1];
+        bs->env[i * 3 + 1] = wf->atm[i*4 + 2];
+        bs->env[i * 3 + 2] = wf->atm[i*4 + 3];
+    }
 
-        // copy exps and coefs
-        size_t offset_exps = 3 * wf->natm, offset_coefs = 3 * wf->natm + dt->nprim, offset_coefs_sp = 3 * wf->natm + 2 * dt->nprim;
-        memcpy(&(bs->env[offset_exps]), dt->benv, 2 * dt->nprim * sizeof(double));
+    // copy exps and coefs
+    size_t offset_exps = 3 * wf->natm, offset_coefs = 3 * wf->natm + dt->nprim, offset_coefs_sp = 3 * wf->natm + 2 * dt->nprim;
+    memcpy(&(bs->env[offset_exps]), dt->benv, 2 * dt->nprim * sizeof(double));
 
-        size_t offset_bas = 0;
-        int iprim = 0, ipprim=0;
+    size_t offset_bas = 0;
+    int iprim = 0, ipprim=0;
 
-        // basis
-        for(size_t i=0; i < dt->nbas; i++) {
-            int angular = (dt->shell_types[i] == -1) ? 0 : abs((int) dt->shell_types[i]);
+    // basis
+    for(size_t i=0; i < dt->nbas; i++) {
+        int angular = (dt->shell_types[i] == -1) ? 0 : abs((int) dt->shell_types[i]);
+
+        bs->bas[(offset_bas + i) * 8 + 0] = (int) dt->bastoatm[i] - 1; // Gaussian gives a 1-based list
+        bs->bas[(offset_bas + i) * 8 + 1] = angular;
+        bs->bas[(offset_bas + i) * 8 + 2] = (int) dt->prims_per_shell[i];
+        bs->bas[(offset_bas + i) * 8 + 3] = 1;
+        bs->bas[(offset_bas + i) * 8 + 5] = (int) offset_exps + iprim;
+        bs->bas[(offset_bas + i) * 8 + 6] = (int) offset_coefs + iprim;
+
+        // normalize coefs
+        for(int j=0; j < (int) dt->prims_per_shell[i]; j++)
+            bs->env[(int) offset_coefs + iprim + j] *= CINTgto_norm(angular, bs->env[(int) offset_exps + iprim +  j]);
+
+        if(dt->shell_types[i] == -1) { // sp
+            offset_bas += 1;
 
             bs->bas[(offset_bas + i) * 8 + 0] = (int) dt->bastoatm[i] - 1; // Gaussian gives a 1-based list
-            bs->bas[(offset_bas + i) * 8 + 1] = angular;
+            bs->bas[(offset_bas + i) * 8 + 1] = 1;
             bs->bas[(offset_bas + i) * 8 + 2] = (int) dt->prims_per_shell[i];
             bs->bas[(offset_bas + i) * 8 + 3] = 1;
             bs->bas[(offset_bas + i) * 8 + 5] = (int) offset_exps + iprim;
-            bs->bas[(offset_bas + i) * 8 + 6] = (int) offset_coefs + iprim;
+            bs->bas[(offset_bas + i) * 8 + 6] = (int) offset_coefs_sp + ipprim;
 
-            // normalize coefs
+            // copy p-coefs and normalize them
+            memcpy(&(bs->env[offset_coefs_sp + ipprim]), &(dt->benv[2 * dt->nprim + iprim]), ((int) dt->prims_per_shell[i]) * sizeof(double));
             for(int j=0; j < (int) dt->prims_per_shell[i]; j++)
-                bs->env[(int) offset_coefs + iprim + j] *= CINTgto_norm(angular, bs->env[(int) offset_exps + iprim +  j]);
+                bs->env[(int) offset_coefs_sp + ipprim + j] *= CINTgto_norm(1, bs->env[(int) offset_exps + iprim + j]);
 
-            if(dt->shell_types[i] == -1) { // sp
-                offset_bas += 1;
-
-                bs->bas[(offset_bas + i) * 8 + 0] = (int) dt->bastoatm[i] - 1; // Gaussian gives a 1-based list
-                bs->bas[(offset_bas + i) * 8 + 1] = 1;
-                bs->bas[(offset_bas + i) * 8 + 2] = (int) dt->prims_per_shell[i];
-                bs->bas[(offset_bas + i) * 8 + 3] = 1;
-                bs->bas[(offset_bas + i) * 8 + 5] = (int) offset_exps + iprim;
-                bs->bas[(offset_bas + i) * 8 + 6] = (int) offset_coefs_sp + ipprim;
-
-                // copy p-coefs and normalize them
-                memcpy(&(bs->env[offset_coefs_sp + ipprim]), &(dt->benv[2 * dt->nprim + iprim]), ((int) dt->prims_per_shell[i]) * sizeof(double));
-                for(int j=0; j < (int) dt->prims_per_shell[i]; j++)
-                    bs->env[(int) offset_coefs_sp + ipprim + j] *= CINTgto_norm(1, bs->env[(int) offset_exps + iprim + j]);
-
-                ipprim += (int) dt->prims_per_shell[i];
-            }
-
-            iprim += (int) dt->prims_per_shell[i];
+            ipprim += (int) dt->prims_per_shell[i];
         }
 
-        stdl_basis_print(bs, 1);
+        iprim += (int) dt->prims_per_shell[i];
+    }
 
-        double* buf = malloc(3 * 3 * sizeof(double));
-        int shls[] = {0, 0};
-        int1e_ovlp_cart(buf, NULL, shls, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
-        printf("overlp <%d|%d> = %f\n", shls[0], shls[1], buf[0]);
+    stdl_basis_print(bs, 1);
 
-        free(buf);
+    double* buf = malloc(3 * 3 * sizeof(double));
+    int shls[] = {0, 0};
+    int1e_ovlp_cart(buf, NULL, shls, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
+    printf("overlp <%d|%d> = %f\n", shls[0], shls[1], buf[0]);
 
-        stdl_basis_delete(bs);
-    } else
-        return STDL_ERR_MALLOC;
+    free(buf);
+
+    stdl_basis_delete(bs);
 
     return STDL_ERR_OK;
 }
@@ -644,8 +640,8 @@ size_t _get_nao(size_t nbas, long* shell_types) {
     return total;
 }
 
-stdl_wavefunction *stdl_fchk_parser_wavefunction_new(stdl_lexer *lx) {
-    assert(lx != NULL);
+int stdl_fchk_parser_wavefunction_new(stdl_wavefunction **wf, stdl_basis **bs, stdl_lexer *lx) {
+    assert(wf != NULL && bs != NULL && lx != NULL);
 
     // useful variables
     int error = STDL_ERR_OK;
@@ -659,7 +655,6 @@ stdl_wavefunction *stdl_fchk_parser_wavefunction_new(stdl_lexer *lx) {
     size_t a_size, nelec = 0, natm = 0, nao = 0, nmo = 0, nbas = 0, nprim = 0;
 
     struct _fchk_data_basis* dt = NULL;
-    stdl_wavefunction* wf = NULL;
     double* atm = NULL; // [natm*4]
 
     // read the file and extract what is required
@@ -744,14 +739,14 @@ stdl_wavefunction *stdl_fchk_parser_wavefunction_new(stdl_lexer *lx) {
                     nmo = (size_t) an_integer;
             } else if(strcmp("Alpha Orbital Energies", name) == 0) {
                 /* Note: assume that "Number of independent functions" was read before. */
-                wf = stdl_wavefunction_new(natm, nelec, nao, nmo);
-                if(wf != NULL)
-                    error = stdl_fchk_parser_get_vector_numbers_immediate(lx, nmo, &(wf->e));
+                error = stdl_wavefunction_new(wf, natm, nelec, nao, nmo);
+                if(error == STDL_ERR_OK)
+                    error = stdl_fchk_parser_get_vector_numbers_immediate(lx, nmo, &((*wf)->e));
                 else
                     error = STDL_ERR_MALLOC;
             } else if(strcmp("Alpha MO coefficients", name) == 0) {
                 /* Note: assume that "Number of independent functions" was read before. */
-                error = stdl_fchk_parser_get_vector_numbers_immediate(lx, nmo * nao, &(wf->C));
+                error = stdl_fchk_parser_get_vector_numbers_immediate(lx, nmo * nao, &((*wf)->C));
 
                 // Normally, there is nothing else to read!
                 finished = 1;
@@ -766,25 +761,23 @@ stdl_wavefunction *stdl_fchk_parser_wavefunction_new(stdl_lexer *lx) {
    // at that point, we should have read everything
     if(finished) {
         // copy geometry where it belongs
-        memcpy(wf->atm, atm, 4 * natm * sizeof(double));
+        memcpy((*wf)->atm, atm, 4 * natm * sizeof(double));
         free(atm);
         atm = NULL;
 
         // create basis
-        _make_overlap_matrix(wf, dt);
-    } else
+        _make_overlap_matrix(*wf, dt);
+    } else {
         stdl_error_msg_parser(__FILE__, __LINE__, lx, "FCHK was missing certain sections (dt=0x%x, wf=0x%x)", dt, wf);
-
-    // clean up if needed
-    if((!finished || error != STDL_ERR_OK) && wf != NULL) {
-        stdl_wavefunction_delete(wf);
-        wf = NULL;
+        error = STDL_ERR_READ;
     }
 
+    // clean up stuffs
     STDL_FREE_IF_USED(atm);
     if(dt != NULL)
         _fchk_data_delete(dt);
+    if(error != STDL_ERR_OK && *wf != NULL)
+        stdl_wavefunction_delete(*wf);
 
-    // return wavefunction
-    return wf;
+    return error;
 }

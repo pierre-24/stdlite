@@ -12,24 +12,23 @@ description: |
     That mean that calling to BLAS/LACPACK, one should use the flag to specify that the matrices should be transposed (*i.e.*, `C`).
   
   + The user is required delete all objects created within the library by using the provided deletor functions to avoid memory leaks.
-    Furthermore, except for constructors, each function return an error code (see [error codes](./errors/stdl_error_code_)) or `STDL_ERR_OK` if everything went well. 
+    Furthermore, each function return an error code (see [error codes](./errors/stdl_error_code_)) or `STDL_ERR_OK` if everything went well. 
     For example,
     
     ```c
     #include <stdlite/utils/base_parser.h>
     
-    int an_integer;
+    int an_integer, error;
+    stdl_lexer* lexer = NULL;
     FILE* f = open("tmp.txt");
     
     if(f != NULL) {
-      stdl_lexer* lexer = stdl_lexer_new(f); // creator
-    
-      if(lexer != NULL) {
+      if(stdl_lexer_new(&lexer, f) == STDL_ERR_OK) {
         if(stdl_parser_get_integer(lx, &an_integer) == STDL_ERR_OK) {
           printf("read: %d\n", an_integer);
         }
       
-        stdl_lexer_delete(lx); // deletor
+        stdl_lexer_delete(lexer); // deletor
       }
       
       fclose(f);

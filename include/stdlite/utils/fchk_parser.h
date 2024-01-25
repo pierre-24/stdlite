@@ -3,6 +3,7 @@
 
 #include <stdlite/utils/base_parser.h>
 #include <stdlite/wavefunction.h>
+#include "stdlite/basis.h"
 
 /**
  * Skip the beginning of FCHK.
@@ -125,16 +126,18 @@ int stdl_fchk_parser_skip_section(stdl_lexer* lx, char type, int is_scalar);
 
 
 /**
- * Create a `stdl_wavefunction` from the info in a FCHK file.
+ * Extract a wavefunction (`stdl_wavefunction`) and a basis set (`stdl_basis`) from the info in a FCHK file.
  * Expects that the introduction has been skipped (with `stdl_fchk_parser_skip_intro()`).
  * Expects that the section comes in the order in which Gaussian prints them.
  * The FCHK is read up to the "Alpha MO coefficients" section.
  * Then, it computes the overlap matrix (`S`) as this is not available in the FCHK.
- * @param lx a valid lexer, opened on a FCHK?
- * @return if everything went well, a valid `stdl_wavefunction` (caller is responsible for free'ing it), `NULL` otherwise.
+ * @param wf a wavefunction to be created
+ * @param bs a basis set to be created
+ * @param lx a valid lexer, opened on a FCHK
+ * @return if everything went well, `STDL_ERR_OK`.
  * @ingroup fchk_parser
  */
-stdl_wavefunction* stdl_fchk_parser_wavefunction_new(stdl_lexer* lx);
+int stdl_fchk_parser_wavefunction_new(stdl_wavefunction **wf, stdl_basis **bs, stdl_lexer *lx);
 
 
 #endif //STDL_FCHK_PARSER_H

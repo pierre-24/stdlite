@@ -20,8 +20,8 @@ void test_lexer_ok() {
     fputs(str, stream);
     rewind(stream);
 
-    stdl_lexer* lx = stdl_lexer_new(stream);
-    TEST_ASSERT_NOT_NULL(lx);
+    stdl_lexer* lx = NULL;
+    STDL_OK(stdl_lexer_new(&lx, stream));
 
     stdl_token_type tab[] = {
         STDL_TK_ALPHA, STDL_TK_ALPHA, STDL_TK_CHAR, STDL_TK_DASH, STDL_TK_DIGIT, STDL_TK_CHAR, STDL_TK_EQ, STDL_TK_DIGIT, STDL_TK_CHAR, STDL_TK_EOF};
@@ -45,8 +45,8 @@ void test_lexer_line_ok() {
     fputs(str, stream);
     rewind(stream);
 
-    stdl_lexer* lx = stdl_lexer_new(stream);
-    TEST_ASSERT_NOT_NULL(lx);
+    stdl_lexer* lx = NULL;
+    STDL_OK(stdl_lexer_new(&lx, stream));
 
     int line = 1, pos_in_line = 0;
 

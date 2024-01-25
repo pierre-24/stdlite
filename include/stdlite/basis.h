@@ -61,14 +61,15 @@ typedef struct stdl_basis_ stdl_basis;
 
 /**
  * Create a new basis set.
- * Initialize the arrays
+ * Initialize all the arrays.
+ * @param bs Basis set to be created
  * @param natm Number of atoms
  * @param nbas Number of basis functions
  * @param env_size size of the `env` array, with `env_size > 3*natm`.
- * @return The initialized basis set object, if any, with all array initialized to their respective size.
+ * @return `STDL_ERR_OK` if everything went well.
  * @ingroup basis
  */
-stdl_basis *stdl_basis_new(int natm, int nbas, size_t env_size, int use_spherical);
+int stdl_basis_new(stdl_basis **bs, int natm, int nbas, size_t env_size, int use_spherical);
 
 /**
  * Delete the basis set.

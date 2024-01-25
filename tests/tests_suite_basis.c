@@ -14,13 +14,15 @@ void test_basis_functions_ovlp_ok() {
     FILE* f = fopen(fchk_path, "r");
     TEST_ASSERT_NOT_NULL(f);
 
-    stdl_lexer* lx = stdl_lexer_new(f);
+    stdl_lexer* lx = NULL;
+    STDL_OK(stdl_lexer_new(&lx, f));
     TEST_ASSERT_NOT_NULL(lx);
 
     STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
-    stdl_wavefunction * wf = stdl_fchk_parser_wavefunction_new(lx);
-    TEST_ASSERT_NOT_NULL(wf);
+    stdl_wavefunction * wf = NULL;
+    stdl_basis* bs = NULL;
+    STDL_OK(stdl_fchk_parser_wavefunction_new(&wf, &bs, lx));
 
     STDL_OK(stdl_wavefunction_delete(wf));
     STDL_OK(stdl_lexer_delete(lx));
