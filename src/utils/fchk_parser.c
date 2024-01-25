@@ -7,10 +7,6 @@
 #include "stdlite/utils/fchk_parser.h"
 #include "stdlite.h"
 #include "stdlite/basis.h"
-#include "stdlite/matrix.h"
-
-int cint1e_ipnuc_cart(double *buf, int *shls,
-                      int *atm, int natm, int *bas, int nbas, double *env);
 
 int stdl_fchk_parser_get_section_info(stdl_lexer* lx, char** name, char* type, int* is_scalar) {
     assert(lx != NULL && name != NULL && type != NULL && is_scalar != NULL);
@@ -542,12 +538,18 @@ int _make_overlap_matrix(stdl_wavefunction* wf, struct _fchk_data_basis* dt) {
 
         // basis
         for(size_t i=0; i < dt->nbas; i++) {
+            int angular = (dt->shell_types[i] == -1) ? 0 : abs((int) dt->shell_types[i]);
+
             bs->bas[(offset_bas + i) * 8 + 0] = (int) dt->bastoatm[i] - 1; // Gaussian gives a 1-based list
-            bs->bas[(offset_bas + i) * 8 + 1] = (dt->shell_types[i] == -1) ? 0 : abs((int) dt->shell_types[i]);
+            bs->bas[(offset_bas + i) * 8 + 1] = angular;
             bs->bas[(offset_bas + i) * 8 + 2] = (int) dt->prims_per_shell[i];
             bs->bas[(offset_bas + i) * 8 + 3] = 1;
             bs->bas[(offset_bas + i) * 8 + 5] = (int) offset_exps + iprim;
             bs->bas[(offset_bas + i) * 8 + 6] = (int) offset_coefs + iprim;
+
+            // normalize coefs
+            for(int j=0; j < (int) dt->prims_per_shell[i]; j++)
+                bs->env[(int) offset_coefs + iprim + j] *= CINTgto_norm(angular, bs->env[(int) offset_exps + iprim +  j]);
 
             if(dt->shell_types[i] == -1) { // sp
                 offset_bas += 1;
@@ -559,8 +561,10 @@ int _make_overlap_matrix(stdl_wavefunction* wf, struct _fchk_data_basis* dt) {
                 bs->bas[(offset_bas + i) * 8 + 5] = (int) offset_exps + iprim;
                 bs->bas[(offset_bas + i) * 8 + 6] = (int) offset_coefs_sp + ipprim;
 
-                // copy p-coefs
-                memcpy(&(bs->env[offset_coefs_sp + ipprim]), &(dt->benv[2 * dt->nprim + iprim]), 3 * sizeof(double));
+                // copy p-coefs and normalize them
+                memcpy(&(bs->env[offset_coefs_sp + ipprim]), &(dt->benv[2 * dt->nprim + iprim]), ((int) dt->prims_per_shell[i]) * sizeof(double));
+                for(int j=0; j < (int) dt->prims_per_shell[i]; j++)
+                    bs->env[(int) offset_coefs_sp + ipprim + j] *= CINTgto_norm(1, bs->env[(int) offset_exps + iprim + j]);
 
                 ipprim += (int) dt->prims_per_shell[i];
             }
@@ -568,17 +572,12 @@ int _make_overlap_matrix(stdl_wavefunction* wf, struct _fchk_data_basis* dt) {
             iprim += (int) dt->prims_per_shell[i];
         }
 
-        stdl_basis_print(bs);
+        stdl_basis_print(bs, 1);
 
-        /*double* buf = malloc(3 * 3 * sizeof(double ));
+        double* buf = malloc(3 * 3 * sizeof(double));
         int shls[] = {0, 0};
-        // fn1(buf.ctypes.data_as(ctypes.c_void_p),
-        //               (ctypes.c_int*2)(i,j),
-        //                mol._atm.ctypes.data_as(ctypes.c_void_p), ctypes.c_int(mol.natm),
-        //                mol._bas.ctypes.data_as(ctypes.c_void_p), ctypes.c_int(mol.nbas),
-        //                mol._env.ctypes.data_as(ctypes.c_void_p))
-        cint1e_ipnuc_cart(buf, shls, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env);
-        printf("overlp <%d|%d> = %f\n", shls[0], shls[1], buf[0]);*/
+        int1e_ovlp_cart(buf, NULL, shls, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
+        printf("overlp <%d|%d> = %f\n", shls[0], shls[1], buf[0]);
 
         stdl_basis_delete(bs);
     } else

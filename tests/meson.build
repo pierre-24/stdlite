@@ -18,9 +18,11 @@ tests_dep += unity_dep
 
 # create tests
 tests_to_run = [
+    'basis',
     'utils_lexer',
     'utils_base_parser',
     'utils_fchk_parser',
+    'wavefunction',
 ]
 
 foreach t: tests_to_run

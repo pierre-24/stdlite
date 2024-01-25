@@ -52,6 +52,11 @@ groups:
       ```
       
       Follows the structure of [`libcint`](https://github.com/sunqm/libcint/blob/master/doc/program_ref.txt), so that it can be used to compute extra integrals.
+      
+      !!! note
+          
+          Most of the documentation (and all examples) of libcint actually refers to the old (version < 3.0) API.
+          The new API actually includes two extra parameters [described there](https://github.com/sunqm/libcint/blob/master/doc/program_ref.tex#L228).
   - name: errors
     title: Error definition and handling
     description: |

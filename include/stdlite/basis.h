@@ -41,7 +41,7 @@ struct stdl_basis_ {
      * - `bas[i*8+1]`: angular momentum
      * - `bas[i*8+2]`: number of primitive GTO, `nprim`,
      * - `bas[i*8+3]`: number of contracted GTO, `ncont`,
-     * - `bas[i*8+4]`: not relevant here
+     * - `bas[i*8+4]`: not relevant here,
      * - `bas[i*8+5]`: offset at which the `nprim` exponents of GTO are found in `env`,
      * - `bas[i*8+6]`: offset at which the `nprim*ncont` contraction coefficients of GTO are found in `env`,
      * - slot 7 is irrelevant.
@@ -52,6 +52,7 @@ struct stdl_basis_ {
      * `double[natm*3+??]`, array which stores the coordinates, GTO exponents, and contraction coefficients.
      * In practice, the `natm*3` coordinates are stored first.
      * Then for each basis function, the `nprim` exponents followed by the `nprim*ncont` coefficients are stored.
+     * For simplicity, each primitive should be normalized.
      */
     double* env;
 };
@@ -83,6 +84,6 @@ int stdl_basis_delete(stdl_basis* bs);
  * @return `STDL_ERR_OK`
  * @ingroup basis
  */
-int stdl_basis_print(stdl_basis* bs);
+int stdl_basis_print(stdl_basis *bs, int denormalize);
 
 #endif //STDLITE_BASIS_H

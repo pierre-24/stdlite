@@ -68,10 +68,13 @@ char _toc(int i) {
     }
 }
 
-int stdl_basis_print(stdl_basis *bs) {
+int stdl_basis_print(stdl_basis *bs, int denormalize) {
     assert(bs != NULL);
 
-    printf("-- basis set containing %d (%s) basis functions on %d atoms--\n", bs->nbas, bs->use_spherical? "spherical": "cartesian", bs->natm);
+    printf("-- basis set containing %d (%s) basis functions on %d atoms --\n", bs->nbas, bs->use_spherical? "spherical": "cartesian", bs->natm);
+    if(denormalize)
+        printf("-- note: coefficients are not normalized --\n");
+
     for(int i=0; i < bs->nbas; i++) {
         int nprim = bs->bas[i*8+2], ncont = bs->bas[i*8+3];
         printf("%d -- %c-type function, centered on atom #%d.\n", i + 1, _toc(bs->bas[i*8+1]), bs->bas[i*8+0] + 1);
@@ -80,7 +83,7 @@ int stdl_basis_print(stdl_basis *bs) {
         for(int j=0; j < bs->bas[i*8+2]; j++){
             printf("  %.8e", bs->env[bs->bas[i*8+5]+j]);
             for(int h=0; h < ncont; h++) {
-                printf(" % .8e", bs->env[bs->bas[i*8+6]+j * ncont + h]);
+                printf(" % .8e", bs->env[bs->bas[i*8+6]+j * ncont + h] * (denormalize ? 1. / CINTgto_norm(bs->bas[i*8+1], bs->env[bs->bas[i*8+5]+j]) : 1));
             }
             printf("\n");
         }
