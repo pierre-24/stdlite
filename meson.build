@@ -33,6 +33,7 @@ stdlite_lib = library(
   install : true,
   c_args : build_args,
   include_directories : includes,
+  dependencies: project_dep,
 )
 
 stdlite_lib_dep = declare_dependency(

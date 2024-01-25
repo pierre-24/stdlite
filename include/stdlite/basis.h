@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+#include <cint_funcs.h>
+
 /**
  * Describe a set of basis functions, centered on atoms.
  * Follows the structure of [`libcint`](https://github.com/sunqm/libcint/blob/master/doc/program_ref.txt), so that it can be used to compute extra integrals.

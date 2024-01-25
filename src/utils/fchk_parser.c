@@ -9,6 +9,9 @@
 #include "stdlite/basis.h"
 #include "stdlite/matrix.h"
 
+int cint1e_ipnuc_cart(double *buf, int *shls,
+                      int *atm, int natm, int *bas, int nbas, double *env);
+
 int stdl_fchk_parser_get_section_info(stdl_lexer* lx, char** name, char* type, int* is_scalar) {
     assert(lx != NULL && name != NULL && type != NULL && is_scalar != NULL);
 
@@ -566,6 +569,17 @@ int _make_overlap_matrix(stdl_wavefunction* wf, struct _fchk_data_basis* dt) {
         }
 
         stdl_basis_print(bs);
+
+        /*double* buf = malloc(3 * 3 * sizeof(double ));
+        int shls[] = {0, 0};
+        // fn1(buf.ctypes.data_as(ctypes.c_void_p),
+        //               (ctypes.c_int*2)(i,j),
+        //                mol._atm.ctypes.data_as(ctypes.c_void_p), ctypes.c_int(mol.natm),
+        //                mol._bas.ctypes.data_as(ctypes.c_void_p), ctypes.c_int(mol.nbas),
+        //                mol._env.ctypes.data_as(ctypes.c_void_p))
+        cint1e_ipnuc_cart(buf, shls, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env);
+        printf("overlp <%d|%d> = %f\n", shls[0], shls[1], buf[0]);*/
+
         stdl_basis_delete(bs);
     } else
         return STDL_ERR_MALLOC;

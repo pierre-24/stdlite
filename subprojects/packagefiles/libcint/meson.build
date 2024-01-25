@@ -12,19 +12,14 @@ project_config = {
 }
 
 # configure files
-configure_file(
+head_config = configure_file(
     format: 'cmake@',
     input: 'src/config.h.in',
     output: 'config.h',
     configuration: project_config
 )
 
-configure_file(
-    format: 'cmake@',
-    input: 'include/cint.h.in',
-    output: 'cint.h',
-    configuration: project_config
-)
+subdir('include')
 
 # configure dependencies
 cc = meson.get_compiler('c')
@@ -112,10 +107,10 @@ endif
 libcint = library(
     meson.project_name(),
     srcs,
-    install : not meson.is_subproject(),
-    c_args : build_args,
-    include_directories : includes,
-    dependencies: project_dep
+    c_args: build_args,
+    include_directories: includes,
+    dependencies: project_dep,
+    install: not meson.is_subproject(),
 )
 
 libcint_dep = declare_dependency(

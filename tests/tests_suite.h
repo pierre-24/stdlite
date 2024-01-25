@@ -4,6 +4,9 @@
 #define UNITY_INCLUDE_DOUBLE
 #include <unity.h>
 
+#include <cint.h>
+
+
 #include <stdlite/errors.h>
 
 #define STDL_OK(v) TEST_ASSERT_EQUAL_INT(STDL_ERR_OK, v)
