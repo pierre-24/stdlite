@@ -7,6 +7,7 @@
 #include "stdlite/utils/fchk_parser.h"
 #include "stdlite.h"
 #include "stdlite/basis.h"
+#include "stdlite/matrix.h"
 
 int stdl_fchk_parser_get_section_info(stdl_lexer* lx, char** name, char* type, int* is_scalar) {
     assert(lx != NULL && name != NULL && type != NULL && is_scalar != NULL);
@@ -480,8 +481,10 @@ struct _fchk_data_basis* _fchk_data_new(size_t nbas, size_t nprims) {
     return dt;
 }
 
-// make the basis set
+// make the basis set, so shuffle things around to convert the format of Gaussian to the one of libcint.
+// If this fails, it is from `malloc()`.
 int _make_basis_set(stdl_basis** bs_ptr, stdl_wavefunction* wf, struct _fchk_data_basis* dt) {
+    assert(bs_ptr != NULL && wf != NULL && dt != NULL);
 
     int nbas = (int) dt->nbas, extra_coefs = 0, fct_type = 0 /* 1 = cartesian, -1 = spherical */;
 
@@ -573,7 +576,9 @@ int _make_basis_set(stdl_basis** bs_ptr, stdl_wavefunction* wf, struct _fchk_dat
 // Get the number of ao, given the type of each basis function.
 // According to the Gaussian documentation, `0=s, 1=p, -1=sp, 2=6d, -2=5d, 3=10f, -3=7f` (and so all).
 // In most of the case, `nao=nmo`.
-size_t _get_nao(size_t nbas, long* shell_types) {
+size_t _count_nao(size_t nbas, long* shell_types) {
+    assert(nbas > 0);
+
     size_t total = 0;
 
     for (size_t i = 0; i < nbas; ++i) {
@@ -626,6 +631,48 @@ size_t _get_nao(size_t nbas, long* shell_types) {
     }
 
     return total;
+}
+
+// create the overlap matrix
+int _make_S(stdl_wavefunction* wf, stdl_basis* bs) {
+    assert(wf != NULL && bs != NULL);
+
+    int si, sj, ioffset=0, joffset;
+    double* buff= malloc(28 * 28 * sizeof(double)); // the maximum libcint can handle
+    if(buff == NULL)
+        return STDL_ERR_MALLOC;
+
+    for(int i=0; i < bs->nbas; i++) {
+        if(bs->use_spherical)
+            si = CINTcgto_spheric(i, bs->bas);
+        else
+            si = CINTcgtos_cart(i, bs->bas);
+
+        joffset = 0;
+
+        for(int j=0; j <= i; j++) {
+            if(bs->use_spherical)
+                sj = CINTcgto_spheric(j, bs->bas);
+            else
+                sj = CINTcgtos_cart(j, bs->bas);
+
+            int1e_ovlp_cart(buff, NULL, (int[]) {i, j}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
+
+            for(int iprim=0; iprim < si; iprim++) {
+                for(int jprim=0; jprim < sj && joffset + jprim <= ioffset + iprim; jprim++) {
+                    wf->S[(ioffset + iprim) * wf->nao + joffset + jprim] = wf->S[(joffset + jprim) * wf->nao + ioffset + iprim] = buff[iprim * sj + jprim];
+                }
+            }
+
+            joffset += sj;
+        }
+
+        ioffset += si;
+    }
+
+    free(buff);
+
+    return STDL_ERR_OK;
 }
 
 int stdl_fchk_parser_extract(stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr, stdl_lexer *lx) {
@@ -699,7 +746,7 @@ int stdl_fchk_parser_extract(stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr, st
                 /* Note: assume that "Number of primitive shells" was read before. */
                 error = stdl_fchk_parser_get_vector_integers_immediate(lx, nbas, &(dt->shell_types));
                 if(error == STDL_ERR_OK) {
-                    nao = _get_nao(nbas, dt->shell_types);
+                    nao = _count_nao(nbas, dt->shell_types);
                     if(nao != nmo)
                         stdl_warning_msg(__FILE__, __LINE__, "number of MO (%d) and AO (%d) does not match", nmo, nao);
                 }
@@ -755,6 +802,13 @@ int stdl_fchk_parser_extract(stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr, st
 
         // create the basis set
         error = _make_basis_set(bs_ptr, *wf_ptr, dt);
+        if(error == STDL_ERR_OK) {
+            _fchk_data_delete(dt);
+            dt = NULL;
+        }
+
+        // create the S matrix
+        error = _make_S(*wf_ptr, *bs_ptr);
     } else {
         stdl_error_msg_parser(__FILE__, __LINE__, lx, "FCHK was missing certain sections (dt=0x%x, wf_ptr=0x%x)", dt, wf_ptr);
         error = STDL_ERR_READ;

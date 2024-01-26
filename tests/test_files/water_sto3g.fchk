@@ -2,12 +2,12 @@ Energy water
 SP        RHF                                                         STO-3G              
 Number of atoms                            I                3
 Info1-9                                    I   N=           9
-          11          10           0           0           0         110
+          11          10           0           0           0         111
            1           1           2
 Full Title                                 C   N=           1
 Energy water
-Route                                      C   N=           1
-#P HF/STO-3G
+Route                                      C   N=           3
+#P HF/STO-3G iop(3/33=4) pop=full   
 Charge                                     I                0
 Multiplicity                               I                1
 Number of electrons                        I               10

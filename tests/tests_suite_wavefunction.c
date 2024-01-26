@@ -23,7 +23,6 @@ void test_extract_from_fchk_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
-
     STDL_OK(stdl_basis_delete(bs));
 
     TEST_ASSERT_EQUAL_INT(3, wf->natm);
@@ -31,8 +30,14 @@ void test_extract_from_fchk_ok() {
     TEST_ASSERT_EQUAL_INT(7, wf->nmo);
     TEST_ASSERT_EQUAL_INT(10, wf->nelec);
 
-    stdl_matrix_numbers_print(wf->nao, wf->nmo, wf->C, 0);
-    stdl_matrix_numbers_print(1, wf->nmo, wf->e, 0);
+    stdl_matrix_numbers_print(wf->nao, wf->nao, wf->S, 1);
+
+    // check that S is indeed symmetric
+    for (size_t i = 0; i < wf->nao; ++i) {
+        for (size_t j = 0; j <=i ; ++j) {
+            TEST_ASSERT_EQUAL_DOUBLE(wf->S[i * wf->nao + j], wf->S[j * wf->nao + i]);
+        }
+    }
 
     STDL_OK(stdl_wavefunction_delete(wf));
     STDL_OK(stdl_lexer_delete(lx));
