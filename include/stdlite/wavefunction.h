@@ -36,7 +36,8 @@ struct stdl_wavefunction_ {
     /// `double[nao*nao]`, the (symmetric) overlap matrix (`S`)
     double* S;
 
-    /// `double[nao*nmo]`, the LCAO coefficients matrix (`C`)
+    /// `double[nao*nmo]`, the LCAO coefficients matrix (`C`).
+    /// Stored (from Gaussian) as `[c_mo0ao0, c_mo1ao0, ..., c_monao0, c_mo0ao1, ..., c_mon,aon]`, so the first index refers to the MO, the second to the AO.
     double* C;
 
     /// `double[nmo]`, the MO energy vector (`e`) for each MO.

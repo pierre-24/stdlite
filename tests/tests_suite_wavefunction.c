@@ -31,7 +31,8 @@ void test_extract_from_fchk_ok() {
     TEST_ASSERT_EQUAL_INT(7, wf->nmo);
     TEST_ASSERT_EQUAL_INT(10, wf->nelec);
 
-    stdl_matrix_numbers_print(wf->nmo, wf->nao, wf->C, 0);
+    stdl_matrix_numbers_print(wf->nao, wf->nmo, wf->C, 0);
+    stdl_matrix_numbers_print(1, wf->nmo, wf->e, 0);
 
     STDL_OK(stdl_wavefunction_delete(wf));
     STDL_OK(stdl_lexer_delete(lx));
