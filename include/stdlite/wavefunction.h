@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 /**
- * Structure that represent a wavefunction.
+ * Structure that represent a (closed-shell!) wavefunction.
  * So, in practice, it stores the results of a QC calculation for subsequent (s)TD-DFT calculation.
  * Thus, it contains geometrical information, as well as the `S` (overlap), `C` (LCAO coefficients), and `e` (MO energies) matrices.
  * It is assumed that the MO are ordered in increasing energy values, and thus that electrons sits on the lower levels.
@@ -20,7 +20,7 @@ struct stdl_wavefunction_ {
     /// `double[natm*4]`, list of atoms with nuclear charge (0) and coordinates (1:3)
     double* atm;
 
-    /// Number of electrons in the system.
+    /// Number of electrons in the system (must be a even number).
     /// Note that those electron should populate MO that are considered, so the number might be different from the one of the actual system (if, say, core AO are not considered, then `nelect` should be equal the number of valence electron, not the total).
     size_t nelec;
 
@@ -36,8 +36,8 @@ struct stdl_wavefunction_ {
     /// `double[nao*nao]`, the (symmetric) overlap matrix (`S`)
     double* S;
 
-    /// `double[nao*nmo]`, the LCAO coefficients matrix (`C`).
-    /// Stored (from Gaussian) as `[c_mo0ao0, c_mo1ao0, ..., c_monao0, c_mo0ao1, ..., c_mon,aon]`, so the first index refers to the MO, the second to the AO.
+    /// `double[nmo*nao]`, the LCAO coefficients matrix (`C`).
+    /// Stored (from Gaussian) as `[c_mo0ao0, c_mo0ao1, ..., c_mo0aoN, c_mo1ao0, ..., c_moNaoN]`.
     double* C;
 
     /// `double[nmo]`, the MO energy vector (`e`) for each MO.

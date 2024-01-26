@@ -1,0 +1,8 @@
+
+option(
+    'la_backend',
+    type: 'combo',
+    value: 'default',
+    choices: ['default', 'openblas'],
+    description : 'linear algebra backend'
+)
