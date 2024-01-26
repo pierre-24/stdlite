@@ -6,48 +6,40 @@ project(
     version : '6.1',
 )
 
-project_config = {
-    'cint_VERSION': '6.1.0',
-    'cint_SOVERSION': '6'
-}
-
-# configure files
-head_config = configure_file(
-    format: 'cmake@',
-    input: 'src/config.h.in',
-    output: 'config.h',
-    configuration: project_config
-)
-
-subdir('include')
-
-# configure dependencies
 cc = meson.get_compiler('c')
 
+# configure
+project_config = configuration_data({
+    'cint_VERSION': '6.1.0',
+    'cint_SOVERSION': '6'
+})
+
+quadmath_dep = cc.find_library('quadmath', required: false)
+if quadmath_dep.found()
+    project_config.set('HAVE_QUADMATH_H', true)
+endif
+
+if cc.has_function('expl')
+    project_config.set('HAVE_EXPL', true)
+endif
+
+if cc.has_function('sqrtl')
+    project_config.set('HAVE_SQRTL', true)
+endif
+
+# sources & includes
+srcs = []
+
+subdir('include')
+subdir('src')
+
+includes = include_directories('src', 'include')
+
+# configure dependencies & build args
 project_dep = [
     cc.find_library('m', required : true)
 ]
 
-# sources & includes
-srcs = files(
-    'src/c2f.c', 'src/cart2sph.c', 'src/cint1e.c', 'src/cint2e.c', 'src/cint_bas.c',
-    'src/fblas.c', 'src/g1e.c', 'src/g2e.c', 'src/misc.c', 'src/optimizer.c',
-    'src/fmt.c', 'src/rys_wheeler.c', 'src/eigh.c', 'src/rys_roots.c', 'src/find_roots.c',
-    'src/cint2c2e.c', 'src/g2c2e.c', 'src/cint3c2e.c', 'src/g3c2e.c',
-    'src/cint3c1e.c', 'src/g3c1e.c',  'src/breit.c',
-    'src/cint1e_a.c', 'src/cint3c1e_a.c',
-    'src/cint1e_grids.c', 'src/g1e_grids.c',
-    'src/autocode/breit1.c', 'src/autocode/dkb.c', 'src/autocode/gaunt1.c',
-    'src/autocode/grad1.c', 'src/autocode/grad2.c', 'src/autocode/hess.c',
-    'src/autocode/int3c1e.c', 'src/autocode/int3c2e.c', 'src/autocode/intor1.c',
-    'src/autocode/intor2.c', 'src/autocode/intor3.c', 'src/autocode/intor4.c',
-    'src/autocode/deriv3.c', 'src/autocode/int1e_grids1.c',
-    'src/autocode/deriv4.c', 'src/autocode/lresc.c'
-)
-
-includes = include_directories('src', 'include')
-
-# build args
 build_args = []
 
 if cc.has_argument('-march=native')
@@ -60,7 +52,6 @@ if cc.has_argument('-march=native')
     message('added -march=native and loop unroling flags')
 endif
 
-quadmath_dep = cc.find_library('quadmath', required: false)
 if quadmath_dep.found()
     project_dep += quadmath_dep
     build_args += '-DHAVE_QUADMATH_H'

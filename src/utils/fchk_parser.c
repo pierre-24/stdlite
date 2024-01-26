@@ -753,7 +753,7 @@ int stdl_fchk_parser_extract(stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr, st
         free(atm);
         atm = NULL;
 
-        // create basis set
+        // create the basis set
         error = _make_basis_set(bs_ptr, *wf_ptr, dt);
     } else {
         stdl_error_msg_parser(__FILE__, __LINE__, lx, "FCHK was missing certain sections (dt=0x%x, wf_ptr=0x%x)", dt, wf_ptr);
