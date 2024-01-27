@@ -37,10 +37,10 @@ void _check_wavefunction(stdl_wavefunction* wf) {
     double* mulliken_pop = malloc(wf->nao * wf->nao * sizeof(double));
     TEST_ASSERT_NOT_NULL(mulliken_pop);
 
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-                (int) wf->nao, (int) wf->nao, (int) wf->nao,
-                1.f, density_mat, (int) wf->nmo,
-                wf->S, (int) wf->nao,
+    cblas_dsymm(CblasRowMajor, CblasRight, CblasLower,
+                (int) wf->nao, (int) wf->nao,
+                1.f,wf->S, (int) wf->nao,
+                density_mat, (int) wf->nao,
                 .0, mulliken_pop, (int) wf->nao
     );
 

@@ -33,7 +33,7 @@ struct stdl_wavefunction_ {
     /// `size_t[nao]`, 0-based list of corresponding atom for each AO.
     size_t* aotoatm;
 
-    /// `double[nao*nao]`, the (symmetric) overlap matrix (`S`)
+    /// `double[nao*nao]`, the (symmetric square) overlap matrix (`S`)
     double* S;
 
     /// `double[nmo*nao]`, the LCAO coefficients matrix (`C`).

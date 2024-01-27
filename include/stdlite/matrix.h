@@ -16,6 +16,31 @@
  * @return `STDL_ERR_OK`
  * @ingroup matrix
  */
-int stdl_matrix_numbers_print(size_t rows, size_t columns, double *matrix, int is_symmetric);
+int stdl_matrix_ge_print(size_t rows, size_t columns, double *matrix, int is_symmetric);
+
+/**
+ * Print a symmetric (thus square) packed matrix.
+ * Storage is in the [lower triangle form](https://netlib.org/lapack/lug/node123.html) (`L`), so: `[a_00, a_10, a_11, a_20, a_21, ..., a_NN]`.
+ * @param n size of the matrix
+ * @param matrix the matrix
+ * @return `STDL_ERR_OK`
+ * @ingroup matrix
+ */
+int stdl_matrix_sp_print(size_t n, double *matrix);
+
+
+/**
+ * Get the size of a symmetric packed (SP) matrix.
+ * @ingroup matrix
+ */
+# define STDL_MATRIX_SP_SIZE(n) (n)*((n)+1)/2
+
+/**
+ * Get the index corresponding to an element of a symmetric packed (SP) matrix.
+ * `i` is the row, while `j` is the column.
+ * Assume `i < j`.
+ * @ingroup matrix
+ */
+#define STDL_MATRIX_SP_IDX(i, j) (i)*(i+1)/2+j
 
 #endif //STDLITE_MATRIX_H

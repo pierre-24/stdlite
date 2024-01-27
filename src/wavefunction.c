@@ -27,6 +27,7 @@ int stdl_wavefunction_new(stdl_wavefunction **wf_ptr, size_t natm, size_t nelec,
     (*wf_ptr)->aotoatm = malloc(nao * sizeof(size_t));
     STDL_ERROR_HANDLE_AND_REPORT((*wf_ptr)->aotoatm == NULL, stdl_wavefunction_delete(*wf_ptr); return STDL_ERR_MALLOC, "malloc");
 
+    // (*wf_ptr)->S = malloc(STDL_MATRIX_SP_SIZE((*wf_ptr)->nao) * sizeof(double));
     (*wf_ptr)->S = malloc(nao * nao * sizeof(double));
     STDL_ERROR_HANDLE_AND_REPORT((*wf_ptr)->S == NULL, stdl_wavefunction_delete(*wf_ptr); return STDL_ERR_MALLOC, "malloc");
 
