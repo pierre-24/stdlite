@@ -14,6 +14,9 @@
  * @ingroup wavefunction
  */
 struct stdl_wavefunction_ {
+    /// Is this wavefunction orthogonalized?
+    int isortho;
+
     /// Number of atoms
     size_t natm;
 
@@ -65,5 +68,14 @@ int stdl_wavefunction_new(stdl_wavefunction **wf_ptr, size_t natm, size_t nelec,
  * @ingroup wavefunction
  */
 int stdl_wavefunction_delete(stdl_wavefunction* wf);
+
+/**
+ * Symmetrize the LCAO coefficients using a Löwdin orthogonalization.
+ * See, *e.g.*, [there](https://booksite.elsevier.com/9780444594365/downloads/16755_10030.pdf).
+ * As a result, `wf->C` becomes symmetric, and `wf->S` is the identity matrix.
+ * @param wf the wavefunction to orthogonalize.
+ * @return the error code
+ */
+int stdl_wavefunction_orthogonalize(stdl_wavefunction* wf);
 
 #endif //STDLITE_WAVEFUNCTION_H

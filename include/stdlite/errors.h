@@ -83,6 +83,12 @@ int stdl_get_debug_level();
 void stdl_debug_msg(char *file, int line, char *format, ...);
 
 /**
+ * Print a debug message
+ * @ingroup errors
+ */
+#define STDL_DEBUG(...) stdl_debug_msg(__FILE__, __LINE__, __VA_ARGS__)
+
+/**
  * Print a warning message in `stdout`, if `DEBUG_LVL` is above 0.
  * @param file source file (use `__FILE__`)
  * @param line line (use `__LINE__`)
@@ -91,6 +97,12 @@ void stdl_debug_msg(char *file, int line, char *format, ...);
  * @ingroup errors
  */
 void stdl_warning_msg(char *file, int line, char *format, ...);
+
+/**
+ * Print a warning message
+ * @ingroup errors
+ */
+#define STDL_WARN(...) stdl_warning_msg(__FILE__, __LINE__, __VA_ARGS__)
 
 /**
  * Print an error message in `stderr`, if `DEBUG_LVL` is equal or above 0.

@@ -8,6 +8,7 @@
 
 #include <cblas.h>
 
+// check that the data are correct by computing the Mulliken population.
 void _check_wavefunction(stdl_wavefunction* wf) {
 
     // compute the density matrix, assuming a closed-shell WF.
@@ -44,6 +45,8 @@ void _check_wavefunction(stdl_wavefunction* wf) {
                 .0, mulliken_pop, (int) wf->nao
     );
 
+    stdl_matrix_ge_print(wf->nao, wf->nao, mulliken_pop, 0);
+
     double total = .0;
     for(size_t i=0; i < wf->nao; i++)
         total += mulliken_pop[i * wf->nao + i];
@@ -55,6 +58,7 @@ void _check_wavefunction(stdl_wavefunction* wf) {
 }
 
 void test_content_ok() {
+
     char cwd[512], fchk_path[1024];
     TEST_ASSERT_NOT_NULL(getcwd(cwd, 512));
 
@@ -71,6 +75,35 @@ void test_content_ok() {
     stdl_basis * bs = NULL;
     STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
     STDL_OK(stdl_basis_delete(bs));
+
+    _check_wavefunction(wf);
+
+    STDL_OK(stdl_wavefunction_delete(wf));
+    STDL_OK(stdl_lexer_delete(lx));
+
+    fclose(f);
+}
+
+
+void test_orthogonalize_ok() {
+    char cwd[512], fchk_path[1024];
+    TEST_ASSERT_NOT_NULL(getcwd(cwd, 512));
+
+    sprintf(fchk_path, "%s/../tests/test_files/water_sto3g.fchk", cwd);
+
+    FILE* f = fopen(fchk_path, "r");
+    TEST_ASSERT_NOT_NULL(f);
+
+    stdl_lexer* lx = NULL;
+    STDL_OK(stdl_lexer_new(&lx, f));
+    STDL_OK(stdl_fchk_parser_skip_intro(lx));
+
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
+    STDL_OK(stdl_basis_delete(bs));
+
+    stdl_wavefunction_orthogonalize(wf);
 
     _check_wavefunction(wf);
 

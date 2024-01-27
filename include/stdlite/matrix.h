@@ -5,7 +5,7 @@
 
 /// Maximum number of columns per batch
 /// @ingroup matrix
-#define STDL_MATRIX_MAX_COLS 5
+#define STDL_MATRIX_MAX_COLS 8
 
 /**
  * Print a matrix.
