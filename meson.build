@@ -24,6 +24,7 @@ la_backend = get_option('la_backend')
 if la_backend == 'openblas' or la_backend == 'default'
   project_dep += cc.find_library('openblas', required : true)
   project_dep += cc.find_library('lapack', required : true)
+  project_dep += cc.find_library('lapacke', required : true)
 endif
 
 # fetch sources and includes
