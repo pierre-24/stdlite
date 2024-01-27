@@ -9,6 +9,7 @@
 #include <cblas.h>
 
 // check that the data are correct by computing the Mulliken population.
+// It should sum up to the number of electrons
 void _check_wavefunction(stdl_wavefunction* wf) {
 
     // compute the density matrix, assuming a closed-shell WF.
@@ -33,19 +34,34 @@ void _check_wavefunction(stdl_wavefunction* wf) {
     }
 
     // compute population
-    // `N = tr(DS)`.
-    // For full Mulliken population  (i.e., `PS-SP`), see, e.g., https://doi.org/10.26434/chemrxiv.12722072.v1
+    // See, e.g., https://doi.org/10.26434/chemrxiv.12722072.v1
     double* mulliken_pop = malloc(wf->nao * wf->nao * sizeof(double));
     TEST_ASSERT_NOT_NULL(mulliken_pop);
 
-    cblas_dsymm(CblasRowMajor, CblasRight, CblasLower,
-                (int) wf->nao, (int) wf->nao,
-                1.f,wf->S, (int) wf->nao,
-                density_mat, (int) wf->nao,
-                .0, mulliken_pop, (int) wf->nao
-    );
+    if(!wf->isortho) {
+        double* tmp = malloc(wf->nao * wf->nao * sizeof(double));
+        TEST_ASSERT_NOT_NULL(tmp);
 
-    stdl_matrix_ge_print(wf->nao, wf->nao, mulliken_pop, 0);
+        cblas_dsymm(CblasRowMajor, CblasRight, CblasLower,
+                    (int) wf->nao, (int) wf->nao,
+                    1.f, wf->S, (int) wf->nao,
+                    density_mat, (int) wf->nao,
+                    .0, tmp, (int) wf->nao
+        );
+
+        // `D*S+S*D = D*S+S^T*D^T = D*S+(D*S)^T`
+        for (size_t i = 0; i < wf->nao; ++i) {
+            for (size_t j = 0; j < wf->nao; ++j) {
+                mulliken_pop[i * wf->nao + j] = .5 * (tmp[i * wf->nao + j] + tmp[j * wf->nao + i]);
+            }
+        }
+
+        free(tmp);
+    } else { // `S=1`, so `1/2*(S*D+D*S) = D`
+        memcpy(mulliken_pop, density_mat, wf->nao * wf->nao * sizeof(double));
+    }
+
+    stdl_matrix_ge_print(wf->nao, wf->nao, mulliken_pop, 1, "1/2*(DS+SD)");
 
     double total = .0;
     for(size_t i=0; i < wf->nao; i++)
@@ -104,6 +120,17 @@ void test_orthogonalize_ok() {
     STDL_OK(stdl_basis_delete(bs));
 
     stdl_wavefunction_orthogonalize(wf);
+
+    // check that the MO are normalized
+    for (size_t i = 0; i < wf->nao; ++i) {
+        double sum = .0;
+
+        for (size_t j = 0; j < wf->nao; ++j) {
+            sum += pow(wf->C[i * wf->nao + j], 2.0);
+        }
+
+        TEST_ASSERT_DOUBLE_WITHIN(1e-8, 1., sum);
+    }
 
     _check_wavefunction(wf);
 

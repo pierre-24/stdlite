@@ -98,6 +98,7 @@ int stdl_wavefunction_orthogonalize(stdl_wavefunction *wf) {
     STDL_FREE_ALL(e, wcc);
 
     // C' = C * S^1/2
+    // The difference probably comes from row-to-column major reference
     cblas_dsymm(CblasRowMajor, CblasRight, CblasLower,
                 (int) wf->nao, (int) wf->nao,
                 1.f, wf->S, (int) wf->nao,
@@ -106,6 +107,7 @@ int stdl_wavefunction_orthogonalize(stdl_wavefunction *wf) {
     );
 
     memcpy(wf->C, w, wf->nao * wf->nao * sizeof(double));
+
     STDL_FREE_ALL(w);
 
     // identity S!

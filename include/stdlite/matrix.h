@@ -5,7 +5,7 @@
 
 /// Maximum number of columns per batch
 /// @ingroup matrix
-#define STDL_MATRIX_MAX_COLS 8
+#define STDL_MATRIX_MAX_COLS 5
 
 /**
  * Print a matrix.
@@ -16,7 +16,7 @@
  * @return `STDL_ERR_OK`
  * @ingroup matrix
  */
-int stdl_matrix_ge_print(size_t rows, size_t columns, double *matrix, int is_symmetric);
+int stdl_matrix_ge_print(size_t rows, size_t columns, double *matrix, int is_symmetric, char *title);
 
 /**
  * Print a symmetric (thus square) packed matrix.

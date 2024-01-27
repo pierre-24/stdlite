@@ -4,8 +4,10 @@
 #include "stdlite/errors.h"
 
 
-int stdl_matrix_ge_print(size_t rows, size_t columns, double *matrix, int is_symmetric) {
+int stdl_matrix_ge_print(size_t rows, size_t columns, double *matrix, int is_symmetric, char *title) {
     size_t i = 0, j, c;
+    printf(" %s\n\n", title);
+
     while (i < columns) {
         // header
         j = 0;
