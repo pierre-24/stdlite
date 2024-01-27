@@ -1,10 +1,14 @@
 #ifndef STDLITE_H
 #define STDLITE_H
 
-/// Free `a` if not `NULL`
-#define STDL_FREE_IF_USED(a) if((a) != NULL) free(a)
+#include <stdlite/basis.h>
+#include <stdlite/errors.h>
+#include <stdlite/helpers.h>
+#include <stdlite/matrix.h>
+#include <stdlite/wavefunction.h>
 
-/// Return if `a` is not `STDL_ERR_OK`
-#define STDL_RETURN_ON_ERROR(a) if((a) != STDL_ERR_OK) return (a)
+#include <stdlite/utils/base_parser.h>
+#include <stdlite/utils/fchk_parser.h>
+#include <stdlite/utils/lexer.h>
 
 #endif //STDLITE_H

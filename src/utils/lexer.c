@@ -2,7 +2,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#include "stdlite.h"
+#include "stdlite/helpers.h"
 #include "stdlite/errors.h"
 #include "stdlite/utils/lexer.h"
 
@@ -39,40 +39,33 @@ int stdl_lexer_new(stdl_lexer **lx_ptr, FILE *input) {
 
     // go ahead
     *lx_ptr = malloc(sizeof(stdl_lexer));
-    if (*lx_ptr != NULL) {
-        (*lx_ptr)->stream = NULL;
-        (*lx_ptr)->file = input;
+    STDL_ERROR_HANDLE_AND_REPORT(*lx_ptr == NULL, return STDL_ERR_MALLOC, "malloc");
 
-        (*lx_ptr)->stream = malloc(STDL_LEXER_STREAM_BUFF_SIZE * sizeof(char));
-        if ((*lx_ptr)->stream == NULL) {
-            stdl_lexer_delete(*lx_ptr);
-            return STDL_ERR_MALLOC;
-        } else {
-            // read first bytes
-            size_t n = fread((*lx_ptr)->stream, 1, STDL_LEXER_STREAM_BUFF_SIZE, input);
-            if (n != STDL_LEXER_STREAM_BUFF_SIZE) // shorter than expected!
-                (*lx_ptr)->stream[n] = '\0';
+    (*lx_ptr)->file = input;
 
-            (*lx_ptr)->pos_in_stream = 0;
-            (*lx_ptr)->current_line = 1;
-            (*lx_ptr)->current_pos_in_line = 0;
-            (*lx_ptr)->current_tk_value = (*lx_ptr)->stream[0];
+    (*lx_ptr)->stream = malloc(STDL_LEXER_STREAM_BUFF_SIZE * sizeof(char));
+    STDL_ERROR_HANDLE_AND_REPORT((*lx_ptr)->stream == NULL, stdl_lexer_delete(*lx_ptr); return STDL_ERR_MALLOC, "malloc");
 
-            stdl_lexer_advance(*lx_ptr, 0);
-        }
+    // read first bytes
+    size_t n = fread((*lx_ptr)->stream, 1, STDL_LEXER_STREAM_BUFF_SIZE, input);
+    if (n != STDL_LEXER_STREAM_BUFF_SIZE) // shorter than expected!
+        (*lx_ptr)->stream[n] = '\0';
 
-        return STDL_ERR_OK;
-    } else
-        return STDL_ERR_MALLOC;
+    (*lx_ptr)->pos_in_stream = 0;
+    (*lx_ptr)->current_line = 1;
+    (*lx_ptr)->current_pos_in_line = 0;
+    (*lx_ptr)->current_tk_value = (*lx_ptr)->stream[0];
 
+    stdl_lexer_advance(*lx_ptr, 0);
+
+    return STDL_ERR_OK;
 }
 
 
 int stdl_lexer_delete(stdl_lexer *lx) {
     assert(lx != NULL);
 
-    STDL_FREE_IF_USED(lx->stream);
-    free(lx);
+    STDL_FREE_ALL(lx->stream, lx);
 
     return STDL_ERR_OK;
 }
@@ -82,10 +75,7 @@ int stdl_lexer_advance(stdl_lexer *lx, int shift) {
     assert(lx != NULL && lx->file != NULL && lx->stream != NULL);
     assert(shift == 0 || shift == 1);
 
-    if(lx->current_tk_value == '\0') {
-        lx->current_tk_type = STDL_TK_EOF;
-        return STDL_ERR_UTIL_LEXER;
-    }
+    STDL_ERROR_HANDLE_AND_REPORT(lx->current_tk_value == '\0', lx->current_tk_type = STDL_TK_EOF; return STDL_ERR_UTIL_LEXER, "reading past EOF");
 
     if (lx->pos_in_stream == STDL_LEXER_STREAM_BUFF_SIZE - 1) {
         // need to read next bytes
@@ -131,9 +121,7 @@ int stdl_lexer_advance(stdl_lexer *lx, int shift) {
 
 int stdl_lexer_eat(stdl_lexer *lx, stdl_token_type t) {
     assert(lx != NULL);
-
-    if (lx->current_tk_type != t)
-        return STDL_ERR_UTIL_LEXER;
+    STDL_ERROR_HANDLE_AND_REPORT(lx->current_tk_type != t, return STDL_ERR_UTIL_LEXER, "expected token type %d, got %d", t, lx->current_tk_type);
 
     return stdl_lexer_advance(lx, 1);
 }

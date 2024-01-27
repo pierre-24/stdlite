@@ -12,13 +12,13 @@
 /**
  * Allocate a string, and grow it from time to time if its size (given by `sz`) gets too large.
  * Actually allocates `fac * STDL_STR_MULT` bytes, and increases `fac` by one each time the size gets too large.
- * @param str str pointer to a non-`NULL` string. Caller is responsible for free'ing it.
+ * @param str_ptr str_ptr pointer to a non-`NULL` string. Caller is responsible for free'ing it.
  * @param sz current size of said string
  * @param fac scaling factor, increase periodically. Set to 0 to initialize the string
  * @return `STDL_ERR_OK` if everything went well.
  * @ingroup base_parser
  */
-int stdl_grow_string(char** str, int sz, int* fac);
+int stdl_grow_string(char** str_ptr, int sz, int* fac);
 
 /**
  * Output a specific error message indicating the current token if `DEBUG_LVL` is above or equal to 0.
@@ -30,6 +30,16 @@ int stdl_grow_string(char** str, int sz, int* fac);
  * @ingroup base_parser
  */
 void stdl_error_msg_parser(char *file, int line, stdl_lexer* lx, char *format, ...);
+
+/**
+ * Copycat of `STDL_ERROR_HANDLE_AND_REPORT`, but using the `stdl_error_msg_parser` function instead.
+ * @ingroup base_parser
+ */
+#define STDL_LEXER_ERROR_HAR(lx, assertion, error_action, ...)       \
+    if(assertion) {                                                  \
+        stdl_error_msg_parser(__FILE__, __LINE__, lx, __VA_ARGS__);  \
+        {error_action;}                                              \
+    }
 
 /**
  * Store the current token value in a string, increase its size by 1, then grow it.

@@ -3,7 +3,7 @@
 
 #include <stdlite/utils/base_parser.h>
 #include <stdlite/wavefunction.h>
-#include "stdlite/basis.h"
+#include <stdlite/basis.h>
 
 /**
  * Skip the beginning of FCHK.

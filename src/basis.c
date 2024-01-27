@@ -9,41 +9,29 @@ int stdl_basis_new(stdl_basis **bs_ptr, int natm, int nbas, size_t env_size, int
     assert(bs_ptr != NULL && natm > 0 && nbas > 0 && env_size > 0);
 
     *bs_ptr = malloc(sizeof(stdl_basis));
+    STDL_ERROR_HANDLE_AND_REPORT(*bs_ptr == NULL, return STDL_ERR_MALLOC, "malloc");
 
-    if(*bs_ptr != NULL) {
-        (*bs_ptr)->natm = natm;
-        (*bs_ptr)->nbas = nbas;
-        (*bs_ptr)->use_spherical = use_spherical;
+    (*bs_ptr)->natm = natm;
+    (*bs_ptr)->nbas = nbas;
+    (*bs_ptr)->use_spherical = use_spherical;
 
-        (*bs_ptr)->atm = (*bs_ptr)->bas = NULL;
-        (*bs_ptr)->env = NULL;
+    (*bs_ptr)->atm = (*bs_ptr)->bas = NULL;
+    (*bs_ptr)->env = NULL;
 
-        (*bs_ptr)->atm = malloc(6 * natm * sizeof(int));
-        (*bs_ptr)->bas = malloc(8 * nbas * sizeof(int));
-        if((*bs_ptr)->atm == NULL || (*bs_ptr)->bas == NULL) {
-            stdl_basis_delete(*bs_ptr);
-            return STDL_ERR_MALLOC;
-        }
+    (*bs_ptr)->atm = malloc(6 * natm * sizeof(int));
+    (*bs_ptr)->bas = malloc(8 * nbas * sizeof(int));
+    STDL_ERROR_HANDLE_AND_REPORT((*bs_ptr)->atm == NULL || (*bs_ptr)->bas == NULL, stdl_basis_delete(*bs_ptr); return STDL_ERR_MALLOC, "malloc");
 
-        (*bs_ptr)->env = malloc(env_size * sizeof(double));
-        if((*bs_ptr)->env == NULL) {
-            stdl_basis_delete(*bs_ptr);
-            return STDL_ERR_MALLOC;
-        }
+    (*bs_ptr)->env = malloc(env_size * sizeof(double));
+    STDL_ERROR_HANDLE_AND_REPORT((*bs_ptr)->env == NULL, stdl_basis_delete(*bs_ptr); return STDL_ERR_MALLOC, "malloc");
 
-        return STDL_ERR_OK;
-    } else
-        return STDL_ERR_MALLOC;
+    return STDL_ERR_OK;
 }
 
 int stdl_basis_delete(stdl_basis *bs) {
     assert(bs != NULL);
 
-    STDL_FREE_IF_USED(bs->atm);
-    STDL_FREE_IF_USED(bs->bas);
-    STDL_FREE_IF_USED(bs->env);
-
-    free(bs);
+    STDL_FREE_ALL(bs->atm, bs->bas, bs->env, bs);
 
     return STDL_ERR_OK;
 }

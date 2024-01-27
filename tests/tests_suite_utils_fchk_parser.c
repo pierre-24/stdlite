@@ -9,6 +9,8 @@
 FILE* stream;
 
 void setUp(void) {
+    stdl_set_debug_level(-1);
+
     stream = tmpfile();
 }
 
@@ -337,4 +339,62 @@ void test_read_fchk_read_all_section_ok() {
     STDL_OK(stdl_lexer_delete(lx));
 
     fclose(f);
+}
+
+
+void test_extract_wavefunction_and_basis_ok() {
+    char cwd[512], fchk_path[1024];
+    TEST_ASSERT_NOT_NULL(getcwd(cwd, 512));
+
+    sprintf(fchk_path, "%s/../tests/test_files/water_sto3g.fchk", cwd);
+
+    FILE *f = fopen(fchk_path, "r");
+    TEST_ASSERT_NOT_NULL(f);
+
+    stdl_lexer *lx = NULL;
+    STDL_OK(stdl_lexer_new(&lx, f));
+
+    STDL_OK(stdl_fchk_parser_skip_intro(lx));
+
+    stdl_wavefunction *wf = NULL;
+    stdl_basis *bs = NULL;
+    STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
+    STDL_OK(stdl_basis_delete(bs));
+
+    // check basis and geometry
+    TEST_ASSERT_EQUAL_INT(3, wf->natm);
+    TEST_ASSERT_EQUAL_INT(7, wf->nao); // O[1s,2s,2px,2py,2pz] + H[1s] + H[1s]
+    TEST_ASSERT_EQUAL_INT(7, wf->nmo);
+    TEST_ASSERT_EQUAL_INT(10, wf->nelec);
+
+    // check that S is indeed symmetric
+    for (size_t i = 0; i < wf->nao; ++i) {
+        for (size_t j = 0; j <=i ; ++j) {
+            TEST_ASSERT_EQUAL_DOUBLE(wf->S[i * wf->nao + j], wf->S[j * wf->nao + i]);
+        }
+    }
+
+    STDL_OK(stdl_wavefunction_delete(wf));
+    STDL_OK(stdl_lexer_delete(lx));
+
+    fclose(f);
+}
+
+void test_extract_wf_too_short_ko() {
+    char* vector = "whatever\nwhatever\nAtomic numbers                             I   N=           3";
+
+    rewind(stream);
+    fputs(vector, stream);
+    rewind(stream);
+
+    stdl_lexer* lx = NULL;
+    STDL_OK(stdl_lexer_new(&lx, stream));
+
+    STDL_OK(stdl_fchk_parser_skip_intro(lx));
+
+    stdl_wavefunction *wf = NULL;
+    stdl_basis *bs = NULL;
+    STDL_NOK(stdl_fchk_parser_extract(&wf, &bs, lx));
+
+    STDL_OK(stdl_lexer_delete(lx));
 }

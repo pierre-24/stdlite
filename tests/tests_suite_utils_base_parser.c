@@ -8,6 +8,8 @@
 FILE* stream;
 
 void setUp(void) {
+    stdl_set_debug_level(-1);
+
     stream = tmpfile();
 }
 

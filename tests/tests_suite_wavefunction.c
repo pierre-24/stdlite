@@ -8,36 +8,7 @@
 
 #include <cblas.h>
 
-void test_extract_from_fchk_ok() {
-    char cwd[512], fchk_path[1024];
-    TEST_ASSERT_NOT_NULL(getcwd(cwd, 512));
-
-    sprintf(fchk_path, "%s/../tests/test_files/water_sto3g.fchk", cwd);
-
-    FILE* f = fopen(fchk_path, "r");
-    TEST_ASSERT_NOT_NULL(f);
-
-    stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(&lx, f));
-
-    STDL_OK(stdl_fchk_parser_skip_intro(lx));
-
-    stdl_wavefunction * wf = NULL;
-    stdl_basis * bs = NULL;
-    STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
-    STDL_OK(stdl_basis_delete(bs));
-
-    TEST_ASSERT_EQUAL_INT(3, wf->natm);
-    TEST_ASSERT_EQUAL_INT(7, wf->nao); // O[1s,2s,2px,2py,2pz] + H[1s] + H[1s]
-    TEST_ASSERT_EQUAL_INT(7, wf->nmo);
-    TEST_ASSERT_EQUAL_INT(10, wf->nelec);
-
-    // check that S is indeed symmetric
-    for (size_t i = 0; i < wf->nao; ++i) {
-        for (size_t j = 0; j <=i ; ++j) {
-            TEST_ASSERT_EQUAL_DOUBLE(wf->S[i * wf->nao + j], wf->S[j * wf->nao + i]);
-        }
-    }
+void _check_wavefunction(stdl_wavefunction* wf) {
 
     // compute the density matrix, assuming a closed-shell WF.
     // D is `double[nao*nao]`
@@ -51,7 +22,7 @@ void test_extract_from_fchk_ok() {
             2.f, wf->C, (int) wf->nmo,
             wf->C, (int) wf->nmo,
             .0, density_mat, (int) wf->nao
-            );
+    );
 
     // check that density is symmetric
     for (size_t i = 0; i < wf->nao; ++i) {
@@ -71,7 +42,7 @@ void test_extract_from_fchk_ok() {
                 1.f, density_mat, (int) wf->nmo,
                 wf->S, (int) wf->nao,
                 .0, mulliken_pop, (int) wf->nao
-                );
+    );
 
     double total = .0;
     for(size_t i=0; i < wf->nao; i++)
@@ -81,6 +52,27 @@ void test_extract_from_fchk_ok() {
 
     free(mulliken_pop);
     free(density_mat);
+}
+
+void test_content_ok() {
+    char cwd[512], fchk_path[1024];
+    TEST_ASSERT_NOT_NULL(getcwd(cwd, 512));
+
+    sprintf(fchk_path, "%s/../tests/test_files/water_sto3g.fchk", cwd);
+
+    FILE* f = fopen(fchk_path, "r");
+    TEST_ASSERT_NOT_NULL(f);
+
+    stdl_lexer* lx = NULL;
+    STDL_OK(stdl_lexer_new(&lx, f));
+    STDL_OK(stdl_fchk_parser_skip_intro(lx));
+
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
+    STDL_OK(stdl_basis_delete(bs));
+
+    _check_wavefunction(wf);
 
     STDL_OK(stdl_wavefunction_delete(wf));
     STDL_OK(stdl_lexer_delete(lx));

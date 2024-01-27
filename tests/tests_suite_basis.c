@@ -5,7 +5,24 @@
 
 #include "tests_suite.h"
 
-void test_basis_functions_ovlp_ok() {
+
+void _check_basis(stdl_basis* bs) {
+
+    // check that <i|i> = 1.
+    double* buf = malloc(3 * 3 * sizeof(double));
+
+    for(int i=0; i < bs->nbas; i++) {
+        int1e_ovlp_cart(buf, NULL, (int[]) {i, i}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
+        int n = CINTcgtos_cart(i, bs->bas);
+        for(int j=0; j < n; j++) {
+            TEST_ASSERT_DOUBLE_WITHIN(1e-8, 1.f, buf[j * n + j]);
+        }
+    }
+
+    free(buf);
+}
+
+void test_basis_functions_ok() {
     char cwd[512], fchk_path[1024];
     TEST_ASSERT_NOT_NULL(getcwd(cwd, 512));
 
@@ -25,20 +42,7 @@ void test_basis_functions_ovlp_ok() {
     STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
     STDL_OK(stdl_wavefunction_delete(wf));
 
-    stdl_basis_print(bs, 1);
-
-    // check that all functions are normalized
-    double* buf = malloc(3 * 3 * sizeof(double));
-
-    for(int i=0; i < bs->nbas; i++) {
-        int1e_ovlp_cart(buf, NULL, (int[]) {i, i}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
-        int n = CINTcgtos_cart(i, bs->bas);
-        for(int j=0; j < n; j++) {
-            TEST_ASSERT_DOUBLE_WITHIN(1e-8, 1.f, buf[j * n + j]);
-        }
-    }
-
-    free(buf);
+    _check_basis(bs);
 
     STDL_OK(stdl_basis_delete(bs));
     STDL_OK(stdl_lexer_delete(lx));

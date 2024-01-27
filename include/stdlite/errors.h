@@ -1,6 +1,24 @@
 #ifndef STDL_ERRORS_H
 #define STDL_ERRORS_H
 
+/// Handle error (if `assertion` is true) by printing a message and using an action.
+/// Inspired by B. Klemens in *21st century C* (O'Reilly).
+/// @ingroup errors
+#define STDL_ERROR_HANDLE_AND_REPORT(assertion, error_action, ...)   \
+    if(assertion) {                                                  \
+        stdl_error_msg(__FILE__, __LINE__, __VA_ARGS__);             \
+        {error_action;}                                              \
+    }
+
+/// Handle error (if `assertion` is true) by using an action.
+/// @ingroup errors
+#define STDL_ERROR_HANDLE(assertion, error_action) if(assertion){error_action;}
+
+/// Handle error code (if different from `STDL_ERR_OK`) by using an action.
+/// @ingroup errors
+#define STDL_ERROR_CODE_HANDLE(code, error_action) STDL_ERROR_HANDLE(code != STDL_ERR_OK, error_action)
+
+
 /**
  * Enum for the errors codes.
  * @ingroup errors
