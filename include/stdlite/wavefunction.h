@@ -40,7 +40,7 @@ struct stdl_wavefunction_ {
     double* S;
 
     /// `double[nmo*nao]`, the LCAO coefficients matrix (`C`).
-    /// Stored (from Gaussian) as `[c_mo0ao0, c_mo0ao1, ..., c_mo0aoN, c_mo1ao0, ..., c_moNaoN]`.
+    /// Stored (from Gaussian) as `[c_mo0ao0, c_mo0ao1, ..., c_mo0aoN, c_mo1ao0, ..., c_moNaoN]`: the first index refers to the MO, the second to the AO.
     double* C;
 
     /// `double[nmo]`, the MO energy vector (`e`) for each MO.
@@ -71,11 +71,29 @@ int stdl_wavefunction_delete(stdl_wavefunction* wf);
 
 /**
  * Symmetrize the LCAO coefficients using a Löwdin orthogonalization.
+ *
+ * $$C' = S^{1/2}\,C.$$
+ *
  * See, *e.g.*, [there](https://booksite.elsevier.com/9780444594365/downloads/16755_10030.pdf).
  * As a result, `wf->C` becomes symmetric, and `wf->S` is the identity matrix.
  * @param wf the wavefunction to orthogonalize.
  * @return the error code
+ * @ingroup wavefunction
  */
 int stdl_wavefunction_orthogonalize(stdl_wavefunction* wf);
+
+/**
+ * Compute the density matrix.
+ *
+ * $$D_{ij} = \sum_k^{MO} n_k\,C_{ki}\,C_{kj},$$
+ *
+ * where $n_k$ is the occupation number of MO $k$.
+ *
+ * @param wf a valid wavefunction
+ * @param[out] D `double[nao*nao]` the density matrix to be created. Caller is responsible for free'ing it.
+ * @return error code.
+ * @ingroup wavefunction
+ */
+int stdl_wavefunction_compute_density(stdl_wavefunction* wf, double** D);
 
 #endif //STDLITE_WAVEFUNCTION_H

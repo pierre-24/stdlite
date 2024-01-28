@@ -97,16 +97,23 @@ int stdl_wavefunction_orthogonalize(stdl_wavefunction *wf) {
 
     STDL_FREE_ALL(e, wcc);
 
-    // C' = C * S^1/2
-    // The difference probably comes from row-to-column major reference
+    // C' = C * S^1/2 (the side depends on if first index is MO or AO)
     cblas_dsymm(CblasRowMajor, CblasRight, CblasLower,
-                (int) wf->nao, (int) wf->nao,
+                (int) wf->nmo, (int) wf->nao,
                 1.f, wf->S, (int) wf->nao,
                 wf->C, (int) wf->nao,
                 .0, w, (int) wf->nao
     );
 
-    memcpy(wf->C, w, wf->nao * wf->nao * sizeof(double));
+    /* Or:
+     * cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                (int) wf->nmo, (int) wf->nao, (int) wf->nao,
+                1.f, wf->C, (int) wf->nao,
+                wf->S, (int) wf->nao,
+                .0f, w, (int) wf->nao
+    );*/
+
+    memcpy(wf->C, w, wf->nmo * wf->nao * sizeof(double));
 
     STDL_FREE_ALL(w);
 
@@ -117,6 +124,36 @@ int stdl_wavefunction_orthogonalize(stdl_wavefunction *wf) {
     }
 
     wf->isortho = 1;
+
+    return STDL_ERR_OK;
+}
+
+int stdl_wavefunction_compute_density(stdl_wavefunction *wf, double **D) {
+    assert(wf != NULL && D != NULL);
+
+    *D = malloc(wf->nao * wf->nao * sizeof(double));
+    STDL_ERROR_HANDLE_AND_REPORT(*D == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    // X_ik = n_k*C_ik
+    double* X = malloc(wf->nao * wf->nmo * sizeof(double));
+    STDL_ERROR_HANDLE_AND_REPORT(X == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    for (size_t i = 0; i < wf->nmo; ++i) {
+        for (size_t j = 0; j < wf->nao; ++j) {
+            X[i * wf->nao + j] = wf->C[i * wf->nao + j] * ((i < wf->nelec / 2) ? 2 : 0);
+        }
+    }
+
+    // D = X^T * C
+    cblas_dgemm(
+            CblasRowMajor, CblasTrans, CblasNoTrans,
+            (int) wf->nao, (int) wf->nao, (int) wf->nmo,
+            1.f, X, (int) wf->nao,
+            wf->C, (int) wf->nao,
+            .0, *D, (int) wf->nao
+    );
+
+    free(X);
 
     return STDL_ERR_OK;
 }

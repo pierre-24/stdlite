@@ -3,9 +3,25 @@
 
 #include <stdlib.h>
 
-/// Maximum number of columns per batch
-/// @ingroup matrix
+/**
+ * Maximum number of columns per batch
+ * @ingroup matrix
+ */
 #define STDL_MATRIX_MAX_COLS 5
+
+/**
+ * Get the index corresponding to an element of a symmetric packed (SP) matrix.
+ * `i` is the row, while `j` is the column.
+ * Assume `i < j`.
+ * @ingroup matrix
+ */
+#define STDL_MATRIX_SP_IDX(i, j) ((i)*(i+1)/2+j)
+
+/**
+ * Get the size of a symmetric packed (SP) matrix.
+ * @ingroup matrix
+ */
+#define STDL_MATRIX_SP_SIZE(n) ((n)*((n)+1)/2)
 
 /**
  * Print a matrix.
@@ -27,20 +43,5 @@ int stdl_matrix_ge_print(size_t rows, size_t columns, double *matrix, int is_sym
  * @ingroup matrix
  */
 int stdl_matrix_sp_print(size_t n, double *matrix);
-
-
-/**
- * Get the size of a symmetric packed (SP) matrix.
- * @ingroup matrix
- */
-# define STDL_MATRIX_SP_SIZE(n) (n)*((n)+1)/2
-
-/**
- * Get the index corresponding to an element of a symmetric packed (SP) matrix.
- * `i` is the row, while `j` is the column.
- * Assume `i < j`.
- * @ingroup matrix
- */
-#define STDL_MATRIX_SP_IDX(i, j) (i)*(i+1)/2+j
 
 #endif //STDLITE_MATRIX_H
