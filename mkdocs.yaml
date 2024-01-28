@@ -6,6 +6,7 @@ repo_name: "pierre-24/stdlite"
 
 nav:
   - index.md
+  - theory.md
   - build.md
   - Public API:
     - API/index.md
