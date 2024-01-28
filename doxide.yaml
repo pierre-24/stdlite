@@ -24,6 +24,15 @@ groups:
           
           Most of the documentation (and all examples) of libcint actually refers to the old (version < 3.0) API.
           The new API actually includes two extra parameters [described there](https://github.com/sunqm/libcint/blob/master/doc/program_ref.tex#L228).
+  - name: context
+    title: Context handler
+    description: |
+      Setup and modify a calculation.
+
+      ```c
+      #include <stdlite/context.h>
+      ```
+
   - name: errors
     title: Error definition and handling
     description: |
@@ -54,7 +63,7 @@ groups:
       #include <stdlite/matrix.h>
       ```
   - name: wavefunction
-    title: Wavefunction results
+    title: Wavefunction
     description: |
       Store the result of a QC calculation, which is the input for subsequent (s)TD-DFT calculations.
       

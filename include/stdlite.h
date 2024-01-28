@@ -2,6 +2,7 @@
 #define STDLITE_H
 
 #include <stdlite/basis.h>
+#include <stdlite/context.h>
 #include <stdlite/errors.h>
 #include <stdlite/helpers.h>
 #include <stdlite/matrix.h>
