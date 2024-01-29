@@ -52,6 +52,7 @@ typedef struct stdlite_context_ stdlite_context;
  * @param e_thr energy threshold
  * @param ax amount of HF exchange
  * @return error code
+ * @ingroup context
  */
 int stdlite_context_new(stdlite_context ** ctx, stdl_wavefunction* wf, float gamma_J, float  gamma_K, float e_thr, float ax);
 
@@ -60,6 +61,7 @@ int stdlite_context_new(stdlite_context ** ctx, stdl_wavefunction* wf, float gam
  * Delete a context. Also delete the `stdl_wavefunction` that it contains.
  * @param ctx the context to be deleted
  * @return error code
+ * @ingroup context
  */
 int stdlite_context_delete(stdlite_context* ctx);
 

@@ -2,7 +2,7 @@ title: Public API documentation
 description: |
   This section describes the public API of `libstdlite`.
   
-  {% include-markdown "../includes/API.md" %}
+  --8<-- "docs/includes/API.md"
 
 output: docs/API
 files:

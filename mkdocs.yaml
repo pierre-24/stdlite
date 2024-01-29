@@ -36,12 +36,13 @@ extra_javascript:
 
 plugins:
   - search
-  - include-markdown
 
 markdown_extensions:
   - def_list
   - attr_list
   - admonition
+  - pymdownx.snippets:
+      check_paths: true
   - pymdownx.details
   - pymdownx.superfences
   - pymdownx.arithmatex:
