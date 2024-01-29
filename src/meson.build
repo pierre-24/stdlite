@@ -1,5 +1,6 @@
 srcs += files(
     'basis.c',
+    'context.c',
     'logging.c',
     'matrix.c',
     'utils/base_parser.c',

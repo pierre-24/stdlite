@@ -85,9 +85,9 @@ int stdl_wavefunction_orthogonalize(stdl_wavefunction* wf);
 /**
  * Compute the density matrix.
  *
- * $$D_{ij} = \sum_k^{MO} n_k\,C_{ki}\,C_{kj},$$
+ * $$D_{\mu\nu} = \sum_r^{MO} n_r\,C_{r\mu}\,C_{r\nu},$$
  *
- * where $n_k$ is the occupation number of MO $k$.
+ * where $n_r$ is the occupation number of MO $r$.
  *
  * @param wf a valid wavefunction
  * @param[out] D `double[nao*nao]` the density matrix to be created. Caller is responsible for free'ing it.

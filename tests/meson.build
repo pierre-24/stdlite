@@ -19,6 +19,7 @@ tests_dep += unity_dep
 # create tests
 tests_to_run = [
     'basis',
+    'context',
     'utils_lexer',
     'utils_base_parser',
     'utils_fchk_parser',

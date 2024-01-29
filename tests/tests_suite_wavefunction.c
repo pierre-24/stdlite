@@ -16,7 +16,7 @@ void _check_wavefunction(stdl_wavefunction* wf) {
     double* density_mat = NULL;
     stdl_wavefunction_compute_density(wf, &density_mat);
 
-    // stdl_matrix_ge_print(wf->nao, wf->nao, density_mat, 0, "D");
+    // stdl_matrix_dge_print(wf->nao, 0, density_mat, "D");
 
     // check that density is symmetric
     for (size_t i = 0; i < wf->nao; ++i) {
@@ -53,7 +53,7 @@ void _check_wavefunction(stdl_wavefunction* wf) {
         memcpy(mulliken_pop, density_mat, wf->nao * wf->nao * sizeof(double));
     }
 
-    // stdl_matrix_ge_print(wf->nao, wf->nao, mulliken_pop, 0, "1/2*(DS+SD)");
+    // stdl_matrix_dge_print(wf->nao, 0, mulliken_pop, "1/2*(DS+SD)");
 
     double total = .0;
     for(size_t i=0; i < wf->nao; i++)
@@ -67,10 +67,7 @@ void _check_wavefunction(stdl_wavefunction* wf) {
 
 void test_content_ok() {
 
-    char cwd[512], fchk_path[1024];
-    TEST_ASSERT_NOT_NULL(getcwd(cwd, 512));
-
-    sprintf(fchk_path, "%s/../tests/test_files/water_sto3g.fchk", cwd);
+    char* fchk_path = "../tests/test_files/water_sto3g.fchk";
 
     FILE* f = fopen(fchk_path, "r");
     TEST_ASSERT_NOT_NULL(f);
@@ -94,10 +91,7 @@ void test_content_ok() {
 
 void test_orthogonalize_ok() {
 
-    char cwd[512], fchk_path[1024];
-    TEST_ASSERT_NOT_NULL(getcwd(cwd, 512));
-
-    sprintf(fchk_path, "%s/../tests/test_files/water_sto3g.fchk", cwd);
+    char* fchk_path = "../tests/test_files/water_sto3g.fchk";
 
     FILE* f = fopen(fchk_path, "r");
     TEST_ASSERT_NOT_NULL(f);
@@ -111,7 +105,7 @@ void test_orthogonalize_ok() {
     STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
     STDL_OK(stdl_basis_delete(bs));
 
-    stdl_wavefunction_orthogonalize(wf);
+    STDL_OK(stdl_wavefunction_orthogonalize(wf));
 
     // check that the MO are normalized
     for (size_t i = 0; i < wf->nmo; ++i) {
@@ -134,10 +128,8 @@ void test_orthogonalize_ok() {
 
 
 void test_remove_mo_ok() {
-    char cwd[512], fchk_path[1024];
-    TEST_ASSERT_NOT_NULL(getcwd(cwd, 512));
 
-    sprintf(fchk_path, "%s/../tests/test_files/water_sto3g.fchk", cwd);
+    char* fchk_path = "../tests/test_files/water_sto3g.fchk";
 
     FILE* f = fopen(fchk_path, "r");
     TEST_ASSERT_NOT_NULL(f);
@@ -158,7 +150,7 @@ void test_remove_mo_ok() {
     wf->nmo = 5;
     wf->nelec = 6;
 
-    stdl_wavefunction_orthogonalize(wf);
+    STDL_OK(stdl_wavefunction_orthogonalize(wf));
 
     // check that the MO are normalized
     for (size_t i = 0; i < wf->nmo; ++i) {

@@ -24,15 +24,24 @@
 #define STDL_MATRIX_SP_SIZE(nx) ((nx)*((nx)+1)/2)
 
 /**
- * Print a matrix.
- * @param rows number of rows
- * @param columns number of columns
+ * Print a double precision matrix.
+ * @param rows number of rows, must be >0.
+ * @param columns number of columns. If 0, assume that the matrix is symmetric.
  * @param matrix the matrix
- * @param is_symmetric only prints the lower half.
  * @return `STDL_ERR_OK`
  * @ingroup matrix
  */
-int stdl_matrix_ge_print(size_t rows, size_t columns, double *matrix, int is_symmetric, char *title);
+int stdl_matrix_dge_print(size_t rows, size_t columns, double *matrix, char *title);
+
+/**
+ * Print a single precision matrix.
+ * @param rows number of rows, must be >0.
+ * @param columns number of columns. If 0, assume that the matrix is symmetric.
+ * @param matrix the matrix
+ * @return `STDL_ERR_OK`
+ * @ingroup matrix
+ */
+int stdl_matrix_sge_print(size_t rows, size_t columns, float *matrix, char *title);
 
 /**
  * Print a symmetric (thus square) packed matrix.
@@ -42,10 +51,11 @@ int stdl_matrix_ge_print(size_t rows, size_t columns, double *matrix, int is_sym
  * @return `STDL_ERR_OK`
  * @ingroup matrix
  */
-int stdl_matrix_sp_print(size_t n, double *matrix);
+int stdl_matrix_dsp_print(size_t n, double *matrix);
+
 
 /**
- * Compute the square root of a square unitary matrix, `*mat`, in place.
+ * Compute the square root of a square unitary matrix in double precision, `*mat`, in place.
  *
  * $$X^{1/2} = U\,\varepsilon^{1/2}\,U^T,$$
  *
@@ -56,6 +66,6 @@ int stdl_matrix_sp_print(size_t n, double *matrix);
  * @return error code
  * @ingroup matrix
  */
-int stdl_matrix_ge_sqrt(double** mat, size_t n);
+int stdl_matrix_dge_sqrt(double** mat, size_t n);
 
 #endif //STDLITE_MATRIX_H

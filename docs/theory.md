@@ -89,7 +89,11 @@ $$\tag{3}\left[\begin{pmatrix}
 \end{pmatrix},$$
 
 where $\mathbf x^\omega$ and $\mathbf y^\omega$ are the frequency-dependent linear response vector (to be determined) in direction $\zeta$.
-The $\mathbf A$ and $\mathbf B$ are electronic Hessian (super-)matrices (related to orbital rotations). For a **global hybrid** density functional (independent of $\omega$), their elements are:
+The $\mathbf A$ and $\mathbf B$ are electronic Hessian (super-)matrices (related to orbital rotations). For a **global hybrid** density functional (independent of $\omega$),
+
+$$E_{XC}= (1-a_x)\,E_X^{GGA}+a_x\,E_X^{HF}+E_C^{GGA},$$
+
+their elements are:
 
 $$\begin{aligned}
 &A_{ia, jb} = \delta_{ij}\delta_{ab} (\epsilon_a - \epsilon_i) + 2(ia|jb) - a_x\,(ij|ab) + (1-a_x)\,(ia|f_{XC}|jb),\\
@@ -134,7 +138,7 @@ $$(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}-\mathbf{B})\,(\mathbf{A}-\mat
 The simplified TD-DFT methods root in 3 approximations:
 
 1. all integrals involving the XC-functionals are neglected,
-2. the singly excited configuration space is truncated considering a single energy threshold $E_{thr}$: the active MO space is defined by $\varepsilon_{HOMO}-2\,(1+0.8\,a_x) \leq \varepsilon_i \leq \varepsilon_{LUMO}+2\,(1+0.8a_x)$, and
+2. the singly excited configuration space is truncated considering a single energy threshold $E_{thr}$: the active MO space is defined by $\varepsilon_{LUMO}-2\,(1+0.8\,a_x)\,E_{thr} \leq \varepsilon_i \leq \varepsilon_{HOMO}+2\,(1+0.8a_x)\,E_{thr}$, and
 3. the ZDO approximation is used for two-electron integrals which built $\mathbf A$ and $\mathbf B$ (see below).
 
 ## Sources and references

@@ -1,6 +1,4 @@
 #include <assert.h>
-#include <math.h>
-#include <lapacke.h>
 #include <cblas.h>
 #include <string.h>
 
@@ -58,7 +56,7 @@ int stdl_wavefunction_orthogonalize(stdl_wavefunction *wf) {
         return STDL_ERR_OK;
     }
 
-    int error = stdl_matrix_ge_sqrt(&(wf->S), wf->nao);
+    int error = stdl_matrix_dge_sqrt(&(wf->S), wf->nao);
     STDL_ERROR_CODE_HANDLE(error, return  error);
 
     // C' = C * S^1/2 (the side depends on if first index is MO or AO)

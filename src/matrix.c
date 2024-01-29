@@ -3,15 +3,23 @@
 #include <lapacke.h>
 #include <math.h>
 #include <cblas.h>
+#include <assert.h>
 
 #include "stdlite/matrix.h"
 #include "stdlite/logging.h"
 #include "stdlite/helpers.h"
 
+int stdl_matrix_dge_print(size_t rows, size_t columns, double *matrix, char *title) {
+    assert(rows > 0 && matrix != NULL);
 
-int stdl_matrix_ge_print(size_t rows, size_t columns, double *matrix, int is_symmetric, char *title) {
     size_t i = 0, j, c;
-    printf(" %s\n\n", title);
+    int is_symmetric = columns == 0;
+
+    if(is_symmetric)
+        columns = rows;
+
+    if(title != NULL)
+        printf(" %s\n\n", title);
 
     while (i < columns) {
         // header
@@ -43,7 +51,51 @@ int stdl_matrix_ge_print(size_t rows, size_t columns, double *matrix, int is_sym
     return STDL_ERR_OK;
 }
 
-int stdl_matrix_sp_print(size_t n, double *matrix) {
+int stdl_matrix_sge_print(size_t rows, size_t columns, float *matrix, char *title) {
+    assert(rows > 0 && matrix != NULL);
+
+    size_t i = 0, j, c;
+    int is_symmetric = columns == 0;
+
+    if(is_symmetric)
+        columns = rows;
+
+    if(title != NULL)
+        printf(" %s\n\n", title);
+
+    while (i < columns) {
+        // header
+        j = 0;
+        printf("    ");
+        while (j < STDL_MATRIX_MAX_COLS && (i + j) < columns){
+            c = i + j;
+            printf("    %6ld    ", c);
+            j++;
+        }
+        printf("\n");
+
+        // content
+        for(size_t r = (is_symmetric? i:0); r < rows; r++) {
+            printf("%4ld", r);
+            j = 0;
+            while (j < STDL_MATRIX_MAX_COLS && i + j < columns && ((is_symmetric && i + j <= r) || !is_symmetric)){
+                c = i + j;
+                printf(" % .6e", matrix[r * columns + c]);
+                j++;
+            }
+            printf("\n");
+        }
+
+
+        i += STDL_MATRIX_MAX_COLS;
+    }
+
+    return STDL_ERR_OK;
+}
+
+int stdl_matrix_dsp_print(size_t n, double *matrix) {
+    assert(n > 0 && matrix != NULL && matrix != NULL);
+
     size_t i = 0, j, c;
     while (i < n) {
         // header
@@ -75,7 +127,7 @@ int stdl_matrix_sp_print(size_t n, double *matrix) {
 }
 
 
-int stdl_matrix_ge_sqrt(double** mat, size_t n) {
+int stdl_matrix_dge_sqrt(double** mat, size_t n) {
     size_t sz = n * n * sizeof(double);
 
     double* e = malloc(n* sizeof(double));
@@ -115,7 +167,7 @@ int stdl_matrix_ge_sqrt(double** mat, size_t n) {
                 .0f, *mat, (int) n
     );
 
-    STDL_FREE_ALL(e, wcc);
+    STDL_FREE_ALL(e, w, wcc);
 
     return STDL_ERR_OK;
 }

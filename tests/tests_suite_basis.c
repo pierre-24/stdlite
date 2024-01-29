@@ -23,10 +23,7 @@ void _check_basis(stdl_basis* bs) {
 }
 
 void test_basis_functions_ok() {
-    char cwd[512], fchk_path[1024];
-    TEST_ASSERT_NOT_NULL(getcwd(cwd, 512));
-
-    sprintf(fchk_path, "%s/../tests/test_files/water_631g.fchk", cwd);
+    char* fchk_path = "../tests/test_files/water_sto3g.fchk";
 
     FILE* f = fopen(fchk_path, "r");
     TEST_ASSERT_NOT_NULL(f);
