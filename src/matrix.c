@@ -1,7 +1,12 @@
 #include <stdio.h>
+#include <string.h>
+#include <lapacke.h>
+#include <math.h>
+#include <cblas.h>
 
 #include "stdlite/matrix.h"
 #include "stdlite/logging.h"
+#include "stdlite/helpers.h"
 
 
 int stdl_matrix_ge_print(size_t rows, size_t columns, double *matrix, int is_symmetric, char *title) {
@@ -65,6 +70,52 @@ int stdl_matrix_sp_print(size_t n, double *matrix) {
 
         i += STDL_MATRIX_MAX_COLS;
     }
+
+    return STDL_ERR_OK;
+}
+
+
+int stdl_matrix_ge_sqrt(double** mat, size_t n) {
+    size_t sz = n * n * sizeof(double);
+
+    double* e = malloc(n* sizeof(double));
+    double* w = malloc(sz);
+    double* wcc = malloc(sz);
+
+    STDL_ERROR_HANDLE_AND_REPORT(e == NULL || w == NULL || wcc == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    // copy *mat in w
+    memcpy(w, *mat, sz);
+
+    // eig
+    int info = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'L', (int) n, w, (int) n, e);
+    STDL_ERROR_HANDLE_AND_REPORT(info != 0, return STDL_ERR_MALLOC, "dsyev() returned %d", info);
+
+    // compute the square root of eigenvalues
+    for(size_t i = 0; i < n; i++) {
+        if(e[i] < .0) {
+            STDL_WARN("eigenvalue of S #%d is < .0, will be set to 0", i);
+            e[i] = 0;
+        } else
+            e[i] = sqrt(e[i]);
+    }
+
+    // wcc = e * w
+    memcpy(wcc, w, sz);
+    for(size_t i = 0; i < n; i++) {
+        for(size_t j=0; j < n; j++)
+            wcc[i * n + j]  *= e[j];
+    }
+
+    // (*mat)^1/2 = w * wcc^T
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+                (int) n, (int) n, (int) n,
+                1.f, w, (int) n,
+                wcc, (int) n,
+                .0f, *mat, (int) n
+    );
+
+    STDL_FREE_ALL(e, wcc);
 
     return STDL_ERR_OK;
 }

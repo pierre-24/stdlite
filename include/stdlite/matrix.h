@@ -18,10 +18,10 @@
 #define STDL_MATRIX_SP_IDX(i, j) ((i)*(i+1)/2+j)
 
 /**
- * Get the size of a symmetric packed (SP) matrix.
+ * Get the size of a symmetric packed (SP) matrix of size `n`.
  * @ingroup matrix
  */
-#define STDL_MATRIX_SP_SIZE(n) ((n)*((n)+1)/2)
+#define STDL_MATRIX_SP_SIZE(nx) ((nx)*((nx)+1)/2)
 
 /**
  * Print a matrix.
@@ -37,11 +37,25 @@ int stdl_matrix_ge_print(size_t rows, size_t columns, double *matrix, int is_sym
 /**
  * Print a symmetric (thus square) packed matrix.
  * Storage is in the [lower triangle form](https://netlib.org/lapack/lug/node123.html) (`L`), so: `[a_00, a_10, a_11, a_20, a_21, ..., a_NN]`.
- * @param n size of the matrix
+ * @param n side length of the matrix
  * @param matrix the matrix
  * @return `STDL_ERR_OK`
  * @ingroup matrix
  */
 int stdl_matrix_sp_print(size_t n, double *matrix);
+
+/**
+ * Compute the square root of a square unitary matrix, `*mat`, in place.
+ *
+ * $$X^{1/2} = U\,\varepsilon^{1/2}\,U^T,$$
+ *
+ * where $\varepsilon$ are the eigenvalues, and $U$ are the eigenvectors.
+ *
+ * @param[in,out] mat Unitary matrix to be modified.
+ * @param n side length of the matrix
+ * @return error code
+ * @ingroup matrix
+ */
+int stdl_matrix_ge_sqrt(double** mat, size_t n);
 
 #endif //STDLITE_MATRIX_H
