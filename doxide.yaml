@@ -33,13 +33,13 @@ groups:
       #include <stdlite/context.h>
       ```
 
-  - name: errors
-    title: Error definition and handling
+  - name: logging
+    title: Logging and errors
     description: |
-      Handling of errors and error messages.
+      Handling of log, of errors, and of error messages.
       
       ```c
-      #include <stdlite/errors.h>
+      #include <stdlite/logging.h>
       ```
       
       Also contains function to signal warnings and debug messages.

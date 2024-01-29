@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include "stdlite/basis.h"
-#include "stdlite/errors.h"
+#include "stdlite/logging.h"
 #include "stdlite.h"
 
 

@@ -3,7 +3,7 @@
 
 #include <stdlite/basis.h>
 #include <stdlite/context.h>
-#include <stdlite/errors.h>
+#include <stdlite/logging.h>
 #include <stdlite/helpers.h>
 #include <stdlite/matrix.h>
 #include <stdlite/wavefunction.h>

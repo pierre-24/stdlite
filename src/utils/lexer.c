@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "stdlite/helpers.h"
-#include "stdlite/errors.h"
+#include "stdlite/logging.h"
 #include "stdlite/utils/lexer.h"
 
 int lexer_translator[] = {

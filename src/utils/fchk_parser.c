@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "stdlite/errors.h"
+#include "stdlite/logging.h"
 #include "stdlite/utils/fchk_parser.h"
 #include "stdlite.h"
 #include "stdlite/basis.h"

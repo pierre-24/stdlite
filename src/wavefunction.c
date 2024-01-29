@@ -5,7 +5,7 @@
 #include <string.h>
 
 #include "stdlite/wavefunction.h"
-#include "stdlite/errors.h"
+#include "stdlite/logging.h"
 #include "stdlite/helpers.h"
 #include "stdlite/matrix.h"
 

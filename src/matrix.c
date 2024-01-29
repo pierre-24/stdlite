@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #include "stdlite/matrix.h"
-#include "stdlite/errors.h"
+#include "stdlite/logging.h"
 
 
 int stdl_matrix_ge_print(size_t rows, size_t columns, double *matrix, int is_symmetric, char *title) {

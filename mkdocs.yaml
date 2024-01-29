@@ -10,7 +10,7 @@ nav:
   - build.md
   - Public API:
     - API/index.md
-    - API/errors/index.md
+    - API/logging/index.md
     - API/helpers/index.md
     - API/context/index.md
     - API/utilities/index.md
