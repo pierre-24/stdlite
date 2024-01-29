@@ -460,6 +460,8 @@ int _fchk_data_new(struct _fchk_data_basis **dt_ptr, size_t nbas, size_t nprims)
 int _make_basis_set(stdl_basis** bs_ptr, stdl_wavefunction* wf, struct _fchk_data_basis* dt) {
     assert(bs_ptr != NULL && wf != NULL && dt != NULL);
 
+    STDL_DEBUG("creating the basis set");
+
     int nbas = (int) dt->nbas, extra_coefs = 0, fct_type = 0 /* 1 = cartesian, -1 = spherical */;
 
     for(int i=0; i < (int) dt->nbas; i++) {
@@ -606,6 +608,8 @@ size_t _count_nao(size_t nbas, long* shell_types) {
 int _make_S(stdl_wavefunction* wf, stdl_basis* bs) {
     assert(wf != NULL && bs != NULL);
 
+    STDL_DEBUG("computing <i|j> to create the S matrix");
+
     int si, sj, ioffset=0, joffset;
 
     double* buff= malloc(28 * 28 * sizeof(double)); // the maximum libcint can handle
@@ -647,6 +651,8 @@ int _make_S(stdl_wavefunction* wf, stdl_basis* bs) {
 int stdl_fchk_parser_extract(stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr, stdl_lexer *lx) {
     assert(wf_ptr != NULL && bs_ptr != NULL && lx != NULL);
 
+    STDL_DEBUG("reading FCHK file");
+
     // useful variables
     int error = STDL_ERR_OK;
     char* name = NULL;
@@ -666,7 +672,7 @@ int stdl_fchk_parser_extract(stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr, st
         error = stdl_fchk_parser_get_section_info(lx, &name, &type, &is_scalar);
         STDL_ERROR_CODE_HANDLE(error, goto _end);
 
-        stdl_debug_msg(__FILE__, __LINE__, "FCHK: section `%s`", name);
+        STDL_DEBUG("- reading section `%s`", name);
 
         if(strcmp("Number of electrons", name) == 0) {
             error = stdl_fchk_parser_get_scalar_integer(lx, &an_integer);
@@ -768,6 +774,8 @@ int stdl_fchk_parser_extract(stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr, st
 
         free(name);
     }
+
+    STDL_DEBUG("reading done");
 
     STDL_ERROR_HANDLE_AND_REPORT(!finished, error = STDL_ERR_UTIL_FCHK; goto _end, "FCHK was missing certain sections (dt=0x%x, wf_ptr=0x%x)", dt, wf_ptr);
 

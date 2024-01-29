@@ -1,0 +1,7 @@
+[wrap-file]
+source_url = https://github.com/argtable/argtable3/releases/download/v3.2.2.f25c624/argtable-v3.2.2.f25c624-amalgamation.tar.gz
+source_filename = argtable-v3.2.2.f25c624-amalgamation.tar.gz
+source_hash = 0066d26e4c09e3e67c897489996907dd3297cd0c678d73ea5ac1892258cc0b98
+
+lead_directory_missing = argtable
+patch_directory = argtable
