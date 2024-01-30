@@ -1,5 +1,9 @@
 title: Theory
 
+!!! note
+    
+    In the following, letters $i,j,\ldots$ ($a,b,\ldots$) are the label of occupied (virtual) molecular orbitals (MO), while $\mu, \nu, \ldots$ refers to atomic orbitals (AO).
+
 ## Introduction
 
 Molecular properties are defined as a response of a (molecular) system to an external perturbation (change of geometry, application of an external electric field, etc).
@@ -100,7 +104,7 @@ $$\begin{aligned}
 &B_{ia,jb} = 2(ia|bj) - a_x(ib|aj) + (1-a_x)\,(ia|f_{XC}|bj),
 \end{aligned}$$
 
-where, by convention, $i,j,\ldots$ ($a,b,\ldots$) are the label of occupied (virtual) MOs, $\epsilon_i$ and $\epsilon_a$ are orbital energies, $a_x$ is the amount of non-local Fock exchange, $(ia|jb)$, $(ia|bj)$, and $(ib|aj)$ are exchange-type and $(ij|ab)$ Coulomb-type two-electron integrals, $(ia|f_{XC}|jb)$ and $(ia|f_{XC}|bj)$ are responses of the exchange-correlation functional.
+where, $\epsilon_i$ and $\epsilon_a$ are orbital energies, $a_x$ is the amount of non-local Fock exchange, $(ia|jb)$, $(ia|bj)$, and $(ib|aj)$ are exchange-type and $(ij|ab)$ Coulomb-type two-electron integrals, $(ia|f_{XC}|jb)$ and $(ia|f_{XC}|bj)$ are responses of the exchange-correlation functional.
 
 Eq. (3) can be turned into a pseudo-eigenvalue problem:
 
@@ -138,8 +142,65 @@ $$(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}-\mathbf{B})\,(\mathbf{A}-\mat
 The simplified TD-DFT methods root in 3 approximations:
 
 1. all integrals involving the XC-functionals are neglected,
-2. the singly excited configuration space is truncated considering a single energy threshold $E_{thr}$: the active MO space is defined by $\varepsilon_i \in [\varepsilon_{LUMO}-E_{w}, \varepsilon_{HOMO}+E_{w}]$, with $E_w = 2\,(1+0.8a_x)\,E_{thr}$, and
-3. the ZDO approximation is used for two-electron integrals which built $\mathbf A$ and $\mathbf B$.
+2. the singly excited configuration space is truncated (see below), and
+3. the [zero-differential overlap](https://en.wikipedia.org/wiki/Zero_differential_overlap) (ZDO) approximation is used for two-electron integrals which built $\mathbf A$ and $\mathbf B$. Different approximations defines different flavors of simplified TD-DFT (see below).
+
+The truncation of the CI space is done in two steps:
+
+1. an active MO space is defined by $\varepsilon_p \in [\varepsilon_{LUMO}-E_{w}, \varepsilon_{HOMO}+E_{w}]$, with $E_w = 2\,(1+0.8a_x)\,E_{thr}$, and then
+2. configuration state functions (CSF) are selected within this active space, either if $A_{ia,ia} < E_{thr}$ (primary CSF, P-CSFs) or if $E^{(2)}_{jb} > E_{pt}$ (secondary CSF, S-CFSs), where
+   $E^{(2)}_{jb} = \sum_{ia}^{P-CSFs} \frac{|A_{ia,jb}|}{A_{ia,ia}-A_{jb,jb}}$.
+
+
+### sTD-DFT
+
+To evaluate the integrals, the following formula is used:
+
+$$(ia|jb) \approx \sum_{AB}^N Q_A^{ia}\,Q_B^{jb}(AA|BB), \text{ with } Q_A^{ia} = \sum_{\mu\in A} (C^{\perp}_{i\mu})^\star\,C^{\perp}_{a\mu},$$
+
+where $Q_{ia}^A$ are the transition charges on atom A, computed from the Löwdin orthogonalized LCAO coefficients, $C^\perp = C\,S^{1/2}$.
+
+??? note "Simplification of the integrals using the ZDO approximation"
+    
+    Starting from the definition of a 4-center integral:
+
+    $$(ia|jb) = \sum_{\mu\nu\alpha\beta} (C_{i\mu})^\star\,C_{a\nu}\,(C_{j\alpha})^\star\,C_{b\beta}\,(\mu\nu|\alpha\beta),$$
+
+    one can instead use Löwdin orthogonalized molecular orbitals, $C^\perp = C\,S^{1/2}$:
+
+    $$(ia|jb) = \sum_{\mu\nu\alpha\beta} (C^\perp_{i\mu})^\star\,C^\perp_{a\nu}\,(C^\perp_{j\alpha})^\star\,C^\perp_{b\beta}\,(\lambda_\mu\lambda_\nu|\lambda_\alpha\lambda_\beta).$$
+
+    Now, the [ZDO approximation](https://en.wikipedia.org/wiki/Zero_differential_overlap) impose that $\lambda_\mu\,\lambda_\nu = \delta_{\mu\nu}\lambda_\mu\lambda_\mu$, so:
+    
+    $$(ia|jb) \approx \sum_{\mu\nu} (C^\perp_{i\mu})^\star\,C^\perp_{a\mu}\,(C^\perp_{j\nu})^\star\,C^\perp_{b\nu}\,(\lambda_\mu\lambda_\mu|\lambda_\nu\lambda_\nu).$$
+
+    Finally, it is assumed that $\lambda_\mu\lambda_\nu = \nu\nu$, and therefore:
+
+    $$(ia|jb) \approx \sum_{\mu\nu} (C^\perp_{i\mu})^\star\,C^\perp_{a\mu}\,(C^\perp_{j\nu})^\star\,C^\perp_{b\nu}\,(\mu\mu|\nu\nu).$$
+
+    Further simplification arise from population analysis, which defines a *transition charge*:
+
+    $$Q_A^{ia} = \sum_{\mu\in A} (C^{\perp}_{i\mu})^\star\,C^{\perp}_{a\mu},$$
+
+    which allows to arrive at the final expresssion.
+
+The remaining $(AA|BB)$ integrals are Mataga–Nishimoto–Ohno–Klopman (MNOK) damped Coulomb operators, which are evaluated according to the type of bielectronic integral that they approximates:
+
++ For Coulomb-type integrals, $(ij|ab)$,
+  
+$$(AA|BB)_J = \left[\frac{1}{R_{AB}^{\gamma_J}+\left(a_x\,\eta_{AB}\right)^{-\gamma_J}}\right]^{1/\gamma_J}.$$
+
++ For exchange-type integrals, $(ia|jb)$,
+
+$$(AA|BB)_K = \left[\frac{1}{R_{AB}^{\gamma_J}+\eta_{AB}^{-\gamma_J}}\right]^{1/\gamma_J}.$$
+
+In both cases, $\eta_{AB} = \frac{1}{2}\,(\eta_A + \eta_B)$ where $\eta_A$ depends on the chemical hardness of A, while $\gamma_J$ and $\gamma_K$ are globally fitted parameters.  
+
+### XsTD-DFT
+
+!!! warning
+    
+    The publication describing the XsTD-DFT implementation is not yet available. Thus, this approach is not yet implemented.
 
 ## Sources and references
 
