@@ -14,7 +14,7 @@ void compute_population_and_check(stdl_wavefunction* wf, int sym) {
 
     // compute the density matrix
     double* density_mat = NULL;
-    STDL_OK(stdl_wavefunction_compute_density(&density_mat, wf->C, wf->nelec, wf->nmo, wf->nao));
+    STDL_OK(stdl_wavefunction_compute_density(&density_mat, wf->C, wf->nocc, wf->nmo, wf->nao));
 
     // stdl_matrix_dge_print(original_wf->nao, 0, density_mat, "D");
 
@@ -58,7 +58,7 @@ void compute_population_and_check(stdl_wavefunction* wf, int sym) {
     for(size_t i=0; i < wf->nao; i++)
         total += mulliken_pop[i * wf->nao + i];
 
-    TEST_ASSERT_DOUBLE_WITHIN(1e-8, (double) wf->nelec, total);
+    TEST_ASSERT_DOUBLE_WITHIN(1e-8, (double) wf->nocc * 2, total);
 
     free(mulliken_pop);
     free(density_mat);
@@ -153,7 +153,7 @@ void test_remove_mo_ok() {
 
     wf->C = wf->C + 2 * wf->nao;
     wf->nmo = 5;
-    wf->nelec = 6;
+    wf->nocc = 3;
 
     compute_population_and_check(wf, 0);
 

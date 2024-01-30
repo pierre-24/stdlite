@@ -662,7 +662,7 @@ int stdl_fchk_parser_extract(stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr, st
     // extracted from file
     long an_integer;
     double* a_vector = NULL;
-    size_t a_size, nelec = 0, natm = 0, nao = 0, nmo = 0, nbas = 0, nprim = 0;
+    size_t a_size, nocc = 0, natm = 0, nao = 0, nmo = 0, nbas = 0, nprim = 0;
 
     struct _fchk_data_basis* dt = NULL;
     double* atm = NULL; // [natm*4]
@@ -677,7 +677,7 @@ int stdl_fchk_parser_extract(stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr, st
         if(strcmp("Number of electrons", name) == 0) {
             error = stdl_fchk_parser_get_scalar_integer(lx, &an_integer);
             STDL_ERROR_CODE_HANDLE(error, free(name); goto _end);
-            nelec = (size_t) an_integer;
+            nocc = (size_t) an_integer / 2;
         } /* --- GEOMETRY: --- */
         else if(strcmp("Nuclear charges", name) == 0) {
             error = stdl_fchk_parser_get_vector_numbers(lx, &natm, &a_vector);
@@ -754,7 +754,7 @@ int stdl_fchk_parser_extract(stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr, st
             nmo = (size_t) an_integer;
         } else if(strcmp("Alpha Orbital Energies", name) == 0) {
             /* Note: assume that "Number of independent functions" was read before. */
-            error = stdl_wavefunction_new(wf_ptr, natm, nelec, nao, nmo);
+            error = stdl_wavefunction_new(wf_ptr, natm, nocc, nao, nmo);
             STDL_ERROR_CODE_HANDLE(error, free(name); goto _end);
 
             error = stdl_fchk_parser_get_vector_numbers_immediate(lx, nmo, &((*wf_ptr)->e));

@@ -20,14 +20,13 @@ struct stdl_wavefunction_ {
     /// `double[natm*4]`, list of atoms with nuclear charge (0) and coordinates (1:3)
     double* atm;
 
-    /// Number of electrons in the system (must be a even number).
-    /// Note that those electron should populate MO that are considered, so the number might be different from the one of the actual system (if, say, core AO are not considered, then `nelect` should be equal the number of valence electron, not the total).
-    size_t nelec;
+    /// Number of occupied MO. Should be >0.
+    size_t nocc;
 
     /// Number of AO.
     size_t nao;
 
-    /// Number of MO. Should fulfill `nelec <= 2*nmo <= 2*nao`.
+    /// Number of MO. Should fulfill `nocc <= nmo <= nao`.
     size_t nmo;
 
     /// `size_t[nao]`, 0-based list of corresponding atom for each AO.
@@ -50,13 +49,13 @@ typedef struct stdl_wavefunction_ stdl_wavefunction;
  * Create a new wavefunction.
  * @param wf_ptr wavefunction object to be initialized
  * @param natm number of atom (should be >0)
- * @param nelec number of electrons (should be >0)
+ * @param nocc number of occupied orbitals, must be >0.
  * @param nao number of atomic orbitals (should be >0)
  * @param nmo number of molecular orbitals (should fulfill `nelec <= 2*nmo <= 2*nao`)
  * @return `SDTL_ERR_OK` if everything was ok.
  * @ingroup wavefunction
  */
-int stdl_wavefunction_new(stdl_wavefunction **wf_ptr, size_t natm, size_t nelec, size_t nao, size_t nmo);
+int stdl_wavefunction_new(stdl_wavefunction **wf_ptr, size_t natm, size_t nocc, size_t nao, size_t nmo);
 
 /**
  * Free the wavefunction.
@@ -91,12 +90,12 @@ int stdl_wavefunction_orthogonalize_C(double* C, double* S, size_t nmo, size_t n
  *
  * @param[out] D `double[nao*nao]` the density matrix to be created. Caller is responsible for free'ing it.
  * @param C `double[nmo*nao]`, the coefficients
- * @param nelec number of electrons, must be >0.
+ * @param nocc number of occupied orbitals, must be >0.
  * @param nmo number of MO, must be >0.
  * @param nao number of AO, must be >0.
  * @return error code.
  * @ingroup wavefunction
  */
-int stdl_wavefunction_compute_density(double **D, double* C, size_t nelec, size_t nmo, size_t nao);
+int stdl_wavefunction_compute_density(double **D, double* C, size_t nocc, size_t nmo, size_t nao);
 
 #endif //STDLITE_WAVEFUNCTION_H

@@ -7,8 +7,8 @@
 #include "stdlite/helpers.h"
 #include "stdlite/matrix.h"
 
-int stdl_wavefunction_new(stdl_wavefunction **wf_ptr, size_t natm, size_t nelec, size_t nao, size_t nmo) {
-    assert(wf_ptr != NULL && natm > 0 && nao > 0 && nmo > 0 && nmo <= nao && 2 * nmo >= nelec && nelec % 2 == 0);
+int stdl_wavefunction_new(stdl_wavefunction **wf_ptr, size_t natm, size_t nocc, size_t nao, size_t nmo) {
+    assert(wf_ptr != NULL && natm > 0 && nao > 0 && nmo > 0 && nmo <= nao && nmo >= nocc);
 
     *wf_ptr = malloc(sizeof(stdl_wavefunction));
     STDL_ERROR_HANDLE_AND_REPORT(*wf_ptr == NULL, return STDL_ERR_MALLOC, "malloc");
@@ -16,7 +16,7 @@ int stdl_wavefunction_new(stdl_wavefunction **wf_ptr, size_t natm, size_t nelec,
     (*wf_ptr)->natm = natm;
     (*wf_ptr)->nao = nao;
     (*wf_ptr)->nmo = nmo;
-    (*wf_ptr)->nelec = nelec;
+    (*wf_ptr)->nocc = nocc;
 
     (*wf_ptr)->atm = (*wf_ptr)->S = (*wf_ptr)->C = (*wf_ptr)->e = NULL;
     (*wf_ptr)->aotoatm = NULL;
@@ -76,8 +76,8 @@ int stdl_wavefunction_orthogonalize_C(double* C, double* S, size_t nmo, size_t n
     return STDL_ERR_OK;
 }
 
-int stdl_wavefunction_compute_density(double **D, double* C, size_t nelec, size_t nmo, size_t nao) {
-    assert(C != NULL && D != NULL && nelec > 0 && nmo > 0 && nao > 0);
+int stdl_wavefunction_compute_density(double **D, double* C, size_t nocc, size_t nmo, size_t nao) {
+    assert(C != NULL && D != NULL && nocc > 0 && nmo > 0 && nao > 0);
 
     *D = malloc(nao * nao * sizeof(double));
     STDL_ERROR_HANDLE_AND_REPORT(*D == NULL, return STDL_ERR_MALLOC, "malloc");
@@ -88,7 +88,7 @@ int stdl_wavefunction_compute_density(double **D, double* C, size_t nelec, size_
 
     for (size_t i = 0; i < nmo; ++i) {
         for (size_t j = 0; j < nao; ++j) {
-            X[i * nao + j] = C[i * nao + j] * ((i < nelec / 2) ? 2 : 0);
+            X[i * nao + j] = C[i * nao + j] * ((i < nocc) ? 2 : 0);
         }
     }
 

@@ -46,7 +46,7 @@ void test_context_select_MO_ok() {
 
     // compute the density matrix
     double* density_mat = NULL;
-    STDL_OK(stdl_wavefunction_compute_density(&density_mat, ctx->C, 2 * ctx->nocc, ctx->nmo, wf->nao));
+    STDL_OK(stdl_wavefunction_compute_density(&density_mat, ctx->C, ctx->nocc, ctx->nmo, wf->nao));
 
     // check that density is symmetric
     for (size_t i = 0; i < wf->nao; ++i) {
@@ -61,6 +61,8 @@ void test_context_select_MO_ok() {
         total += density_mat[i * wf->nao + i];
 
     TEST_ASSERT_DOUBLE_WITHIN(1e-8, 2.f * ctx->nocc, total);
+
+    // stdl_matrix_dge_print(wf->nao, 0, density_mat, "D");
 
     free(density_mat);
 

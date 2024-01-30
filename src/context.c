@@ -22,7 +22,7 @@ int stdlite_context_new(stdl_context ** ctx, stdl_wavefunction* wf, stdl_basis* 
     // select MO to include
     STDL_DEBUG("range: %f a.u. (%.3f eV)", ethr, ethr * 27.212);
 
-    size_t ohomo = (int) wf->nelec / 2 - 1, omin = 0, omax = 0;
+    size_t ohomo = (int) wf->nocc - 1, omin = 0, omax = 0;
     double ehomo = wf->e[ohomo], elumo = wf->e[ohomo + 1], ewin = 2 * (1 + .8 * ax)  * ethr, emin = elumo -ewin, emax = ehomo+ ewin;
 
     STDL_DEBUG("window: %f a.u. (%.3feV)", ewin, ewin * 27.212);
