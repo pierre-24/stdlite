@@ -10,13 +10,13 @@
 
 // check that the data are correct by computing the Mulliken population.
 // It should sum up to the number of electrons
-void _check_wavefunction(stdl_wavefunction* wf) {
+void compute_population_and_check(stdl_wavefunction* wf, int sym) {
 
     // compute the density matrix
     double* density_mat = NULL;
-    stdl_wavefunction_compute_density(wf, &density_mat);
+    STDL_OK(stdl_wavefunction_compute_density(&density_mat, wf->C, wf->nelec, wf->nmo, wf->nao));
 
-    // stdl_matrix_dge_print(wf->nao, 0, density_mat, "D");
+    // stdl_matrix_dge_print(original_wf->nao, 0, density_mat, "D");
 
     // check that density is symmetric
     for (size_t i = 0; i < wf->nao; ++i) {
@@ -30,7 +30,7 @@ void _check_wavefunction(stdl_wavefunction* wf) {
     double* mulliken_pop = malloc(wf->nao * wf->nao * sizeof(double));
     TEST_ASSERT_NOT_NULL(mulliken_pop);
 
-    if(!wf->isortho) {
+    if(!sym) {
         double* tmp = malloc(wf->nao * wf->nao * sizeof(double));
         TEST_ASSERT_NOT_NULL(tmp);
 
@@ -49,11 +49,10 @@ void _check_wavefunction(stdl_wavefunction* wf) {
         }
 
         free(tmp);
-    } else { // S=1, so 1/2*(S*D+D*S) = D
+    } else // S=1, so 1/2*(S*D+D*S) = D
         memcpy(mulliken_pop, density_mat, wf->nao * wf->nao * sizeof(double));
-    }
 
-    // stdl_matrix_dge_print(wf->nao, 0, mulliken_pop, "1/2*(DS+SD)");
+    // stdl_matrix_dge_print(original_wf->nao, 0, mulliken_pop, "1/2*(DS+SD)");
 
     double total = .0;
     for(size_t i=0; i < wf->nao; i++)
@@ -81,7 +80,7 @@ void test_content_ok() {
     STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
     STDL_OK(stdl_basis_delete(bs));
 
-    _check_wavefunction(wf);
+    compute_population_and_check(wf, 0);
 
     STDL_OK(stdl_wavefunction_delete(wf));
     STDL_OK(stdl_lexer_delete(lx));
@@ -105,7 +104,7 @@ void test_orthogonalize_ok() {
     STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
     STDL_OK(stdl_basis_delete(bs));
 
-    STDL_OK(stdl_wavefunction_orthogonalize(wf));
+    STDL_OK(stdl_wavefunction_orthogonalize_C(wf->C, wf->S, wf->nmo, wf->nao));
 
     // check that the MO are normalized
     for (size_t i = 0; i < wf->nmo; ++i) {
@@ -118,7 +117,13 @@ void test_orthogonalize_ok() {
         TEST_ASSERT_DOUBLE_WITHIN(1e-8, 1., sum);
     }
 
-    _check_wavefunction(wf);
+    // set S to identity
+    for (size_t i = 0; i < wf->nao; ++i) {
+        for (size_t j = 0; j < wf->nao; ++j)
+            wf->S[i * wf->nao + j] = i == j ? 1.:.0;
+    }
+
+    compute_population_and_check(wf, 1);
 
     STDL_OK(stdl_wavefunction_delete(wf));
     STDL_OK(stdl_lexer_delete(lx));
@@ -150,20 +155,7 @@ void test_remove_mo_ok() {
     wf->nmo = 5;
     wf->nelec = 6;
 
-    STDL_OK(stdl_wavefunction_orthogonalize(wf));
-
-    // check that the MO are normalized
-    for (size_t i = 0; i < wf->nmo; ++i) {
-        double sum = .0;
-
-        for (size_t j = 0; j < wf->nao; ++j) {
-            sum += pow(wf->C[i * wf->nao + j], 2.0);
-        }
-
-        TEST_ASSERT_DOUBLE_WITHIN(1e-8, 1., sum);
-    }
-
-    _check_wavefunction(wf);
+    compute_population_and_check(wf, 0);
 
     // put back C
     wf->C = tmp;

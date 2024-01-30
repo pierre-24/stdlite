@@ -6,12 +6,12 @@
 
 /**
  * Object for the configuration and storage of intermediates of a sTD-DFT calculation.
- * All internal variables uses `float` instead of `double` for speed and memory (to the price of accuracy).
+ * Contains a subset of MOs from `original_wf`.
  * @ingroup context
  */
 struct stdlite_context_ {
     /// Input wavefunction
-    stdl_wavefunction* wf;
+    stdl_wavefunction* original_wf;
 
     /// Input basis set
     stdl_basis* bs;
@@ -28,7 +28,7 @@ struct stdlite_context_ {
     /// Parameter for the method: $a_x$, the amount of HF exchange.
     float ax;
 
-    /// Number of MO considered in the calculation, so that `nmo <= wf->nmo && nocc + nvirt == nmo`.
+    /// Number of MO considered in the calculation, so that `nmo <= original_wf->nmo && nocc + nvirt == nmo`.
     size_t nmo;
 
     /// Number of occupied MO considered in the calculation, with `nocc < nmo && nocc + nvirt == nmo`
@@ -40,7 +40,7 @@ struct stdlite_context_ {
     /// `double[nmo]` Energy of MOs
     double* e;
 
-    /// `double[nmo*wf->nao]` orthogonal MO coefficients for the selected MO.
+    /// `double[nmo*original_wf->nao]` orthogonal MO coefficients for the selected MO.
     double* C;
 };
 

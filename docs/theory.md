@@ -138,8 +138,8 @@ $$(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}-\mathbf{B})\,(\mathbf{A}-\mat
 The simplified TD-DFT methods root in 3 approximations:
 
 1. all integrals involving the XC-functionals are neglected,
-2. the singly excited configuration space is truncated considering a single energy threshold $E_{thr}$: the active MO space is defined by $\varepsilon_{LUMO}-2\,(1+0.8\,a_x)\,E_{thr} \leq \varepsilon_i \leq \varepsilon_{HOMO}+2\,(1+0.8a_x)\,E_{thr}$, and
-3. the ZDO approximation is used for two-electron integrals which built $\mathbf A$ and $\mathbf B$ (see below).
+2. the singly excited configuration space is truncated considering a single energy threshold $E_{thr}$: the active MO space is defined by $\varepsilon_i \in [\varepsilon_{LUMO}-E_{w}, \varepsilon_{HOMO}+E_{w}]$, with $E_w = 2\,(1+0.8a_x)\,E_{thr}$, and
+3. the ZDO approximation is used for two-electron integrals which built $\mathbf A$ and $\mathbf B$.
 
 ## Sources and references
 

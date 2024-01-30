@@ -14,9 +14,6 @@
  * @ingroup wavefunction
  */
 struct stdl_wavefunction_ {
-    /// Is this wavefunction orthogonalized?
-    int isortho;
-
     /// Number of atoms
     size_t natm;
 
@@ -70,17 +67,20 @@ int stdl_wavefunction_new(stdl_wavefunction **wf_ptr, size_t natm, size_t nelec,
 int stdl_wavefunction_delete(stdl_wavefunction* wf);
 
 /**
- * Symmetrize the LCAO coefficients using a Löwdin orthogonalization.
+ * Symmetrize the LCAO coefficients in place using a Löwdin orthogonalization.
  *
  * $$C' = S^{1/2}\,C.$$
  *
  * See, *e.g.*, [there](https://booksite.elsevier.com/9780444594365/downloads/16755_10030.pdf).
- * As a result, `wf->C` becomes symmetric, and `wf->S` is the identity matrix.
- * @param wf the wavefunction to orthogonalize.
+ * As a result, `original_wf->C` becomes symmetric, and `original_wf->S` is the identity matrix.
+ * @param[in,out] C `double[nmo*nao]`, the coefficients to be orthogonal
+ * @param S `double[nao*nao]`, the overlap matrix
+ * @param nmo number of MO, must be >0.
+ * @param nao number of AO, must be >0.
  * @return the error code
  * @ingroup wavefunction
  */
-int stdl_wavefunction_orthogonalize(stdl_wavefunction* wf);
+int stdl_wavefunction_orthogonalize_C(double* C, double* S, size_t nmo, size_t nao) ;
 
 /**
  * Compute the density matrix.
@@ -89,11 +89,14 @@ int stdl_wavefunction_orthogonalize(stdl_wavefunction* wf);
  *
  * where $n_r$ is the occupation number of MO $r$.
  *
- * @param wf a valid wavefunction
  * @param[out] D `double[nao*nao]` the density matrix to be created. Caller is responsible for free'ing it.
+ * @param C `double[nmo*nao]`, the coefficients
+ * @param nelec number of electrons, must be >0.
+ * @param nmo number of MO, must be >0.
+ * @param nao number of AO, must be >0.
  * @return error code.
  * @ingroup wavefunction
  */
-int stdl_wavefunction_compute_density(stdl_wavefunction* wf, double** D);
+int stdl_wavefunction_compute_density(double **D, double* C, size_t nelec, size_t nmo, size_t nao);
 
 #endif //STDLITE_WAVEFUNCTION_H
