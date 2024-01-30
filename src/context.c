@@ -41,9 +41,9 @@ int stdlite_context_new(stdl_context ** ctx, stdl_wavefunction* wf, stdl_basis* 
 
     (*ctx)->nmo = omax - omin + 1;
     (*ctx)->nocc = ohomo - omin + 1;
-    (*ctx)->nvirt = omax - ohomo;
+    size_t nvirt = omax - ohomo;
 
-    STDL_DEBUG("Resulting partition: [%d || %d | %d || %d] (occ + virt = %d, %.2f%% of %d)", omin, (*ctx)->nocc, (*ctx)->nvirt, wf->nmo - omax - 1, (*ctx)->nmo, (double) (*ctx)->nmo / wf->nmo * 100, wf->nmo);
+    STDL_DEBUG("Resulting partition: [%d || %d | %d || %d] (occ + virt = %d, %.2f%% of %d MOs)", omin, (*ctx)->nocc, nvirt, wf->nmo - omax - 1, (*ctx)->nmo, (double) (*ctx)->nmo / wf->nmo * 100, wf->nmo);
 
     (*ctx)->e = malloc((*ctx)->nmo * sizeof(double ));
     (*ctx)->C = malloc((*ctx)->nmo * wf->nao * sizeof(double));

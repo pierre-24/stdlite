@@ -31,7 +31,6 @@ void test_context_select_MO_ok() {
 
     TEST_ASSERT_EQUAL_INT(ctx->nmo, 5);
     TEST_ASSERT_EQUAL_INT(ctx->nocc, 3);
-    TEST_ASSERT_EQUAL_INT(ctx->nvirt, 2);
 
     // check that the MO are normalized
     for (size_t i = 0; i < ctx->nmo; ++i) {

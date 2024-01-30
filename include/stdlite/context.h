@@ -34,9 +34,6 @@ struct stdlite_context_ {
     /// Number of occupied MO considered in the calculation, with `nocc < nmo && nocc + nvirt == nmo`
     size_t nocc;
 
-    /// Number of virtual (non-occupied) MO, with `nvirt < nmo && nocc + nvirt == nmo`
-    size_t nvirt;
-
     /// `double[nmo]` Energy of MOs
     double* e;
 
