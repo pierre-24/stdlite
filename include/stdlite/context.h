@@ -55,7 +55,7 @@ typedef struct stdlite_context_ stdl_context;
  * @return error code
  * @ingroup context
  */
-int stdlite_context_new(stdl_context ** ctx, stdl_wavefunction* wf, stdl_basis* basis, float gammaJ, float  gammaK, float ethr, float ax);
+int stdl_context_new(stdl_context ** ctx, stdl_wavefunction* wf, stdl_basis* bs, float gammaJ, float  gammaK, float ethr, float ax);
 
 
 /**
@@ -64,7 +64,18 @@ int stdlite_context_new(stdl_context ** ctx, stdl_wavefunction* wf, stdl_basis* 
  * @return error code
  * @ingroup context
  */
-int stdlite_context_delete(stdl_context* ctx);
+int stdl_context_delete(stdl_context* ctx);
+
+/**
+ * Select CSFs.
+ *
+ * @note Unclear at the moment how to store and use that.
+ *
+ * @param ctx a valid context
+ * @return error code
+ * @ingroup context
+ */
+int stdl_context_select_csf(stdl_context* ctx);
 
 
 #endif //STDLITE_CONTEXT_H

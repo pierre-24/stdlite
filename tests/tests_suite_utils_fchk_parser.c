@@ -365,7 +365,7 @@ void test_extract_wavefunction_and_basis_ok() {
     TEST_ASSERT_EQUAL_INT(3, wf->natm);
     TEST_ASSERT_EQUAL_INT(7, wf->nao); // O[1s,2s,2px,2py,2pz] + H[1s] + H[1s]
     TEST_ASSERT_EQUAL_INT(7, wf->nmo);
-    TEST_ASSERT_EQUAL_INT(10, wf->nelec);
+    TEST_ASSERT_EQUAL_INT(5, wf->nocc);
 
     // check that S is indeed symmetric
     for (size_t i = 0; i < wf->nao; ++i) {

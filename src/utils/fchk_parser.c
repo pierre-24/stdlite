@@ -780,7 +780,7 @@ int stdl_fchk_parser_extract(stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr, st
     STDL_ERROR_HANDLE_AND_REPORT(!finished, error = STDL_ERR_UTIL_FCHK; goto _end, "FCHK was missing certain sections (dt=0x%x, wf_ptr=0x%x)", dt, wf_ptr);
 
     // at that point, we should have read everything
-    // copy geometry where it belongs
+    // copy remaining stuffs
     memcpy((*wf_ptr)->atm, atm, 4 * natm * sizeof(double));
     free(atm);
     atm = NULL;
@@ -791,6 +791,22 @@ int stdl_fchk_parser_extract(stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr, st
 
     _fchk_data_delete(dt);
     dt = NULL;
+
+    // map each AO to its atom
+    int si, center, shift = 0;
+    for (int i = 0; i < (*bs_ptr)->nbas; ++i) {
+        center = (*bs_ptr)->bas[i * 8 + 0];
+        if((*bs_ptr)->use_spherical)
+            si = CINTcgto_spheric(i, (*bs_ptr)->bas);
+        else
+            si = CINTcgtos_cart(i, (*bs_ptr)->bas);
+
+        for(int j = 0; j < si; j++) {
+            (*wf_ptr)->aotoatm[shift + j] = center;
+        }
+
+        shift += si;
+    }
 
     // create the S matrix
     error = _make_S(*wf_ptr, *bs_ptr);

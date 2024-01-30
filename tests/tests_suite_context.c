@@ -7,7 +7,7 @@
 #include "tests_suite.h"
 
 void setUp() {
-    stdl_set_debug_level(3);
+    stdl_set_debug_level(-1);
 }
 
 
@@ -27,7 +27,7 @@ void test_context_select_MO_ok() {
     STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
 
     stdl_context* ctx = NULL;
-    STDL_OK(stdlite_context_new(&ctx, wf, bs, 2.0, 4.0, 7. / 27.212, 1.0));
+    STDL_OK(stdl_context_new(&ctx, wf, bs, 2.0, 4.0, 10. / 27.212, 1.0));
 
     TEST_ASSERT_EQUAL_INT(ctx->nmo, 5);
     TEST_ASSERT_EQUAL_INT(ctx->nocc, 3);
@@ -65,7 +65,9 @@ void test_context_select_MO_ok() {
 
     free(density_mat);
 
-    STDL_OK(stdlite_context_delete(ctx));
+    stdl_context_select_csf(ctx);
+
+    STDL_OK(stdl_context_delete(ctx));
     STDL_OK(stdl_lexer_delete(lx));
 
     fclose(f);
