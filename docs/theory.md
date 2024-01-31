@@ -2,7 +2,8 @@ title: Theory
 
 !!! note
     
-    In the following, letters $i,j,\ldots$ ($a,b,\ldots$) are the label of occupied (virtual) molecular orbitals (MO), while $\mu, \nu, \ldots$ refers to atomic orbitals (AO).
+    In the following, $p$, $q$, $r$, $s$,... refer to molecular orbitals (MOs), $i$, $j$, $k$, $l$,... to occupied, $a$, $b$, $c$, $d$,... to unoccupied ones, and $\alpha$, $\beta$, $\gamma$, $\delta$,... to atomic orbitals (AOs). 
+    All quantities are in [atomic units](https://en.wikipedia.org/wiki/Atomic_units), unless otherwise mentioned.
 
 ## Introduction
 
@@ -127,15 +128,15 @@ $$\tag{4}\begin{pmatrix}
 \end{pmatrix}$$
 
 which is generally referred to as the Casida equation [thought Eq. (3) may also be called that]. In this case, the $\omega$'s are the excitation energies while $\mathbf x^\omega$ and $\mathbf y^\omega$ might be seen as excitation and de-excitation vectors. 
-Indeed, a common simplification to Eq. (4) is the **Tamm-Dancoff approximation**, where $\mathbf B = \mathbf 0$, and therefore:
+Solving this latter problem is done using two approaches. On the one hand, a common simplification to Eq. (4) is the **Tamm-Dancoff approximation** ($\mathbf B = \mathbf 0$) and therefore:
 
 $$\tag{5}\mathbf A\,\mathbf x^\omega = \omega\,\mathbf x^\omega,$$
 
-where the $\mathbf x_{ia}^\omega$ is the coefficient associated to the $i \to a$ transition.
+where the $\mathbf x_{ia}^\omega$ is simply the coefficient associated to the $i \to a$ transition.
 
-Solving Eq. (4) is done through another eigenvalue problem, namely:
+On the other hand, Eq. (4) can be rewritten in another eigenvalue problem, namely:
 
-$$(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}-\mathbf{B})\,(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,\mathbf{Z} = \omega^2\,\mathbf{Z}, \text{ with } \mathbf{Z} = (\mathbf{A}-\mathbf{B})^\frac{1}{2} (\mathbf x + \mathbf y).$$
+$$\tag{6}(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}-\mathbf{B})\,(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,\mathbf{Z} = \omega^2\,\mathbf{Z}, \text{ with } \mathbf{Z} = (\mathbf{A}-\mathbf{B})^\frac{1}{2} (\mathbf x + \mathbf y).$$
 
 ## The simplified approaches to TD-DFT
 
@@ -192,9 +193,9 @@ $$(AA|BB)_J = \left[\frac{1}{R_{AB}^{\gamma_J}+\left(a_x\,\eta_{AB}\right)^{-\ga
 
 + For exchange-type integrals, $(ia|jb)$,
 
-$$(AA|BB)_K = \left[\frac{1}{R_{AB}^{\gamma_J}+\eta_{AB}^{-\gamma_J}}\right]^{1/\gamma_J}.$$
+$$(AA|BB)_K = \left[\frac{1}{R_{AB}^{\gamma_K}+\eta_{AB}^{-\gamma_K}}\right]^{1/\gamma_K}.$$
 
-In both cases, $\eta_{AB} = \frac{1}{2}\,(\eta_A + \eta_B)$ where $\eta_A$ depends on the chemical hardness of A, while $\gamma_J$ and $\gamma_K$ are globally fitted parameters.  
+In both cases, $\eta_{AB} = \frac{1}{2}\,(\eta_A + \eta_B)$ where $\eta_A$ is the chemical hardness of A (obtained from [here](https://dx.doi.org/10.1002/qua.22202)), while $\gamma_J$ and $\gamma_K$ are globally fitted parameters.  
 
 ### XsTD-DFT
 
