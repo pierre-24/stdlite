@@ -182,7 +182,7 @@ int stdl_context_delete(stdl_context* ctx) {
 
 int stdl_context_select_csf(stdl_context *ctx) {
 
-    /**
+    /*
      * 1) To select primary CSFs, one needs to evaluate A_iaia, and so: (ii|aa) and (ia|ia).
      */
 
@@ -298,23 +298,33 @@ int stdl_context_select_csf(stdl_context *ctx) {
 
     // stdl_matrix_sge_print(nexci, natm, tmpAia, "tmp^A_ia");
 
-    // (ia|ia) = tmpAia * qAia^T
-    float* iaia = malloc(nexci * nexci * sizeof(float));
-    STDL_ERROR_HANDLE_AND_REPORT(iaia == NULL, return STDL_ERR_MALLOC, "malloc");
+    // only diagonal elements, (ia|ia), are required, so no explicit calculation of (ia|jb).
 
-    cblas_sgemm(
-            CblasRowMajor, CblasNoTrans, CblasTrans,
-            (int) nexci, (int) nexci, (int) natm,
-            1.0f, tmpAia, (int) natm,
-            qAia, (int) natm,
-            .0f, iaia, (int)nexci
-    );
+    // look at A_ia,ia
 
-    // stdl_matrix_sge_print(nexci, nexci, iaia, "(ia|ia)");
+    for(size_t i=0; i < ctx->nocc; i++) {
+        for (size_t a = 0; a < nvirt; ++a) {
+            size_t k = i * nvirt + a;
+            float iaia = .0f;
+            for(size_t A=0; A < natm; A++) {
+                iaia += tmpAia[k * natm + A] * qAia[k * natm + A];
+            }
+
+            float A_iaia = (float) (ctx->e[ctx->nocc + a] - ctx->e[i]) + 2 * iaia - iiaa[i * nvirt + a];
+
+            if(A_iaia <= ctx->ethr) {
+                printf("selected primary:: %ld→%ld (E=%.3f eV)\n", i, ctx->nocc + a, A_iaia * 27.212);
+            } // ... the rest is selected to be considered in perturbation.
+        }
+    }
 
     STDL_FREE_ALL(tmpAia, qAia);
 
-    STDL_FREE_ALL(AABB_J, AABB_K, iiaa, iaia);
+    /*
+     * 2) Now, select S-CSFs, but only within the selected P-CSFs.
+     */
+
+    STDL_FREE_ALL(AABB_J, AABB_K, iiaa);
 
     return STDL_ERR_OK;
 }
