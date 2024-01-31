@@ -183,13 +183,18 @@ int stdl_context_delete(stdl_context* ctx) {
 int stdl_context_select_csf(stdl_context *ctx) {
 
     /*
-     * 1) To select primary CSFs, one needs to evaluate A_iaia, and so: (ii|aa) and (ia|ia).
+     * 1) Prepare charges and intermediates.
      */
 
-    size_t natm = ctx->original_wf->natm, nvirt = ctx->nmo - ctx->nocc, nexci = ctx->nocc * nvirt;
+    size_t natm = ctx->original_wf->natm,
+        nvirt = ctx->nmo - ctx->nocc,
+        nexci_ij = STDL_MATRIX_SP_SIZE(ctx->nocc),
+        nexci_ab = STDL_MATRIX_SP_SIZE(nvirt),
+        nexci_ia = ctx->nocc * nvirt;
+
     double* atm = ctx->original_wf->atm;
 
-    // Coulomb and exchange-like integrals (AA|BB)
+    // Coulomb and exchange-like integrals (AA|BB), `float[natm * natm]`
     float * AABB_J = malloc(natm * natm * sizeof(float));
     float * AABB_K = malloc(natm * natm * sizeof(float));
     STDL_ERROR_HANDLE_AND_REPORT(AABB_J == NULL || AABB_K == NULL, return STDL_ERR_MALLOC, "malloc");
@@ -214,60 +219,41 @@ int stdl_context_select_csf(stdl_context *ctx) {
     // stdl_matrix_sge_print(natm, 0, AABB_J, "(AA|BB)_J");
     // stdl_matrix_sge_print(natm, 0, AABB_K, "(AA|BB)_K");
 
-    // density charges for Coulomb terms: Q_ii and Q_aa
-    float* qApp = malloc(ctx->nmo * natm * sizeof(float));
-    STDL_ERROR_HANDLE_AND_REPORT(qApp == NULL, return STDL_ERR_MALLOC, "malloc");
+    // 1. density charges for Coulomb terms: Q_A^ij [in packed form, float[STDL_SP_SIZE(nocc)]], Q_A^ab [in packed form, float[STDL_SP_SIZE(nocc)]], and Q_A^ia [float[nocc * nvirt]].
+    float* qAij = malloc(nexci_ij * natm * sizeof(float));
+    float* qAab = malloc(nexci_ab * natm * sizeof(float));
+    float* qAia = malloc(nexci_ia * natm * sizeof(float));
+    STDL_ERROR_HANDLE_AND_REPORT(qAij == NULL || qAab == NULL || qAia == NULL, return STDL_ERR_MALLOC, "malloc");
 
-    for(size_t p=0; p < ctx->nmo; p++) {
-        for(size_t A=0; A < natm; A++)
-            qApp[p * natm + A] = .0f;
+    for(size_t i=0; i < ctx->nocc; i++) {
+        for(size_t j=0; j <= i; j++) {
+            size_t k = i * (i + 1) / 2 + j;
 
-        for(size_t mu=0; mu < ctx->original_wf->nao; mu++) {
-            qApp[p * natm + ctx->original_wf->aotoatm[mu]] += powf((float) ctx->C[p * ctx->original_wf->nao + mu], 2.f);
+            for(size_t A=0; A < natm; A++)
+                qAij[k * natm + A] = .0f;
+
+            for(size_t mu=0; mu < ctx->original_wf->nao; mu++) {
+                qAij[k * natm + ctx->original_wf->aotoatm[mu]] += (float) (ctx->C[i * ctx->original_wf->nao + mu] * ctx->C[j * ctx->original_wf->nao + mu]);
+            }
         }
     }
 
-    // use pointers, so that qAii is [nocc * natm] and qAaa is [nvirt * natm]
-    float* qAii = qApp, *qAaa = qApp + ctx->nocc * natm;
+    // stdl_matrix_sge_print(nexci_ij, natm, qAij, "Q_A^ij");
 
-    // stdl_matrix_sge_print(ctx->nocc, natm, qAii, "Q^A_ii");
+    for(size_t a=0; a < nvirt; a++) {
+        for(size_t b=0; b <= a; b++) {
+            size_t k = a * (a + 1) / 2 + b;
 
-    // stdl_matrix_sge_print(nvirt, natm, qAaa, "Q^A_aa");
+            for(size_t A=0; A < natm; A++)
+                qAab[k * natm + A] = .0f;
 
-    // tmpAii = qAii * AABB_J
-    float* tmpAii = malloc(ctx->nocc * natm * sizeof(float));
-    STDL_ERROR_HANDLE_AND_REPORT(tmpAii == NULL, return STDL_ERR_MALLOC, "malloc");
+            for(size_t mu=0; mu < ctx->original_wf->nao; mu++) {
+                qAab[k * natm + ctx->original_wf->aotoatm[mu]] += (float) (ctx->C[(a + ctx->nocc) * ctx->original_wf->nao + mu] * ctx->C[(b + ctx->nocc) * ctx->original_wf->nao + mu]);
+            }
+        }
+    }
 
-    cblas_ssymm(
-            CblasRowMajor, CblasRight, CblasLower,
-            (int) ctx->nocc, (int) natm,
-            1.0f, AABB_J, (int) natm,
-            qAii, (int) natm,
-            .0f, tmpAii, (int) natm
-            );
-
-    // stdl_matrix_sge_print(ctx->nocc, natm, tmpAii, "tmp^A_ii");
-
-    // (ii|aa) = tmpAii * qAaa^T
-    float* iiaa = malloc(ctx->nocc * nvirt * sizeof(float));
-    STDL_ERROR_HANDLE_AND_REPORT(iiaa == NULL, return STDL_ERR_MALLOC, "malloc");
-
-    cblas_sgemm(
-            CblasRowMajor, CblasNoTrans, CblasTrans,
-            (int) ctx->nocc, (int) nvirt, (int) natm,
-            1.0f, tmpAii, (int) natm,
-            qAaa, (int) natm,
-            .0f, iiaa, (int) nvirt
-            );
-
-    // stdl_matrix_sge_print(ctx->nocc, nvirt, iiaa, "(ii|aa)");
-
-    STDL_FREE_ALL(tmpAii, qApp);
-
-    // compute density charges for exchange term: Q_ia
-
-    float* qAia = malloc( nexci * natm * sizeof(float));
-    STDL_ERROR_HANDLE_AND_REPORT(qAia == NULL, return STDL_ERR_MALLOC, "malloc");
+    // stdl_matrix_sge_print(nexci_ab, natm, qAab, "Q^A_ab");
 
     for(size_t i=0; i < ctx->nocc; i++) {
         for (size_t a = 0; a < nvirt; ++a) {
@@ -282,35 +268,54 @@ int stdl_context_select_csf(stdl_context *ctx) {
         }
     }
 
-    // stdl_matrix_sge_print(nexci, natm, qAia, "Q^A_ia");
+    // stdl_matrix_sge_print(nexci_ia, natm, qAia, "Q_A^ia");
 
-    // tmpAia = qAia * AABB_K
-    float* tmpAia = malloc( nexci * natm * sizeof(float));
-    STDL_ERROR_HANDLE_AND_REPORT(tmpAia == NULL, return STDL_ERR_MALLOC, "malloc");
+    // 2. Intermediates: (ij|BB)_J [in packed form], and (ia|BB)_K:
+    float* ijBB_J = malloc(nexci_ij * natm * sizeof(float));
+    float* iaBB_K = malloc(nexci_ia * natm * sizeof(float));
+    STDL_ERROR_HANDLE_AND_REPORT(ijBB_J == NULL || iaBB_K == NULL, return STDL_ERR_MALLOC, "malloc");
 
     cblas_ssymm(
             CblasRowMajor, CblasRight, CblasLower,
-            (int) nexci, (int) natm,
-            1.0f, AABB_K, (int) natm,
-            qAia, (int) natm,
-            .0f, tmpAia, (int) natm
+            (int) nexci_ij, (int) natm,
+            1.0f, AABB_J, (int) natm,
+            qAij, (int) natm,
+            .0f, ijBB_J, (int) natm
     );
 
-    // stdl_matrix_sge_print(nexci, natm, tmpAia, "tmp^A_ia");
+    // stdl_matrix_sge_print(nexci_ij, natm, ijBB_J, "(ij|BB)_J");
 
-    // only diagonal elements, (ia|ia), are required, so no explicit calculation of (ia|jb).
+    cblas_ssymm(
+            CblasRowMajor, CblasRight, CblasLower,
+            (int) nexci_ia, (int) natm,
+            1.0f, AABB_K, (int) natm,
+            qAia, (int) natm,
+            .0f, iaBB_K, (int) natm
+    );
 
-    // look at A_ia,ia
+    // stdl_matrix_sge_print(nexci_ia, natm, iaBB_K, "(ia|BB)_K");
 
+    STDL_FREE_ALL(AABB_J, AABB_K);
+
+    /*
+     *  2) To select primary CSFs, one needs to evaluate A'_ia,ia = (e_a - e_i) + 2*(ia|ia)' - (ii|aa)'.
+     *     Then, CSFs are selected if A'_ia,ia <= E_thr.
+     */
     for(size_t i=0; i < ctx->nocc; i++) {
+        size_t kii = STDL_MATRIX_SP_IDX(i, i);
+
         for (size_t a = 0; a < nvirt; ++a) {
-            size_t k = i * nvirt + a;
+            size_t kaa = STDL_MATRIX_SP_IDX(a, a);
+            size_t kia = i * nvirt + a;
             float iaia = .0f;
-            for(size_t A=0; A < natm; A++) {
-                iaia += tmpAia[k * natm + A] * qAia[k * natm + A];
+            float iiaa = .0f;
+
+            for(size_t A=0; A < natm; A++) { // scalar product to compute (ii|aa)' and (ia|ia)'.
+                iiaa += ijBB_J[kii * natm + A] * qAab[kaa * natm + A];
+                iaia += iaBB_K[kia * natm + A] * qAia[kia * natm + A];
             }
 
-            float A_iaia = (float) (ctx->e[ctx->nocc + a] - ctx->e[i]) + 2 * iaia - iiaa[i * nvirt + a];
+            float A_iaia = (float) (ctx->e[ctx->nocc + a] - ctx->e[i]) + 2 * iaia - iiaa;
 
             if(A_iaia <= ctx->ethr) {
                 printf("selected primary:: %ld→%ld (E=%.3f eV)\n", i, ctx->nocc + a, A_iaia * 27.212);
@@ -318,13 +323,11 @@ int stdl_context_select_csf(stdl_context *ctx) {
         }
     }
 
-    STDL_FREE_ALL(tmpAia, qAia);
-
     /*
-     * 2) Now, select S-CSFs, but only within the selected P-CSFs.
+     * 2) Now, select S-CSFs.
      */
 
-    STDL_FREE_ALL(AABB_J, AABB_K, iiaa);
+    STDL_FREE_ALL(qAij, qAab, qAia, ijBB_J, iaBB_K);
 
     return STDL_ERR_OK;
 }

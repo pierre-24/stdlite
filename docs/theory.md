@@ -94,11 +94,12 @@ $$\tag{3}\left[\begin{pmatrix}
 \end{pmatrix},$$
 
 where $\mathbf x^\omega$ and $\mathbf y^\omega$ are the frequency-dependent linear response vector (to be determined) in direction $\zeta$.
-The $\mathbf A$ and $\mathbf B$ are electronic Hessian (super-)matrices (related to orbital rotations). For a **global hybrid** density functional (independent of $\omega$),
+The $\mathbf A$ and $\mathbf B$ are electronic Hessian (super-)matrices (related to orbital rotations). 
+In the rest of this devellopment a **global hybrid** density functional is assumed,
 
-$$E_{XC}= (1-a_x)\,E_X^{GGA}+a_x\,E_X^{HF}+E_C^{GGA},$$
+$$E_{XC}= (1-a_x)\,E_X^{GGA}+a_x\,E_X^{HF}+E_C^{GGA}.$$
 
-their elements are:
+Thanks to the [Slater-Condon rules](https://en.wikipedia.org/wiki/Slater%E2%80%93Condon_rules), one can evaluate the elements of $\mathbf A$ and $\mathbf B$, which are:
 
 $$\begin{aligned}
 &A_{ia, jb} = \delta_{ij}\delta_{ab} (\epsilon_a - \epsilon_i) + 2(ia|jb) - a_x\,(ij|ab) + (1-a_x)\,(ia|f_{XC}|jb),\\
@@ -157,9 +158,9 @@ The truncation of the CI space is done in two steps:
 
 To evaluate the integrals, the following formula is used:
 
-$$(ia|jb) \approx \sum_{AB}^N Q_A^{ia}\,Q_B^{jb}(AA|BB), \text{ with } Q_A^{ia} = \sum_{\mu\in A} (C^{\perp}_{i\mu})^\star\,C^{\perp}_{a\mu},$$
+$$(ia|jb)' \approx \sum_{AB}^N q_A^{ia}\,q_B^{jb}(AA|BB), \text{ with } q_A^{ia} = \sum_{\mu\in A} (C^{\perp}_{i\mu})^\star\,C^{\perp}_{a\mu},$$
 
-where $Q_{ia}^A$ are the transition charges on atom A, computed from the Löwdin orthogonalized LCAO coefficients, $C^\perp = C\,S^{1/2}$.
+where the $q_{ia}^A$'s are the transition charges on atom A, computed using Löwdin orthogonalized LCAO coefficients, $C^\perp = C\,S^{1/2}$.
 
 ??? note "Simplification of the integrals using the ZDO approximation"
     
@@ -169,23 +170,24 @@ where $Q_{ia}^A$ are the transition charges on atom A, computed from the Löwdin
 
     one can instead use Löwdin orthogonalized molecular orbitals, $C^\perp = C\,S^{1/2}$:
 
-    $$(ia|jb) = \sum_{\mu\nu\alpha\beta} (C^\perp_{i\mu})^\star\,C^\perp_{a\nu}\,(C^\perp_{j\alpha})^\star\,C^\perp_{b\beta}\,(\lambda_\mu\lambda_\nu|\lambda_\alpha\lambda_\beta).$$
+    $$(ia|jb) = \sum_{\mu\nu\alpha\beta} (C^\perp_{i\mu})^\star\,C^\perp_{a\nu}\,(C^\perp_{j\alpha})^\star\,C^\perp_{b\beta}\,(\lambda_\mu\lambda_\nu|\lambda_\alpha\lambda_\beta),$$
 
+    where $\lambda_\mu = \sum_\nu S^{-1/2}_{\mu\nu}\,\phi_\nu$.
     Now, the [ZDO approximation](https://en.wikipedia.org/wiki/Zero_differential_overlap) impose that $\lambda_\mu\,\lambda_\nu = \delta_{\mu\nu}\lambda_\mu\lambda_\mu$, so:
     
     $$(ia|jb) \approx \sum_{\mu\nu} (C^\perp_{i\mu})^\star\,C^\perp_{a\mu}\,(C^\perp_{j\nu})^\star\,C^\perp_{b\nu}\,(\lambda_\mu\lambda_\mu|\lambda_\nu\lambda_\nu).$$
 
-    Finally, it is assumed that $\lambda_\mu\lambda_\nu = \nu\nu$, and therefore:
+    Finally, it is assumed that $\lambda_\mu\lambda_\mu \approx \mu\mu$, and therefore:
 
     $$(ia|jb) \approx \sum_{\mu\nu} (C^\perp_{i\mu})^\star\,C^\perp_{a\mu}\,(C^\perp_{j\nu})^\star\,C^\perp_{b\nu}\,(\mu\mu|\nu\nu).$$
 
-    Further simplification arise from population analysis, which defines a *transition charge*:
+    A simplification of the notation arise from population analysis, which allows to defines a *transition charge*:
 
-    $$Q_A^{ia} = \sum_{\mu\in A} (C^{\perp}_{i\mu})^\star\,C^{\perp}_{a\mu},$$
+    $$q_A^{ia} = \sum_{\mu\in A} (C^{\perp}_{i\mu})^\star\,C^{\perp}_{a\mu},$$
 
-    which allows to arrive at the final expresssion.
+    leading to the final expresssion.
 
-The remaining $(AA|BB)$ integrals are Mataga–Nishimoto–Ohno–Klopman (MNOK) damped Coulomb operators, which are evaluated according to the type of bielectronic integral that they approximates:
+The remaining $(AA|BB)$ integrals are defined as Mataga–Nishimoto–Ohno–Klopman (MNOK) damped Coulomb operators, which are evaluated according to the type of bielectronic integral that they approximates:
 
 + For Coulomb-type integrals, $(ij|ab)$,
   
@@ -196,6 +198,23 @@ $$(AA|BB)_J = \left[\frac{1}{R_{AB}^{\gamma_J}+\left(a_x\,\eta_{AB}\right)^{-\ga
 $$(AA|BB)_K = \left[\frac{1}{R_{AB}^{\gamma_K}+\eta_{AB}^{-\gamma_K}}\right]^{1/\gamma_K}.$$
 
 In both cases, $\eta_{AB} = \frac{1}{2}\,(\eta_A + \eta_B)$ where $\eta_A$ is the chemical hardness of A (obtained from [here](https://dx.doi.org/10.1002/qua.22202)), while $\gamma_J$ and $\gamma_K$ are globally fitted parameters.  
+
+In practice, the elements of the (approximated) electronic Hessian matrices are:
+
+$$\begin{aligned}
+\mathbf{A}'_{ia,jb} =& \delta_{ij}\delta_{ab} (\epsilon_a - \epsilon_i)
++ 2\,(ia|jb)'  -  (ij|ab)',\\ 
+\mathbf{B}'_{ia,jb} =& (ia|bj)' -a_x\,(ib|aj)',
+\end{aligned}$$
+
+which are evaluated in a computationally efficient way by precomputing three kind of transition charges: $q_A^{ij}$, $q_A^{ia}$, and $q_A^{ab}$, and two intermediates:
+
+$$(ij|BB)_J = \sum_A^N q_A^{ij}\,(AA|BB)_J \text{ and } (ia|BB)_K = \sum_A^N q_A^{ia}\,(AA|BB)_K,$$
+
+so that a scalar product leads to the value of the different integrals. For example,
+
+$$(ia|jb)' \approx \sum_{B}^N (ia|BB)_K\,q_B^{jb}.$$
+
 
 ### XsTD-DFT
 
