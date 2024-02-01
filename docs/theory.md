@@ -145,7 +145,7 @@ The simplified TD-DFT methods root in 3 approximations:
 
 1. all integrals involving the XC-functionals are neglected,
 2. the singly excited configuration space is truncated (see below), and
-3. the [zero-differential overlap](https://en.wikipedia.org/wiki/Zero_differential_overlap) (ZDO) approximation is used for two-electron integrals which built $\mathbf A$ and $\mathbf B$. Different approximations defines different flavors of simplified TD-DFT (see below).
+3. the [zero-differential overlap](https://en.wikipedia.org/wiki/Zero_differential_overlap) (ZDO) approximation is used for two-electron integrals which built $\mathbf A$ and $\mathbf B$. Different approximations for the remaining integrals define different flavors of simplified TD-DFT (see below).
 
 The truncation of the CI space is done in two steps:
 
@@ -154,15 +154,15 @@ The truncation of the CI space is done in two steps:
    $E^{(2)}_{jb} = \sum_{ia}^{P-CSFs} \frac{|A_{ia,jb}|}{A_{ia,ia}-A_{jb,jb}}$.
 
 
-### sTD-DFT
+### sTD-DFT, or the monopole approximation
 
-To evaluate the integrals, the following formula is used:
+To evaluate the integrals, a formula of the following kind is used:
 
-$$(ia|jb)' \approx \sum_{AB}^N q_A^{ia}\,q_B^{jb}(AA|BB), \text{ with } q_A^{ia} = \sum_{\mu\in A} (C^{\perp}_{i\mu})^\star\,C^{\perp}_{a\mu},$$
+$$(ia|jb) \approx (ia|jb)' = \sum_{AB}^N q_A^{ia}\,q_B^{jb}(AA|BB), \text{ with } q_A^{ia} = \sum_{\mu\in A} (C^{\perp}_{i\mu})^\star\,C^{\perp}_{a\mu},$$
 
-where the $q_{ia}^A$'s are the transition charges on atom A, computed using Löwdin orthogonalized LCAO coefficients, $C^\perp = C\,S^{1/2}$.
+where the $q_{ia}^A$'s are the transition charges on atom A, computed using Löwdin orthogonalized LCAO coefficients, $C^\perp_{i\mu} = \sum_\nu C_{i\nu}\,S^{1/2}_{\nu\mu}$.
 
-??? note "Simplification of the integrals using the ZDO approximation"
+??? note "Application of the ZDO approximation"
     
     Starting from the definition of a 4-center integral:
 
@@ -187,7 +187,7 @@ where the $q_{ia}^A$'s are the transition charges on atom A, computed using Löw
 
     leading to the final expresssion.
 
-The remaining $(AA|BB)$ integrals are defined as Mataga–Nishimoto–Ohno–Klopman (MNOK) damped Coulomb operators, which are evaluated according to the type of bielectronic integral that they approximates:
+The remaining $(AA|BB)$ integrals are evaluated with Mataga–Nishimoto–Ohno–Klopman (MNOK) damped Coulomb operators, according to the type of bielectronic integral that they approximate:
 
 + For Coulomb-type integrals, $(ij|ab)$,
   
