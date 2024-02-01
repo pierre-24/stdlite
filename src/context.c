@@ -108,8 +108,9 @@ float eta[] = {
         0.223701390f,
 };
 
-int stdl_context_new(stdl_context ** ctx, stdl_wavefunction* wf, stdl_basis* bs, float gammaJ, float  gammaK, float ethr, float ax) {
-    assert(ctx != NULL && wf != NULL && bs != NULL && gammaJ > 0 && gammaK > 0 && ethr > 0 && ax >= 0 && ax <= 1);
+int stdl_context_new(stdl_context **ctx, stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float gammaK, float ethr,
+                     float e2thr, float ax) {
+    assert(ctx != NULL && wf != NULL && bs != NULL && gammaJ > 0 && gammaK > 0 && ethr > 0 && e2thr > 0 && ax >= 0 && ax <= 1);
 
     *ctx = malloc(sizeof(stdl_context));
     STDL_ERROR_HANDLE_AND_REPORT(*ctx == NULL, return STDL_ERR_MALLOC, "malloc");
@@ -119,6 +120,7 @@ int stdl_context_new(stdl_context ** ctx, stdl_wavefunction* wf, stdl_basis* bs,
     (*ctx)->gammaJ = gammaJ;
     (*ctx)->gammaK = gammaK;
     (*ctx)->ethr = ethr;
+    (*ctx)->e2thr = e2thr;
     (*ctx)->ax = ax;
 
     // select MO to include
@@ -178,6 +180,10 @@ int stdl_context_delete(stdl_context* ctx) {
     STDL_FREE_ALL(ctx->e, ctx->C, ctx);
 
     return STDL_ERR_OK;
+}
+
+size_t _lin(size_t i, size_t j) {
+    return (i >= j) ? i*(i+1) / 2 + j : j*(j+1) / 2 + i;
 }
 
 int stdl_context_select_csf(stdl_context *ctx) {
@@ -317,9 +323,20 @@ int stdl_context_select_csf(stdl_context *ctx) {
     // stdl_matrix_sge_print(nexci_ia, natm, iaBB_K, "(ia|BB)_K");
 
     /*
-     *  2) To select primary CSFs, one needs to evaluate A'_ia,ia = (e_a - e_i) + 2*(ia|ia)' - (ii|aa)'.
+     *  2) To select primary CSFs i→a, one needs to evaluate A'_ia,ia = (e_a - e_i) + 2*(ia|ia)' - (ii|aa)'.
      *     Then, CSFs are selected if A'_ia,ia <= E_thr.
      */
+
+    // marks csfs as not-included (0), primary (1), or secondary (2).
+    char* csfs = malloc(nexci_ia * sizeof(short));
+    STDL_ERROR_HANDLE_AND_REPORT(csfs == NULL, free(env); return STDL_ERR_MALLOC, "malloc");
+
+    // store diagonal components
+    float* A_diag = malloc(nexci_ia * sizeof(float ));
+    STDL_ERROR_HANDLE_AND_REPORT(csfs == NULL, STDL_FREE_ALL(env, csfs); return STDL_ERR_MALLOC, "malloc");
+
+    size_t ncsfs = 0;
+
     for(size_t i=0; i < ctx->nocc; i++) {
         size_t kii = STDL_MATRIX_SP_IDX(i, i);
 
@@ -329,24 +346,64 @@ int stdl_context_select_csf(stdl_context *ctx) {
             float iaia = .0f;
             float iiaa = .0f;
 
-            for(size_t A=0; A < natm; A++) { // scalar product to compute (ii|aa)' and (ia|ia)'.
-                iiaa += ijBB_J[kii * natm + A] * qAab[kaa * natm + A];
+            for(size_t A=0; A < natm; A++) { // scalar products to compute (ia|ia)' and (ii|aa)'.
                 iaia += iaBB_K[kia * natm + A] * qAia[kia * natm + A];
+                iiaa += ijBB_J[kii * natm + A] * qAab[kaa * natm + A];
             }
 
-            float A_iaia = (float) (ctx->e[ctx->nocc + a] - ctx->e[i]) + 2 * iaia - iiaa;
+            A_diag[kia] = (float) (ctx->e[ctx->nocc + a] - ctx->e[i]) + 2 * iaia - iiaa;
 
-            if(A_iaia <= ctx->ethr) {
-                printf("selected primary:: %ld→%ld (E=%.3f eV)\n", i, ctx->nocc + a, A_iaia * 27.212);
-            } // ... the rest is selected to be considered in perturbation.
+            if(A_diag[kia] <= ctx->ethr) {
+                csfs[kia] = 1;
+                ncsfs++;
+                STDL_DEBUG("selected primary:: %ld→%ld (E=%.3f eV)", i, ctx->nocc + a, A_diag[kia] * 27.212);
+            } else {// ... the rest is selected to be considered in perturbation.
+                csfs[kia] = 2; // mark as potentially secondary for the moment
+            }
         }
     }
 
     /*
-     * 2) Now, select S-CSFs.
+     * 3) Now, select S-CSFs j→b so that E^(2)_jb > E^(2)_thr.
      */
 
-    STDL_FREE_ALL(env);
+    for(size_t kjb=0; kjb < nexci_ia; kjb++) { // loop over possible S-CSFs
+        if(csfs[kjb] == 2) {
+            size_t b = kjb % nvirt, j = kjb / nvirt;
+            float e2 = .0f; // perturbation energy
+
+            for(size_t kia=0; kia < nexci_ia; kia++) { // loop over P-CSFs
+                if(csfs[kia] == 1) {
+                    float iajb = .0f;
+                    float ijab = .0f;
+
+                    size_t a = kia % nvirt, i = kia / nvirt;
+                    size_t kij = _lin(i, j);
+                    size_t kab = _lin(a, b);
+
+                    for(size_t A=0; A < natm; A++) { // scalar products to compute (ia|jb)' and (ij|ab)'.
+                        iajb += iaBB_K[kia * natm + A] * qAia[kjb * natm + A];
+                        ijab += ijBB_J[kij * natm + A] * qAab[kab * natm + A];
+                    }
+
+                    float A_iajb = 2 * iajb - ijab;
+
+                    e2 += powf(A_iajb, 2) / (A_diag[kjb] - A_diag[kia]);
+                }
+            }
+
+            if(e2 < ctx->e2thr) {
+                csfs[kjb] = 0; // discarded
+            } else {
+                STDL_DEBUG("selected secondary:: %ld→%ld (E=%.3f eV)", j, ctx->nocc + b, A_diag[kjb] * 27.212);
+                ncsfs++;
+            }
+        }
+    }
+
+    STDL_DEBUG("selected %d CSFs (%.2f%% of %d CSFs)", ncsfs, (float) ncsfs / (float) nexci_ia * 100, nexci_ia);
+
+    STDL_FREE_ALL(env, csfs, A_diag);
 
     return STDL_ERR_OK;
 }

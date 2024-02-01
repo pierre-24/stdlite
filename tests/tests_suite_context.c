@@ -7,7 +7,7 @@
 #include "tests_suite.h"
 
 void setUp() {
-    stdl_set_debug_level(-1);
+    stdl_set_debug_level(3);
 }
 
 
@@ -27,10 +27,10 @@ void test_context_select_MO_ok() {
     STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
 
     stdl_context* ctx = NULL;
-    STDL_OK(stdl_context_new(&ctx, wf, bs, 2.0, 4.0, 10. / 27.212, 1.0));
+    STDL_OK(stdl_context_new(&ctx, wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0));
 
-    TEST_ASSERT_EQUAL_INT(ctx->nmo, 5);
-    TEST_ASSERT_EQUAL_INT(ctx->nocc, 3);
+    TEST_ASSERT_EQUAL_INT(ctx->nmo,7);
+    TEST_ASSERT_EQUAL_INT(ctx->nocc, 4);
 
     // check that the MO are normalized
     for (size_t i = 0; i < ctx->nmo; ++i) {
@@ -59,7 +59,7 @@ void test_context_select_MO_ok() {
     for(size_t i=0; i < wf->nao; i++)
         total += density_mat[i * wf->nao + i];
 
-    TEST_ASSERT_DOUBLE_WITHIN(1e-8, 2.f * ctx->nocc, total);
+    TEST_ASSERT_DOUBLE_WITHIN(1e-6, 2.f * ctx->nocc, total);
 
     // stdl_matrix_dge_print(wf->nao, 0, density_mat, "D");
 

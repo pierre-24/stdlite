@@ -22,8 +22,11 @@ struct stdlite_context_ {
     /// Parameter for the method: $\gamma_K$.
     float gammaK;
 
-    /// Parameter for the method: $\varepsilon_{thr}$, the threshold for selecting MO.
+    /// Parameter for the method: $E_{thr}$, the threshold for selecting MOs and primary CSFs.
     float ethr;
+
+    /// Parameter for the method: $E^{(2)}_{thr}$, the threshold for (perturbatively) selecting secondary CSFs.
+    float e2thr;
 
     /// Parameter for the method: $a_x$, the amount of HF exchange.
     float ax;
@@ -50,12 +53,14 @@ typedef struct stdlite_context_ stdl_context;
  * @param wf A valid wavefunction.
  * @param gammaJ parameter for Coulomb integrals approximation
  * @param gammaK parameter for exchange integrals approximation
- * @param ethr energy threshold
+ * @param ethr energy threshold for primary CSFs, must be >0
+ * @param e2thr energy threshold for secondary CSFs (selected pertubatively), must be >0
  * @param ax amount of HF exchange
  * @return error code
  * @ingroup context
  */
-int stdl_context_new(stdl_context ** ctx, stdl_wavefunction* wf, stdl_basis* bs, float gammaJ, float  gammaK, float ethr, float ax);
+int stdl_context_new(stdl_context **ctx, stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float gammaK, float ethr,
+                     float e2thr, float ax);
 
 
 /**

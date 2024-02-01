@@ -150,9 +150,12 @@ The simplified TD-DFT methods root in 3 approximations:
 The truncation of the CI space is done in two steps:
 
 1. an active MO space is defined by $\varepsilon_p \in [\varepsilon_{LUMO}-E_{w}, \varepsilon_{HOMO}+E_{w}]$, with $E_w = 2\,(1+0.8a_x)\,E_{thr}$, and then
-2. configuration state functions (CSF) are selected within this active space, either if $A_{ia,ia} < E_{thr}$ (primary CSF, P-CSFs) or if $E^{(2)}_{jb} > E_{pt}$ (secondary CSF, S-CFSs), where
-   $E^{(2)}_{jb} = \sum_{ia}^{P-CSFs} \frac{|A_{ia,jb}|}{A_{ia,ia}-A_{jb,jb}}$.
+2. configuration state functions (CSF) are selected within this active space: first, a set of primary $i\to a$ CSFs (P-CSFs), for which $A_{ia,ia} < E_{thr}$, is built.
+   Then, from CSFs $j\to b$ for which $A_{jb,jb} > E_{thr}$, a set of secondary CSFs (S-CSFs), for which $E^{(2)}_{jb} > E^{(2)}_{thr}$ is build (typically, $E^{(2)}_{thr} = 10^{-4}$). Other CSFs are discarded.
 
+The selection of S-CSFs is based on a perturbative approach, where $E^{(2)}_{jb}$ measure the cumulative perturbative contributions to all the P-CSFs:
+
+$$E^{(2)}_{jb} = \sum_{ia}^{\text{P-CSFs}} \frac{|A_{ia,jb}|^2}{A_{jb,jb}-A_{ia,ia}}.$$
 
 ### sTD-DFT, or the monopole approximation
 
