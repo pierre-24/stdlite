@@ -181,23 +181,46 @@ int stdl_context_delete(stdl_context* ctx) {
 }
 
 int stdl_context_select_csf(stdl_context *ctx) {
+    assert(ctx != NULL);
 
-    /*
-     * 1) Prepare charges and intermediates.
-     */
 
     size_t natm = ctx->original_wf->natm,
-        nvirt = ctx->nmo - ctx->nocc,
-        nexci_ij = STDL_MATRIX_SP_SIZE(ctx->nocc),
-        nexci_ab = STDL_MATRIX_SP_SIZE(nvirt),
-        nexci_ia = ctx->nocc * nvirt;
+            nvirt = ctx->nmo - ctx->nocc,
+            nexci_ij = STDL_MATRIX_SP_SIZE(ctx->nocc),
+            nexci_ab = STDL_MATRIX_SP_SIZE(nvirt),
+            nexci_ia = ctx->nocc * nvirt;
+
+    /*
+     * 1) Prepare charges and intermediates, as one big block of (continuous) memory.
+     *
+     *  <--- natm --------->
+     * +--------------------+ 0
+     * |  AABB_J            |
+     * +--------------------+ natm
+     * |  AABB_K            |
+     * +--------------------+ natm
+     * |  qAij [packed]     |
+     * +--------------------+ nexci_ij
+     * |  qAab [packed]     |
+     * +--------------------+ nexci_ab
+     * |  qAia              |
+     * +--------------------+ nexci_ia
+     * |  ijBB_J [packed]   |
+     * +--------------------+ nexci_ij
+     * |  iaBB_K            |
+     * +--------------------+ nexci_ia
+     *
+     * TOTAL = natm * (2 * natm + 2 * nexci_ij + 2 * nexci_ia + nexci_ab)
+     */
 
     double* atm = ctx->original_wf->atm;
 
+    float* env = malloc(natm * (2 * natm + 2 * nexci_ij + 2 * nexci_ia + nexci_ab) * sizeof(float));
+    STDL_ERROR_HANDLE_AND_REPORT(env == NULL, return STDL_ERR_MALLOC, "malloc");
+
     // Coulomb and exchange-like integrals (AA|BB), `float[natm * natm]`
-    float * AABB_J = malloc(natm * natm * sizeof(float));
-    float * AABB_K = malloc(natm * natm * sizeof(float));
-    STDL_ERROR_HANDLE_AND_REPORT(AABB_J == NULL || AABB_K == NULL, return STDL_ERR_MALLOC, "malloc");
+    float * AABB_J = env;
+    float * AABB_K = env + natm * natm;
 
     for(size_t A=0; A < natm; A++) {
         for(size_t B=0; B <= A; B++) {
@@ -220,10 +243,9 @@ int stdl_context_select_csf(stdl_context *ctx) {
     // stdl_matrix_sge_print(natm, 0, AABB_K, "(AA|BB)_K");
 
     // 1. density charges for Coulomb terms: Q_A^ij [in packed form, float[STDL_SP_SIZE(nocc)]], Q_A^ab [in packed form, float[STDL_SP_SIZE(nocc)]], and Q_A^ia [float[nocc * nvirt]].
-    float* qAij = malloc(nexci_ij * natm * sizeof(float));
-    float* qAab = malloc(nexci_ab * natm * sizeof(float));
-    float* qAia = malloc(nexci_ia * natm * sizeof(float));
-    STDL_ERROR_HANDLE_AND_REPORT(qAij == NULL || qAab == NULL || qAia == NULL, return STDL_ERR_MALLOC, "malloc");
+    float* qAij = env + (2 * natm) * natm;
+    float* qAab = env + (2 * natm + nexci_ij) * natm;
+    float* qAia = env + (2 * natm + nexci_ij + nexci_ab) * natm;
 
     for(size_t i=0; i < ctx->nocc; i++) {
         for(size_t j=0; j <= i; j++) {
@@ -238,7 +260,7 @@ int stdl_context_select_csf(stdl_context *ctx) {
         }
     }
 
-    // stdl_matrix_sge_print(nexci_ij, natm, qAij, "Q_A^ij");
+    // stdl_matrix_sge_print(nexci_ij, natm, qAij, "q_A^ij");
 
     for(size_t a=0; a < nvirt; a++) {
         for(size_t b=0; b <= a; b++) {
@@ -253,7 +275,7 @@ int stdl_context_select_csf(stdl_context *ctx) {
         }
     }
 
-    // stdl_matrix_sge_print(nexci_ab, natm, qAab, "Q^A_ab");
+    // stdl_matrix_sge_print(nexci_ab, natm, qAab, "q^A_ab");
 
     for(size_t i=0; i < ctx->nocc; i++) {
         for (size_t a = 0; a < nvirt; ++a) {
@@ -271,9 +293,8 @@ int stdl_context_select_csf(stdl_context *ctx) {
     // stdl_matrix_sge_print(nexci_ia, natm, qAia, "Q_A^ia");
 
     // 2. Intermediates: (ij|BB)_J [in packed form], and (ia|BB)_K:
-    float* ijBB_J = malloc(nexci_ij * natm * sizeof(float));
-    float* iaBB_K = malloc(nexci_ia * natm * sizeof(float));
-    STDL_ERROR_HANDLE_AND_REPORT(ijBB_J == NULL || iaBB_K == NULL, return STDL_ERR_MALLOC, "malloc");
+    float* ijBB_J = env + (2 * natm + nexci_ij + nexci_ab + nexci_ia) * natm;
+    float* iaBB_K = env + (2 * natm + 2 * nexci_ij + nexci_ab + nexci_ia) * natm;
 
     cblas_ssymm(
             CblasRowMajor, CblasRight, CblasLower,
@@ -294,8 +315,6 @@ int stdl_context_select_csf(stdl_context *ctx) {
     );
 
     // stdl_matrix_sge_print(nexci_ia, natm, iaBB_K, "(ia|BB)_K");
-
-    STDL_FREE_ALL(AABB_J, AABB_K);
 
     /*
      *  2) To select primary CSFs, one needs to evaluate A'_ia,ia = (e_a - e_i) + 2*(ia|ia)' - (ii|aa)'.
@@ -327,7 +346,7 @@ int stdl_context_select_csf(stdl_context *ctx) {
      * 2) Now, select S-CSFs.
      */
 
-    STDL_FREE_ALL(qAij, qAab, qAia, ijBB_J, iaBB_K);
+    STDL_FREE_ALL(env);
 
     return STDL_ERR_OK;
 }
