@@ -182,10 +182,6 @@ int stdl_context_delete(stdl_context* ctx) {
     return STDL_ERR_OK;
 }
 
-size_t _lin(size_t i, size_t j) {
-    return (i >= j) ? i*(i+1) / 2 + j : j*(j+1) / 2 + i;
-}
-
 int stdl_context_select_csfs_monopole(stdl_context *ctx, size_t *nselected, size_t **csfs, float **A, float **B) {
     assert(ctx != NULL && nselected != NULL && csfs != NULL && A != NULL);
 
@@ -415,8 +411,8 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, size_t *nselected, size
                         float ijab = .0f;
 
                         size_t a = kia % nvirt, i = kia / nvirt;
-                        size_t kij = _lin(i, j);
-                        size_t kab = _lin(a, b);
+                        size_t kij = STDL_MATRIX_SP_IDX(i, j);
+                        size_t kab = STDL_MATRIX_SP_IDX(a, b);
 
                         for(size_t A_=0; A_ < natm; A_++) { // scalar products to compute (ia|jb)' and (ij|ab)'.
                             iajb += iaBB_K[kia * natm + A_] * qAia[kjb * natm + A_];
@@ -471,7 +467,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, size_t *nselected, size
                         float ijab = .0f;
                         float ibaj = .0f;
 
-                        size_t kij = _lin(i, j), kab = _lin(a, b), kbi = b * nvirt + i, kaj = a * nvirt + j;
+                        size_t kij = STDL_MATRIX_SP_IDX(i, j), kab = STDL_MATRIX_SP_IDX(a, b), kbi = b * nvirt + i, kaj = a * nvirt + j;
 
                         for(size_t A_=0; A_ < natm; A_++) { // scalar products to compute (ia|jb)', (ij|ab)' and (ib|aj)'.
                             iajb += iaBB_K[kia * natm + A_] * qAia[kjb * natm + A_];

@@ -12,16 +12,19 @@
 /**
  * Get the index corresponding to an element of a symmetric packed (SP) matrix.
  * `i` is the row, while `j` is the column.
- * Assume `i < j`.
  * @ingroup matrix
  */
-#define STDL_MATRIX_SP_IDX(i, j) ((i)*(i+1)/2+j)
+static inline size_t STDL_MATRIX_SP_IDX(size_t i, size_t j) {
+    return (i >= j) ? i*(i+1) / 2 + j : j*(j+1) / 2 + i;
+}
 
 /**
  * Get the size of a symmetric packed (SP) matrix of size `n`.
  * @ingroup matrix
  */
-#define STDL_MATRIX_SP_SIZE(nx) ((nx)*((nx)+1)/2)
+static inline size_t STDL_MATRIX_SP_SIZE(size_t nx) {
+    return ((nx)*((nx)+1)/2);
+}
 
 /**
  * Print a double precision matrix.
