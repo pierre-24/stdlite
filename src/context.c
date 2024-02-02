@@ -7,7 +7,7 @@
 #include "stdlite/context.h"
 #include "stdlite/logging.h"
 #include "stdlite/helpers.h"
-#include "stdlite/matrix.h"
+#include "stdlite/utils/matrix.h"
 
 // Chemical hardness (in Eh), from 10.1002/qua.22202
 float eta[] = {

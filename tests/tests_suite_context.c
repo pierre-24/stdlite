@@ -1,7 +1,7 @@
 #include <string.h>
 
 #include <stdlite/utils/fchk_parser.h>
-#include <stdlite/matrix.h>
+#include <stdlite/utils/matrix.h>
 #include <stdlite/context.h>
 
 #include "tests_suite.h"
@@ -9,7 +9,6 @@
 void setUp() {
     stdl_set_debug_level(-1);
 }
-
 
 void test_context_select_MO_ok() {
     char* fchk_path = "../tests/test_files/water_631g.fchk";

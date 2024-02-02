@@ -5,7 +5,7 @@
 #include <cblas.h>
 #include <assert.h>
 
-#include "stdlite/matrix.h"
+#include "include/stdlite/utils/matrix.h"
 #include "stdlite/logging.h"
 #include "stdlite/helpers.h"
 

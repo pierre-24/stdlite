@@ -54,14 +54,6 @@ groups:
       ```c
       #include <stdlite/helpers.h>
       ```
-  - name: matrix
-    title: Matrices
-    description: |
-      Utilities to work with matrices.
-      
-      ```c
-      #include <stdlite/matrix.h>
-      ```
   - name: response
     title: Response functions
     description: |
@@ -154,4 +146,12 @@ groups:
       
           stdl_lexer_delete(lx);
           fclose(f);
+          ```
+      - name: matrix
+        title: Matrices
+        description: |
+          Utilities to work with matrices.
+          
+          ```c
+          #include <stdlite/matrix.h>
           ```

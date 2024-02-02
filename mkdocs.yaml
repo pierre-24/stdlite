@@ -11,13 +11,12 @@ nav:
   - Public API:
     - API/index.md
     - API/logging/index.md
-    - API/helpers/index.md
+    - API/wavefunction/index.md
     - API/context/index.md
     - API/response/index.md
     - API/utilities/index.md
     - API/basis/index.md
-    - API/matrix/index.md
-    - API/wavefunction/index.md
+    - API/helpers/index.md
 
 theme:
   name: material

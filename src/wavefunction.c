@@ -5,7 +5,7 @@
 #include "stdlite/wavefunction.h"
 #include "stdlite/logging.h"
 #include "stdlite/helpers.h"
-#include "stdlite/matrix.h"
+#include "stdlite/utils/matrix.h"
 
 int stdl_wavefunction_new(stdl_wavefunction **wf_ptr, size_t natm, size_t nocc, size_t nao, size_t nmo) {
     assert(wf_ptr != NULL && natm > 0 && nao > 0 && nmo > 0 && nmo <= nao && nmo >= nocc);

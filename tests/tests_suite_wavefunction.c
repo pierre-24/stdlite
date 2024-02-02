@@ -2,7 +2,7 @@
 #include <unistd.h>
 
 #include <stdlite/utils/fchk_parser.h>
-#include <stdlite/matrix.h>
+#include <stdlite/utils/matrix.h>
 
 #include "tests_suite.h"
 
