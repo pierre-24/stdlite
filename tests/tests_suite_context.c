@@ -7,7 +7,7 @@
 #include "tests_suite.h"
 
 void setUp() {
-    stdl_set_debug_level(3);
+    stdl_set_debug_level(-1);
 }
 
 
@@ -27,10 +27,10 @@ void test_context_select_MO_ok() {
     STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
 
     stdl_context* ctx = NULL;
-    STDL_OK(stdl_context_new(&ctx, wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0));
+    STDL_OK(stdl_context_new(&ctx, wf, bs, 2.0, 4.0, 10. / 27.212, 1e-4, 1.0));
 
-    TEST_ASSERT_EQUAL_INT(ctx->nmo,7);
-    TEST_ASSERT_EQUAL_INT(ctx->nocc, 4);
+    TEST_ASSERT_EQUAL_INT(5, ctx->nmo);
+    TEST_ASSERT_EQUAL_INT(3, ctx->nocc);
 
     // check that the MO are normalized
     for (size_t i = 0; i < ctx->nmo; ++i) {
@@ -65,7 +65,50 @@ void test_context_select_MO_ok() {
 
     free(density_mat);
 
-    stdl_context_select_csf(ctx);
+    STDL_OK(stdl_context_delete(ctx));
+    STDL_OK(stdl_lexer_delete(lx));
+
+    fclose(f);
+}
+
+
+void test_context_select_csfs_ok() {
+    char* fchk_path = "../tests/test_files/water_631g.fchk";
+
+    FILE* f = fopen(fchk_path, "r");
+    TEST_ASSERT_NOT_NULL(f);
+
+    stdl_lexer* lx = NULL;
+    STDL_OK(stdl_lexer_new(&lx, f));
+    STDL_OK(stdl_fchk_parser_skip_intro(lx));
+
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+
+    STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
+
+    stdl_context* ctx = NULL;
+    STDL_OK(stdl_context_new(&ctx, wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0));
+
+    TEST_ASSERT_EQUAL_INT(ctx->nmo,7);
+    TEST_ASSERT_EQUAL_INT(ctx->nocc, 4);
+
+    size_t nselected = 0;
+    size_t* csfs = NULL;
+    float * A = NULL;
+    STDL_OK(stdl_context_select_csfs_monopole(ctx, &nselected, &csfs, &A, NULL));
+
+    TEST_ASSERT_EQUAL_INT(10, nselected);
+
+    // check that energies are in increasing order
+    for (size_t kia = 1; kia < nselected; ++kia) {
+        TEST_ASSERT_TRUE(A[(kia - 1) * nselected + (kia - 1)] <= A[kia * nselected + kia]);
+    }
+
+    // stdl_matrix_sge_print(nselected, nselected, A, "A");
+
+    free(csfs);
+    free(A);
 
     STDL_OK(stdl_context_delete(ctx));
     STDL_OK(stdl_lexer_delete(lx));

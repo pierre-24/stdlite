@@ -102,7 +102,7 @@ $$E_{XC}= (1-a_x)\,E_X^{GGA}+a_x\,E_X^{HF}+E_C^{GGA}.$$
 Thanks to the [Slater-Condon rules](https://en.wikipedia.org/wiki/Slater%E2%80%93Condon_rules), one can evaluate the elements of $\mathbf A$ and $\mathbf B$, which are:
 
 $$\begin{aligned}
-&A_{ia, jb} = \delta_{ij}\delta_{ab} (\epsilon_a - \epsilon_i) + 2(ia|jb) - a_x\,(ij|ab) + (1-a_x)\,(ia|f_{XC}|jb),\\
+&A_{ia, jb} = \delta_{ij}\delta_{ab} (\varepsilon_a - \varepsilon_i) + 2(ia|jb) - a_x\,(ij|ab) + (1-a_x)\,(ia|f_{XC}|jb),\\
 &B_{ia,jb} = 2(ia|bj) - a_x(ib|aj) + (1-a_x)\,(ia|f_{XC}|bj),
 \end{aligned}$$
 
@@ -129,7 +129,7 @@ $$\tag{4}\begin{pmatrix}
 \end{pmatrix}$$
 
 which is generally referred to as the Casida equation [thought Eq. (3) may also be called that]. In this case, the $\omega$'s are the excitation energies while $\mathbf x^\omega$ and $\mathbf y^\omega$ might be seen as excitation and de-excitation vectors. 
-Solving this latter problem is done using two approaches. On the one hand, a common simplification to Eq. (4) is the **Tamm-Dancoff approximation** ($\mathbf B = \mathbf 0$) and therefore:
+Solving this latter problem is done using two approaches. On the one hand, a common simplification to Eq. (4) is the [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) ($\mathbf B = \mathbf 0$) and therefore:
 
 $$\tag{5}\mathbf A\,\mathbf x^\omega = \omega\,\mathbf x^\omega,$$
 
@@ -205,7 +205,7 @@ In both cases, $\eta_{AB} = \frac{1}{2}\,(\eta_A + \eta_B)$ where $\eta_A$ is th
 In practice, the elements of the (approximated) electronic Hessian matrices are:
 
 $$\begin{aligned}
-\mathbf{A}'_{ia,jb} =& \delta_{ij}\delta_{ab} (\epsilon_a - \epsilon_i)
+\mathbf{A}'_{ia,jb} =& \delta_{ij}\delta_{ab} (\varepsilon_a - \varepsilon_i)
 + 2\,(ia|jb)'  -  (ij|ab)',\\ 
 \mathbf{B}'_{ia,jb} =& (ia|bj)' -a_x\,(ib|aj)',
 \end{aligned}$$

@@ -72,15 +72,16 @@ int stdl_context_new(stdl_context **ctx, stdl_wavefunction *wf, stdl_basis *bs, 
 int stdl_context_delete(stdl_context* ctx);
 
 /**
- * Select CSFs.
- *
- * @note Unclear at the moment how to store and use that.
+ * Select CSFs and build the $\mathbf A$ and $\mathbf B$ matrices, using the monopole approximation (original sTD-DFT).
+ * If `B` is set to `NULL`, then only $\mathbf A$ is filled (Tamm-Dancoff approximation).
  *
  * @param ctx a valid context
+ * @param[out] nselected number of CSFs that were selected. If equals to 0, then `csfs` and `A` are not initialized.
+ * @param[out] `size_t[nselected]`, the indices (`i*ctx->nvirt + a`) of each selected CSF `i→a`, as `i = csfs[k] / ctx->nvirt; a = csfs[k] % ctx->nvirt`. They are sorted in increasing energy order, the energy being available at `A[k * nselected + k]`.
  * @return error code
  * @ingroup context
  */
-int stdl_context_select_csf(stdl_context* ctx);
+int stdl_context_select_csfs_monopole(stdl_context *ctx, size_t *nselected, size_t **csfs, float **A, float **B);
 
 
 #endif //STDLITE_CONTEXT_H

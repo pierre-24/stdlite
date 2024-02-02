@@ -186,8 +186,8 @@ size_t _lin(size_t i, size_t j) {
     return (i >= j) ? i*(i+1) / 2 + j : j*(j+1) / 2 + i;
 }
 
-int stdl_context_select_csf(stdl_context *ctx) {
-    assert(ctx != NULL);
+int stdl_context_select_csfs_monopole(stdl_context *ctx, size_t *nselected, size_t **csfs, float **A, float **B) {
+    assert(ctx != NULL && nselected != NULL && csfs != NULL && A != NULL);
 
 
     size_t natm = ctx->original_wf->natm,
@@ -228,20 +228,20 @@ int stdl_context_select_csf(stdl_context *ctx) {
     float * AABB_J = env;
     float * AABB_K = env + natm * natm;
 
-    for(size_t A=0; A < natm; A++) {
-        for(size_t B=0; B <= A; B++) {
+    for(size_t A_=0; A_ < natm; A_++) {
+        for(size_t B_=0; B_ <= A_; B_++) {
             float r_AB = 0;
-            if(A != B) {
-                r_AB = (float) sqrt(pow(atm[A * 4 + 1] - atm[B * 4 + 1], 2) + pow(atm[A * 4 + 2] - atm[B * 4 + 2], 2) + pow(atm[A * 4 + 3] - atm[B * 4 + 3], 2));
+            if(A_ != B_) {
+                r_AB = (float) sqrt(pow(atm[A_ * 4 + 1] - atm[B_ * 4 + 1], 2) + pow(atm[A_ * 4 + 2] - atm[B_ * 4 + 2], 2) + pow(atm[A_ * 4 + 3] - atm[B_ * 4 + 3], 2));
             }
 
-            float etaAB = .5f * (eta[(int) atm[A * 4 + 0]] + eta[(int) atm[B * 4 + 0]]);
+            float etaAB = .5f * (eta[(int) atm[A_ * 4 + 0]] + eta[(int) atm[B_ * 4 + 0]]);
 
-            AABB_J[A * natm + B] = 1.f / powf(powf(r_AB, ctx->gammaJ) + powf(ctx->ax * etaAB, -ctx->gammaJ), 1.f / ctx->gammaJ);
-            AABB_J[B * natm + A] = AABB_J[A * natm + B];
+            AABB_J[A_ * natm + B_] = 1.f / powf(powf(r_AB, ctx->gammaJ) + powf(ctx->ax * etaAB, -ctx->gammaJ), 1.f / ctx->gammaJ);
+            AABB_J[B_ * natm + A_] = AABB_J[A_ * natm + B_];
 
-            AABB_K[A * natm + B] = 1.f / powf(powf(r_AB, ctx->gammaK) + powf(etaAB, -ctx->gammaK), 1.f / ctx->gammaK);
-            AABB_K[B * natm + A] = AABB_K[A * natm + B];
+            AABB_K[A_ * natm + B_] = 1.f / powf(powf(r_AB, ctx->gammaK) + powf(etaAB, -ctx->gammaK), 1.f / ctx->gammaK);
+            AABB_K[B_ * natm + A_] = AABB_K[A_ * natm + B_];
         }
     }
 
@@ -257,8 +257,8 @@ int stdl_context_select_csf(stdl_context *ctx) {
         for(size_t j=0; j <= i; j++) {
             size_t k = i * (i + 1) / 2 + j;
 
-            for(size_t A=0; A < natm; A++)
-                qAij[k * natm + A] = .0f;
+            for(size_t A_=0; A_ < natm; A_++)
+                qAij[k * natm + A_] = .0f;
 
             for(size_t mu=0; mu < ctx->original_wf->nao; mu++) {
                 qAij[k * natm + ctx->original_wf->aotoatm[mu]] += (float) (ctx->C[i * ctx->original_wf->nao + mu] * ctx->C[j * ctx->original_wf->nao + mu]);
@@ -272,8 +272,8 @@ int stdl_context_select_csf(stdl_context *ctx) {
         for(size_t b=0; b <= a; b++) {
             size_t k = a * (a + 1) / 2 + b;
 
-            for(size_t A=0; A < natm; A++)
-                qAab[k * natm + A] = .0f;
+            for(size_t A_=0; A_ < natm; A_++)
+                qAab[k * natm + A_] = .0f;
 
             for(size_t mu=0; mu < ctx->original_wf->nao; mu++) {
                 qAab[k * natm + ctx->original_wf->aotoatm[mu]] += (float) (ctx->C[(a + ctx->nocc) * ctx->original_wf->nao + mu] * ctx->C[(b + ctx->nocc) * ctx->original_wf->nao + mu]);
@@ -287,8 +287,8 @@ int stdl_context_select_csf(stdl_context *ctx) {
         for (size_t a = 0; a < nvirt; ++a) {
             size_t k = i * nvirt + a;
 
-            for(size_t A=0; A < natm; A++)
-                qAia[k * natm + A] = .0f;
+            for(size_t A_=0; A_ < natm; A_++)
+                qAia[k * natm + A_] = .0f;
 
             for(size_t mu=0; mu < ctx->original_wf->nao; mu++) {
                 qAia[k * natm + ctx->original_wf->aotoatm[mu]] += (float) (ctx->C[i * ctx->original_wf->nao + mu] * ctx->C[(ctx->nocc + a) * ctx->original_wf->nao + mu]);
@@ -327,15 +327,15 @@ int stdl_context_select_csf(stdl_context *ctx) {
      *     Then, CSFs are selected if A'_ia,ia <= E_thr.
      */
 
-    // marks csfs as not-included (0), primary (1), or secondary (2).
-    char* csfs = malloc(nexci_ia * sizeof(short));
-    STDL_ERROR_HANDLE_AND_REPORT(csfs == NULL, free(env); return STDL_ERR_MALLOC, "malloc");
+    // marks csfs_ensemble as not-included (0), primary (1), or secondary (2).
+    char* csfs_ensemble = malloc(nexci_ia * sizeof(short));
+    STDL_ERROR_HANDLE_AND_REPORT(csfs_ensemble == NULL, free(env); return STDL_ERR_MALLOC, "malloc");
 
     // store diagonal components
     float* A_diag = malloc(nexci_ia * sizeof(float ));
-    STDL_ERROR_HANDLE_AND_REPORT(csfs == NULL, STDL_FREE_ALL(env, csfs); return STDL_ERR_MALLOC, "malloc");
+    STDL_ERROR_HANDLE_AND_REPORT(csfs_ensemble == NULL, STDL_FREE_ALL(env, csfs_ensemble); return STDL_ERR_MALLOC, "malloc");
 
-    size_t ncsfs = 0;
+    *nselected = 0;
 
     for(size_t i=0; i < ctx->nocc; i++) {
         size_t kii = STDL_MATRIX_SP_IDX(i, i);
@@ -346,26 +346,26 @@ int stdl_context_select_csf(stdl_context *ctx) {
             float iaia = .0f;
             float iiaa = .0f;
 
-            for(size_t A=0; A < natm; A++) { // scalar products to compute (ia|ia)' and (ii|aa)'.
-                iaia += iaBB_K[kia * natm + A] * qAia[kia * natm + A];
-                iiaa += ijBB_J[kii * natm + A] * qAab[kaa * natm + A];
+            for(size_t A_=0; A_ < natm; A_++) { // scalar products to compute (ia|ia)' and (ii|aa)'.
+                iaia += iaBB_K[kia * natm + A_] * qAia[kia * natm + A_];
+                iiaa += ijBB_J[kii * natm + A_] * qAab[kaa * natm + A_];
             }
 
             A_diag[kia] = (float) (ctx->e[ctx->nocc + a] - ctx->e[i]) + 2 * iaia - iiaa;
 
             if(A_diag[kia] <= ctx->ethr) {
-                csfs[kia] = 1;
-                ncsfs++;
-                STDL_DEBUG("selected primary:: %ld→%ld (E=%f Eh)", i, ctx->nocc + a, A_diag[kia]);
+                csfs_ensemble[kia] = 1;
+                (*nselected)++;
+                STDL_DEBUG("selected primary:: %ld→%ld [%d] (E=%f Eh)", i, ctx->nocc + a, kia, A_diag[kia]);
             } else {// ... the rest is selected to be considered in perturbation.
-                csfs[kia] = 2; // mark as potentially secondary for the moment
+                csfs_ensemble[kia] = 2; // mark as potentially secondary for the moment
             }
         }
     }
 
     // while we're at it, sort the CSFs
     size_t* csfs_sorted_indices = malloc(nexci_ia * sizeof(size_t));
-    STDL_ERROR_HANDLE_AND_REPORT(csfs_sorted_indices == NULL, STDL_FREE_ALL(env, csfs, A_diag); return STDL_ERR_MALLOC, "malloc");
+    STDL_ERROR_HANDLE_AND_REPORT(csfs_sorted_indices == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag); return STDL_ERR_MALLOC, "malloc");
 
     for(size_t kia=0; kia < nexci_ia; kia++)
         csfs_sorted_indices[kia] = kia;
@@ -399,18 +399,18 @@ int stdl_context_select_csf(stdl_context *ctx) {
         }
     }
 
-    if(ncsfs > 0) {
+    if(*nselected > 0) {
         /*
          * 3) Now, select S-CSFs j→b so that E^(2)_jb > E^(2)_thr.
          */
 
         for(size_t kjb=0; kjb < nexci_ia; kjb++) { // loop over possible S-CSFs
-            if(csfs[kjb] == 2) {
+            if(csfs_ensemble[kjb] == 2) {
                 size_t b = kjb % nvirt, j = kjb / nvirt;
                 float e2 = .0f; // perturbation energy
 
                 for(size_t kia=0; kia < nexci_ia; kia++) { // loop over P-CSFs
-                    if(csfs[kia] == 1) {
+                    if(csfs_ensemble[kia] == 1) {
                         float iajb = .0f;
                         float ijab = .0f;
 
@@ -418,9 +418,9 @@ int stdl_context_select_csf(stdl_context *ctx) {
                         size_t kij = _lin(i, j);
                         size_t kab = _lin(a, b);
 
-                        for(size_t A=0; A < natm; A++) { // scalar products to compute (ia|jb)' and (ij|ab)'.
-                            iajb += iaBB_K[kia * natm + A] * qAia[kjb * natm + A];
-                            ijab += ijBB_J[kij * natm + A] * qAab[kab * natm + A];
+                        for(size_t A_=0; A_ < natm; A_++) { // scalar products to compute (ia|jb)' and (ij|ab)'.
+                            iajb += iaBB_K[kia * natm + A_] * qAia[kjb * natm + A_];
+                            ijab += ijBB_J[kij * natm + A_] * qAab[kab * natm + A_];
                         }
 
                         float A_iajb = 2 * iajb - ijab;
@@ -430,20 +430,83 @@ int stdl_context_select_csf(stdl_context *ctx) {
                 }
 
                 if(e2 < ctx->e2thr) {
-                    csfs[kjb] = 0; // discarded
+                    csfs_ensemble[kjb] = 0; // discarded
                 } else {
-                    STDL_DEBUG("selected secondary:: %ld→%ld (E=%f Eh)", j, ctx->nocc + b, A_diag[kjb]);
-                    ncsfs++;
+                    STDL_DEBUG("selected secondary:: %ld→%ld [%d] (E=%f Eh)", j, ctx->nocc + b, kjb, A_diag[kjb]);
+                    (*nselected)++;
                 }
             }
         }
+
+        STDL_DEBUG("selected %ld CSFs (%.2f%% of %ld CSFs)", *nselected, (float) *nselected / (float) nexci_ia * 100, nexci_ia);
+
+        /*
+         * 4) Store selected CSFs (in increasing energy order), and create A', B' matrices
+         */
+        *csfs = malloc((*nselected) * sizeof(size_t));
+        *A = malloc((*nselected) * (*nselected) * sizeof(float));
+        STDL_ERROR_HANDLE_AND_REPORT(*csfs == NULL || *A == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices, *csfs, *A); return STDL_ERR_MALLOC, "malloc");
+
+        if(B != NULL) {
+            *B = malloc((*nselected) * (*nselected) * sizeof(float));
+            STDL_ERROR_HANDLE_AND_REPORT(*B == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices, *csfs, *A); return STDL_ERR_MALLOC, "malloc");
+        }
+
+        size_t lia = 0, ljb = 0;
+        for(size_t kia_=0; kia_ < nexci_ia; kia_++) {
+            size_t kia = csfs_sorted_indices[kia_]; // corresponding index
+            size_t a = kia % nvirt, i = kia / nvirt;
+
+            if(csfs_ensemble[kia] > 0) {
+                (*csfs)[lia] = kia;
+
+                ljb = 0;
+                for (size_t kjb_ = 0; kjb_ < nexci_ia; ++kjb_) {
+                    size_t kjb = csfs_sorted_indices[kjb_]; // corresponding index
+
+                    if(csfs_ensemble[kjb] > 0) {
+                        size_t b = kjb % nvirt, j = kjb / nvirt;
+
+                        float iajb = .0f;
+                        float ijab = .0f;
+                        float ibaj = .0f;
+
+                        size_t kij = _lin(i, j), kab = _lin(a, b), kbi = b * nvirt + i, kaj = a * nvirt + j;
+
+                        for(size_t A_=0; A_ < natm; A_++) { // scalar products to compute (ia|jb)', (ij|ab)' and (ib|aj)'.
+                            iajb += iaBB_K[kia * natm + A_] * qAia[kjb * natm + A_];
+                            ijab += ijBB_J[kij * natm + A_] * qAab[kab * natm + A_];
+                            ibaj += iaBB_K[kbi * natm + A_] * qAia[kaj * natm + A_];
+                        }
+
+                        (*A)[lia * (*nselected) + ljb] = 2 * iajb - ijab;
+
+                        if(kia == kjb) // diagonal element
+                            (*A)[lia * (*nselected) + ljb] += (float) (ctx->e[ctx->nocc + a] - ctx->e[i]);
+                        else // non-diagonal
+                            (*A)[ljb * (*nselected) + lia] = (*A)[lia * (*nselected) + ljb];
+
+                        if(B != NULL) {
+                            (*B)[lia * (*nselected) + ljb] = iajb - ctx->ax * ibaj;
+                            if(kia != kjb)
+                                (*B)[ljb * (*nselected) + lia] = (*B)[lia * (*nselected) + ljb];
+                        }
+
+                        ljb++;
+                    }
+                }
+
+                lia++;
+            }
+        }
+
+
     } else {
+        *csfs = NULL;
         STDL_WARN("no CSFs selected. `E_thr` should be at least %f Eh!", A_diag[csfs_sorted_indices[0]]);
     }
 
-    STDL_DEBUG("selected %d CSFs (%.2f%% of %d CSFs)", ncsfs, (float) ncsfs / (float) nexci_ia * 100, nexci_ia);
-
-    STDL_FREE_ALL(env, csfs, A_diag, csfs_sorted_indices);
+    STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices);
 
     return STDL_ERR_OK;
 }
