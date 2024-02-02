@@ -9,7 +9,7 @@
 #include "stdlite/helpers.h"
 #include "stdlite/matrix.h"
 
-// Chemical hardness (in a.u.), from 10.1002/qua.22202
+// Chemical hardness (in Eh), from 10.1002/qua.22202
 float eta[] = {
         .0f, // no Z=0
         0.472592880f,
@@ -124,14 +124,14 @@ int stdl_context_new(stdl_context **ctx, stdl_wavefunction *wf, stdl_basis *bs, 
     (*ctx)->ax = ax;
 
     // select MO to include
-    STDL_DEBUG("range: %f a.u. (%.3f eV)", ethr, ethr * 27.212);
+    STDL_DEBUG("range: %f Eh (%.3f eV)", ethr, ethr * 27.212);
 
     size_t ohomo = (int) wf->nocc - 1, omin = 0, omax = 0;
     double ehomo = wf->e[ohomo], elumo = wf->e[ohomo + 1], ewin = 2 * (1 + .8 * ax)  * ethr, emin = elumo -ewin, emax = ehomo+ ewin;
 
-    STDL_DEBUG("window: %f a.u. (%.3f eV)", ewin, ewin * 27.212);
-    STDL_DEBUG("occ MO cutoff: %f a.u. (%.3f eV)", emin, emin * 27.212);
-    STDL_DEBUG("virt MO cutoff: %f a.u. (%.3f eV)", emax, emax * 27.212);
+    STDL_DEBUG("window: %f Eh (%.3f eV)", ewin, ewin * 27.212);
+    STDL_DEBUG("occ MO cutoff: %f Eh (%.3f eV)", emin, emin * 27.212);
+    STDL_DEBUG("virt MO cutoff: %f Eh (%.3f eV)", emax, emax * 27.212);
 
     for(size_t i=0; i < wf->nmo; i++) {
         if(wf->e[i] >= emin && omin == 0)
@@ -356,54 +356,94 @@ int stdl_context_select_csf(stdl_context *ctx) {
             if(A_diag[kia] <= ctx->ethr) {
                 csfs[kia] = 1;
                 ncsfs++;
-                STDL_DEBUG("selected primary:: %ld→%ld (E=%.3f eV)", i, ctx->nocc + a, A_diag[kia] * 27.212);
+                STDL_DEBUG("selected primary:: %ld→%ld (E=%f Eh)", i, ctx->nocc + a, A_diag[kia]);
             } else {// ... the rest is selected to be considered in perturbation.
                 csfs[kia] = 2; // mark as potentially secondary for the moment
             }
         }
     }
 
-    /*
-     * 3) Now, select S-CSFs j→b so that E^(2)_jb > E^(2)_thr.
-     */
+    // while we're at it, sort the CSFs
+    size_t* csfs_sorted_indices = malloc(nexci_ia * sizeof(size_t));
+    STDL_ERROR_HANDLE_AND_REPORT(csfs_sorted_indices == NULL, STDL_FREE_ALL(env, csfs, A_diag); return STDL_ERR_MALLOC, "malloc");
 
-    for(size_t kjb=0; kjb < nexci_ia; kjb++) { // loop over possible S-CSFs
-        if(csfs[kjb] == 2) {
-            size_t b = kjb % nvirt, j = kjb / nvirt;
-            float e2 = .0f; // perturbation energy
+    for(size_t kia=0; kia < nexci_ia; kia++)
+        csfs_sorted_indices[kia] = kia;
 
-            for(size_t kia=0; kia < nexci_ia; kia++) { // loop over P-CSFs
-                if(csfs[kia] == 1) {
-                    float iajb = .0f;
-                    float ijab = .0f;
+    // heap sort, https://en.wikipedia.org/wiki/Heapsort#Standard_implementation
+    size_t start = nexci_ia / 2, end = nexci_ia, tmp_swap, root, child;
+    while(end > 1) {
+        if(start) {
+            start -= 1;
+        } else {
+            end -= 1;
+            tmp_swap = csfs_sorted_indices[end];
+            csfs_sorted_indices[end] = csfs_sorted_indices[0];
+            csfs_sorted_indices[0] = tmp_swap;
+        }
 
-                    size_t a = kia % nvirt, i = kia / nvirt;
-                    size_t kij = _lin(i, j);
-                    size_t kab = _lin(a, b);
+        root = start;
+        while((2 * root + 1) < end) {
+            child = 2 * root + 1;
+            if(child + 1 < end && A_diag[csfs_sorted_indices[child]] < A_diag[csfs_sorted_indices[child + 1]])
+                child += 1;
 
-                    for(size_t A=0; A < natm; A++) { // scalar products to compute (ia|jb)' and (ij|ab)'.
-                        iajb += iaBB_K[kia * natm + A] * qAia[kjb * natm + A];
-                        ijab += ijBB_J[kij * natm + A] * qAab[kab * natm + A];
-                    }
-
-                    float A_iajb = 2 * iajb - ijab;
-
-                    e2 += powf(A_iajb, 2) / (A_diag[kjb] - A_diag[kia]);
-                }
-            }
-
-            if(e2 < ctx->e2thr) {
-                csfs[kjb] = 0; // discarded
+            if(A_diag[csfs_sorted_indices[root]] < A_diag[csfs_sorted_indices[child]]) {
+                tmp_swap = csfs_sorted_indices[child];
+                csfs_sorted_indices[child] = csfs_sorted_indices[root];
+                csfs_sorted_indices[root] = tmp_swap;
+                root = child;
             } else {
-                STDL_DEBUG("selected secondary:: %ld→%ld (E=%.3f eV)", j, ctx->nocc + b, A_diag[kjb] * 27.212);
-                ncsfs++;
+                break;
             }
         }
     }
 
+    if(ncsfs > 0) {
+        /*
+         * 3) Now, select S-CSFs j→b so that E^(2)_jb > E^(2)_thr.
+         */
+
+        for(size_t kjb=0; kjb < nexci_ia; kjb++) { // loop over possible S-CSFs
+            if(csfs[kjb] == 2) {
+                size_t b = kjb % nvirt, j = kjb / nvirt;
+                float e2 = .0f; // perturbation energy
+
+                for(size_t kia=0; kia < nexci_ia; kia++) { // loop over P-CSFs
+                    if(csfs[kia] == 1) {
+                        float iajb = .0f;
+                        float ijab = .0f;
+
+                        size_t a = kia % nvirt, i = kia / nvirt;
+                        size_t kij = _lin(i, j);
+                        size_t kab = _lin(a, b);
+
+                        for(size_t A=0; A < natm; A++) { // scalar products to compute (ia|jb)' and (ij|ab)'.
+                            iajb += iaBB_K[kia * natm + A] * qAia[kjb * natm + A];
+                            ijab += ijBB_J[kij * natm + A] * qAab[kab * natm + A];
+                        }
+
+                        float A_iajb = 2 * iajb - ijab;
+
+                        e2 += powf(A_iajb, 2) / (A_diag[kjb] - A_diag[kia]);
+                    }
+                }
+
+                if(e2 < ctx->e2thr) {
+                    csfs[kjb] = 0; // discarded
+                } else {
+                    STDL_DEBUG("selected secondary:: %ld→%ld (E=%f Eh)", j, ctx->nocc + b, A_diag[kjb]);
+                    ncsfs++;
+                }
+            }
+        }
+    } else {
+        STDL_WARN("no CSFs selected. `E_thr` should be at least %f Eh!", A_diag[csfs_sorted_indices[0]]);
+    }
+
     STDL_DEBUG("selected %d CSFs (%.2f%% of %d CSFs)", ncsfs, (float) ncsfs / (float) nexci_ia * 100, nexci_ia);
 
-    STDL_FREE_ALL(env, csfs, A_diag);
+    STDL_FREE_ALL(env, csfs, A_diag, csfs_sorted_indices);
 
     return STDL_ERR_OK;
 }
