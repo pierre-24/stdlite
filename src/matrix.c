@@ -128,6 +128,8 @@ int stdl_matrix_dsp_print(size_t n, double *matrix) {
 
 
 int stdl_matrix_dge_sqrt(double** mat, size_t n) {
+    assert(mat != NULL && *mat != NULL && n > 0);
+
     size_t sz = n * n * sizeof(double);
 
     double* e = malloc(n* sizeof(double));

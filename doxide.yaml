@@ -62,6 +62,14 @@ groups:
       ```c
       #include <stdlite/matrix.h>
       ```
+  - name: response
+    title: Response functions
+    description: |
+      Solve the linear response problem or the Casida equation.
+      
+      ```c
+      #include <stdlite/response.h>
+      ```
   - name: wavefunction
     title: Wavefunction
     description: |

@@ -499,8 +499,6 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, size_t *nselected, size
                 lia++;
             }
         }
-
-
     } else {
         *csfs = NULL;
         STDL_WARN("no CSFs selected. `E_thr` should be at least %f Eh!", A_diag[csfs_sorted_indices[0]]);
