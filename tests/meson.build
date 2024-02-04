@@ -21,6 +21,7 @@ tests_to_run = [
     'basis',
     'context',
     'utils_lexer',
+    'response',
     'utils_base_parser',
     'utils_fchk_parser',
     'wavefunction',
