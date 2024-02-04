@@ -81,3 +81,48 @@ int stdl_basis_print(stdl_basis *bs, int denormalize) {
 
     return STDL_ERR_OK;
 }
+
+int stdl_basis_compute_dsy_ovlp(stdl_basis* bs, size_t nao, double* S) {
+    assert(bs != NULL && S != NULL && nao >= (size_t) bs->nbas);
+
+    STDL_DEBUG("computing <i|j> to create the S matrix");
+
+    int si, sj, ioffset=0, joffset;
+
+    double* buff= malloc(28 * 28 * sizeof(double)); // the maximum libcint can handle
+    STDL_ERROR_HANDLE_AND_REPORT(buff == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    for(int i=0; i < bs->nbas; i++) {
+        if(bs->use_spherical)
+            si = CINTcgto_spheric(i, bs->bas);
+        else
+            si = CINTcgtos_cart(i, bs->bas);
+
+        joffset = 0;
+
+        for(int j=0; j <= i; j++) {
+            if(bs->use_spherical) {
+                sj = CINTcgto_spheric(j, bs->bas);
+                int1e_ovlp_sph(buff, NULL, (int[]) {i, j}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
+            }
+            else {
+                sj = CINTcgtos_cart(j, bs->bas);
+                int1e_ovlp_cart(buff, NULL, (int[]) {i, j}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
+            }
+
+            for(int iprim=0; iprim < si; iprim++) {
+                for(int jprim=0; jprim < sj && joffset + jprim <= ioffset + iprim; jprim++) {
+                    S[(ioffset + iprim) * nao + joffset + jprim] = S[(joffset + jprim) * nao + ioffset + iprim] = buff[iprim * sj + jprim];
+                }
+            }
+
+            joffset += sj;
+        }
+
+        ioffset += si;
+    }
+
+    free(buff);
+
+    return STDL_ERR_OK;
+}

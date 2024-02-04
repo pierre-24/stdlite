@@ -88,4 +88,14 @@ int stdl_basis_delete(stdl_basis* bs);
  */
 int stdl_basis_print(stdl_basis *bs, int denormalize);
 
+/**
+ * Compute the overlap matrix, $S_ij = \braket{i|j}$ in `S`.
+ * While it could be `sp`, BLAS multiplication routines requires `sy`.
+ * @param bs a valid basis set
+ * @param nao number of AO, must be `nao > bas->nbas`
+ * @param S ´double[nao, nao]´ the overlap matrix to be filled.
+ * @return error code.
+ */
+int stdl_basis_compute_dsy_ovlp(stdl_basis* bs, size_t nao, double* S);
+
 #endif //STDLITE_BASIS_H

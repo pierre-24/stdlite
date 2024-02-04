@@ -14,7 +14,7 @@ void compute_population_and_check(stdl_wavefunction* wf, int sym) {
 
     // compute the density matrix
     double* density_mat = NULL;
-    STDL_OK(stdl_wavefunction_compute_density(&density_mat, wf->C, wf->nocc, wf->nmo, wf->nao));
+    STDL_OK(stdl_wavefunction_compute_dge_density(wf->C, wf->nocc, wf->nmo, wf->nao, &density_mat));
 
     // stdl_matrix_dge_print(original_wf->nao, 0, density_mat, "D");
 
@@ -104,7 +104,7 @@ void test_orthogonalize_ok() {
     STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
     STDL_OK(stdl_basis_delete(bs));
 
-    STDL_OK(stdl_wavefunction_orthogonalize_C(wf->C, wf->S, wf->nmo, wf->nao));
+    STDL_OK(stdl_wavefunction_orthogonalize_dge_C(wf->C, wf->S, wf->nmo, wf->nao));
 
     // check that the MO are normalized
     for (size_t i = 0; i < wf->nmo; ++i) {

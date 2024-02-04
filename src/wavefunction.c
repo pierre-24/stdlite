@@ -47,7 +47,7 @@ int stdl_wavefunction_delete(stdl_wavefunction *wf) {
     return STDL_ERR_OK;
 }
 
-int stdl_wavefunction_orthogonalize_C(double* C, double* S, size_t nmo, size_t nao) {
+int stdl_wavefunction_orthogonalize_dge_C(double* C, double* S, size_t nmo, size_t nao) {
     assert(C != NULL && S != NULL && nmo > 0 && nao > 0);
 
     // compute S^(1/2)
@@ -76,7 +76,7 @@ int stdl_wavefunction_orthogonalize_C(double* C, double* S, size_t nmo, size_t n
     return STDL_ERR_OK;
 }
 
-int stdl_wavefunction_compute_density(double **D, double* C, size_t nocc, size_t nmo, size_t nao) {
+int stdl_wavefunction_compute_dge_density(double *C, size_t nocc, size_t nmo, size_t nao, double **D) {
     assert(C != NULL && D != NULL && nocc > 0 && nmo > 0 && nao > 0);
 
     *D = malloc(nao * nao * sizeof(double));

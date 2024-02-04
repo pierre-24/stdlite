@@ -162,7 +162,7 @@ int stdl_context_new(stdl_context **ctx, stdl_wavefunction *wf, stdl_basis *bs, 
 
     STDL_DEBUG("Orthogonalize MOs");
 
-    int error = stdl_wavefunction_orthogonalize_C((*ctx)->C, wf->S, (*ctx)->nmo, wf->nao);
+    int error = stdl_wavefunction_orthogonalize_dge_C((*ctx)->C, wf->S, (*ctx)->nmo, wf->nao);
     STDL_ERROR_CODE_HANDLE(error, stdl_context_delete(*ctx); return error);
 
     return STDL_ERR_OK;

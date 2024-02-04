@@ -603,51 +603,6 @@ size_t _count_nao(size_t nbas, long* shell_types) {
     return total;
 }
 
-// create the overlap matrix
-// if this fails, it is definitely from the malloc()
-int _make_S(stdl_wavefunction* wf, stdl_basis* bs) {
-    assert(wf != NULL && bs != NULL);
-
-    STDL_DEBUG("computing <i|j> to create the S matrix");
-
-    int si, sj, ioffset=0, joffset;
-
-    double* buff= malloc(28 * 28 * sizeof(double)); // the maximum libcint can handle
-    STDL_ERROR_HANDLE_AND_REPORT(buff == NULL, return STDL_ERR_MALLOC, "malloc");
-
-    for(int i=0; i < bs->nbas; i++) {
-        if(bs->use_spherical)
-            si = CINTcgto_spheric(i, bs->bas);
-        else
-            si = CINTcgtos_cart(i, bs->bas);
-
-        joffset = 0;
-
-        for(int j=0; j <= i; j++) {
-            if(bs->use_spherical)
-                sj = CINTcgto_spheric(j, bs->bas);
-            else
-                sj = CINTcgtos_cart(j, bs->bas);
-
-            int1e_ovlp_cart(buff, NULL, (int[]) {i, j}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
-
-            for(int iprim=0; iprim < si; iprim++) {
-                for(int jprim=0; jprim < sj && joffset + jprim <= ioffset + iprim; jprim++) {
-                    wf->S[(ioffset + iprim) * wf->nao + joffset + jprim] = wf->S[(joffset + jprim) * wf->nao + ioffset + iprim] = buff[iprim * sj + jprim];
-                }
-            }
-
-            joffset += sj;
-        }
-
-        ioffset += si;
-    }
-
-    free(buff);
-
-    return STDL_ERR_OK;
-}
-
 int stdl_fchk_parser_extract(stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr, stdl_lexer *lx) {
     assert(wf_ptr != NULL && bs_ptr != NULL && lx != NULL);
 
@@ -809,7 +764,7 @@ int stdl_fchk_parser_extract(stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr, st
     }
 
     // create the S matrix
-    error = _make_S(*wf_ptr, *bs_ptr);
+    error = stdl_basis_compute_dsy_ovlp((*bs_ptr), nao, (*wf_ptr)->S);
 
     // clean up stuffs
     _end:

@@ -32,7 +32,7 @@ struct stdl_wavefunction_ {
     /// `size_t[nao]`, 0-based list of corresponding atom for each AO.
     size_t* aotoatm;
 
-    /// `double[nao*nao]`, the (symmetric square) overlap matrix (`S`)
+    /// `double[nao*nao]`, the (symmetric square) overlap matrix (`S`).
     double* S;
 
     /// `double[nmo*nao]`, the LCAO coefficients matrix (`C`).
@@ -79,7 +79,7 @@ int stdl_wavefunction_delete(stdl_wavefunction* wf);
  * @return the error code
  * @ingroup wavefunction
  */
-int stdl_wavefunction_orthogonalize_C(double* C, double* S, size_t nmo, size_t nao) ;
+int stdl_wavefunction_orthogonalize_dge_C(double* C, double* S, size_t nmo, size_t nao) ;
 
 /**
  * Compute the density matrix.
@@ -88,14 +88,14 @@ int stdl_wavefunction_orthogonalize_C(double* C, double* S, size_t nmo, size_t n
  *
  * where $n_r$ is the occupation number of MO $r$.
  *
- * @param[out] D `double[nao*nao]` the density matrix to be created. Caller is responsible for free'ing it.
  * @param C `double[nmo*nao]`, the coefficients
  * @param nocc number of occupied orbitals, must be >0.
  * @param nmo number of MO, must be >0.
  * @param nao number of AO, must be >0.
+ * @param[out] D `double[nao*nao]` the density matrix to be created. Caller is responsible for free'ing it.
  * @return error code.
  * @ingroup wavefunction
  */
-int stdl_wavefunction_compute_density(double **D, double* C, size_t nocc, size_t nmo, size_t nao);
+int stdl_wavefunction_compute_dge_density(double *C, size_t nocc, size_t nmo, size_t nao, double **D);
 
 #endif //STDLITE_WAVEFUNCTION_H
