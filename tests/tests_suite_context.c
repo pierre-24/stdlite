@@ -101,10 +101,10 @@ void test_context_select_csfs_ok() {
 
     // check that energies are in increasing order
     for (size_t kia = 1; kia < nselected; ++kia) {
-        TEST_ASSERT_TRUE(A[(kia - 1) * nselected + (kia - 1)] <= A[kia * nselected + kia]);
+        TEST_ASSERT_TRUE(A[STDL_MATRIX_SP_IDX(kia - 1, kia - 1)] <= A[STDL_MATRIX_SP_IDX(kia, kia)]);
     }
 
-    // stdl_matrix_sge_print(nselected, nselected, A, "A");
+    // stdl_matrix_ssp_print(nselected, A);
 
     free(csfs);
     free(A);

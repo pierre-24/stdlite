@@ -127,6 +127,40 @@ int stdl_matrix_dsp_print(size_t n, double *matrix) {
 }
 
 
+int stdl_matrix_ssp_print(size_t n, float *matrix) {
+    assert(n > 0 && matrix != NULL && matrix != NULL);
+
+    size_t i = 0, j, c;
+    while (i < n) {
+        // header
+        j = 0;
+        printf("    ");
+        while (j < STDL_MATRIX_MAX_COLS && (i + j) < n){
+            c = i + j;
+            printf("    %6ld    ", c);
+            j++;
+        }
+        printf("\n");
+
+        // content
+        for(size_t r = i; r < n; r++) {
+            printf("%4ld", r);
+            j = 0;
+            while (j < STDL_MATRIX_MAX_COLS && i + j < n && i + j <= r){
+                c = i + j;
+                printf(" % .6e", matrix[STDL_MATRIX_SP_IDX(r, c)]);
+                j++;
+            }
+            printf("\n");
+        }
+
+        i += STDL_MATRIX_MAX_COLS;
+    }
+
+    return STDL_ERR_OK;
+}
+
+
 int stdl_matrix_dge_sqrt(size_t n, double** mat) {
     assert(mat != NULL && *mat != NULL && n > 0);
 

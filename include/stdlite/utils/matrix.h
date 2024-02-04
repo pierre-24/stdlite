@@ -23,7 +23,7 @@ static inline size_t STDL_MATRIX_SP_IDX(size_t i, size_t j) {
  * @ingroup matrix
  */
 static inline size_t STDL_MATRIX_SP_SIZE(size_t nx) {
-    return ((nx)*((nx)+1)/2);
+    return nx*(nx+1)/2;
 }
 
 /**
@@ -55,6 +55,16 @@ int stdl_matrix_sge_print(size_t rows, size_t columns, float *matrix, char *titl
  * @ingroup matrix
  */
 int stdl_matrix_dsp_print(size_t n, double *matrix);
+
+/**
+ * Print a symmetric (thus square) packed matrix.
+ * Storage is in the [lower triangle form](https://netlib.org/lapack/lug/node123.html) (`L`), so: `[a_00, a_10, a_11, a_20, a_21, ..., a_NN]`.
+ * @param n side length of the matrix
+ * @param matrix the matrix
+ * @return `STDL_ERR_OK`
+ * @ingroup matrix
+ */
+int stdl_matrix_ssp_print(size_t n, float *matrix);
 
 
 /**

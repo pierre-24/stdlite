@@ -441,15 +441,15 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, size_t *nselected, size
          * 4) Store selected CSFs (in increasing energy order), and create A', B' matrices
          */
         *csfs = malloc((*nselected) * sizeof(size_t));
-        *A = malloc((*nselected) * (*nselected) * sizeof(float));
+        *A = malloc(STDL_MATRIX_SP_SIZE(*nselected) * sizeof(float));
         STDL_ERROR_HANDLE_AND_REPORT(*csfs == NULL || *A == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices, *csfs, *A); return STDL_ERR_MALLOC, "malloc");
 
         if(B != NULL) {
-            *B = malloc((*nselected) * (*nselected) * sizeof(float));
+            *B = malloc(STDL_MATRIX_SP_SIZE(*nselected) * sizeof(float));
             STDL_ERROR_HANDLE_AND_REPORT(*B == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices, *csfs, *A); return STDL_ERR_MALLOC, "malloc");
         }
 
-        size_t lia = 0, ljb = 0;
+        size_t lia = 0, ljb;
         for(size_t kia_=0; kia_ < nexci_ia; kia_++) {
             size_t kia = csfs_sorted_indices[kia_]; // corresponding index
             size_t a = kia % nvirt, i = kia / nvirt;
@@ -458,7 +458,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, size_t *nselected, size
                 (*csfs)[lia] = kia;
 
                 ljb = 0;
-                for (size_t kjb_ = 0; kjb_ < nexci_ia; ++kjb_) {
+                for (size_t kjb_ = 0; kjb_ < nexci_ia && ljb <= lia; ++kjb_) {
                     size_t kjb = csfs_sorted_indices[kjb_]; // corresponding index
 
                     if(csfs_ensemble[kjb] > 0) {
@@ -476,17 +476,13 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, size_t *nselected, size
                             ibaj += iaBB_K[kbi * natm + A_] * qAia[kaj * natm + A_];
                         }
 
-                        (*A)[lia * (*nselected) + ljb] = 2 * iajb - ijab;
+                        (*A)[STDL_MATRIX_SP_IDX(lia, ljb)] = 2 * iajb - ijab;
 
                         if(kia == kjb) // diagonal element
-                            (*A)[lia * (*nselected) + ljb] += (float) (ctx->e[ctx->nocc + a] - ctx->e[i]);
-                        else // non-diagonal
-                            (*A)[ljb * (*nselected) + lia] = (*A)[lia * (*nselected) + ljb];
+                            (*A)[STDL_MATRIX_SP_IDX(lia, ljb)] += (float) (ctx->e[ctx->nocc + a] - ctx->e[i]);
 
                         if(B != NULL) {
-                            (*B)[lia * (*nselected) + ljb] = iajb - ctx->ax * ibaj;
-                            if(kia != kjb)
-                                (*B)[ljb * (*nselected) + lia] = (*B)[lia * (*nselected) + ljb];
+                            (*B)[STDL_MATRIX_SP_IDX(lia, ljb)] = iajb - ctx->ax * ibaj;
                         }
 
                         ljb++;

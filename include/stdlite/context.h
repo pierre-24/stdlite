@@ -78,7 +78,10 @@ int stdl_context_delete(stdl_context* ctx);
  *
  * @param ctx a valid context
  * @param[out] nselected number of CSFs that were selected. If equals to 0, then `csfs` and `A` are not initialized.
- * @param[out] `size_t[nselected]`, the indices (`i*ctx->nvirt + a`) of each selected CSF `i→a`, as `i = csfs[k] / ctx->nvirt; a = csfs[k] % ctx->nvirt`. They are sorted in increasing energy order, the energy being available at `A[k * nselected + k]`.
+ * @param[out] csfs `size_t[nselected]`, the indices (`i*ctx->nvirt + a`) of each selected CSF `i→a`, as `i = csfs[k] / ctx->nvirt; a = csfs[k] % ctx->nvirt`.
+ *             They are sorted in increasing energy order, the energy being available at `A[k * nselected + k]`.
+ * @param[out] A `float[STDL_SP_SIZE(nslected)]`, part of the electronic Hessian matrix, in `sp` format.
+ * @param[out] B `float[STDL_SP_SIZE(nslected)]`, part of the electronic Hessian matrix, in `sp` format. Might be `NULL` if only `A` is required.
  * @return error code
  * @ingroup context
  */
