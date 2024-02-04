@@ -34,7 +34,7 @@ int lexer_translator[] = {
 };
 
 
-int stdl_lexer_new(stdl_lexer **lx_ptr, FILE *input) {
+int stdl_lexer_new(FILE *input, stdl_lexer **lx_ptr) {
     assert(lx_ptr != NULL && input != NULL);
 
     // go ahead

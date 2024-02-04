@@ -24,7 +24,7 @@ void test_lexer_ok() {
     rewind(stream);
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(&lx, stream));
+    STDL_OK(stdl_lexer_new(stream, &lx));
 
     stdl_token_type tab[] = {
         STDL_TK_ALPHA, STDL_TK_ALPHA, STDL_TK_CHAR, STDL_TK_DASH, STDL_TK_DIGIT, STDL_TK_CHAR, STDL_TK_EQ, STDL_TK_DIGIT, STDL_TK_CHAR, STDL_TK_EOF};
@@ -50,7 +50,7 @@ void test_lexer_line_ok() {
     rewind(stream);
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(&lx, stream));
+    STDL_OK(stdl_lexer_new(stream, &lx));
 
     int line = 1, pos_in_line = 0;
 
@@ -77,7 +77,7 @@ void test_lexer_eat_ok() {
     rewind(stream);
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(&lx, stream));
+    STDL_OK(stdl_lexer_new(stream, &lx));
 
     STDL_OK(stdl_lexer_eat(lx, STDL_TK_ALPHA)); // works on `a`, advance
     STDL_NOK(stdl_lexer_eat(lx, STDL_TK_ALPHA)); // does not work on `\n`
@@ -93,7 +93,7 @@ void test_lexer_skip_ok() {
     rewind(stream);
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(&lx, stream));
+    STDL_OK(stdl_lexer_new(stream, &lx));
 
     STDL_OK(stdl_lexer_skip(lx, isalpha)); // advance up to `1`
 

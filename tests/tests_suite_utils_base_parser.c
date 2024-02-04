@@ -33,7 +33,7 @@ void test_read_integer_ok() {
         expected = test_integers[i];
         wipe_and_write_integer(stream, expected);
 
-        STDL_OK(stdl_lexer_new(&lx, stream));
+        STDL_OK(stdl_lexer_new(stream, &lx));
         STDL_OK(stdl_parser_get_integer(lx, &actual));
         TEST_ASSERT_EQUAL_INT(expected, actual);
         STDL_OK(stdl_lexer_delete(lx));
@@ -55,7 +55,7 @@ void test_read_non_integer_ko() {
         fputs(wrong[i], stream);
         rewind(stream);
 
-        STDL_OK(stdl_lexer_new(&lx, stream));
+        STDL_OK(stdl_lexer_new(stream, &lx));
         STDL_NOK(stdl_parser_get_integer(lx, &actual)); // that does not works ;)
         STDL_OK(stdl_lexer_delete(lx));
     }
@@ -68,7 +68,7 @@ void test_read_integers_ok() {
     rewind(stream);
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(&lx, stream));
+    STDL_OK(stdl_lexer_new(stream, &lx));
 
     long expected, actual;
 
@@ -104,7 +104,7 @@ void test_read_real_ok() {
         // pure float
         wipe_and_write_real(stream, "%f", expected);
 
-        STDL_OK(stdl_lexer_new(&lx, stream));
+        STDL_OK(stdl_lexer_new(stream, &lx));
         STDL_OK(stdl_parser_get_number(lx, &actual));
         TEST_ASSERT_EQUAL_DOUBLE(expected, actual);
         STDL_OK(stdl_lexer_delete(lx));
@@ -112,7 +112,7 @@ void test_read_real_ok() {
         // scientific notation
         wipe_and_write_real(stream, "%e", expected);
 
-        STDL_OK(stdl_lexer_new(&lx, stream));
+        STDL_OK(stdl_lexer_new(stream, &lx));
         STDL_OK(stdl_parser_get_number(lx, &actual));
         TEST_ASSERT_EQUAL_DOUBLE(expected, actual);
         STDL_OK(stdl_lexer_delete(lx));
@@ -142,7 +142,7 @@ void test_read_real_many_notations_ok() {
         fputc(' ', stream);
         rewind(stream);
 
-        STDL_OK(stdl_lexer_new(&lx, stream));
+        STDL_OK(stdl_lexer_new(stream, &lx));
         STDL_OK(stdl_parser_get_number(lx, &actual));
         TEST_ASSERT_EQUAL_DOUBLE(expected, actual);
         STDL_OK(stdl_lexer_delete(lx));
@@ -164,7 +164,7 @@ void test_read_real_many_notations_ok() {
         fputc(' ', stream);
         rewind(stream);
 
-        STDL_OK(stdl_lexer_new(&lx, stream));
+        STDL_OK(stdl_lexer_new(stream, &lx));
         STDL_OK(stdl_parser_get_number(lx, &actual));
         TEST_ASSERT_EQUAL_DOUBLE(expected, actual);
         STDL_OK(stdl_lexer_delete(lx));
@@ -188,7 +188,7 @@ void test_read_non_real_ko() {
         fputs(wrong[i], stream);
         rewind(stream);
 
-        STDL_OK(stdl_lexer_new(&lx, stream));
+        STDL_OK(stdl_lexer_new(stream, &lx));
         STDL_NOK(stdl_parser_get_number(lx, &actual)); // that does not works!
         STDL_OK(stdl_lexer_delete(lx));
     }
@@ -202,7 +202,7 @@ void test_read_litteral_ok() {
     fputs(expected, stream);
     rewind(stream);
 
-    STDL_OK(stdl_lexer_new(&lx, stream));
+    STDL_OK(stdl_lexer_new(stream, &lx));
     TEST_ASSERT_NOT_NULL(lx);
 
     char* actual;
@@ -221,7 +221,7 @@ void test_read_litterals_ok() {
     rewind(stream);
 
     stdl_lexer* lx = NULL; 
-    STDL_OK(stdl_lexer_new(&lx, stream));
+    STDL_OK(stdl_lexer_new(stream, &lx));
 
     char* expected;
     char* actual = NULL;

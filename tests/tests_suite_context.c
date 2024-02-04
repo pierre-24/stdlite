@@ -17,16 +17,16 @@ void test_context_select_MO_ok() {
     TEST_ASSERT_NOT_NULL(f);
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(&lx, f));
+    STDL_OK(stdl_lexer_new(f, &lx));
     STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
 
-    STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
+    STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
 
     stdl_context* ctx = NULL;
-    STDL_OK(stdl_context_new(&ctx, wf, bs, 2.0, 4.0, 10. / 27.212, 1e-4, 1.0));
+    STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 10. / 27.212, 1e-4, 1.0, &ctx));
 
     TEST_ASSERT_EQUAL_INT(5, ctx->nmo);
     TEST_ASSERT_EQUAL_INT(3, ctx->nocc);
@@ -78,16 +78,16 @@ void test_context_select_csfs_ok() {
     TEST_ASSERT_NOT_NULL(f);
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(&lx, f));
+    STDL_OK(stdl_lexer_new(f, &lx));
     STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
 
-    STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
+    STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
 
     stdl_context* ctx = NULL;
-    STDL_OK(stdl_context_new(&ctx, wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0));
+    STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
 
     TEST_ASSERT_EQUAL_INT(ctx->nmo,7);
     TEST_ASSERT_EQUAL_INT(ctx->nocc, 4);

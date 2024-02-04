@@ -72,12 +72,12 @@ void test_content_ok() {
     TEST_ASSERT_NOT_NULL(f);
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(&lx, f));
+    STDL_OK(stdl_lexer_new(f, &lx));
     STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
-    STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
+    STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
     STDL_OK(stdl_basis_delete(bs));
 
     compute_population_and_check(wf, 0);
@@ -96,12 +96,12 @@ void test_orthogonalize_ok() {
     TEST_ASSERT_NOT_NULL(f);
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(&lx, f));
+    STDL_OK(stdl_lexer_new(f, &lx));
     STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
-    STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
+    STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
     STDL_OK(stdl_basis_delete(bs));
 
     STDL_OK(stdl_wavefunction_orthogonalize_dge_C(wf->C, wf->S, wf->nmo, wf->nao));
@@ -140,12 +140,12 @@ void test_remove_mo_ok() {
     TEST_ASSERT_NOT_NULL(f);
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(&lx, f));
+    STDL_OK(stdl_lexer_new(f, &lx));
     STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
-    STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
+    STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
     STDL_OK(stdl_basis_delete(bs));
 
     // "remove" the two first MO

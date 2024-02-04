@@ -7,7 +7,7 @@
 #include "stdlite/helpers.h"
 #include "stdlite/utils/matrix.h"
 
-int stdl_wavefunction_new(stdl_wavefunction **wf_ptr, size_t natm, size_t nocc, size_t nao, size_t nmo) {
+int stdl_wavefunction_new(size_t natm, size_t nocc, size_t nao, size_t nmo, stdl_wavefunction **wf_ptr) {
     assert(wf_ptr != NULL && natm > 0 && nao > 0 && nmo > 0 && nmo <= nao && nmo >= nocc);
 
     *wf_ptr = malloc(sizeof(stdl_wavefunction));
@@ -55,7 +55,7 @@ int stdl_wavefunction_orthogonalize_dge_C(double* C, double* S, size_t nmo, size
     STDL_ERROR_HANDLE_AND_REPORT(sqrtS == NULL, return STDL_ERR_MALLOC, "malloc");
     memcpy(sqrtS, S, nao * nao * sizeof(double));
 
-    int error = stdl_matrix_dge_sqrt(&sqrtS, nao);
+    int error = stdl_matrix_dge_sqrt(nao, &sqrtS);
     STDL_ERROR_CODE_HANDLE(error, return  error);
 
     // C' = C * S^1/2

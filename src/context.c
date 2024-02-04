@@ -108,8 +108,9 @@ float eta[] = {
         0.223701390f,
 };
 
-int stdl_context_new(stdl_context **ctx, stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float gammaK, float ethr,
-                     float e2thr, float ax) {
+int
+stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float gammaK, float ethr, float e2thr, float ax,
+                 stdl_context **ctx) {
     assert(ctx != NULL && wf != NULL && bs != NULL && gammaJ > 0 && gammaK > 0 && ethr > 0 && e2thr > 0 && ax >= 0 && ax <= 1);
 
     *ctx = malloc(sizeof(stdl_context));

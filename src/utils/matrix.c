@@ -127,7 +127,7 @@ int stdl_matrix_dsp_print(size_t n, double *matrix) {
 }
 
 
-int stdl_matrix_dge_sqrt(double** mat, size_t n) {
+int stdl_matrix_dge_sqrt(size_t n, double** mat) {
     assert(mat != NULL && *mat != NULL && n > 0);
 
     size_t sz = n * n * sizeof(double);

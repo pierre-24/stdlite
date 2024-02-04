@@ -69,6 +69,6 @@ int stdl_matrix_dsp_print(size_t n, double *matrix);
  * @return error code
  * @ingroup matrix
  */
-int stdl_matrix_dge_sqrt(double** mat, size_t n);
+int stdl_matrix_dge_sqrt(size_t n, double **mat);
 
 #endif //STDLITE_MATRIX_H

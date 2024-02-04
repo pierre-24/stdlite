@@ -12,7 +12,7 @@
 /**
  * Allocate a string, and grow it from time to time if its size (given by `sz`) gets too large.
  * Actually allocates `fac * STDL_STR_MULT` bytes, and increases `fac` by one each time the size gets too large.
- * @param str_ptr str_ptr pointer to a non-`NULL` string. Caller is responsible for free'ing it.
+ * @param[in,out] str_ptr str_ptr pointer to a non-`NULL` string. Caller is responsible for free'ing it.
  * @param sz current size of said string
  * @param fac scaling factor, increase periodically. Set to 0 to initialize the string
  * @return `STDL_ERR_OK` if everything went well.

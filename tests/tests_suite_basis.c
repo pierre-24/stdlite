@@ -29,14 +29,14 @@ void test_basis_functions_ok() {
     TEST_ASSERT_NOT_NULL(f);
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(&lx, f));
+    STDL_OK(stdl_lexer_new(f, &lx));
     TEST_ASSERT_NOT_NULL(lx);
 
     STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
     stdl_wavefunction * wf = NULL;
     stdl_basis* bs = NULL;
-    STDL_OK(stdl_fchk_parser_extract(&wf, &bs, lx));
+    STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
     STDL_OK(stdl_wavefunction_delete(wf));
 
     _check_basis(bs);

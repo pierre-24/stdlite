@@ -485,7 +485,7 @@ int _make_basis_set(stdl_basis** bs_ptr, stdl_wavefunction* wf, struct _fchk_dat
     size_t env_size = wf->natm * 3 /* coordinates */ + 2 * dt->nprim /* exp + contractions */ + extra_coefs /* sp functions */;
     stdl_debug_msg(__FILE__, __LINE__, "%d atoms and %d basis functions (including sp→s,p) = %ld bytes of env", wf->natm, nbas, env_size);
 
-    int err = stdl_basis_new(bs_ptr, (int) wf->natm, nbas, env_size, fct_type == -1);
+    int err = stdl_basis_new((int) wf->natm, nbas, env_size, fct_type == -1, bs_ptr);
     STDL_ERROR_CODE_HANDLE(err, return err);
 
     // atoms
@@ -603,7 +603,7 @@ size_t _count_nao(size_t nbas, long* shell_types) {
     return total;
 }
 
-int stdl_fchk_parser_extract(stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr, stdl_lexer *lx) {
+int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr) {
     assert(wf_ptr != NULL && bs_ptr != NULL && lx != NULL);
 
     STDL_DEBUG("reading FCHK file");
@@ -709,7 +709,7 @@ int stdl_fchk_parser_extract(stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr, st
             nmo = (size_t) an_integer;
         } else if(strcmp("Alpha Orbital Energies", name) == 0) {
             /* Note: assume that "Number of independent functions" was read before. */
-            error = stdl_wavefunction_new(wf_ptr, natm, nocc, nao, nmo);
+            error = stdl_wavefunction_new(natm, nocc, nao, nmo, wf_ptr);
             STDL_ERROR_CODE_HANDLE(error, free(name); goto _end);
 
             error = stdl_fchk_parser_get_vector_numbers_immediate(lx, nmo, &((*wf_ptr)->e));

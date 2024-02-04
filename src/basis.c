@@ -5,7 +5,7 @@
 #include "stdlite.h"
 
 
-int stdl_basis_new(stdl_basis **bs_ptr, int natm, int nbas, size_t env_size, int use_spherical) {
+int stdl_basis_new(int natm, int nbas, size_t env_size, int use_spherical, stdl_basis **bs_ptr) {
     assert(bs_ptr != NULL && natm > 0 && nbas > 0 && env_size > 0);
 
     *bs_ptr = malloc(sizeof(stdl_basis));
