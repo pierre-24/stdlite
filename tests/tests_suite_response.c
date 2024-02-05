@@ -2,6 +2,7 @@
 #include <stdlite/utils/fchk_parser.h>
 #include <stdlite/utils/matrix.h>
 #include <stdlite/helpers.h>
+#include <string.h>
 
 #include "tests_suite.h"
 
@@ -32,6 +33,13 @@ void test_response_TDA_full_ok() {
     float * A = NULL;
     STDL_OK(stdl_context_select_csfs_monopole(ctx, &nselected, &csfs, &A, NULL));
 
+    // save diagonal elements (i.e., the energies of the CSFs)
+    float* A_diag = malloc(nselected * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(A_diag);
+
+    for (size_t kia = 0; kia < nselected; ++kia)
+        A_diag[kia] = A[STDL_MATRIX_SP_IDX(kia, kia)];
+
     float* energies = NULL;
     float* amplitudes = NULL;
 
@@ -39,7 +47,7 @@ void test_response_TDA_full_ok() {
 
     for (size_t kia = 0; kia < nselected; ++kia) {
         // in this case, the eigenvalues are more or less the diagonal elements of A.
-        TEST_ASSERT_FLOAT_WITHIN(1e-2, A[STDL_MATRIX_SP_IDX(kia, kia)], energies[kia]);
+        TEST_ASSERT_FLOAT_WITHIN(1e-2, A_diag[kia], energies[kia]);
 
         // check that it is normed
         float sum = .0f;
@@ -51,7 +59,7 @@ void test_response_TDA_full_ok() {
 
     }
 
-    STDL_FREE_ALL(csfs, A, energies, amplitudes);
+    STDL_FREE_ALL(csfs, A, energies, amplitudes, A_diag);
 
     STDL_OK(stdl_context_delete(ctx));
     STDL_OK(stdl_lexer_delete(lx));
@@ -82,6 +90,10 @@ void test_response_TDA_ok() {
     float * A = NULL;
     STDL_OK(stdl_context_select_csfs_monopole(ctx, &nselected, &csfs, &A, NULL));
 
+    float* Ap = malloc(STDL_MATRIX_SP_SIZE(nselected) * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(Ap);
+    memcpy(Ap, A, STDL_MATRIX_SP_SIZE(nselected) * sizeof(float ));
+
     float* energies = NULL;
     float* amplitudes = NULL;
 
@@ -91,7 +103,7 @@ void test_response_TDA_ok() {
     float* first_energies = NULL;
     float* first_amplitudes = NULL;
 
-    STDL_OK(stdl_response_casida_TDA(ctx, nselected, A, nrequested, &first_energies, &first_amplitudes));
+    STDL_OK(stdl_response_casida_TDA(ctx, nselected, Ap, nrequested, &first_energies, &first_amplitudes));
 
     for (size_t kia = 0; kia < nrequested; ++kia) {
         // the same eigenvalues should have been obtained
@@ -100,7 +112,7 @@ void test_response_TDA_ok() {
 
     // stdl_matrix_sge_print(nrequested, nselected, first_amplitudes, "CSFS");
 
-    STDL_FREE_ALL(csfs, A, energies, amplitudes, first_energies, first_amplitudes);
+    STDL_FREE_ALL(csfs, A, Ap, energies, amplitudes, first_energies, first_amplitudes);
 
     STDL_OK(stdl_context_delete(ctx));
     STDL_OK(stdl_lexer_delete(lx));
