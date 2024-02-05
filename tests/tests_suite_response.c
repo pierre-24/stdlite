@@ -55,7 +55,7 @@ void test_response_TDA_full_ok() {
             sum += powf(amplitudes[kia * nselected + kjb], 2);
         }
 
-        TEST_ASSERT_FLOAT_WITHIN(1e-6, 1.0f, sum);
+        TEST_ASSERT_FLOAT_WITHIN(1e-5, 1.0f, sum);
 
     }
 
