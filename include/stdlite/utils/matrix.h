@@ -7,7 +7,9 @@
  * Maximum number of columns per batch
  * @ingroup matrix
  */
+#ifndef STDL_MATRIX_MAX_COLS
 #define STDL_MATRIX_MAX_COLS 5
+#endif
 
 /**
  * Get the index corresponding to an element of a symmetric packed (SP) matrix.

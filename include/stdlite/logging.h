@@ -33,12 +33,8 @@ enum stdl_error_code_ {
     /// Read error
     STDL_ERR_READ = 2,
 
-    /// Element not found
-    STDL_ERR_NOT_FOUND = 3,
-
-    /// Element already found
-    STDL_ERR_ALREADY = 4,
-
+    STDL_UNUSED3 = 3,
+    STDL_UNUSED4 = 4,
     STDL_UNUSED5 = 5,
     STDL_UNUSED6 = 6,
     STDL_UNUSED7 = 7,

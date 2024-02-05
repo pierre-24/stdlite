@@ -50,9 +50,10 @@ int stdl_response_casida_TDA(stdl_context* ctx, size_t ncsfs, float *A, size_t n
             LAPACK_ROW_MAJOR, 'V', 'I', 'L',
             (int) ncsfs, tmp,
             .0f, .0f,
-            1, (int) nexci, 1e-6f,
+            1 /* even though we are in C, it starts at 1 */, (int) nexci, STDL_RESPONSE_EIGV_ABSTOL,
             &found,*energies, *amplitudes, (int) nexci, ifail
             );
+
     STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(*energies, *amplitudes, tmp, ifail); return STDL_ERR_MALLOC, "error while sspevx(): %d", err);
 
     STDL_FREE_ALL(tmp, ifail);
