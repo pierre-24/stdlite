@@ -93,8 +93,11 @@ int stdl_matrix_sge_print(size_t rows, size_t columns, float *matrix, char *titl
     return STDL_ERR_OK;
 }
 
-int stdl_matrix_dsp_print(size_t n, double *matrix) {
+int stdl_matrix_dsp_print(size_t n, double *matrix, char *title) {
     assert(n > 0 && matrix != NULL && matrix != NULL);
+
+    if(title != NULL)
+        printf(" %s\n\n", title);
 
     size_t i = 0, j, c;
     while (i < n) {
@@ -127,8 +130,11 @@ int stdl_matrix_dsp_print(size_t n, double *matrix) {
 }
 
 
-int stdl_matrix_ssp_print(size_t n, float *matrix) {
+int stdl_matrix_ssp_print(size_t n, float *matrix, char *title) {
     assert(n > 0 && matrix != NULL && matrix != NULL);
+
+    if(title != NULL)
+        printf(" %s\n\n", title);
 
     size_t i = 0, j, c;
     while (i < n) {
@@ -204,6 +210,32 @@ int stdl_matrix_dge_sqrt(size_t n, double** mat) {
     );
 
     STDL_FREE_ALL(e, w, wcc);
+
+    return STDL_ERR_OK;
+}
+
+int stdl_matrix_sge_transpose(size_t nrows, size_t ncols, float* mat) {
+    assert(nrows > 0 && ncols > 0 && mat != NULL);
+
+    size_t start, next, i;
+    float tmp;
+
+    for (start = 0; start <= nrows * ncols - 1; start++) {
+        next = start;
+        i = 0;
+        do {
+            i++;
+            next = (next % nrows) * ncols + next / nrows;
+        } while (next > start);
+        if (next < start || i == 1) continue;
+
+        tmp = mat[next = start];
+        do {
+            i = (next % nrows) * ncols + next / nrows;
+            mat[next] = (i == start) ? tmp : mat[i];
+            next = i;
+        } while (next > start);
+    }
 
     return STDL_ERR_OK;
 }

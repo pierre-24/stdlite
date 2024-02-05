@@ -33,6 +33,7 @@ static inline size_t STDL_MATRIX_SP_SIZE(size_t nx) {
  * @param rows number of rows, must be >0.
  * @param columns number of columns. If 0, assume that the matrix is symmetric.
  * @param matrix the matrix
+ * @param title title to be printed if not `NULL`.
  * @return `STDL_ERR_OK`
  * @ingroup matrix
  */
@@ -43,6 +44,7 @@ int stdl_matrix_dge_print(size_t rows, size_t columns, double *matrix, char *tit
  * @param rows number of rows, must be >0.
  * @param columns number of columns. If 0, assume that the matrix is symmetric.
  * @param matrix the matrix
+ * @param title title to be printed if not `NULL`.
  * @return `STDL_ERR_OK`
  * @ingroup matrix
  */
@@ -53,24 +55,26 @@ int stdl_matrix_sge_print(size_t rows, size_t columns, float *matrix, char *titl
  * Storage is in the [lower triangle form](https://netlib.org/lapack/lug/node123.html) (`L`), so: `[a_00, a_10, a_11, a_20, a_21, ..., a_NN]`.
  * @param n side length of the matrix
  * @param matrix the matrix
+ * @param title title to be printed if not `NULL`.
  * @return `STDL_ERR_OK`
  * @ingroup matrix
  */
-int stdl_matrix_dsp_print(size_t n, double *matrix);
+int stdl_matrix_dsp_print(size_t n, double *matrix, char *title);
 
 /**
  * Print a symmetric (thus square) packed matrix.
  * Storage is in the [lower triangle form](https://netlib.org/lapack/lug/node123.html) (`L`), so: `[a_00, a_10, a_11, a_20, a_21, ..., a_NN]`.
  * @param n side length of the matrix
  * @param matrix the matrix
+ * @param title title to be printed if not `NULL`.
  * @return `STDL_ERR_OK`
  * @ingroup matrix
  */
-int stdl_matrix_ssp_print(size_t n, float *matrix);
+int stdl_matrix_ssp_print(size_t n, float *matrix, char *title);
 
 
 /**
- * Compute the square root of a square unitary matrix in double precision, `*mat`, in place.
+ * Compute the square root of a square unitary matrix (in double precision), `*mat`, in place.
  *
  * $$X^{1/2} = U\,\varepsilon^{1/2}\,U^T,$$
  *
@@ -82,5 +86,17 @@ int stdl_matrix_ssp_print(size_t n, float *matrix);
  * @ingroup matrix
  */
 int stdl_matrix_dge_sqrt(size_t n, double **mat);
+
+
+/**
+ * Transpose a (single precision) rectangular matrix in place.
+ * From <https://rosettacode.org/wiki/Matrix_transposition#C> and <https://en.wikipedia.org/wiki/In-place_matrix_transposition>.
+ *
+ * @param nrows number of rows
+ * @param ncols number of columns
+ * @param mat `float[nrows * ncols]`, matrix to be transposed
+ * @return error code
+ */
+int stdl_matrix_sge_transpose(size_t nrows, size_t ncols, float* mat);
 
 #endif //STDLITE_MATRIX_H

@@ -37,9 +37,18 @@ void test_response_TDA_full_ok() {
 
     STDL_OK(stdl_response_casida_TDA_full(ctx, nselected, A, &energies, &amplitudes));
 
-    // in this case, the eigenvalues are more or less the diagonal elements of A.
     for (size_t kia = 0; kia < nselected; ++kia) {
+        // in this case, the eigenvalues are more or less the diagonal elements of A.
         TEST_ASSERT_FLOAT_WITHIN(1e-2, A[STDL_MATRIX_SP_IDX(kia, kia)], energies[kia]);
+
+        // check that it is normed
+        float sum = .0f;
+        for (size_t kjb = 0; kjb < nselected; kjb++) {
+            sum += powf(amplitudes[kia * nselected + kjb], 2);
+        }
+
+        TEST_ASSERT_FLOAT_WITHIN(1e-6, 1.0f, sum);
+
     }
 
     STDL_FREE_ALL(csfs, A, energies, amplitudes);
@@ -68,9 +77,6 @@ void test_response_TDA_ok() {
     stdl_context* ctx = NULL;
     STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
 
-    TEST_ASSERT_EQUAL_INT(ctx->nmo,7);
-    TEST_ASSERT_EQUAL_INT(ctx->nocc, 4);
-
     size_t nselected = 0;
     size_t* csfs = NULL;
     float * A = NULL;
@@ -81,17 +87,18 @@ void test_response_TDA_ok() {
 
     STDL_OK(stdl_response_casida_TDA_full(ctx, nselected, A, &energies, &amplitudes));
 
+    size_t nrequested = 5;
     float* first_energies = NULL;
     float* first_amplitudes = NULL;
 
-    STDL_OK(stdl_response_casida_TDA(ctx, nselected, A, 5, &first_energies, &first_amplitudes));
+    STDL_OK(stdl_response_casida_TDA(ctx, nselected, A, nrequested, &first_energies, &first_amplitudes));
 
-    // the same eigenvalues should have been obtained
-    for (size_t kia = 0; kia < 5; ++kia) {
+    for (size_t kia = 0; kia < nrequested; ++kia) {
+        // the same eigenvalues should have been obtained
         TEST_ASSERT_FLOAT_WITHIN(1e-5, energies[kia], first_energies[kia]);
     }
 
-    // stdl_matrix_sge_print(nselected, 5, first_amplitudes, "CSFS");
+    // stdl_matrix_sge_print(nrequested, nselected, first_amplitudes, "CSFS");
 
     STDL_FREE_ALL(csfs, A, energies, amplitudes, first_energies, first_amplitudes);
 

@@ -13,7 +13,7 @@
 
 /**
  * Solve the Casida equation to get excitation energies and amplitudes, within the Tamm-Dancoff approximation.
- * Gives all possible excitations, so it might result in a big `amplitudes` array.
+ * Gives all (i.e., `N=ncsfs`) possible excitations, so it might result in a big `amplitudes` array.
  *
  * @param ctx a valid context
  * @param ncsfs number of CSFs that are considered (or, in other words, the length of `A`).
@@ -36,7 +36,7 @@ int stdl_response_casida_TDA_full(stdl_context *ctx, size_t ncsfs, float *A, flo
  * @param A `float[STLD_MATRIX_SP_SIZE(ncsfs)]`, an approximate electronic Hessian matrix.
  * @param nexci number of excitations requested.
  * @param[out] energies `float[nexci]` excitation energies (eigenvalues).
- * @param[out] amplitudes `float[ncsfs,nexci]` amplitudes for each excitation (eigenvectors).
+ * @param[out] amplitudes `float[nexci,ncsfs]` amplitudes for each excitation (eigenvectors).
  * @return error code
  * @ingroup response
  */

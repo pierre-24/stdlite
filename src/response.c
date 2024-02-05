@@ -26,6 +26,8 @@ int stdl_response_casida_TDA_full(stdl_context *ctx, size_t ncsfs, float *A, flo
             );
     STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(*energies, *amplitudes, tmp); return STDL_ERR_MALLOC, "error while sspev(): %d", err);
 
+    stdl_matrix_sge_transpose(ncsfs, ncsfs, *amplitudes);
+
     STDL_FREE_ALL(tmp);
 
     return STDL_ERR_OK;
@@ -55,6 +57,8 @@ int stdl_response_casida_TDA(stdl_context* ctx, size_t ncsfs, float *A, size_t n
             );
 
     STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(*energies, *amplitudes, tmp, ifail); return STDL_ERR_MALLOC, "error while sspevx(): %d", err);
+
+    stdl_matrix_sge_transpose(ncsfs, nexci, *amplitudes);
 
     STDL_FREE_ALL(tmp, ifail);
 
