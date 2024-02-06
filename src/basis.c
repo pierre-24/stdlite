@@ -87,7 +87,7 @@ int stdl_basis_print(stdl_basis *bs, int denormalize) {
     return STDL_ERR_OK;
 }
 
-int stdl_basis_compute_dsy_ovlp(stdl_basis *bs, double *S) {
+int stdl_basis_compute_dsp_ovlp(stdl_basis *bs, double **S) {
     assert(bs != NULL && S != NULL);
 
     STDL_DEBUG("computing <i|j> to create the S matrix");
@@ -104,6 +104,9 @@ int stdl_basis_compute_dsy_ovlp(stdl_basis *bs, double *S) {
 
     double* buff= malloc(28 * 28 * sizeof(double)); // the maximum libcint can handle
     STDL_ERROR_HANDLE_AND_REPORT(buff == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    *S = malloc(STDL_MATRIX_SP_SIZE(nao) * sizeof(double));
+    STDL_ERROR_HANDLE_AND_REPORT(*S == NULL, STDL_FREE_ALL(buff); return STDL_ERR_MALLOC, "malloc");
 
     for(int i=0; i < bs->nbas; i++) {
         if(bs->use_spherical)
@@ -125,7 +128,7 @@ int stdl_basis_compute_dsy_ovlp(stdl_basis *bs, double *S) {
 
             for(int iprim=0; iprim < si; iprim++) {
                 for(int jprim=0; jprim < sj && joffset + jprim <= ioffset + iprim; jprim++) {
-                    S[(ioffset + iprim) * nao + joffset + jprim] = S[(joffset + jprim) * nao + ioffset + iprim] = buff[iprim * sj + jprim];
+                    (*S)[STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = buff[iprim * sj + jprim];
                 }
             }
 
@@ -161,7 +164,7 @@ int stdl_basis_compute_ssp_dipole(stdl_basis *bs, float** dipoles) {
 
     size_t ndips = STDL_MATRIX_SP_SIZE(nao);
     *dipoles = malloc(3 * ndips * sizeof(float));
-    STDL_ERROR_HANDLE_AND_REPORT(dipoles == NULL, STDL_FREE_ALL(buff); return STDL_ERR_MALLOC, "malloc");
+    STDL_ERROR_HANDLE_AND_REPORT(*dipoles == NULL, STDL_FREE_ALL(buff); return STDL_ERR_MALLOC, "malloc");
 
     for(int i=0; i < bs->nbas; i++) {
         if(bs->use_spherical)

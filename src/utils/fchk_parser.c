@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <lapacke.h>
 
 #include "stdlite/logging.h"
 #include "stdlite/utils/fchk_parser.h"
@@ -766,7 +767,11 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
     }
 
     // create the S matrix
-    error = stdl_basis_compute_dsy_ovlp((*bs_ptr), (*wf_ptr)->S);
+    double* S;
+    error = stdl_basis_compute_dsp_ovlp((*bs_ptr), &S);
+    stdl_matrix_dsp_blowsy((*wf_ptr)->nao, S, (*wf_ptr)->S);
+
+    STDL_FREE_ALL(S);
 
     // clean up stuffs
     _end:

@@ -93,19 +93,18 @@ int stdl_basis_delete(stdl_basis* bs);
 int stdl_basis_print(stdl_basis *bs, int denormalize);
 
 /**
- * Compute the overlap matrix, $S_{ij} = \braket{i|j}$ in `S`.
- * While it could be `sp`, BLAS multiplication routines requires `sy`.
+ * Compute the overlap matrix, $S_{ij} = \braket{i|j}$ in `S` (double precision).
  * @param bs a valid basis set
- * @param S ´double[nao, nao]´ the overlap matrix to be filled.
+ * @param[out] S ´double[STDL_MATRIX_SP_SIZE(nao)]´ the resulting overlap matrix.
  * @return error code.
  */
-int stdl_basis_compute_dsy_ovlp(stdl_basis *bs, double *S);
+int stdl_basis_compute_dsp_ovlp(stdl_basis *bs, double **S);
 
 
 /**
- * Compute the electronic dipole matrix, $D_{ij} = \braket{i|r|j}$.
+ * Compute the electronic dipole matrix, $D_{ij} = \braket{i|r|j}$ (signle precision).
  * @param bs a valid basis set
- * @param[out] dipoles ´float[3, STDL_MATRIX_SP_SIZE(nao)]´ the dipole matrix. The component of the dipole is thus the slowest varying index.
+ * @param[out] dipoles ´float[3, STDL_MATRIX_SP_SIZE(nao)]´ the resulting dipole matrix. The component of the dipole is thus the slowest varying index.
  * @return error code.
  */
 int stdl_basis_compute_ssp_dipole(stdl_basis *bs, float** dipoles);
