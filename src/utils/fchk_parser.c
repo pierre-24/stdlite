@@ -482,24 +482,26 @@ int _make_basis_set(stdl_basis** bs_ptr, stdl_wavefunction* wf, struct _fchk_dat
     if(fct_type == 0)
         fct_type = 1;
 
-    size_t env_size = wf->natm * 3 /* coordinates */ + 2 * dt->nprim /* exp + contractions */ + extra_coefs /* sp functions */;
+    size_t env_size = 20 + wf->natm * 3 /* coordinates */ + 2 * dt->nprim /* exp + contractions */ + extra_coefs /* sp functions */;
     stdl_debug_msg(__FILE__, __LINE__, "%d atoms and %d basis functions (including sp→s,p) = %ld bytes of env", wf->natm, nbas, env_size);
 
     int err = stdl_basis_new((int) wf->natm, nbas, env_size, fct_type == -1, bs_ptr);
     STDL_ERROR_CODE_HANDLE(err, return err);
 
+    size_t base_offset = 20;
+
     // atoms
     for(size_t i=0; i < wf->natm; i++) {
         (*bs_ptr)->atm[i * 6 + 0] = (int) wf->atm[i * 4 + 0];
-        (*bs_ptr)->atm[i * 6 + 1] = (int) (i * 3);
+        (*bs_ptr)->atm[i * 6 + 1] = (int) (base_offset + i * 3);
 
-        (*bs_ptr)->env[i * 3 + 0] = wf->atm[i * 4 + 1];
-        (*bs_ptr)->env[i * 3 + 1] = wf->atm[i * 4 + 2];
-        (*bs_ptr)->env[i * 3 + 2] = wf->atm[i * 4 + 3];
+        (*bs_ptr)->env[base_offset + i * 3 + 0] = wf->atm[i * 4 + 1];
+        (*bs_ptr)->env[base_offset + i * 3 + 1] = wf->atm[i * 4 + 2];
+        (*bs_ptr)->env[base_offset + i * 3 + 2] = wf->atm[i * 4 + 3];
     }
 
     // copy exps and coefs
-    size_t offset_exps = 3 * wf->natm, offset_coefs = 3 * wf->natm + dt->nprim, offset_coefs_sp = 3 * wf->natm + 2 * dt->nprim;
+    size_t offset_exps = base_offset + 3 * wf->natm, offset_coefs = base_offset +3 * wf->natm + dt->nprim, offset_coefs_sp = base_offset +3 * wf->natm + 2 * dt->nprim;
     memcpy(&((*bs_ptr)->env[offset_exps]), dt->benv, 2 * dt->nprim * sizeof(double));
 
     size_t offset_bas = 0;
@@ -764,7 +766,7 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
     }
 
     // create the S matrix
-    error = stdl_basis_compute_dsy_ovlp((*bs_ptr), nao, (*wf_ptr)->S);
+    error = stdl_basis_compute_dsy_ovlp((*bs_ptr), (*wf_ptr)->S);
 
     // clean up stuffs
     _end:

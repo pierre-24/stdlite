@@ -133,7 +133,6 @@ void test_orthogonalize_ok() {
 
 
 void test_remove_mo_ok() {
-
     char* fchk_path = "../tests/test_files/water_sto3g.fchk";
 
     FILE* f = fopen(fchk_path, "r");

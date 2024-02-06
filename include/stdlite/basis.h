@@ -62,9 +62,13 @@ typedef struct stdl_basis_ stdl_basis;
 /**
  * Create a new basis set.
  * Initialize all the arrays.
+ *
+ * @warning According to [this](https://github.com/sunqm/libcint/issues/76), the first 20 values of `env` are reserved.
+ *          One should thus account for that when computing `env_size` (20 should be added to what is required) and when filling it (first value should be at `env[20]`).
+ *
  * @param natm Number of atoms
  * @param nbas Number of basis functions
- * @param env_size size of the `env` array, with `env_size > 3*natm`.
+ * @param env_size size of the `env` array, with `env_size > 3*natm + 20`.
  * @param[out] bs_ptr Basis set object to be created.
  * @return `STDL_ERR_OK` if everything went well.
  * @ingroup basis
@@ -89,13 +93,21 @@ int stdl_basis_delete(stdl_basis* bs);
 int stdl_basis_print(stdl_basis *bs, int denormalize);
 
 /**
- * Compute the overlap matrix, $S_ij = \braket{i|j}$ in `S`.
+ * Compute the overlap matrix, $S_{ij} = \braket{i|j}$ in `S`.
  * While it could be `sp`, BLAS multiplication routines requires `sy`.
  * @param bs a valid basis set
- * @param nao number of AO, must be `nao > bas->nbas`
  * @param S ´double[nao, nao]´ the overlap matrix to be filled.
  * @return error code.
  */
-int stdl_basis_compute_dsy_ovlp(stdl_basis* bs, size_t nao, double* S);
+int stdl_basis_compute_dsy_ovlp(stdl_basis *bs, double *S);
+
+
+/**
+ * Compute the electronic dipole matrix, $D_{ij} = \braket{i|r|j}$.
+ * @param bs a valid basis set
+ * @param[out] dipoles ´float[3, STDL_MATRIX_SP_SIZE(nao)]´ the dipole matrix. The component of the dipole is thus the slowest varying index.
+ * @return error code.
+ */
+int stdl_basis_compute_ssp_dipole(stdl_basis *bs, float** dipoles);
 
 #endif //STDLITE_BASIS_H

@@ -6,7 +6,7 @@
 
 
 int stdl_basis_new(int natm, int nbas, size_t env_size, int use_spherical, stdl_basis **bs_ptr) {
-    assert(bs_ptr != NULL && natm > 0 && nbas > 0 && env_size > 0);
+    assert(bs_ptr != NULL && natm > 0 && nbas > 0 && env_size > (3 * (size_t) natm + 20));
 
     *bs_ptr = malloc(sizeof(stdl_basis));
     STDL_ERROR_HANDLE_AND_REPORT(*bs_ptr == NULL, return STDL_ERR_MALLOC, "malloc");
@@ -24,6 +24,11 @@ int stdl_basis_new(int natm, int nbas, size_t env_size, int use_spherical, stdl_
 
     (*bs_ptr)->env = malloc(env_size * sizeof(double));
     STDL_ERROR_HANDLE_AND_REPORT((*bs_ptr)->env == NULL, stdl_basis_delete(*bs_ptr); return STDL_ERR_MALLOC, "malloc");
+
+    // fill the first 20 elements of env with zeroes
+    for (int i = 0; i < 20; ++i) {
+        (*bs_ptr)->env[i] = .0;
+    }
 
     return STDL_ERR_OK;
 }
@@ -82,10 +87,18 @@ int stdl_basis_print(stdl_basis *bs, int denormalize) {
     return STDL_ERR_OK;
 }
 
-int stdl_basis_compute_dsy_ovlp(stdl_basis* bs, size_t nao, double* S) {
-    assert(bs != NULL && S != NULL && nao >= (size_t) bs->nbas);
+int stdl_basis_compute_dsy_ovlp(stdl_basis *bs, double *S) {
+    assert(bs != NULL && S != NULL);
 
     STDL_DEBUG("computing <i|j> to create the S matrix");
+
+    size_t nao = 0;
+    for(int i=0; i < bs->nbas; i++) {
+        if (bs->use_spherical)
+            nao += CINTcgto_spheric(i, bs->bas);
+        else
+            nao += CINTcgtos_cart(i, bs->bas);
+    }
 
     int si, sj, ioffset=0, joffset;
 
@@ -113,6 +126,66 @@ int stdl_basis_compute_dsy_ovlp(stdl_basis* bs, size_t nao, double* S) {
             for(int iprim=0; iprim < si; iprim++) {
                 for(int jprim=0; jprim < sj && joffset + jprim <= ioffset + iprim; jprim++) {
                     S[(ioffset + iprim) * nao + joffset + jprim] = S[(joffset + jprim) * nao + ioffset + iprim] = buff[iprim * sj + jprim];
+                }
+            }
+
+            joffset += sj;
+        }
+
+        ioffset += si;
+    }
+
+    free(buff);
+
+    return STDL_ERR_OK;
+}
+
+
+int stdl_basis_compute_ssp_dipole(stdl_basis *bs, float** dipoles) {
+    assert(bs != NULL && dipoles != NULL);
+
+    STDL_DEBUG("computing <i|j> to create the S matrix");
+
+    size_t nao = 0;
+    for(int i=0; i < bs->nbas; i++) {
+        if (bs->use_spherical)
+            nao += CINTcgto_spheric(i, bs->bas);
+        else
+            nao += CINTcgtos_cart(i, bs->bas);
+    }
+
+    int si, sj, ioffset=0, joffset;
+
+    double* buff= malloc(3 * 28 * 28 * sizeof(double)); // the maximum libcint can handle
+    STDL_ERROR_HANDLE_AND_REPORT(buff == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    size_t ndips = STDL_MATRIX_SP_SIZE(nao);
+    *dipoles = malloc(3 * ndips * sizeof(float));
+    STDL_ERROR_HANDLE_AND_REPORT(dipoles == NULL, STDL_FREE_ALL(buff); return STDL_ERR_MALLOC, "malloc");
+
+    for(int i=0; i < bs->nbas; i++) {
+        if(bs->use_spherical)
+            si = CINTcgto_spheric(i, bs->bas);
+        else
+            si = CINTcgtos_cart(i, bs->bas);
+
+        joffset = 0;
+
+        for(int j=0; j <= i; j++) {
+            if(bs->use_spherical) {
+                sj = CINTcgto_spheric(j, bs->bas);
+                int1e_r_sph(buff, NULL, (int[]) {i, j}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
+            }
+            else {
+                sj = CINTcgtos_cart(j, bs->bas);
+                int1e_r_cart(buff, NULL, (int[]) {i, j}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
+            }
+
+            for(int iprim=0; iprim < si; iprim++) {
+                for(int jprim=0; jprim < sj && joffset + jprim <= ioffset + iprim; jprim++) {
+                    (*dipoles)[0 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = (float) buff[0 * si * sj + iprim * sj + jprim];
+                    (*dipoles)[1 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = (float) buff[1 * si * sj + iprim * sj + jprim];
+                    (*dipoles)[2 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = (float) buff[2 * si * sj + iprim * sj + jprim];
                 }
             }
 
