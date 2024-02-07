@@ -8,35 +8,28 @@
 #include "stdlite/utils/matrix.h"
 
 
-int stdl_response_casida_TDA_full(stdl_context *ctx, size_t ncsfs, float *A, float **energies, float **amplitudes) {
+int stdl_response_casida_TDA_full(stdl_context *ctx, size_t ncsfs, float *A, float *energies, float *amplitudes) {
     assert(ctx != NULL && ncsfs > 0 && A != NULL && energies != NULL && amplitudes != NULL);
-
-    *energies = malloc(ncsfs * sizeof(float ));
-    *amplitudes = malloc(ncsfs * ncsfs * sizeof(float ));
-
-    STDL_ERROR_HANDLE_AND_REPORT(*energies == NULL || *amplitudes == NULL, STDL_FREE_ALL(*energies, *amplitudes); return STDL_ERR_MALLOC, "malloc");
 
     int err = LAPACKE_sspev(
             LAPACK_ROW_MAJOR, 'V', 'L',
             (int) ncsfs, A,
-            *energies, *amplitudes, (int) ncsfs
+            energies, amplitudes, (int) ncsfs
             );
-    STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(*energies, *amplitudes); return STDL_ERR_MALLOC, "error while sspev(): %d", err);
 
-    stdl_matrix_sge_transpose(ncsfs, ncsfs, *amplitudes);
+    STDL_ERROR_HANDLE_AND_REPORT(err != 0, return STDL_ERR_RESPONSE, "error while sspev(): %d", err);
+
+    stdl_matrix_sge_transpose(ncsfs, ncsfs, amplitudes);
 
     return STDL_ERR_OK;
 }
 
-int stdl_response_casida_TDA(stdl_context* ctx, size_t ncsfs, float *A, size_t nexci, float** energies, float** amplitudes){
+int stdl_response_casida_TDA(stdl_context* ctx, size_t ncsfs, float *A, size_t nexci, float *energies, float *amplitudes){
     assert(ctx != NULL && ncsfs > 0 && A != NULL && energies != NULL && amplitudes != NULL);
-
-    *energies = malloc(nexci * sizeof(float ));
-    *amplitudes = malloc(nexci * ncsfs * sizeof(float ));
 
     int* ifail = malloc(ncsfs * sizeof(float ));
 
-    STDL_ERROR_HANDLE_AND_REPORT(*energies == NULL || *amplitudes == NULL || ifail == NULL, STDL_FREE_ALL(*energies, *amplitudes, ifail); return STDL_ERR_MALLOC, "malloc");
+    STDL_ERROR_HANDLE_AND_REPORT(ifail == NULL, return STDL_ERR_MALLOC, "malloc");
 
     int found = 0;
 
@@ -45,12 +38,12 @@ int stdl_response_casida_TDA(stdl_context* ctx, size_t ncsfs, float *A, size_t n
             (int) ncsfs, A,
             .0f, .0f,
             1 /* even though we are in C, it starts at 1 */, (int) nexci, STDL_RESPONSE_EIGV_ABSTOL,
-            &found,*energies, *amplitudes, (int) nexci, ifail
+            &found, energies, amplitudes, (int) nexci, ifail
             );
 
-    STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(*energies, *amplitudes, ifail); return STDL_ERR_MALLOC, "error while sspevx(): %d", err);
+    STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(ifail); return STDL_ERR_RESPONSE, "error while sspevx(): %d", err);
 
-    stdl_matrix_sge_transpose(ncsfs, nexci, *amplitudes);
+    stdl_matrix_sge_transpose(ncsfs, nexci, amplitudes);
 
     STDL_FREE_ALL(ifail);
 

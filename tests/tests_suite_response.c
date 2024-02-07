@@ -40,10 +40,10 @@ void test_response_TDA_full_ok() {
     for (size_t kia = 0; kia < nselected; ++kia)
         A_diag[kia] = A[STDL_MATRIX_SP_IDX(kia, kia)];
 
-    float* energies = NULL;
-    float* amplitudes = NULL;
+    float* energies = malloc(nselected * sizeof(float ));
+    float* amplitudes = malloc(nselected * nselected * sizeof(float ));
 
-    STDL_OK(stdl_response_casida_TDA_full(ctx, nselected, A, &energies, &amplitudes));
+    STDL_OK(stdl_response_casida_TDA_full(ctx, nselected, A, energies, amplitudes));
 
     for (size_t kia = 0; kia < nselected; ++kia) {
         // in this case, the eigenvalues are more or less the diagonal elements of A.
@@ -94,16 +94,17 @@ void test_response_TDA_ok() {
     TEST_ASSERT_NOT_NULL(Ap);
     memcpy(Ap, A, STDL_MATRIX_SP_SIZE(nselected) * sizeof(float ));
 
-    float* energies = NULL;
-    float* amplitudes = NULL;
+    float* energies = malloc(nselected * sizeof(float ));
+    float* amplitudes = malloc(nselected * nselected * sizeof(float ));
 
-    STDL_OK(stdl_response_casida_TDA_full(ctx, nselected, A, &energies, &amplitudes));
+    STDL_OK(stdl_response_casida_TDA_full(ctx, nselected, A, energies, amplitudes));
 
     size_t nrequested = 5;
-    float* first_energies = NULL;
-    float* first_amplitudes = NULL;
 
-    STDL_OK(stdl_response_casida_TDA(ctx, nselected, Ap, nrequested, &first_energies, &first_amplitudes));
+    float* first_energies = malloc(nrequested * sizeof(float ));
+    float* first_amplitudes = malloc(nrequested * nselected * sizeof(float ));
+
+    STDL_OK(stdl_response_casida_TDA(ctx, nselected, Ap, nrequested, first_energies, first_amplitudes));
 
     for (size_t kia = 0; kia < nrequested; ++kia) {
         // the same eigenvalues should have been obtained

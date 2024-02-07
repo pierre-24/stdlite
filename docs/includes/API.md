@@ -32,7 +32,7 @@
   }
   ```
 
-+ Apart from the creator functions (`stdl_*_new()`), the principle for outputs is "bring-your-own-space". 
-  In other words, outputs of functions (especially arrays) must have been allocated to their correct size.
++ Apart from the creator functions (`stdl_*_new()`) and cases where the size of the output is not known (such as in the selection of CSFs), the principle for outputs is "bring-your-own-space". 
+  In other words, unless otherwise mentioned, outputs of functions (especially arrays) must have been allocated to their correct size.
   
 ## Specific topics
