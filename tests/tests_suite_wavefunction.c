@@ -97,6 +97,50 @@ void test_content_ok() {
     fclose(f);
 }
 
+void test_sqrtS_ok() {
+
+    char* fchk_path = "../tests/test_files/water_sto3g.fchk";
+
+    FILE* f = fopen(fchk_path, "r");
+    TEST_ASSERT_NOT_NULL(f);
+
+    stdl_lexer* lx = NULL;
+    STDL_OK(stdl_lexer_new(f, &lx));
+    STDL_OK(stdl_fchk_parser_skip_intro(lx));
+
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
+    STDL_OK(stdl_basis_delete(bs));
+
+    double* sqrtS = malloc(wf->nao * wf->nao * sizeof(double));
+    TEST_ASSERT_NOT_NULL(sqrtS);
+
+    double* reS = malloc(wf->nao * wf->nao * sizeof(double));
+    TEST_ASSERT_NOT_NULL(reS);
+
+    stdl_matrix_dsp_sqrt_sy(wf->nao, wf->S, sqrtS);
+
+    cblas_dsymm(CblasRowMajor, CblasLeft, CblasLower,
+                (int) wf->nao, (int) wf->nao, 1.0, sqrtS, (int) wf->nao,
+                sqrtS, (int) wf->nao,
+                .0, reS, (int) wf->nao
+                );
+
+    for(size_t i = 0; i < wf->nao; i++) {
+        for (size_t j = 0; j <= i; ++j) {
+            TEST_ASSERT_DOUBLE_WITHIN(1e-8, reS[i * wf->nao + j], wf->S[STDL_MATRIX_SP_IDX(i, j)]);
+        }
+    }
+
+    STDL_FREE_ALL(sqrtS, reS);
+
+    STDL_OK(stdl_wavefunction_delete(wf));
+    STDL_OK(stdl_lexer_delete(lx));
+
+    fclose(f);
+}
+
 void test_orthogonalize_ok() {
 
     char* fchk_path = "../tests/test_files/water_sto3g.fchk";

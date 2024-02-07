@@ -188,6 +188,10 @@ int stdl_matrix_dsp_sqrt_sy(size_t n, double *mat, double* matsy) {
 
     size_t sz = n * n * sizeof(double);
 
+
+    // use temporary `matsy` to store `mat`, in order to avoid mat to be destroyed in the process
+    memcpy(matsy, mat, STDL_MATRIX_SP_SIZE(n) * sizeof(double));
+
     double* e = malloc(n * sizeof(double));
     double* w = malloc(sz);
     double* wcc = malloc(sz);
@@ -195,7 +199,7 @@ int stdl_matrix_dsp_sqrt_sy(size_t n, double *mat, double* matsy) {
     STDL_ERROR_HANDLE_AND_REPORT(e == NULL || w == NULL || wcc == NULL, STDL_FREE_ALL(e, w, wcc); return STDL_ERR_MALLOC, "malloc");
 
     // eig
-    int info = LAPACKE_dspev(LAPACK_ROW_MAJOR, 'V', 'L', (int) n, mat, e, w, (int) n);
+    int info = LAPACKE_dspev(LAPACK_ROW_MAJOR, 'V', 'L', (int) n, matsy, e, w, (int) n);
 
     STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(e, w, wcc); return STDL_ERR_MALLOC, "dsyev() returned %d", info);
 
