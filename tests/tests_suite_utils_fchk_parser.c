@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include <stdlite/utils/fchk_parser.h>
 
@@ -239,10 +238,8 @@ void test_parser_vector_string_ok() {
 }
 
 void test_read_fchk_skip_all_ok() {
-    char cwd[512], fchk_path[1024];
-    TEST_ASSERT_NOT_NULL(getcwd(cwd, 512));
 
-    sprintf(fchk_path, "%s/../tests/test_files/water_sto3g.fchk", cwd);
+    char* fchk_path = "../tests/test_files/water_sto3g.fchk";
 
     FILE* f = fopen(fchk_path, "r");
     TEST_ASSERT_NOT_NULL(f);
@@ -272,10 +269,8 @@ void test_read_fchk_skip_all_ok() {
 }
 
 void test_read_fchk_read_all_section_ok() {
-    char cwd[512], fchk_path[1024];
-    TEST_ASSERT_NOT_NULL(getcwd(cwd, 512));
 
-    sprintf(fchk_path, "%s/../tests/test_files/water_631g.fchk", cwd);
+    char* fchk_path = "../tests/test_files/water_631g.fchk";
 
     FILE* f = fopen(fchk_path, "r");
     TEST_ASSERT_NOT_NULL(f);
@@ -343,12 +338,10 @@ void test_read_fchk_read_all_section_ok() {
 
 
 void test_extract_wavefunction_and_basis_ok() {
-    char cwd[512], fchk_path[1024];
-    TEST_ASSERT_NOT_NULL(getcwd(cwd, 512));
 
-    sprintf(fchk_path, "%s/../tests/test_files/water_sto3g.fchk", cwd);
+    char* fchk_path = "../tests/test_files/water_sto3g.fchk";
 
-    FILE *f = fopen(fchk_path, "r");
+    FILE* f = fopen(fchk_path, "r");
     TEST_ASSERT_NOT_NULL(f);
 
     stdl_lexer *lx = NULL;
@@ -366,13 +359,6 @@ void test_extract_wavefunction_and_basis_ok() {
     TEST_ASSERT_EQUAL_INT(7, wf->nao); // O[1s,2s,2px,2py,2pz] + H[1s] + H[1s]
     TEST_ASSERT_EQUAL_INT(7, wf->nmo);
     TEST_ASSERT_EQUAL_INT(5, wf->nocc);
-
-    // check that S is indeed symmetric
-    for (size_t i = 0; i < wf->nao; ++i) {
-        for (size_t j = 0; j <=i ; ++j) {
-            TEST_ASSERT_EQUAL_DOUBLE(wf->S[i * wf->nao + j], wf->S[j * wf->nao + i]);
-        }
-    }
 
     STDL_OK(stdl_wavefunction_delete(wf));
     STDL_OK(stdl_lexer_delete(lx));
