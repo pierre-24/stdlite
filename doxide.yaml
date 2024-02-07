@@ -13,6 +13,7 @@ groups:
     title: Basis set
     description: |
       Describe a set of basis functions, centered on atoms.
+      Also provide functions that computes integrals in AO basis.
       
       ```c
       #include <stdlite/basis.h>
@@ -24,6 +25,7 @@ groups:
           
           Most of the documentation (and all examples) of libcint actually refers to the old (version < 3.0) API.
           The new API actually includes two extra parameters [described there](https://github.com/sunqm/libcint/blob/master/doc/program_ref.tex#L228).
+          Furthermore, according to [this](https://github.com/sunqm/libcint/issues/76), the first 20 values of `env` are reserved.
   - name: context
     title: Context handler
     description: |
@@ -151,6 +153,10 @@ groups:
         title: Matrices
         description: |
           Utilities to work with matrices.
+          
+          !!! note
+              + For symmetric matrices (`sy`), it is generally assumed that the lower triangle part (`UPLO=L`) is provided, while the upper part might not be referenced.
+              + Symmetry packed storage (`sp`) refers to the [lower triangle form](https://netlib.org/lapack/lug/node123.html) (`L`), so: `[a_00, a_10, a_11, a_20, a_21, ..., a_NN]`.
           
           ```c
           #include <stdlite/matrix.h>

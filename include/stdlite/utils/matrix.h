@@ -52,7 +52,7 @@ int stdl_matrix_sge_print(size_t rows, size_t columns, float *matrix, char *titl
 
 /**
  * Print a symmetric (thus square) packed matrix.
- * Storage is in the [lower triangle form](https://netlib.org/lapack/lug/node123.html) (`L`), so: `[a_00, a_10, a_11, a_20, a_21, ..., a_NN]`.
+ *
  * @param n side length of the matrix
  * @param matrix the matrix
  * @param title title to be printed if not `NULL`.
@@ -63,7 +63,7 @@ int stdl_matrix_dsp_print(size_t n, double *matrix, char *title);
 
 /**
  * Print a symmetric (thus square) packed matrix.
- * Storage is in the [lower triangle form](https://netlib.org/lapack/lug/node123.html) (`L`), so: `[a_00, a_10, a_11, a_20, a_21, ..., a_NN]`.
+ *
  * @param n side length of the matrix
  * @param matrix the matrix
  * @param title title to be printed if not `NULL`.
@@ -96,6 +96,7 @@ int stdl_matrix_dge_sqrt(size_t n, double **mat);
  * @param ncols number of columns
  * @param mat `float[nrows * ncols]`, matrix to be transposed
  * @return error code
+ * @ingroup matrix
  */
 int stdl_matrix_sge_transpose(size_t nrows, size_t ncols, float* mat);
 
@@ -107,6 +108,7 @@ int stdl_matrix_sge_transpose(size_t nrows, size_t ncols, float* mat);
  * @param in `double[STDL_SP_SIZE(n)]` a matrix in symmetry packed storage
  * @param[in,out] out `double[n,n]` the resulting matrix.
  * @return error code
+ * @ingroup matrix
  */
 int stdl_matrix_dsp_blowsy(size_t n, double* in, double* out);
 
@@ -115,9 +117,10 @@ int stdl_matrix_dsp_blowsy(size_t n, double* in, double* out);
  * Unlike `*tpttr()`, ensure that both side of the matrix are filled (which is something one should avoid if possible).
  *
  * @param n order of `in` and `out`
- * @param in `double[STDL_SP_SIZE(n)]` a matrix in symmetry packed storage
- * @param[in,out] out `double[n,n]` the resulting matrix.
+ * @param in `floay[STDL_SP_SIZE(n)]` a matrix in symmetry packed storage
+ * @param[in,out] out `float[n,n]` the resulting matrix.
  * @return error code
+ * @ingroup matrix
  */
 int stdl_matrix_ssp_blowsy(size_t n, float * in, float * out);
 
