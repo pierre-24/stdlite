@@ -30,7 +30,7 @@ int stdl_wavefunction_new(size_t natm, size_t nocc, size_t nao, size_t nmo, stdl
     (*wf_ptr)->aotoatm = malloc(nao * sizeof(size_t));
     STDL_ERROR_HANDLE_AND_REPORT((*wf_ptr)->aotoatm == NULL, stdl_wavefunction_delete(*wf_ptr); return STDL_ERR_MALLOC, "malloc");
 
-    (*wf_ptr)->S = malloc(nao * nao * sizeof(double));
+    (*wf_ptr)->S = malloc(STDL_MATRIX_SP_SIZE(nao) * sizeof(double));
     STDL_ERROR_HANDLE_AND_REPORT((*wf_ptr)->S == NULL, stdl_wavefunction_delete(*wf_ptr); return STDL_ERR_MALLOC, "malloc");
 
     (*wf_ptr)->C = malloc(nao * nmo * sizeof(double));
@@ -47,20 +47,19 @@ int stdl_wavefunction_delete(stdl_wavefunction *wf) {
     return STDL_ERR_OK;
 }
 
-int stdl_wavefunction_orthogonalize_dge_C(double* C, double* S, size_t nmo, size_t nao) {
+int stdl_wavefunction_orthogonalize_dge_C(size_t nmo, size_t nao, double *S, double *C) {
     assert(C != NULL && S != NULL && nmo > 0 && nao > 0);
 
-    // compute S^(1/2)
+    // compute S^1/2
     double* sqrtS = malloc(nao * nao * sizeof(double));
     STDL_ERROR_HANDLE_AND_REPORT(sqrtS == NULL, return STDL_ERR_MALLOC, "malloc");
-    memcpy(sqrtS, S, nao * nao * sizeof(double));
 
-    int error = stdl_matrix_dge_sqrt(nao, &sqrtS);
-    STDL_ERROR_CODE_HANDLE(error, return  error);
+    int error = stdl_matrix_dsp_sqrt_sy(nao, S, sqrtS);
+    STDL_ERROR_CODE_HANDLE(error, free(sqrtS); return error);
 
     // C' = C * S^1/2
     double* tmp = malloc(nmo * nao * sizeof(double ));
-    STDL_ERROR_HANDLE_AND_REPORT(tmp == NULL, return STDL_ERR_MALLOC, "malloc");
+    STDL_ERROR_HANDLE_AND_REPORT(tmp == NULL, STDL_FREE_ALL(sqrtS); return STDL_ERR_MALLOC, "malloc");
 
     cblas_dsymm(CblasRowMajor, CblasRight, CblasLower,
                 (int) nmo, (int) nao,

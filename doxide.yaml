@@ -156,7 +156,7 @@ groups:
           
           !!! note
               + For symmetric matrices (`sy`), it is generally assumed that the lower triangle part (`UPLO=L`) is provided, while the upper part might not be referenced.
-              + Symmetry packed storage (`sp`) refers to the [lower triangle form](https://netlib.org/lapack/lug/node123.html) (`L`), so: `[a_00, a_10, a_11, a_20, a_21, ..., a_NN]`.
+              + Symmetry packed storage (`sp`) refers to the [lower triangle form](https://netlib.org/lapack/lug/node123.html) (`UPLO=L`), so: `[a_00, a_10, a_11, a_20, a_21, ..., a_NN]`.
           
           ```c
           #include <stdlite/matrix.h>

@@ -74,18 +74,34 @@ int stdl_matrix_ssp_print(size_t n, float *matrix, char *title);
 
 
 /**
- * Compute the square root of a square unitary matrix (in double precision), `*mat`, in place.
+ * Compute the square root of a matrix (in double precision), `*mat`, in place.
  *
  * $$X^{1/2} = U\,\varepsilon^{1/2}\,U^T,$$
  *
  * where $\varepsilon$ are the eigenvalues, and $U$ are the eigenvectors.
  *
- * @param[in,out] mat Unitary matrix to be modified.
+ * @param[in,out] mat `double[STDL_MATRIX_SP_SIZE(n)]` Unitary matrix to be modified.
  * @param n side length of the matrix
  * @return error code
  * @ingroup matrix
  */
-int stdl_matrix_dge_sqrt(size_t n, double **mat);
+int stdl_matrix_dsp_sqrt(size_t n, double *mat);
+
+
+/**
+ * Compute the square root of a matrix (in double precision), and output in `sy` format.
+ *
+ * $$X^{1/2} = U\,\varepsilon^{1/2}\,U^T,$$
+ *
+ * where $\varepsilon$ are the eigenvalues, and $U$ are the eigenvectors.
+ *
+ * @param mat `double[STDL_MATRIX_SP_SIZE(n)]` a matrix
+ * @param n side length of the matrix
+ * @param matsy `double[n,n]` the square root of `mat`
+ * @return error code
+ * @ingroup matrix
+ */
+int stdl_matrix_dsp_sqrt_sy(size_t n, double *mat, double* matsy);
 
 
 /**

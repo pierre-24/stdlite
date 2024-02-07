@@ -167,23 +167,37 @@ int stdl_matrix_ssp_print(size_t n, float *matrix, char *title) {
 }
 
 
-int stdl_matrix_dge_sqrt(size_t n, double** mat) {
-    assert(mat != NULL && *mat != NULL && n > 0);
+int stdl_matrix_dsp_sqrt(size_t n, double *mat) {
+    assert(mat != NULL && mat != NULL && n > 0);
+
+    double* matsy = malloc(n * n * sizeof(double));
+    STDL_ERROR_HANDLE_AND_REPORT(matsy == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    stdl_matrix_dsp_sqrt_sy(n, mat, matsy);
+
+    LAPACKE_dtrttp(LAPACK_ROW_MAJOR, 'L', (int) n, matsy, (int) n, mat);
+
+    STDL_FREE_ALL(matsy);
+
+    return STDL_ERR_OK;
+}
+
+
+int stdl_matrix_dsp_sqrt_sy(size_t n, double *mat, double* matsy) {
+    assert(mat != NULL && mat != NULL && n > 0 && matsy != NULL);
 
     size_t sz = n * n * sizeof(double);
 
-    double* e = malloc(n* sizeof(double));
+    double* e = malloc(n * sizeof(double));
     double* w = malloc(sz);
     double* wcc = malloc(sz);
 
-    STDL_ERROR_HANDLE_AND_REPORT(e == NULL || w == NULL || wcc == NULL, return STDL_ERR_MALLOC, "malloc");
-
-    // copy *mat in w
-    memcpy(w, *mat, sz);
+    STDL_ERROR_HANDLE_AND_REPORT(e == NULL || w == NULL || wcc == NULL, STDL_FREE_ALL(e, w, wcc); return STDL_ERR_MALLOC, "malloc");
 
     // eig
-    int info = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'L', (int) n, w, (int) n, e);
-    STDL_ERROR_HANDLE_AND_REPORT(info != 0, return STDL_ERR_MALLOC, "dsyev() returned %d", info);
+    int info = LAPACKE_dspev(LAPACK_ROW_MAJOR, 'V', 'L', (int) n, mat, e, w, (int) n);
+
+    STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(e, w, wcc); return STDL_ERR_MALLOC, "dsyev() returned %d", info);
 
     // compute the square root of eigenvalues
     for(size_t i = 0; i < n; i++) {
@@ -206,7 +220,7 @@ int stdl_matrix_dge_sqrt(size_t n, double** mat) {
                 (int) n, (int) n, (int) n,
                 1.f, w, (int) n,
                 wcc, (int) n,
-                .0f, *mat, (int) n
+                .0f, matsy, (int) n
     );
 
     STDL_FREE_ALL(e, w, wcc);

@@ -32,14 +32,14 @@ struct stdl_wavefunction_ {
     /// `size_t[nao]`, 0-based list of corresponding atom for each AO.
     size_t* aotoatm;
 
-    /// `double[nao*nao]`, the (symmetric square) overlap matrix (`S`).
+    /// `double[STDL_MATRIX_SP_SIZE(nao)]`, the overlap matrix $S_{\mu\nu}$.
     double* S;
 
-    /// `double[nmo*nao]`, the LCAO coefficients matrix (`C`).
+    /// `double[nmo*nao]`, the LCAO coefficients matrix $C_{pq}$.
     /// Stored (from Gaussian) as `[c_mo0ao0, c_mo0ao1, ..., c_mo0aoN, c_mo1ao0, ..., c_moNaoN]`: the first index refers to the MO, the second to the AO.
     double* C;
 
-    /// `double[nmo]`, the MO energy vector (`e`) for each MO.
+    /// `double[nmo]`, the MO energy vector $\varepsilon_p$ for each MO.
     double* e;
 };
 
@@ -71,15 +71,15 @@ int stdl_wavefunction_delete(stdl_wavefunction* wf);
  * $$C' = S^{1/2}\,C.$$
  *
  * See, *e.g.*, [there](https://booksite.elsevier.com/9780444594365/downloads/16755_10030.pdf).
- * As a result, `original_wf->C` becomes symmetric, and `original_wf->S` is the identity matrix.
- * @param[in,out] C `double[nmo*nao]`, the coefficients to be orthogonal
- * @param S `double[nao*nao]`, the overlap matrix
+ *
  * @param nmo number of MO, must be >0.
  * @param nao number of AO, must be >0.
+ * @param S `double[STLD_MATRIX_SP_SIZE(nao)]`, the overlap matrix
+ * @param[in,out] C `double[nmo*nao]`, the coefficients to be orthogonalized
  * @return the error code
  * @ingroup wavefunction
  */
-int stdl_wavefunction_orthogonalize_dge_C(double* C, double* S, size_t nmo, size_t nao) ;
+int stdl_wavefunction_orthogonalize_dge_C(size_t nmo, size_t nao, double *S, double *C);
 
 /**
  * Compute the density matrix.
@@ -97,5 +97,6 @@ int stdl_wavefunction_orthogonalize_dge_C(double* C, double* S, size_t nmo, size
  * @ingroup wavefunction
  */
 int stdl_wavefunction_compute_dge_density(double *C, size_t nocc, size_t nmo, size_t nao, double **D);
+
 
 #endif //STDLITE_WAVEFUNCTION_H
