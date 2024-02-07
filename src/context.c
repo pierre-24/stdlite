@@ -124,6 +124,12 @@ stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float gamm
     (*ctx)->e2thr = e2thr;
     (*ctx)->ax = ax;
 
+    (*ctx)->ncsfs = 0;
+    (*ctx)->csfs = NULL;
+    (*ctx)->ecsfs = NULL;
+    (*ctx)->A = NULL;
+    (*ctx)->B = NULL;
+
     // select MO to include
     STDL_DEBUG("range: %f Eh (%.3f eV)", ethr, ethr * 27.212);
 
@@ -150,7 +156,7 @@ stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float gamm
 
     STDL_DEBUG("Resulting partition: [%d || %d | %d || %d] (occ + virt = %d, %.2f%% of %d MOs)", omin, (*ctx)->nocc, nvirt, wf->nmo - omax - 1, (*ctx)->nmo, (double) (*ctx)->nmo / wf->nmo * 100, wf->nmo);
 
-    (*ctx)->e = malloc((*ctx)->nmo * sizeof(double ));
+    (*ctx)->e = malloc((*ctx)->nmo * sizeof(double));
     (*ctx)->C = malloc((*ctx)->nmo * wf->nao * sizeof(double));
 
     STDL_ERROR_HANDLE_AND_REPORT((*ctx)->e == NULL || (*ctx)->C == NULL, stdl_context_delete(*ctx); return STDL_ERR_MALLOC, "malloc");
@@ -178,14 +184,13 @@ int stdl_context_delete(stdl_context* ctx) {
     if(ctx->bs != NULL)
         stdl_basis_delete(ctx->bs);
 
-    STDL_FREE_ALL(ctx->e, ctx->C, ctx);
+    STDL_FREE_ALL(ctx->e, ctx->C, ctx->csfs, ctx->ecsfs, ctx->A, ctx->B, ctx);
 
     return STDL_ERR_OK;
 }
 
-int stdl_context_select_csfs_monopole(stdl_context *ctx, size_t *nselected, size_t **csfs, float **A, float **B) {
-    assert(ctx != NULL && nselected != NULL && csfs != NULL && A != NULL);
-
+int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
+    assert(ctx != NULL && ctx->ncsfs == 0);
 
     size_t natm = ctx->original_wf->natm,
             nvirt = ctx->nmo - ctx->nocc,
@@ -330,9 +335,9 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, size_t *nselected, size
 
     // store diagonal components
     float* A_diag = malloc(nexci_ia * sizeof(float ));
-    STDL_ERROR_HANDLE_AND_REPORT(csfs_ensemble == NULL, STDL_FREE_ALL(env, csfs_ensemble); return STDL_ERR_MALLOC, "malloc");
+    STDL_ERROR_HANDLE_AND_REPORT(A_diag == NULL, STDL_FREE_ALL(env, csfs_ensemble); return STDL_ERR_MALLOC, "malloc");
 
-    *nselected = 0;
+    ctx->ncsfs = 0;
 
     for(size_t i=0; i < ctx->nocc; i++) {
         size_t kii = STDL_MATRIX_SP_IDX(i, i);
@@ -352,7 +357,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, size_t *nselected, size
 
             if(A_diag[kia] <= ctx->ethr) {
                 csfs_ensemble[kia] = 1;
-                (*nselected)++;
+                (ctx->ncsfs)++;
                 STDL_DEBUG("selected primary:: %ld→%ld [%d] (E=%f Eh)", i, ctx->nocc + a, kia, A_diag[kia]);
             } else {// ... the rest is selected to be considered in perturbation.
                 csfs_ensemble[kia] = 2; // mark as potentially secondary for the moment
@@ -396,7 +401,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, size_t *nselected, size
         }
     }
 
-    if(*nselected > 0) {
+    if(ctx->ncsfs > 0) {
         /*
          * 3) Now, select S-CSFs j→b so that E^(2)_jb > E^(2)_thr.
          */
@@ -430,23 +435,24 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, size_t *nselected, size
                     csfs_ensemble[kjb] = 0; // discarded
                 } else {
                     STDL_DEBUG("selected secondary:: %ld→%ld [%d] (E=%f Eh)", j, ctx->nocc + b, kjb, A_diag[kjb]);
-                    (*nselected)++;
+                    (ctx->ncsfs)++;
                 }
             }
         }
 
-        STDL_DEBUG("selected %ld CSFs (%.2f%% of %ld CSFs)", *nselected, (float) *nselected / (float) nexci_ia * 100, nexci_ia);
+        STDL_DEBUG("selected %ld CSFs (%.2f%% of %ld CSFs)", ctx->ncsfs, (float) ctx->ncsfs / (float) nexci_ia * 100, nexci_ia);
 
         /*
          * 4) Store selected CSFs (in increasing energy order), and create A', B' matrices
          */
-        *csfs = malloc((*nselected) * sizeof(size_t));
-        *A = malloc(STDL_MATRIX_SP_SIZE(*nselected) * sizeof(float));
-        STDL_ERROR_HANDLE_AND_REPORT(*csfs == NULL || *A == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices, *csfs, *A); return STDL_ERR_MALLOC, "malloc");
+        ctx->ecsfs = malloc((ctx->ncsfs) * sizeof(float ));
+        ctx->csfs = malloc((ctx->ncsfs) * sizeof(size_t));
+        ctx->A = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+        STDL_ERROR_HANDLE_AND_REPORT(ctx->ecsfs == NULL || ctx->csfs == NULL || ctx->A == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices); return STDL_ERR_MALLOC, "malloc");
 
-        if(B != NULL) {
-            *B = malloc(STDL_MATRIX_SP_SIZE(*nselected) * sizeof(float));
-            STDL_ERROR_HANDLE_AND_REPORT(*B == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices, *csfs, *A); return STDL_ERR_MALLOC, "malloc");
+        if(compute_B) {
+            ctx->B = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+            STDL_ERROR_HANDLE_AND_REPORT(ctx->B == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices); return STDL_ERR_MALLOC, "malloc");
         }
 
         size_t lia = 0, ljb;
@@ -455,7 +461,8 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, size_t *nselected, size
             size_t a = kia % nvirt, i = kia / nvirt;
 
             if(csfs_ensemble[kia] > 0) {
-                (*csfs)[lia] = kia;
+                ctx->csfs[lia] = kia;
+                ctx->ecsfs[lia] = A_diag[kia];
 
                 ljb = 0;
                 for (size_t kjb_ = 0; kjb_ < nexci_ia && ljb <= lia; ++kjb_) {
@@ -476,13 +483,13 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, size_t *nselected, size
                             ibaj += iaBB_K[kbi * natm + A_] * qAia[kaj * natm + A_];
                         }
 
-                        (*A)[STDL_MATRIX_SP_IDX(lia, ljb)] = 2 * iajb - ijab;
+                        ctx->A[STDL_MATRIX_SP_IDX(lia, ljb)] = 2 * iajb - ijab;
 
                         if(kia == kjb) // diagonal element
-                            (*A)[STDL_MATRIX_SP_IDX(lia, ljb)] += (float) (ctx->e[ctx->nocc + a] - ctx->e[i]);
+                            ctx->A[STDL_MATRIX_SP_IDX(lia, ljb)] += (float) (ctx->e[ctx->nocc + a] - ctx->e[i]);
 
-                        if(B != NULL) {
-                            (*B)[STDL_MATRIX_SP_IDX(lia, ljb)] = iajb - ctx->ax * ibaj;
+                        if(compute_B) {
+                            ctx->A[STDL_MATRIX_SP_IDX(lia, ljb)] = iajb - ctx->ax * ibaj;
                         }
 
                         ljb++;
@@ -493,7 +500,6 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, size_t *nselected, size
             }
         }
     } else {
-        *csfs = NULL;
         STDL_WARN("no CSFs selected. `E_thr` should be at least %f Eh!", A_diag[csfs_sorted_indices[0]]);
     }
 

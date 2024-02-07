@@ -94,22 +94,22 @@ void test_context_select_csfs_ok() {
     TEST_ASSERT_EQUAL_INT(ctx->nmo,7);
     TEST_ASSERT_EQUAL_INT(ctx->nocc, 4);
 
-    size_t nselected = 0;
-    size_t* csfs = NULL;
-    float * A = NULL;
-    STDL_OK(stdl_context_select_csfs_monopole(ctx, &nselected, &csfs, &A, NULL));
+    TEST_ASSERT_EQUAL_INT(0, ctx->ncsfs);
 
-    TEST_ASSERT_EQUAL_INT(10, nselected);
+    STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
+
+    TEST_ASSERT_EQUAL_INT(10, ctx->ncsfs);
+    TEST_ASSERT_NULL(ctx->B);
 
     // check that energies are in increasing order
-    for (size_t kia = 1; kia < nselected; ++kia) {
-        TEST_ASSERT_TRUE(A[STDL_MATRIX_SP_IDX(kia - 1, kia - 1)] <= A[STDL_MATRIX_SP_IDX(kia, kia)]);
+    for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
+        TEST_ASSERT_EQUAL_FLOAT(ctx->A[STDL_MATRIX_SP_IDX(kia, kia)], ctx->ecsfs[kia]);
+
+        if(kia > 0)
+            TEST_ASSERT_TRUE(ctx->ecsfs[kia-1] <= ctx->ecsfs[kia]);
     }
 
-    // stdl_matrix_ssp_print(nselected, A);
-
-    free(csfs);
-    free(A);
+    // stdl_matrix_ssp_print(ctx->ncsfs, ctx->A, "A");
 
     STDL_OK(stdl_context_delete(ctx));
     STDL_OK(stdl_lexer_delete(lx));

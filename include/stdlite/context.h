@@ -42,6 +42,23 @@ struct stdlite_context_ {
 
     /// `double[nmo*original_wf->nao]` orthogonal MO coefficients for the selected MO.
     double* C;
+
+    /// number of CSFs selected by a given scheme (monopole, ...). Zero as long as no CSFs has been selected.
+    size_t ncsfs;
+
+    /// `size_t[ncsfs]`, the indices (`kia = i*ctx->nvirt + a`) of each selected CSF `i→a` (as `i = csfs[kia] / nvirt; a = csfs[kia] % nvirt`).
+    /// They are given in increasing energy order, the energy being available at `ecsfs[kia]`.
+    /// `NULL` as long as no CSFs has been selected.
+    size_t* csfs;
+
+    /// `float[ncsfs]`, the energy of each CSF. `NULL` as long as no CSFs has been selected.
+    float* ecsfs;
+
+    /// `float[STDL_MATRIX_SP_SIZE(ncfs)]`, part of the electronic Hessian matrix. `NULL` as long as no CSFs has been selected.
+    float* A;
+
+    /// `float[STDL_MATRIX_SP_SIZE(ncfs)]`, part of the electronic Hessian matrix. Might be `NULL` if only `A` is required.
+    float* B;
 };
 
 typedef struct stdlite_context_ stdl_context;
@@ -82,7 +99,7 @@ int stdl_context_delete(stdl_context* ctx);
  * @return error code
  * @ingroup context
  */
-int stdl_context_select_csfs_monopole(stdl_context *ctx, size_t *nselected, size_t **csfs, float **A, float **B);
+int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B);
 
 
 #endif //STDLITE_CONTEXT_H
