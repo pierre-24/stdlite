@@ -48,6 +48,40 @@ void test_basis_functions_ok() {
     fclose(f);
 }
 
+void test_ovlp_ok() {
+    char* fchk_path = "../tests/test_files/water_631g.fchk";
+
+    FILE* f = fopen(fchk_path, "r");
+    TEST_ASSERT_NOT_NULL(f);
+
+    stdl_lexer* lx = NULL;
+    STDL_OK(stdl_lexer_new(f, &lx));
+    TEST_ASSERT_NOT_NULL(lx);
+
+    STDL_OK(stdl_fchk_parser_skip_intro(lx));
+
+    stdl_wavefunction * wf = NULL;
+    stdl_basis* bs = NULL;
+    STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
+
+    double* S = malloc(STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(S);
+
+    stdl_basis_compute_dsp_ovlp(bs, S);
+
+    // check that <i|i> = 1
+    for (size_t i = 0; i < wf->nao; ++i)
+        TEST_ASSERT_DOUBLE_WITHIN(1e-8, 1.0, S[STDL_MATRIX_SP_IDX(i, i)]);
+
+    free(S);
+
+    STDL_OK(stdl_wavefunction_delete(wf));
+    STDL_OK(stdl_basis_delete(bs));
+    STDL_OK(stdl_lexer_delete(lx));
+
+    fclose(f);
+}
+
 void test_dipoles_ok() {
     char* fchk_path = "../tests/test_files/water_sto3g.fchk";
 
@@ -64,11 +98,13 @@ void test_dipoles_ok() {
     stdl_basis* bs = NULL;
     STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
 
-    float* dipoles = NULL;
-    stdl_basis_compute_ssp_dipole(bs, &dipoles);
+    float* dipoles = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(dipoles);
 
-    stdl_matrix_ssp_print(wf->nao, dipoles, "xlint");
-    stdl_matrix_ssp_print(wf->nao, dipoles + STDL_MATRIX_SP_SIZE(wf->nao), "ylint");
+    stdl_basis_compute_ssp_dipole(bs, dipoles);
+
+    stdl_matrix_ssp_print(wf->nao, dipoles + 0 * STDL_MATRIX_SP_SIZE(wf->nao), "xlint");
+    stdl_matrix_ssp_print(wf->nao, dipoles + 1 * STDL_MATRIX_SP_SIZE(wf->nao), "ylint");
     stdl_matrix_ssp_print(wf->nao, dipoles + 2 * STDL_MATRIX_SP_SIZE(wf->nao), "zlint");
 
     free(dipoles);
