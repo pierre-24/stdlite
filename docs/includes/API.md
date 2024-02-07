@@ -6,7 +6,6 @@
 
 + Every object, enum, or function that belongs to the public library API starts with `stdl_`.
 
-
 + Every array is stored in the usual [**row major**](https://en.wikipedia.org/wiki/Row-_and_column-major_order) form rather than the usual in fortran, column major.
 
 + The user is required delete all objects created within the library by using the provided deletor functions to avoid memory leaks.
@@ -32,5 +31,8 @@
     fclose(f);
   }
   ```
+
++ Apart from the creator functions (`stdl_*_new()`), the principle for outputs is "bring-your-own-space". 
+  In other words, outputs of functions (especially arrays) must have been allocated to their correct size.
   
 ## Specific topics

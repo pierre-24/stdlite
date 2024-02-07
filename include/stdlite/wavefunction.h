@@ -68,7 +68,9 @@ int stdl_wavefunction_delete(stdl_wavefunction* wf);
 /**
  * Symmetrize the LCAO coefficients in place using a Löwdin orthogonalization.
  *
- * $$C' = S^{1/2}\,C.$$
+ * In other words:
+ *
+ * $$C^{\perp} = S^{1/2}\,C.$$
  *
  * See, *e.g.*, [there](https://booksite.elsevier.com/9780444594365/downloads/16755_10030.pdf).
  *
@@ -79,12 +81,12 @@ int stdl_wavefunction_delete(stdl_wavefunction* wf);
  * @return the error code
  * @ingroup wavefunction
  */
-int stdl_wavefunction_orthogonalize_dge_C(size_t nmo, size_t nao, double *S, double *C);
+int stdl_wavefunction_orthogonalize_C_dge(size_t nmo, size_t nao, double *S, double *C);
 
 /**
- * Compute the density matrix.
+ * Compute the density matrix (`sy` format).
  *
- * $$D_{\mu\nu} = \sum_r^{MO} n_r\,C_{r\mu}\,C_{r\nu},$$
+ * $$P_{\mu\nu} = \sum_r^{MO} n_r\,C_{r\mu}\,C_{r\nu},$$
  *
  * where $n_r$ is the occupation number of MO $r$.
  *
@@ -92,11 +94,11 @@ int stdl_wavefunction_orthogonalize_dge_C(size_t nmo, size_t nao, double *S, dou
  * @param nocc number of occupied orbitals, must be >0.
  * @param nmo number of MO, must be >0.
  * @param nao number of AO, must be >0.
- * @param[out] D `double[nao*nao]` the density matrix to be created. Caller is responsible for free'ing it.
+ * @param[out] D `double[nao*nao]` the density matrix.
  * @return error code.
  * @ingroup wavefunction
  */
-int stdl_wavefunction_compute_dge_density(double *C, size_t nocc, size_t nmo, size_t nao, double **D);
+int stdl_wavefunction_compute_density_dsy(size_t nocc, size_t nmo, size_t nao, double *C, double *D);
 
 
 #endif //STDLITE_WAVEFUNCTION_H

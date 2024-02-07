@@ -15,19 +15,21 @@
 void compute_population_and_check(stdl_wavefunction* wf, int sym) {
 
     // compute the density matrix
-    double* density_mat = NULL;
-    STDL_OK(stdl_wavefunction_compute_dge_density(wf->C, wf->nocc, wf->nmo, wf->nao, &density_mat));
+    double* P = malloc(wf->nao * wf->nao * sizeof(double));
+    TEST_ASSERT_NOT_NULL(P);
 
-    // stdl_matrix_dge_print(wf->nmo, 0, density_mat, "D");
+    STDL_OK(stdl_wavefunction_compute_density_dsy(wf->nocc, wf->nmo, wf->nao, wf->C, P));
+
+    // stdl_matrix_dge_print(wf->nao, wf->nao, P, "P");
 
     // check that density is symmetric
     for (size_t i = 0; i < wf->nao; ++i) {
         for (size_t j = 0; j <=i ; ++j) {
-            TEST_ASSERT_EQUAL_DOUBLE(density_mat[i * wf->nao + j], density_mat[j * wf->nao + i]);
+            TEST_ASSERT_EQUAL_DOUBLE(P[i * wf->nao + j], P[j * wf->nao + i]);
         }
     }
 
-    // compute Mulliken population
+    // compute Mulliken population as `M = 1/2*(P*S+S*P)`
     // See, e.g., https://doi.org/10.26434/chemrxiv.12722072.v1
     double* mulliken_pop = malloc(wf->nao * wf->nao * sizeof(double));
     TEST_ASSERT_NOT_NULL(mulliken_pop);
@@ -44,11 +46,11 @@ void compute_population_and_check(stdl_wavefunction* wf, int sym) {
         cblas_dsymm(CblasRowMajor, CblasRight, CblasLower,
                     (int) wf->nao, (int) wf->nao,
                     1.f, Ssy, (int) wf->nao,
-                    density_mat, (int) wf->nao,
+                    P, (int) wf->nao,
                     .0, tmp, (int) wf->nao
         );
 
-        // `D*S+S*D = D*S+S^T*D^T = D*S+(D*S)^T`
+        // `1/2*(P*S+S*P) = 1/2*(P*S+S^T*P^T) = 1/2*(P*S+(P*S)^T)`
         for (size_t i = 0; i < wf->nao; ++i) {
             for (size_t j = 0; j < wf->nao; ++j) {
                 mulliken_pop[i * wf->nao + j] = .5 * (tmp[i * wf->nao + j] + tmp[j * wf->nao + i]);
@@ -57,9 +59,9 @@ void compute_population_and_check(stdl_wavefunction* wf, int sym) {
 
         STDL_FREE_ALL(tmp, Ssy);
     } else // S=1, so 1/2*(S*D+D*S) = D
-        memcpy(mulliken_pop, density_mat, wf->nao * wf->nao * sizeof(double));
+        memcpy(mulliken_pop, P, wf->nao * wf->nao * sizeof(double));
 
-    // stdl_matrix_dge_print(original_wf->nao, 0, mulliken_pop, "1/2*(DS+SD)");
+    // stdl_matrix_dge_print(wf->nao, 0, mulliken_pop, "1/2*(PS+SP)");
 
     double total = .0;
     for(size_t i=0; i < wf->nao; i++)
@@ -68,7 +70,7 @@ void compute_population_and_check(stdl_wavefunction* wf, int sym) {
     TEST_ASSERT_DOUBLE_WITHIN(1e-8, (double) wf->nocc * 2, total);
 
     free(mulliken_pop);
-    free(density_mat);
+    free(P);
 }
 
 void test_content_ok() {
@@ -111,7 +113,7 @@ void test_orthogonalize_ok() {
     STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
     STDL_OK(stdl_basis_delete(bs));
 
-    STDL_OK(stdl_wavefunction_orthogonalize_dge_C(wf->nmo, wf->nao, wf->S, wf->C));
+    STDL_OK(stdl_wavefunction_orthogonalize_C_dge(wf->nmo, wf->nao, wf->S, wf->C));
 
     // check that the MO are normalized
     for (size_t i = 0; i < wf->nmo; ++i) {
