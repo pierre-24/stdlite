@@ -97,5 +97,7 @@ int stdl_wavefunction_compute_density_dsy(size_t nocc, size_t nmo, size_t nao, d
             .0, D, (int) nao
     );
 
+    STDL_FREE_ALL(X);
+
     return STDL_ERR_OK;
 }
