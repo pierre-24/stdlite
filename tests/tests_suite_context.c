@@ -43,26 +43,28 @@ void test_context_select_MO_ok() {
     }
 
     // compute the density matrix
-    double* density_mat = NULL;
-    STDL_OK(stdl_wavefunction_compute_density_dsy(ctx->nocc, ctx->nmo, wf->nao, ctx->C, &density_mat));
+    double* P = malloc(wf->nao * wf->nao * sizeof(double));
+    TEST_ASSERT_NOT_NULL(P);
+
+    STDL_OK(stdl_wavefunction_compute_density_dsy(ctx->nocc, ctx->nmo, wf->nao, ctx->C, P));
 
     // check that density is symmetric
     for (size_t i = 0; i < wf->nao; ++i) {
         for (size_t j = 0; j <=i ; ++j) {
-            TEST_ASSERT_EQUAL_DOUBLE(density_mat[i * wf->nao + j], density_mat[j * wf->nao + i]);
+            TEST_ASSERT_EQUAL_DOUBLE(P[i * wf->nao + j], P[j * wf->nao + i]);
         }
     }
 
     // count electrons
     double total = .0;
     for(size_t i=0; i < wf->nao; i++)
-        total += density_mat[i * wf->nao + i];
+        total += P[i * wf->nao + i];
 
     TEST_ASSERT_DOUBLE_WITHIN(1e-6, 2.f * ctx->nocc, total);
 
-    // stdl_matrix_dge_print(wf->nao, 0, density_mat, "D");
+    // stdl_matrix_dge_print(wf->nao, 0, P, "D");
 
-    free(density_mat);
+    free(P);
 
     STDL_OK(stdl_context_delete(ctx));
     STDL_OK(stdl_lexer_delete(lx));
