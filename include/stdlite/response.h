@@ -56,4 +56,15 @@ int stdl_response_casida_TDA(stdl_context *ctx, size_t nexci, float *energies, f
  */
 int stdl_response_print_excitations(stdl_context *ctx, size_t nexci, float *energies, float *amplitudes, double* dipoles_MO);
 
+/**
+ * Print (in stdout) the contribution of each CSF to the excitations that were computed.
+ * @param ctx a valid context, with `ctx->ncsfs > 0`.
+ * @param nexci number of excitations computed
+ * @param energies `float[nexci]` excitation energies (eigenvalues).
+ * @param amplitudes `float[nexci,ncsfs]` amplitudes for each excitation (eigenvectors).
+ * @param thresh threshold (on the square of the coefficient) above which a contribution is printed.
+ * @return
+ */
+int stdl_response_print_excitations_contribs(stdl_context *ctx, size_t nexci, float* energies, float *amplitudes, float thresh);
+
 #endif //STDLITE_RESPONSE_H

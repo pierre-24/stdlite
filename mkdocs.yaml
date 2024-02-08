@@ -26,11 +26,11 @@ theme:
 
 extra_css:
   - stylesheets/doxide.css
-  - https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css
+  - https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css
 
 extra_javascript:
   - https://polyfill.io/v3/polyfill.min.js?features=es6
-  - https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js
+  - https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js
   - javascripts/katex.js
 
 plugins:

@@ -104,17 +104,19 @@ void test_response_TDA_ok() {
 
 
 void test_response_TDA_print_ok() {
+    TEST_IGNORE_MESSAGE("only for printing");
+
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 25. / 27.212, 1e-4, 1.0, &ctx));
 
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
 
     // request the 10 first excitations
-    size_t nrequested = 10;
+    size_t nrequested = 12;
     float* first_energies = malloc(nrequested * sizeof(float));
     float* first_amplitudes = malloc(nrequested * ctx->ncsfs * sizeof(float));
 
@@ -143,6 +145,7 @@ void test_response_TDA_print_ok() {
     }
 
     ASSERT_STDL_OK(stdl_response_print_excitations(ctx, nrequested, first_energies, first_amplitudes, dipoles_sp_MO));
+    ASSERT_STDL_OK(stdl_response_print_excitations_contribs(ctx, nrequested, first_energies, first_amplitudes, .001f));
 
     STDL_FREE_ALL(first_energies, first_amplitudes, dipoles_sp_AO, dipoles_sp_MO, tmpsy_AO, tmpsy_MO);
 

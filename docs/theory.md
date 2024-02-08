@@ -262,6 +262,17 @@ where $\mathbf P$ is the density matrix. Alternatively, in MO basis:
 
 $$\vec\mu_e = \sum^{MO}_p n_p\,D^{MO}_{pp}.$$
 
+### Transition dipole moment and oscillator strength
+
+The transition dipole moment (in the dipole length formalism) for excitation $\wp$, associated with response vectors $\mathbf x_{\wp}^\omega$ and $\mathbf y_{\wp}^\omega$ is given by:
+
+$$\vec{\mu}_{0\wp} =  \sqrt{2}\,\sum_{ia}^{CFS} D^{MO}_{ia}\,(x^\omega_{\wp,ia}+y^\omega_{\wp,ia}),$$
+
+where the $\sqrt 2$ factor is required for singlet excitations (it is 0 for triplet).
+The associated [oscillator strength](https://en.wikipedia.org/wiki/Oscillator_strength) is defined by:
+
+$$f_{0\wp} = \frac{2}{3}\,\Delta E_{0\wp}\,|\vec\mu_{0\wp}|^2.$$
+
 ## Sources and references
 
 + J. Toulouse, [Introduction to the calculation of molecular properties by response theory](https://www.lct.jussieu.fr/pagesperso/toulouse/enseignement/molecular_properties.pdf) (last consultation: January 2023). 
