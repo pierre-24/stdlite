@@ -457,48 +457,45 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
             STDL_ERROR_HANDLE_AND_REPORT(ctx->B == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices); return STDL_ERR_MALLOC, "malloc");
         }
 
-        size_t lia = 0, ljb;
+        // store index in order
+        size_t lia = 0;
         for(size_t kia_=0; kia_ < nexci_ia; kia_++) {
             size_t kia = csfs_sorted_indices[kia_]; // corresponding index
-            size_t a = kia % nvirt, i = kia / nvirt;
-
             if(csfs_ensemble[kia] > 0) {
                 ctx->csfs[lia] = kia;
                 ctx->ecsfs[lia] = A_diag[kia];
+                lia++;
+            }
+        }
 
-                ljb = 0;
-                for (size_t kjb_ = 0; kjb_ < nexci_ia && ljb <= lia; ++kjb_) {
-                    size_t kjb = csfs_sorted_indices[kjb_]; // corresponding index
+        // build A' and B' (if requested)
+        for(lia=0; lia < ctx->ncsfs; lia++) {
+            size_t kia = ctx->csfs[lia];
+            size_t a = kia % nvirt, i = kia / nvirt;
 
-                    if(csfs_ensemble[kjb] > 0) {
-                        size_t b = kjb % nvirt, j = kjb / nvirt;
+            for (size_t ljb = 0; ljb <= lia; ++ljb) {
+                size_t kjb = ctx->csfs[ljb]; // corresponding index
+                size_t b = kjb % nvirt, j = kjb / nvirt;
 
-                        float iajb = .0f;
-                        float ijab = .0f;
-                        float ibaj = .0f;
+                float iajb = .0f;
+                float ijab = .0f;
+                float ibaj = .0f;
 
-                        size_t kij = STDL_MATRIX_SP_IDX(i, j), kab = STDL_MATRIX_SP_IDX(a, b), kbi = b * nvirt + i, kaj = a * nvirt + j;
+                size_t kij = STDL_MATRIX_SP_IDX(i, j), kab = STDL_MATRIX_SP_IDX(a, b), kib = i * nvirt + b, kja = j * nvirt + a;
 
-                        for(size_t A_=0; A_ < natm; A_++) { // scalar products to compute (ia|jb)', (ij|ab)' and (ib|aj)'.
-                            iajb += iaBB_K[kia * natm + A_] * qAia[kjb * natm + A_];
-                            ijab += ijBB_J[kij * natm + A_] * qAab[kab * natm + A_];
-                            ibaj += iaBB_K[kbi * natm + A_] * qAia[kaj * natm + A_];
-                        }
-
-                        ctx->A[STDL_MATRIX_SP_IDX(lia, ljb)] = 2 * iajb - ijab;
-
-                        if(kia == kjb) // diagonal element
-                            ctx->A[STDL_MATRIX_SP_IDX(lia, ljb)] += (float) (ctx->e[ctx->nocc + a] - ctx->e[i]);
-
-                        if(compute_B) {
-                            ctx->A[STDL_MATRIX_SP_IDX(lia, ljb)] = iajb - ctx->ax * ibaj;
-                        }
-
-                        ljb++;
-                    }
+                for(size_t A_=0; A_ < natm; A_++) { // scalar products to compute (ia|jb)', (ij|ab)' and (ib|aj)'.
+                    iajb += iaBB_K[kia * natm + A_] * qAia[kjb * natm + A_];
+                    ijab += ijBB_J[kij * natm + A_] * qAab[kab * natm + A_];
+                    ibaj += iaBB_K[kib * natm + A_] * qAia[kja * natm + A_];
                 }
 
-                lia++;
+                ctx->A[STDL_MATRIX_SP_IDX(lia, ljb)] = 2 * iajb - ijab;
+
+                if(kia == kjb) // diagonal element
+                    ctx->A[STDL_MATRIX_SP_IDX(lia, ljb)] += (float) (ctx->e[ctx->nocc + a] - ctx->e[i]);
+
+                if(compute_B)
+                    ctx->B[STDL_MATRIX_SP_IDX(lia, ljb)] = 2 * iajb - ctx->ax * ibaj;
             }
         }
     } else {

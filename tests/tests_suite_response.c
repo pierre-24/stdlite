@@ -102,7 +102,6 @@ void test_response_TDA_ok() {
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
 
-
 void test_response_TDA_print_ok() {
     TEST_IGNORE_MESSAGE("only for printing");
 
@@ -148,6 +147,44 @@ void test_response_TDA_print_ok() {
     ASSERT_STDL_OK(stdl_response_print_excitations_contribs(ctx, nrequested, first_energies, first_amplitudes, .001f));
 
     STDL_FREE_ALL(first_energies, first_amplitudes, dipoles_sp_AO, dipoles_sp_MO, tmpsy_AO, tmpsy_MO);
+
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
+}
+
+void test_response_TD_full_ok() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
+
+    stdl_context* ctx = NULL;
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
+
+    TEST_ASSERT_EQUAL_INT(ctx->nmo,7);
+    TEST_ASSERT_EQUAL_INT(ctx->nocc, 4);
+
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
+
+    TEST_ASSERT_EQUAL_INT(ctx->ncsfs, 10);
+
+    float* energies = malloc(ctx->ncsfs * sizeof(float ));
+    float* amplitudes = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float ));
+
+    ASSERT_STDL_OK(stdl_response_casida_TD_full(ctx, energies, amplitudes));
+
+    /*for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
+        // in this case, the eigenvalues are more or less the diagonal elements of A.
+        TEST_ASSERT_FLOAT_WITHIN(1e-2, ctx->ecsfs[kia], energies[kia]);
+
+        // check that it is normed
+        float sum = .0f;
+        for (size_t kjb = 0; kjb < ctx->ncsfs; kjb++) {
+            sum += powf(amplitudes[kia * ctx->ncsfs + kjb], 2);
+        }
+
+        TEST_ASSERT_FLOAT_WITHIN(1e-5, 1.0f, sum);
+    }*/
+
+    STDL_FREE_ALL(energies, amplitudes);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }

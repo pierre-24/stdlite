@@ -64,11 +64,11 @@ int stdl_response_print_excitations(stdl_context *ctx, size_t nexci, float *ener
 
         // compute transition dipole
         float dip[3] = {.0f, .0f, .0f};
-        for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
-            size_t i = ctx->csfs[kia] / nvirt, a = ctx->csfs[kia] % nvirt + ctx->nocc;
+        for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
+            size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
 
             for (int cpt = 0; cpt < 3; ++cpt)
-                dip[cpt] += s2 * amplitudes[iexci * ctx->ncsfs + kia] * ((float) dipoles_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)]);
+                dip[cpt] += s2 * amplitudes[iexci * ctx->ncsfs + lia] * ((float) dipoles_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)]);
         }
 
         // print dipole
@@ -125,4 +125,30 @@ int stdl_response_print_excitations_contribs(stdl_context *ctx, size_t nexci, fl
     }
 
     printf("-------------------------------------------\n");
+
+    return STDL_ERR_OK;
+}
+
+
+// turn ctx->A and ctx-B to A+B and A-B, respectively
+void _make_apb_amb(stdl_context* ctx) {
+    for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
+        for (size_t kjb = 0; kjb <= kia; ++kjb) {
+            float a = ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)], b = ctx->B[STDL_MATRIX_SP_IDX(kia, kjb)];
+            ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)] = a + b;
+            ctx->B[STDL_MATRIX_SP_IDX(kia, kjb)] = a - b;
+        }
+    }
+}
+
+int stdl_response_casida_TD_full(stdl_context *ctx, float *energies, float *amplitudes) {
+    assert(ctx != NULL && ctx->ncsfs > 0 && ctx->B != NULL && energies != NULL && amplitudes != NULL);
+
+    // compute A+B and A-B
+    _make_apb_amb(ctx);
+
+    // get (A-B)^1/2
+    stdl_matrix_ssp_sqrt(ctx->ncsfs, ctx->B);
+
+    return STDL_ERR_OK;
 }

@@ -102,8 +102,8 @@ $$E_{XC}= (1-a_x)\,E_X^{GGA}+a_x\,E_X^{HF}+E_C^{GGA}.$$
 Thanks to the [Slater-Condon rules](https://en.wikipedia.org/wiki/Slater%E2%80%93Condon_rules), one can evaluate the elements of $\mathbf A$ and $\mathbf B$, which are:
 
 $$\begin{aligned}
-&A_{ia, jb} = \delta_{ij}\delta_{ab} (\varepsilon_a - \varepsilon_i) + 2(ia|jb) - a_x\,(ij|ab) + (1-a_x)\,(ia|f_{XC}|jb),\\
-&B_{ia,jb} = 2(ia|bj) - a_x(ib|aj) + (1-a_x)\,(ia|f_{XC}|bj),
+&A_{ia, jb} = \delta_{ij}\delta_{ab} (\varepsilon_a - \varepsilon_i) + 2\,(ia|jb) - a_x\,(ij|ab) + (1-a_x)\,(ia|f_{XC}|jb),\\
+&B_{ia,jb} = 2\,(ia|bj) - a_x\,(ib|aj) + (1-a_x)\,(ia|f_{XC}|bj),
 \end{aligned}$$
 
 where, $\epsilon_i$ and $\epsilon_a$ are orbital energies, $a_x$ is the amount of non-local Fock exchange, $(ia|jb)$, $(ia|bj)$, and $(ib|aj)$ are exchange-type and $(ij|ab)$ Coulomb-type two-electron integrals, $(ia|f_{XC}|jb)$ and $(ia|f_{XC}|bj)$ are responses of the exchange-correlation functional.
@@ -137,7 +137,7 @@ where the $\mathbf x_{ia}^\omega$ is simply the coefficient associated to the $i
 
 On the other hand, Eq. (4) can be rewritten in another eigenvalue problem, namely:
 
-$$\tag{6}(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}-\mathbf{B})\,(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,\mathbf{Z} = \omega^2\,\mathbf{Z}, \text{ with } \mathbf{Z} = (\mathbf{A}-\mathbf{B})^\frac{1}{2} (\mathbf x + \mathbf y).$$
+$$\tag{6}(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}+\mathbf{B})\,(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,\mathbf{Z} = \omega^2\,\mathbf{Z}, \text{ with } \mathbf{Z} = (\mathbf{A}-\mathbf{B})^\frac{1}{2} (\mathbf x + \mathbf y).$$
 
 ## The simplified approaches to TD-DFT
 
@@ -205,9 +205,8 @@ In both cases, $\eta_{AB} = \frac{1}{2}\,(\eta_A + \eta_B)$ where $\eta_A$ is th
 In practice, the elements of the (approximated) electronic Hessian matrices are:
 
 $$\begin{aligned}
-A'_{ia,jb} =& \delta_{ij}\delta_{ab} (\varepsilon_a - \varepsilon_i)
-+ 2\,(ia|jb)'  -  (ij|ab)',\\ 
-B'_{ia,jb} =& (ia|bj)' -a_x\,(ib|aj)',
+A'_{ia,jb} =& \delta_{ij}\delta_{ab} (\varepsilon_a - \varepsilon_i) + 2\,(ia|jb)' - (ij|ab)',\\ 
+B'_{ia,jb} =& 2\,(ia|bj)' -a_x\,(ib|aj)',
 \end{aligned}$$
 
 which are evaluated in a computationally efficient way by precomputing three kind of transition charges: $q_A^{ij}$, $q_A^{ia}$, and $q_A^{ab}$, and two intermediates:

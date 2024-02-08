@@ -42,6 +42,20 @@ int stdl_response_casida_TDA_full(stdl_context *ctx, float *energies, float *amp
  */
 int stdl_response_casida_TDA(stdl_context *ctx, size_t nexci, float *energies, float *amplitudes);
 
+/**
+ * Solve the Casida equation to get excitation energies and amplitudes.
+ * Gives all (i.e., `N=ncsfs`) possible excitations, so it might result in a big `amplitudes` array.
+ *
+ * @warning the `ctx->A` and `ctx->B` matrices are irreversibly modified in the process.
+ *
+ * @param ctx a valid context, with `ctx->ncsfs > 0`.
+ * @param[out] energies `float[ncsfs]` excitation energies (eigenvalues).
+ * @param[out] amplitudes `float[ncsfs,ncsfs]` amplitudes for each excitation (eigenvectors). Note that
+ * @return error code
+ * @ingroup response
+ */
+int stdl_response_casida_TD_full(stdl_context *ctx, float *energies, float *amplitudes);
+
 
 /**
  * Print (in stdout) the excitations that were computed.

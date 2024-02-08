@@ -105,6 +105,36 @@ int stdl_matrix_dsp_sqrt_sy(size_t n, double *mat, double* matsy);
 
 
 /**
+ * Compute the square root of a `sp` matrix (in single precision), `*mat`, in place.
+ *
+ * $$X^{1/2} = U\,\varepsilon^{1/2}\,U^T,$$
+ *
+ * where $\varepsilon$ are its eigenvalues, and $U$ are its eigenvectors.
+ *
+ * @param[in,out] mat `float[STDL_MATRIX_SP_SIZE(n)]` Unitary matrix to be modified.
+ * @param n side length of the matrix
+ * @return error code
+ * @ingroup matrix
+ */
+int stdl_matrix_ssp_sqrt(size_t n, float *mat);
+
+/**
+ * Compute the square root of a `sp` matrix (in single precision), and output in `sy` format.
+ *
+ * $$X^{1/2} = U\,\varepsilon^{1/2}\,U^T,$$
+ *
+ * where $\varepsilon$ are the eigenvalues, and $U$ are the eigenvectors.
+ *
+ * @param mat `floay[STDL_MATRIX_SP_SIZE(n)]` a matrix
+ * @param n side length of the matrix
+ * @param matsy `float[n,n]` the square root of `mat`
+ * @return error code
+ * @ingroup matrix
+ */
+int stdl_matrix_ssp_sqrt_sy(size_t n, float *mat, float * matsy);
+
+
+/**
  * Transpose a (single precision) rectangular matrix in place.
  * From <https://rosettacode.org/wiki/Matrix_transposition#C> and <https://en.wikipedia.org/wiki/In-place_matrix_transposition>.
  *
