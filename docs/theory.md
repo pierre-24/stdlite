@@ -205,9 +205,9 @@ In both cases, $\eta_{AB} = \frac{1}{2}\,(\eta_A + \eta_B)$ where $\eta_A$ is th
 In practice, the elements of the (approximated) electronic Hessian matrices are:
 
 $$\begin{aligned}
-\mathbf{A}'_{ia,jb} =& \delta_{ij}\delta_{ab} (\varepsilon_a - \varepsilon_i)
+A'_{ia,jb} =& \delta_{ij}\delta_{ab} (\varepsilon_a - \varepsilon_i)
 + 2\,(ia|jb)'  -  (ij|ab)',\\ 
-\mathbf{B}'_{ia,jb} =& (ia|bj)' -a_x\,(ib|aj)',
+B'_{ia,jb} =& (ia|bj)' -a_x\,(ib|aj)',
 \end{aligned}$$
 
 which are evaluated in a computationally efficient way by precomputing three kind of transition charges: $q_A^{ij}$, $q_A^{ia}$, and $q_A^{ab}$, and two intermediates:
@@ -224,6 +224,43 @@ $$(ia|jb)' \approx \sum_{B}^N (ia|BB)_K\,q_B^{jb}.$$
 !!! warning
     
     The publication describing the XsTD-DFT implementation is not yet available. Thus, this approach is not yet implemented.
+
+
+## Properties
+
+!!! note
+    When required, conversion of $X$ from the AO to the MO basis is done using:
+    
+    $$X^{MO}_{pq} = \sum^{AO}_{\mu\nu} C_{p\mu} X_{\mu\nu} C_{q\nu}.$$
+
+### Density matrix
+
+The density matrix elements are defined as:
+
+$$P_{\mu\nu} = \sum^{MO}_p n_p\,C^\star_{p\mu}\,C_{p\nu},$$
+
+where $n_p$ is the occupancy of $p$. If this is a closed shell calculation, occupied MO have an occupancy of 2, 0 otherwise.
+
+### Dipole moment
+
+The total dipole moment is obtained as:
+
+$$\vec\mu = \vec\mu_e + \sum^{N_{nuc}}_A Z_A\,\vec r_A,$$
+
+where $Z_A$ and $\vec r_A$ are the charge and position of nuclei $A$, respectively.
+The electronic dipole moment, $\vec\mu_e$, is an expectation value of the wavefunction.
+The electric dipole moment matrix elements (in AO basis) are computed as:
+
+$$D_{\mu\nu} = -\,\braket{\mu|\vec{r}-\vec R_0|\nu},$$
+
+where the dipole moment integral have been multiplied by the value of the electronic charge (-1 in atomic units) and $\vec R_0$ is the origin.
+The electronic dipole moment is computed via:
+
+$$\vec\mu_e = \sum^{AO}_{\mu\nu} P_{\mu\nu}\,D_{\nu\mu},$$
+
+where $\mathbf P$ is the density matrix. Alternatively, in MO basis:
+
+$$\vec\mu_e = \sum^{MO}_p n_p\,D^{MO}_{pp}.$$
 
 ## Sources and references
 
