@@ -258,30 +258,18 @@ int stdl_matrix_sge_transpose(size_t nrows, size_t ncols, float* mat) {
     return STDL_ERR_OK;
 }
 
-int stdl_matrix_dsp_blowsy(size_t n, double* in, double* out) {
-    assert(n > 0 && in != NULL && out != NULL);
+int stdl_matrix_dsp_blowsy(size_t n, char uplo, double *in, double *out) {
+    assert(n > 0 && in != NULL && out != NULL && (uplo == 'U' || uplo == 'L'));
 
-    LAPACKE_dtpttr(LAPACK_ROW_MAJOR, 'L', (int) n, in, out, (int) n);
-
-    for(size_t i = 0; i < n; i++) {
-        for (size_t j = i; j < n; ++j) {
-            out[i * n + j] = out[j * n + i];
-        }
-    }
+    LAPACKE_dtpttr(LAPACK_ROW_MAJOR, uplo, (int) n, in, out, (int) n);
 
     return STDL_ERR_OK;
 }
 
-int stdl_matrix_ssp_blowsy(size_t n, float * in, float * out) {
-    assert(n > 0 && in != NULL && out != NULL);
+int stdl_matrix_ssp_blowsy(size_t n, char uplo, float *in, float *out) {
+    assert(n > 0 && in != NULL && out != NULL && (uplo == 'U' || uplo == 'L'));
 
-    LAPACKE_stpttr(LAPACK_ROW_MAJOR, 'L', (int) n, in, out, (int) n);
-
-    for(size_t i = 0; i < n; i++) {
-        for (size_t j = i; j < n; ++j) {
-            out[i * n + j] = out[j * n + i];
-        }
-    }
+    LAPACKE_stpttr(LAPACK_ROW_MAJOR, uplo, (int) n, in, out, (int) n);
 
     return STDL_ERR_OK;
 }

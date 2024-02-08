@@ -18,7 +18,7 @@ void compute_population_and_check(stdl_wavefunction* wf, int sym) {
     double* P = malloc(wf->nao * wf->nao * sizeof(double));
     TEST_ASSERT_NOT_NULL(P);
 
-    STDL_OK(stdl_wavefunction_compute_density_dsy(wf->nocc, wf->nmo, wf->nao, wf->C, P));
+    ASSERT_STDL_OK(stdl_wavefunction_compute_density_dsy(wf->nocc, wf->nmo, wf->nao, wf->C, P));
 
     // stdl_matrix_dge_print(wf->nao, wf->nao, P, "P");
 
@@ -73,45 +73,40 @@ void compute_population_and_check(stdl_wavefunction* wf, int sym) {
     free(P);
 }
 
-void test_content_ok() {
-
-    char* fchk_path = "../tests/test_files/water_sto3g.fchk";
+// Read a FCHK file and extract both basis set and wavefunction
+void read_fchk(char* fchk_path, stdl_wavefunction** wf, stdl_basis** bs) {
 
     FILE* f = fopen(fchk_path, "r");
     TEST_ASSERT_NOT_NULL(f);
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(f, &lx));
-    STDL_OK(stdl_fchk_parser_skip_intro(lx));
+    ASSERT_STDL_OK(stdl_lexer_new(f, &lx));
+    ASSERT_STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
-    stdl_wavefunction * wf = NULL;
-    stdl_basis * bs = NULL;
-    STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
-    STDL_OK(stdl_basis_delete(bs));
+    ASSERT_STDL_OK(stdl_fchk_parser_extract(lx, wf, bs));
 
-    compute_population_and_check(wf, 0);
-
-    STDL_OK(stdl_wavefunction_delete(wf));
-    STDL_OK(stdl_lexer_delete(lx));
+    ASSERT_STDL_OK(stdl_lexer_delete(lx));
 
     fclose(f);
 }
 
-void test_sqrtS_ok() {
-
-    char* fchk_path = "../tests/test_files/water_sto3g.fchk";
-
-    FILE* f = fopen(fchk_path, "r");
-    TEST_ASSERT_NOT_NULL(f);
-
-    stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(f, &lx));
-    STDL_OK(stdl_fchk_parser_skip_intro(lx));
-
+void test_content_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
-    STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
-    STDL_OK(stdl_basis_delete(bs));
+    read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
+    ASSERT_STDL_OK(stdl_basis_delete(bs));
+
+    compute_population_and_check(wf, 0);
+
+    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
+}
+
+void test_sqrtS_ok() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
+
+    ASSERT_STDL_OK(stdl_basis_delete(bs));
 
     double* sqrtS = malloc(wf->nao * wf->nao * sizeof(double));
     TEST_ASSERT_NOT_NULL(sqrtS);
@@ -135,29 +130,17 @@ void test_sqrtS_ok() {
 
     STDL_FREE_ALL(sqrtS, reS);
 
-    STDL_OK(stdl_wavefunction_delete(wf));
-    STDL_OK(stdl_lexer_delete(lx));
-
-    fclose(f);
+    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
 }
 
 void test_orthogonalize_ok() {
-
-    char* fchk_path = "../tests/test_files/water_sto3g.fchk";
-
-    FILE* f = fopen(fchk_path, "r");
-    TEST_ASSERT_NOT_NULL(f);
-
-    stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(f, &lx));
-    STDL_OK(stdl_fchk_parser_skip_intro(lx));
-
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
-    STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
-    STDL_OK(stdl_basis_delete(bs));
+    read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
 
-    STDL_OK(stdl_wavefunction_orthogonalize_C_dge(wf->nmo, wf->nao, wf->S, wf->C));
+    ASSERT_STDL_OK(stdl_basis_delete(bs));
+
+    ASSERT_STDL_OK(stdl_wavefunction_orthogonalize_C_dge(wf->nmo, wf->nao, wf->S, wf->C));
 
     // check that the MO are normalized
     for (size_t i = 0; i < wf->nmo; ++i) {
@@ -178,27 +161,16 @@ void test_orthogonalize_ok() {
 
     compute_population_and_check(wf, 1);
 
-    STDL_OK(stdl_wavefunction_delete(wf));
-    STDL_OK(stdl_lexer_delete(lx));
-
-    fclose(f);
+    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
 }
 
 
 void test_remove_mo_ok() {
-    char* fchk_path = "../tests/test_files/water_sto3g.fchk";
-
-    FILE* f = fopen(fchk_path, "r");
-    TEST_ASSERT_NOT_NULL(f);
-
-    stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(f, &lx));
-    STDL_OK(stdl_fchk_parser_skip_intro(lx));
-
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
-    STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
-    STDL_OK(stdl_basis_delete(bs));
+    read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
+
+    ASSERT_STDL_OK(stdl_basis_delete(bs));
 
     // "remove" the two first MO
     double* tmp = wf->C;
@@ -212,8 +184,78 @@ void test_remove_mo_ok() {
     // put back C
     wf->C = tmp;
 
-    STDL_OK(stdl_wavefunction_delete(wf));
-    STDL_OK(stdl_lexer_delete(lx));
+    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
+}
 
-    fclose(f);
+void test_dipole() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
+
+    double* dipoles_sp = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipoles_sp);
+
+    // compute dipole integrals
+    ASSERT_STDL_OK(stdl_basis_compute_dsp_dipole(bs, dipoles_sp));
+
+    // compute explicitly the electronic dipole moment along z
+    double dipz1 = .0;
+    for (size_t p = 0; p < wf->nocc; ++p) {
+        for (size_t mu = 0; mu < wf->nao; ++mu) {
+            for (size_t nu = 0; nu < wf->nao; ++nu) {
+                dipz1 += 2 * wf->C[p * wf->nao + mu] * wf->C[p * wf->nao + nu] * dipoles_sp[2 * STDL_MATRIX_SP_SIZE(wf->nao) + STDL_MATRIX_SP_IDX(mu, nu)];
+            }
+        }
+    }
+
+    TEST_ASSERT_DOUBLE_WITHIN(1e-6, -0.675072, dipz1);
+
+    // blow the matrix
+    double* dipole_z_sy = malloc(wf->nao * wf->nao * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipole_z_sy);
+
+    stdl_matrix_dsp_blowsy(wf->nao, 'L', dipoles_sp + 2 * STDL_MATRIX_SP_SIZE(wf->nao), dipole_z_sy);
+
+    // compute through density
+    // dipz = sum_mu (P * D)_mu,mu
+    double* P = malloc(wf->nao * wf->nao * sizeof(double ));
+    TEST_ASSERT_NOT_NULL(P);
+
+    double* result = malloc(wf->nao * wf->nao * sizeof(double ));
+    TEST_ASSERT_NOT_NULL(result);
+
+    ASSERT_STDL_OK(stdl_wavefunction_compute_density_dsy(wf->nocc, wf->nmo, wf->nao, wf->C, P));
+
+    cblas_dsymm(CblasRowMajor, CblasRight, CblasLower,
+                (int) wf->nao, (int) wf->nao,
+                1.f, dipole_z_sy, (int) wf->nao,
+                P, (int) wf->nao,
+                .0, result, (int) wf->nao
+    );
+
+    double dipz2 = .0;
+    for (size_t mu = 0; mu < wf->nao; ++mu) {
+        dipz2 += result[mu * wf->nao + mu];
+    }
+
+    TEST_ASSERT_DOUBLE_WITHIN(1e-6, dipz1, dipz2);
+
+    // compute through MO basis
+    // dipz = sum_p n_p * D_pp (where n_p is the occupancy of MO p)
+    double* dipole_z_mo_sy = malloc(wf->nmo * wf->nmo * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipole_z_mo_sy);
+
+    ASSERT_STDL_OK(stdl_wavefunction_dsy_ao_to_mo(wf->nao, wf->nmo, wf->C, dipole_z_sy, dipole_z_mo_sy));
+
+    double dipz3 = .0;
+    for (size_t p = 0; p < wf->nocc; ++p) {
+        dipz3 += 2 * dipole_z_mo_sy[p * wf->nmo + p];
+    }
+
+    TEST_ASSERT_DOUBLE_WITHIN(1e-6, dipz1, dipz3);
+
+    STDL_FREE_ALL(dipoles_sp, dipole_z_sy, dipole_z_mo_sy, P, result);
+
+    ASSERT_STDL_OK(stdl_basis_delete(bs));
+    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
 }

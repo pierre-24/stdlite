@@ -33,10 +33,10 @@ void test_read_integer_ok() {
         expected = test_integers[i];
         wipe_and_write_integer(stream, expected);
 
-        STDL_OK(stdl_lexer_new(stream, &lx));
-        STDL_OK(stdl_parser_get_integer(lx, &actual));
+        ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
+        ASSERT_STDL_OK(stdl_parser_get_integer(lx, &actual));
         TEST_ASSERT_EQUAL_INT(expected, actual);
-        STDL_OK(stdl_lexer_delete(lx));
+        ASSERT_STDL_OK(stdl_lexer_delete(lx));
     }
 }
 
@@ -55,9 +55,9 @@ void test_read_non_integer_ko() {
         fputs(wrong[i], stream);
         rewind(stream);
 
-        STDL_OK(stdl_lexer_new(stream, &lx));
+        ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
         STDL_NOK(stdl_parser_get_integer(lx, &actual)); // that does not works ;)
-        STDL_OK(stdl_lexer_delete(lx));
+        ASSERT_STDL_OK(stdl_lexer_delete(lx));
     }
 }
 
@@ -68,7 +68,7 @@ void test_read_integers_ok() {
     rewind(stream);
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(stream, &lx));
+    ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
 
     long expected, actual;
 
@@ -76,14 +76,14 @@ void test_read_integers_ok() {
         expected = test_integers[i];
 
         // read number
-        STDL_OK(stdl_parser_get_integer(lx, &actual));
+        ASSERT_STDL_OK(stdl_parser_get_integer(lx, &actual));
         TEST_ASSERT_EQUAL_INT(expected, actual);
 
         // eat up next space
-        STDL_OK(stdl_lexer_eat(lx, STDL_TK_WHITESPACE));
+        ASSERT_STDL_OK(stdl_lexer_eat(lx, STDL_TK_WHITESPACE));
     }
 
-    STDL_OK(stdl_lexer_delete(lx));
+    ASSERT_STDL_OK(stdl_lexer_delete(lx));
 }
 
 void wipe_and_write_real(FILE* f, char* fmt, const double x) {
@@ -104,18 +104,18 @@ void test_read_real_ok() {
         // pure float
         wipe_and_write_real(stream, "%f", expected);
 
-        STDL_OK(stdl_lexer_new(stream, &lx));
-        STDL_OK(stdl_parser_get_number(lx, &actual));
+        ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
+        ASSERT_STDL_OK(stdl_parser_get_number(lx, &actual));
         TEST_ASSERT_EQUAL_DOUBLE(expected, actual);
-        STDL_OK(stdl_lexer_delete(lx));
+        ASSERT_STDL_OK(stdl_lexer_delete(lx));
 
         // scientific notation
         wipe_and_write_real(stream, "%e", expected);
 
-        STDL_OK(stdl_lexer_new(stream, &lx));
-        STDL_OK(stdl_parser_get_number(lx, &actual));
+        ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
+        ASSERT_STDL_OK(stdl_parser_get_number(lx, &actual));
         TEST_ASSERT_EQUAL_DOUBLE(expected, actual);
-        STDL_OK(stdl_lexer_delete(lx));
+        ASSERT_STDL_OK(stdl_lexer_delete(lx));
     }
 }
 
@@ -142,10 +142,10 @@ void test_read_real_many_notations_ok() {
         fputc(' ', stream);
         rewind(stream);
 
-        STDL_OK(stdl_lexer_new(stream, &lx));
-        STDL_OK(stdl_parser_get_number(lx, &actual));
+        ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
+        ASSERT_STDL_OK(stdl_parser_get_number(lx, &actual));
         TEST_ASSERT_EQUAL_DOUBLE(expected, actual);
-        STDL_OK(stdl_lexer_delete(lx));
+        ASSERT_STDL_OK(stdl_lexer_delete(lx));
     }
 
     expected = -0.6;
@@ -164,10 +164,10 @@ void test_read_real_many_notations_ok() {
         fputc(' ', stream);
         rewind(stream);
 
-        STDL_OK(stdl_lexer_new(stream, &lx));
-        STDL_OK(stdl_parser_get_number(lx, &actual));
+        ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
+        ASSERT_STDL_OK(stdl_parser_get_number(lx, &actual));
         TEST_ASSERT_EQUAL_DOUBLE(expected, actual);
-        STDL_OK(stdl_lexer_delete(lx));
+        ASSERT_STDL_OK(stdl_lexer_delete(lx));
     }
 }
 
@@ -188,9 +188,9 @@ void test_read_non_real_ko() {
         fputs(wrong[i], stream);
         rewind(stream);
 
-        STDL_OK(stdl_lexer_new(stream, &lx));
+        ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
         STDL_NOK(stdl_parser_get_number(lx, &actual)); // that does not works!
-        STDL_OK(stdl_lexer_delete(lx));
+        ASSERT_STDL_OK(stdl_lexer_delete(lx));
     }
 }
 
@@ -202,16 +202,16 @@ void test_read_litteral_ok() {
     fputs(expected, stream);
     rewind(stream);
 
-    STDL_OK(stdl_lexer_new(stream, &lx));
+    ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
     TEST_ASSERT_NOT_NULL(lx);
 
     char* actual;
-    STDL_OK(stdl_parser_get_literal(lx, isalpha, &actual));
+    ASSERT_STDL_OK(stdl_parser_get_literal(lx, isalpha, &actual));
     TEST_ASSERT_EQUAL_STRING(expected, actual);
 
     free(actual);
 
-    STDL_OK(stdl_lexer_delete(lx));
+    ASSERT_STDL_OK(stdl_lexer_delete(lx));
 }
 
 void test_read_litterals_ok() {
@@ -221,7 +221,7 @@ void test_read_litterals_ok() {
     rewind(stream);
 
     stdl_lexer* lx = NULL; 
-    STDL_OK(stdl_lexer_new(stream, &lx));
+    ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
 
     char* expected;
     char* actual = NULL;
@@ -230,14 +230,14 @@ void test_read_litterals_ok() {
         expected = test_litterals[i];
 
         // read
-        STDL_OK(stdl_parser_get_literal(lx, isalpha, &actual));
+        ASSERT_STDL_OK(stdl_parser_get_literal(lx, isalpha, &actual));
         TEST_ASSERT_EQUAL_STRING(expected, actual);
 
         free(actual);
 
         // eat up next space
-        STDL_OK(stdl_lexer_eat(lx, STDL_TK_WHITESPACE));
+        ASSERT_STDL_OK(stdl_lexer_eat(lx, STDL_TK_WHITESPACE));
     }
 
-    STDL_OK(stdl_lexer_delete(lx));
+    ASSERT_STDL_OK(stdl_lexer_delete(lx));
 }

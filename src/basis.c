@@ -141,7 +141,7 @@ int stdl_basis_compute_dsp_ovlp(stdl_basis *bs, double *S) {
 }
 
 
-int stdl_basis_compute_ssp_dipole(stdl_basis *bs, float *dipoles) {
+int stdl_basis_compute_dsp_dipole(stdl_basis *bs, double *dipoles) {
     assert(bs != NULL && dipoles != NULL);
 
     STDL_DEBUG("computing <i|j> to create the S matrix");
@@ -181,9 +181,9 @@ int stdl_basis_compute_ssp_dipole(stdl_basis *bs, float *dipoles) {
 
             for(int iprim=0; iprim < si; iprim++) {
                 for(int jprim=0; jprim < sj && joffset + jprim <= ioffset + iprim; jprim++) {
-                    dipoles[0 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = (float) buff[0 * si * sj + iprim * sj + jprim];
-                    dipoles[1 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = (float) buff[1 * si * sj + iprim * sj + jprim];
-                    dipoles[2 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = (float) buff[2 * si * sj + iprim * sj + jprim];
+                    dipoles[0 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = -buff[0 * si * sj + iprim * sj + jprim];
+                    dipoles[1 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = -buff[1 * si * sj + iprim * sj + jprim];
+                    dipoles[2 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = -buff[2 * si * sj + iprim * sj + jprim];
                 }
             }
 

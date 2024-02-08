@@ -30,8 +30,8 @@ void test_parse_section_info_ok() {
     fputs(scalar, stream);
     rewind(stream);
 
-    STDL_OK(stdl_lexer_new(stream, &lx));
-    STDL_OK(stdl_fchk_parser_get_section_info(lx, &title, &type, &is_scalar));
+    ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
+    ASSERT_STDL_OK(stdl_fchk_parser_get_section_info(lx, &title, &type, &is_scalar));
 
     TEST_ASSERT_EQUAL_STRING("Multiplicity", title);
     TEST_ASSERT_EQUAL_CHAR('I', type);
@@ -40,7 +40,7 @@ void test_parse_section_info_ok() {
 
     free(title);
 
-    STDL_OK(stdl_lexer_delete(lx));
+    ASSERT_STDL_OK(stdl_lexer_delete(lx));
 
     // vector
     char* vector = "Atomic numbers                             I   N=           3";
@@ -49,8 +49,8 @@ void test_parse_section_info_ok() {
     fputs(vector, stream);
     rewind(stream);
 
-    STDL_OK(stdl_lexer_new(stream, &lx));
-    STDL_OK(stdl_fchk_parser_get_section_info(lx, &title, &type, &is_scalar));
+    ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
+    ASSERT_STDL_OK(stdl_fchk_parser_get_section_info(lx, &title, &type, &is_scalar));
 
     TEST_ASSERT_EQUAL_STRING("Atomic numbers", title);
     TEST_ASSERT_EQUAL_CHAR('I', type);
@@ -59,7 +59,7 @@ void test_parse_section_info_ok() {
 
     free(title);
 
-    STDL_OK(stdl_lexer_delete(lx));
+    ASSERT_STDL_OK(stdl_lexer_delete(lx));
 }
 
 void test_parse_incorrect_section_info_ko() {
@@ -83,12 +83,12 @@ void test_parse_incorrect_section_info_ko() {
         fputs(incorrect[i], stream);
         rewind(stream);
 
-        STDL_OK(stdl_lexer_new(stream, &lx));
+        ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
         STDL_NOK(stdl_fchk_parser_get_section_info(lx, &title, &type, &is_scalar));
 
         free(title);
 
-        STDL_OK(stdl_lexer_delete(lx));
+        ASSERT_STDL_OK(stdl_lexer_delete(lx));
     }
 }
 
@@ -109,8 +109,8 @@ void test_parser_vector_ints_ok() {
         fprintf(stream, fmt, mx);
         rewind(stream);
 
-        STDL_OK(stdl_lexer_new(stream, &lx));
-        STDL_OK(stdl_fchk_parser_get_vector_integers(lx, &sz, &values));
+        ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
+        ASSERT_STDL_OK(stdl_fchk_parser_get_vector_integers(lx, &sz, &values));
 
         TEST_ASSERT_EQUAL_INT(mx, sz);
         for (long j = 0; j < mx; ++j) {
@@ -119,7 +119,7 @@ void test_parser_vector_ints_ok() {
 
         free(values);
 
-        STDL_OK(stdl_lexer_delete(lx));
+        ASSERT_STDL_OK(stdl_lexer_delete(lx));
     }
 
 }
@@ -142,9 +142,9 @@ void test_parser_incorrect_vector_ints_ko() {
         fputs(incorrect[i], stream);
         rewind(stream);
 
-        STDL_OK(stdl_lexer_new(stream, &lx));
+        ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
         STDL_NOK(stdl_fchk_parser_get_vector_integers(lx, &sz, &values));
-        STDL_OK(stdl_lexer_delete(lx));
+        ASSERT_STDL_OK(stdl_lexer_delete(lx));
     }
 
 }
@@ -169,8 +169,8 @@ void test_parser_vector_numbers_ok() {
     size_t sz;
     stdl_lexer* lx = NULL;
 
-    STDL_OK(stdl_lexer_new(stream, &lx));
-    STDL_OK(stdl_fchk_parser_get_vector_numbers(lx, &sz, &values));
+    ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
+    ASSERT_STDL_OK(stdl_fchk_parser_get_vector_numbers(lx, &sz, &values));
 
     TEST_ASSERT_EQUAL_INT(9, sz);
     for (int j = 0; j < 9; ++j) {
@@ -179,7 +179,7 @@ void test_parser_vector_numbers_ok() {
 
     free(values);
 
-    STDL_OK(stdl_lexer_delete(lx));
+    ASSERT_STDL_OK(stdl_lexer_delete(lx));
 }
 
 void test_parser_incorrect_vector_numbers_ko() {
@@ -201,9 +201,9 @@ void test_parser_incorrect_vector_numbers_ko() {
         fputs(incorrect[i], stream);
         rewind(stream);
 
-        STDL_OK(stdl_lexer_new(stream, &lx));
+        ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
         STDL_NOK(stdl_fchk_parser_get_vector_numbers(lx, &sz, &values));
-        STDL_OK(stdl_lexer_delete(lx));
+        ASSERT_STDL_OK(stdl_lexer_delete(lx));
     }
 
 }
@@ -222,11 +222,11 @@ void test_parser_vector_string_ok() {
     rewind(stream);
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(stream, &lx));
+    ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
 
     char* actual;
     size_t sz;
-    STDL_OK(stdl_fchk_parser_get_vector_string(lx, &sz, &actual));
+    ASSERT_STDL_OK(stdl_fchk_parser_get_vector_string(lx, &sz, &actual));
 
     TEST_ASSERT_EQUAL_INT(6, sz);
     TEST_ASSERT_EQUAL_STRING(expected, actual);
@@ -234,7 +234,7 @@ void test_parser_vector_string_ok() {
 
     free(actual);
 
-    STDL_OK(stdl_lexer_delete(lx));
+    ASSERT_STDL_OK(stdl_lexer_delete(lx));
 }
 
 void test_read_fchk_skip_all_ok() {
@@ -249,21 +249,21 @@ void test_read_fchk_skip_all_ok() {
     int is_scalar = -1, nsections = 0;
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(f, &lx));
+    ASSERT_STDL_OK(stdl_lexer_new(f, &lx));
 
-    STDL_OK(stdl_fchk_parser_skip_intro(lx));
+    ASSERT_STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
     while (lx->current_tk_type != STDL_TK_EOF) {
-        STDL_OK(stdl_fchk_parser_get_section_info(lx, &name, &type, &is_scalar));
+        ASSERT_STDL_OK(stdl_fchk_parser_get_section_info(lx, &name, &type, &is_scalar));
         free(name);
 
-        STDL_OK(stdl_fchk_parser_skip_section(lx, type, is_scalar));
+        ASSERT_STDL_OK(stdl_fchk_parser_skip_section(lx, type, is_scalar));
         nsections++;
     }
 
     TEST_ASSERT_EQUAL_INT(86, nsections);
 
-    STDL_OK(stdl_lexer_delete(lx));
+    ASSERT_STDL_OK(stdl_lexer_delete(lx));
 
     fclose(f);
 }
@@ -286,21 +286,21 @@ void test_read_fchk_read_all_section_ok() {
     size_t sz;
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(f, &lx));
+    ASSERT_STDL_OK(stdl_lexer_new(f, &lx));
 
-    STDL_OK(stdl_fchk_parser_skip_intro(lx));
+    ASSERT_STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
     while (lx->current_tk_type != STDL_TK_EOF) {
-        STDL_OK(stdl_fchk_parser_get_section_info(lx, &name, &type, &is_scalar));
+        ASSERT_STDL_OK(stdl_fchk_parser_get_section_info(lx, &name, &type, &is_scalar));
         free(name);
 
         if(is_scalar) {
             switch (type) {
                 case 'I':
-                    STDL_OK(stdl_fchk_parser_get_scalar_integer(lx, &an_integer));
+                    ASSERT_STDL_OK(stdl_fchk_parser_get_scalar_integer(lx, &an_integer));
                     break;
                 case 'R':
-                    STDL_OK(stdl_fchk_parser_get_scalar_number(lx, &a_number));
+                    ASSERT_STDL_OK(stdl_fchk_parser_get_scalar_number(lx, &a_number));
                     break;
                 default:
                     TEST_FAIL_MESSAGE("Unknown type for scalar");
@@ -309,15 +309,15 @@ void test_read_fchk_read_all_section_ok() {
         } else {
             switch (type) {
                 case 'I':
-                    STDL_OK(stdl_fchk_parser_get_vector_integers(lx, &sz, &vector_integers));
+                    ASSERT_STDL_OK(stdl_fchk_parser_get_vector_integers(lx, &sz, &vector_integers));
                     free(vector_integers);
                     break;
                 case 'R':
-                    STDL_OK(stdl_fchk_parser_get_vector_numbers(lx, &sz, &vector_numbers));
+                    ASSERT_STDL_OK(stdl_fchk_parser_get_vector_numbers(lx, &sz, &vector_numbers));
                     free(vector_numbers);
                     break;
                 case 'C':
-                    STDL_OK(stdl_fchk_parser_get_vector_string(lx, &sz, &a_string));
+                    ASSERT_STDL_OK(stdl_fchk_parser_get_vector_string(lx, &sz, &a_string));
                     free(a_string);
                     break;
                 default:
@@ -331,7 +331,7 @@ void test_read_fchk_read_all_section_ok() {
 
     TEST_ASSERT_EQUAL_INT(86, nsections);
 
-    STDL_OK(stdl_lexer_delete(lx));
+    ASSERT_STDL_OK(stdl_lexer_delete(lx));
 
     fclose(f);
 }
@@ -345,14 +345,14 @@ void test_extract_wavefunction_and_basis_ok() {
     TEST_ASSERT_NOT_NULL(f);
 
     stdl_lexer *lx = NULL;
-    STDL_OK(stdl_lexer_new(f, &lx));
+    ASSERT_STDL_OK(stdl_lexer_new(f, &lx));
 
-    STDL_OK(stdl_fchk_parser_skip_intro(lx));
+    ASSERT_STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
     stdl_wavefunction *wf = NULL;
     stdl_basis *bs = NULL;
-    STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
-    STDL_OK(stdl_basis_delete(bs));
+    ASSERT_STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
+    ASSERT_STDL_OK(stdl_basis_delete(bs));
 
     // check basis and geometry
     TEST_ASSERT_EQUAL_INT(3, wf->natm);
@@ -360,8 +360,8 @@ void test_extract_wavefunction_and_basis_ok() {
     TEST_ASSERT_EQUAL_INT(7, wf->nmo);
     TEST_ASSERT_EQUAL_INT(5, wf->nocc);
 
-    STDL_OK(stdl_wavefunction_delete(wf));
-    STDL_OK(stdl_lexer_delete(lx));
+    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
+    ASSERT_STDL_OK(stdl_lexer_delete(lx));
 
     fclose(f);
 }
@@ -374,13 +374,13 @@ void test_extract_wf_too_short_ko() {
     rewind(stream);
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(stream, &lx));
+    ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
 
-    STDL_OK(stdl_fchk_parser_skip_intro(lx));
+    ASSERT_STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
     stdl_wavefunction *wf = NULL;
     stdl_basis *bs = NULL;
     STDL_NOK(stdl_fchk_parser_extract(lx, &wf, &bs));
 
-    STDL_OK(stdl_lexer_delete(lx));
+    ASSERT_STDL_OK(stdl_lexer_delete(lx));
 }

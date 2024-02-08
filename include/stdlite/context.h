@@ -43,6 +43,9 @@ struct stdlite_context_ {
     /// `double[nmo*original_wf->nao]` orthogonal MO coefficients for the selected MO.
     double* C;
 
+    /// `double[nmo*original_wf->nao]` non orthogonal MO coefficient for the selected MO
+    double* C_orig;
+
     /// number of CSFs selected by a given scheme (monopole, ...). Zero as long as no CSFs has been selected.
     size_t ncsfs;
 

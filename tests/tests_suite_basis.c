@@ -30,20 +30,20 @@ void test_basis_functions_ok() {
     TEST_ASSERT_NOT_NULL(f);
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(f, &lx));
+    ASSERT_STDL_OK(stdl_lexer_new(f, &lx));
     TEST_ASSERT_NOT_NULL(lx);
 
-    STDL_OK(stdl_fchk_parser_skip_intro(lx));
+    ASSERT_STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
     stdl_wavefunction * wf = NULL;
     stdl_basis* bs = NULL;
-    STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
-    STDL_OK(stdl_wavefunction_delete(wf));
+    ASSERT_STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
+    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
 
     _check_basis(bs);
 
-    STDL_OK(stdl_basis_delete(bs));
-    STDL_OK(stdl_lexer_delete(lx));
+    ASSERT_STDL_OK(stdl_basis_delete(bs));
+    ASSERT_STDL_OK(stdl_lexer_delete(lx));
 
     fclose(f);
 }
@@ -55,14 +55,14 @@ void test_ovlp_ok() {
     TEST_ASSERT_NOT_NULL(f);
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(f, &lx));
+    ASSERT_STDL_OK(stdl_lexer_new(f, &lx));
     TEST_ASSERT_NOT_NULL(lx);
 
-    STDL_OK(stdl_fchk_parser_skip_intro(lx));
+    ASSERT_STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
     stdl_wavefunction * wf = NULL;
     stdl_basis* bs = NULL;
-    STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
+    ASSERT_STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
 
     double* S = malloc(STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(S);
@@ -75,9 +75,9 @@ void test_ovlp_ok() {
 
     free(S);
 
-    STDL_OK(stdl_wavefunction_delete(wf));
-    STDL_OK(stdl_basis_delete(bs));
-    STDL_OK(stdl_lexer_delete(lx));
+    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
+    ASSERT_STDL_OK(stdl_basis_delete(bs));
+    ASSERT_STDL_OK(stdl_lexer_delete(lx));
 
     fclose(f);
 }
@@ -89,29 +89,31 @@ void test_dipoles_ok() {
     TEST_ASSERT_NOT_NULL(f);
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(f, &lx));
+    ASSERT_STDL_OK(stdl_lexer_new(f, &lx));
     TEST_ASSERT_NOT_NULL(lx);
 
-    STDL_OK(stdl_fchk_parser_skip_intro(lx));
+    ASSERT_STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
     stdl_wavefunction * wf = NULL;
     stdl_basis* bs = NULL;
-    STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
+    ASSERT_STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
 
-    float* dipoles = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(float ));
+    double* dipoles = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles);
 
-    stdl_basis_compute_ssp_dipole(bs, dipoles);
+    stdl_basis_compute_dsp_dipole(bs, dipoles);
 
-    stdl_matrix_ssp_print(wf->nao, dipoles + 0 * STDL_MATRIX_SP_SIZE(wf->nao), "xlint");
-    stdl_matrix_ssp_print(wf->nao, dipoles + 1 * STDL_MATRIX_SP_SIZE(wf->nao), "ylint");
-    stdl_matrix_ssp_print(wf->nao, dipoles + 2 * STDL_MATRIX_SP_SIZE(wf->nao), "zlint");
+    /*
+    stdl_matrix_dsp_print(wf->nao, dipoles + 0 * STDL_MATRIX_SP_SIZE(wf->nao), "xlint");
+    stdl_matrix_dsp_print(wf->nao, dipoles + 1 * STDL_MATRIX_SP_SIZE(wf->nao), "ylint");
+    stdl_matrix_dsp_print(wf->nao, dipoles + 2 * STDL_MATRIX_SP_SIZE(wf->nao), "zlint");
+     */
 
     free(dipoles);
 
-    STDL_OK(stdl_wavefunction_delete(wf));
-    STDL_OK(stdl_basis_delete(bs));
-    STDL_OK(stdl_lexer_delete(lx));
+    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
+    ASSERT_STDL_OK(stdl_basis_delete(bs));
+    ASSERT_STDL_OK(stdl_lexer_delete(lx));
 
     fclose(f);
 }

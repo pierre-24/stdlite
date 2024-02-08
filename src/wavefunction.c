@@ -101,3 +101,31 @@ int stdl_wavefunction_compute_density_dsy(size_t nocc, size_t nmo, size_t nao, d
 
     return STDL_ERR_OK;
 }
+
+int stdl_wavefunction_dsy_ao_to_mo(size_t nao, size_t nmo, double* C, double* X_AO, double* X_MO) {
+    double* X_tmp = malloc(nao * nmo * sizeof(double));
+    STDL_ERROR_HANDLE_AND_REPORT(X_tmp == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    // X_tmp = C * X_AO
+    cblas_dsymm(CblasRowMajor, CblasRight, CblasLower,
+                (int) nmo, (int) nao,
+                1.f, X_AO, (int) nao,
+                C, (int) nao,
+                .0, X_tmp, (int) nao
+    );
+
+    // X_MO = X * C^T
+    cblas_dgemm(
+            CblasRowMajor, CblasNoTrans, CblasTrans,
+            (int) nmo, (int) nmo, (int) nao,
+            1.f, X_tmp, (int) nao,
+            C, (int) nao,
+            .0, X_MO, (int) nmo
+    );
+
+    STDL_FREE_ALL(X_tmp);
+
+    return STDL_ERR_OK;
+}
+
+

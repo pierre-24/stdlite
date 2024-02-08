@@ -118,7 +118,6 @@ int stdl_matrix_sge_transpose(size_t nrows, size_t ncols, float* mat);
 
 /**
  * Blow a (double-precision) symmetry packed matrix (`in`) into a full storage (symmetric, `sy`) matrix (`out`).
- * Unlike `*tpttr()`, ensure that both side of the matrix are filled (which is something one should avoid if possible).
  *
  * @param n order of `in` and `out`
  * @param in `double[STDL_SP_SIZE(n)]` a matrix in symmetry packed storage
@@ -126,18 +125,18 @@ int stdl_matrix_sge_transpose(size_t nrows, size_t ncols, float* mat);
  * @return error code
  * @ingroup matrix
  */
-int stdl_matrix_dsp_blowsy(size_t n, double* in, double* out);
+int stdl_matrix_dsp_blowsy(size_t n, char uplo, double *in, double *out);
 
 /**
  * Blow a (single-precision) symmetry packed matrix (`in`) into a full storage (symmetric, `sy`) matrix (`out`).
- * Unlike `*tpttr()`, ensure that both side of the matrix are filled (which is something one should avoid if possible).
  *
  * @param n order of `in` and `out`
+ * @param uplo wether `in` and `out` are upper (`U`) or lower (`L`) triangular.
  * @param in `floay[STDL_SP_SIZE(n)]` a matrix in symmetry packed storage
  * @param[in,out] out `float[n,n]` the resulting matrix.
  * @return error code
  * @ingroup matrix
  */
-int stdl_matrix_ssp_blowsy(size_t n, float * in, float* out);
+int stdl_matrix_ssp_blowsy(size_t n, char uplo, float *in, float *out);
 
 #endif //STDLITE_MATRIX_H

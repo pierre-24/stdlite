@@ -7,35 +7,41 @@
 #include "tests_suite.h"
 
 
-void test_response_TDA_full_ok() {
-    char* fchk_path = "../tests/test_files/water_631g.fchk";
+void read_fchk(char* fchk_path, stdl_wavefunction** wf, stdl_basis** bs) {
 
     FILE* f = fopen(fchk_path, "r");
     TEST_ASSERT_NOT_NULL(f);
 
     stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(f, &lx));
-    STDL_OK(stdl_fchk_parser_skip_intro(lx));
+    ASSERT_STDL_OK(stdl_lexer_new(f, &lx));
+    ASSERT_STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
+    ASSERT_STDL_OK(stdl_fchk_parser_extract(lx, wf, bs));
+
+    ASSERT_STDL_OK(stdl_lexer_delete(lx));
+
+    fclose(f);
+}
+
+void test_response_TDA_full_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
-
-    STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
+    read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
 
     TEST_ASSERT_EQUAL_INT(ctx->nmo,7);
     TEST_ASSERT_EQUAL_INT(ctx->nocc, 4);
 
-    STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
 
     TEST_ASSERT_EQUAL_INT(ctx->ncsfs, 10);
 
     float* energies = malloc(ctx->ncsfs * sizeof(float ));
     float* amplitudes = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float ));
 
-    STDL_OK(stdl_response_casida_TDA_full(ctx, energies, amplitudes));
+    ASSERT_STDL_OK(stdl_response_casida_TDA_full(ctx, energies, amplitudes));
 
     for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
         // in this case, the eigenvalues are more or less the diagonal elements of A.
@@ -52,31 +58,18 @@ void test_response_TDA_full_ok() {
 
     STDL_FREE_ALL(energies, amplitudes);
 
-    STDL_OK(stdl_context_delete(ctx));
-    STDL_OK(stdl_lexer_delete(lx));
-
-    fclose(f);
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
 
 void test_response_TDA_ok() {
-    char* fchk_path = "../tests/test_files/water_631g.fchk";
-
-    FILE* f = fopen(fchk_path, "r");
-    TEST_ASSERT_NOT_NULL(f);
-
-    stdl_lexer* lx = NULL;
-    STDL_OK(stdl_lexer_new(f, &lx));
-    STDL_OK(stdl_fchk_parser_skip_intro(lx));
-
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
-
-    STDL_OK(stdl_fchk_parser_extract(lx, &wf, &bs));
+    read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
 
-    STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
 
     // copy A for latter
     float* Ap = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
@@ -86,7 +79,7 @@ void test_response_TDA_ok() {
     // fetch all excitations
     float* energies = malloc(ctx->ncsfs * sizeof(float ));
     float* amplitudes = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float ));
-    STDL_OK(stdl_response_casida_TDA_full(ctx, energies, amplitudes));
+    ASSERT_STDL_OK(stdl_response_casida_TDA_full(ctx, energies, amplitudes));
 
     // replace A, which has now been severely damaged.
     STDL_FREE_ALL(ctx->A);
@@ -97,7 +90,7 @@ void test_response_TDA_ok() {
     float* first_energies = malloc(nrequested * sizeof(float));
     float* first_amplitudes = malloc(nrequested * ctx->ncsfs * sizeof(float));
 
-    STDL_OK(stdl_response_casida_TDA(ctx, nrequested, first_energies, first_amplitudes));
+    ASSERT_STDL_OK(stdl_response_casida_TDA(ctx, nrequested, first_energies, first_amplitudes));
 
     for (size_t kia = 0; kia < nrequested; ++kia) {
         // the same eigenvalues should have been obtained
@@ -106,8 +99,5 @@ void test_response_TDA_ok() {
 
     STDL_FREE_ALL(energies, amplitudes, first_energies, first_amplitudes);
 
-    STDL_OK(stdl_context_delete(ctx));
-    STDL_OK(stdl_lexer_delete(lx));
-
-    fclose(f);
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
 }

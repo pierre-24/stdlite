@@ -161,6 +161,8 @@ stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float gamm
 
     STDL_ERROR_HANDLE_AND_REPORT((*ctx)->e == NULL || (*ctx)->C == NULL, stdl_context_delete(*ctx); return STDL_ERR_MALLOC, "malloc");
 
+    (*ctx)->C_orig = wf->C + omin * wf->nao;
+
     // copy coefficients and energies
     for(size_t i=0; i < (*ctx)->nmo; i++) {
         (*ctx)->e[i] = wf->e[omin + i];

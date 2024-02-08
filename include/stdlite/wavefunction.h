@@ -101,4 +101,19 @@ int stdl_wavefunction_orthogonalize_C_dge(size_t nmo, size_t nao, double *S, dou
 int stdl_wavefunction_compute_density_dsy(size_t nocc, size_t nmo, size_t nao, double *C, double *D);
 
 
+/**
+ * Convert $X$ expressed from AO to MO basis.
+ *
+ * $$X^{MO}_{pq} = \sum_{\mu\nu} C_{p\mu}\,X^{AO}_{\mu\nu}\,C_{q\nu}.$$
+ *
+ * @param nao number of AO, must be >0.
+ * @param nmo number of MO, must be `0 < nmo <= nao`.
+ * @param C the LCAO coefficients
+ * @param X_AO `double[nao,nao]`, the matrix in AO basis
+ * @param[out] X_MO `double[nmo,nmo]`, the matrix in MO basis
+ * @return error code
+ */
+int stdl_wavefunction_dsy_ao_to_mo(size_t nao, size_t nmo, double* C, double* X_AO, double* X_MO);
+
+
 #endif //STDLITE_WAVEFUNCTION_H
