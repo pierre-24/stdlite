@@ -120,6 +120,7 @@ int stdl_matrix_sge_transpose(size_t nrows, size_t ncols, float* mat);
  * Blow a (double-precision) symmetry packed matrix (`in`) into a full storage (symmetric, `sy`) matrix (`out`).
  *
  * @param n order of `in` and `out`
+ * @param uplo whether `in` and `out` are upper (`U`) or lower (`L`) triangular.
  * @param in `double[STDL_SP_SIZE(n)]` a matrix in symmetry packed storage
  * @param[in,out] out `double[n,n]` the resulting matrix.
  * @return error code
@@ -131,12 +132,36 @@ int stdl_matrix_dsp_blowsy(size_t n, char uplo, double *in, double *out);
  * Blow a (single-precision) symmetry packed matrix (`in`) into a full storage (symmetric, `sy`) matrix (`out`).
  *
  * @param n order of `in` and `out`
- * @param uplo wether `in` and `out` are upper (`U`) or lower (`L`) triangular.
- * @param in `floay[STDL_SP_SIZE(n)]` a matrix in symmetry packed storage
+ * @param uplo whether `in` and `out` are upper (`U`) or lower (`L`) triangular.
+ * @param in `float[STDL_SP_SIZE(n)]` a matrix in symmetry packed storage
  * @param[in,out] out `float[n,n]` the resulting matrix.
  * @return error code
  * @ingroup matrix
  */
 int stdl_matrix_ssp_blowsy(size_t n, char uplo, float *in, float *out);
+
+/**
+ * Shrink a (double-precision) full storage (symmetric, `sy`) matrix (`in`) into a symmetry packed matrix (`out`).
+ *
+ * @param n order of `in` and `out`
+ * @param uplo whether `in` and `out` are upper (`U`) or lower (`L`) triangular.
+ * @param in `double[n,n]` a matrix in full symmetric (`sp`) storage
+ * @param[in,out] out `double[STDL_SP_SIZE(n)]` the resulting matrix.
+ * @return error code
+ * @ingroup matrix
+ */
+int stdl_matrix_dsy_shrinksp(size_t n, char uplo, double *in, double *out);
+
+/**
+ * Shrink a (single-precision) full storage (symmetric, `sy`) matrix (`in`) into a symmetry packed matrix (`out`).
+ *
+ * @param n order of `in` and `out`
+ * @param uplo whether `in` and `out` are upper (`U`) or lower (`L`) triangular.
+ * @param in `float[n,n]` a matrix in full symmetric (`sp`) storage
+ * @param[in,out] out `float[STDL_SP_SIZE(n)]` the resulting matrix.
+ * @return error code
+ * @ingroup matrix
+ */
+int stdl_matrix_ssy_shrinksp(size_t n, char uplo, float *in, float *out);
 
 #endif //STDLITE_MATRIX_H

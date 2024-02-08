@@ -80,7 +80,7 @@ void test_context_select_MO_ok() {
 void test_dipole() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
-    read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
+    read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
 
     stdl_context* ctx = NULL;
     ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));

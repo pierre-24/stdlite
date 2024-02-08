@@ -101,3 +101,50 @@ void test_response_TDA_ok() {
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
+
+
+void test_response_TDA_print_ok() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
+
+    stdl_context* ctx = NULL;
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
+
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
+
+    // request the 10 first excitations
+    size_t nrequested = 10;
+    float* first_energies = malloc(nrequested * sizeof(float));
+    float* first_amplitudes = malloc(nrequested * ctx->ncsfs * sizeof(float));
+
+    ASSERT_STDL_OK(stdl_response_casida_TDA(ctx, nrequested, first_energies, first_amplitudes));
+
+    // compute the dipole moments
+    double* dipoles_sp_AO = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipoles_sp_AO);
+
+    double* dipoles_sp_MO = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipoles_sp_MO);
+
+    double* tmpsy_AO = malloc(wf->nao * wf->nao * sizeof(double));
+    TEST_ASSERT_NOT_NULL(tmpsy_AO);
+
+    double* tmpsy_MO = malloc(wf->nmo * wf->nmo * sizeof(double));
+    TEST_ASSERT_NOT_NULL(tmpsy_MO);
+
+    // compute dipole integrals and convert to MO
+    ASSERT_STDL_OK(stdl_basis_compute_dsp_dipole(bs, dipoles_sp_AO));
+
+    for (int cpt = 0; cpt < 3; ++cpt) {
+        ASSERT_STDL_OK(stdl_matrix_dsp_blowsy(wf->nao, 'L', dipoles_sp_AO + cpt * STDL_MATRIX_SP_SIZE(wf->nao), tmpsy_AO));
+        ASSERT_STDL_OK(stdl_wavefunction_dsy_ao_to_mo(wf->nao, ctx->nmo, ctx->C_orig, tmpsy_AO, tmpsy_MO));
+        ASSERT_STDL_OK(stdl_matrix_dsy_shrinksp(ctx->nmo, 'L', tmpsy_MO, dipoles_sp_MO + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo)));
+    }
+
+    ASSERT_STDL_OK(stdl_response_print_excitations(ctx, nrequested, first_energies, first_amplitudes, dipoles_sp_MO));
+
+    STDL_FREE_ALL(first_energies, first_amplitudes, dipoles_sp_AO, dipoles_sp_MO, tmpsy_AO, tmpsy_MO);
+
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
+}

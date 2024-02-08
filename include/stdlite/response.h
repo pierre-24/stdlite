@@ -42,4 +42,18 @@ int stdl_response_casida_TDA_full(stdl_context *ctx, float *energies, float *amp
  */
 int stdl_response_casida_TDA(stdl_context *ctx, size_t nexci, float *energies, float *amplitudes);
 
+
+/**
+ * Print (in stdout) the excitations that were computed.
+ *
+ * @param ctx a valid context, with `ctx->ncsfs > 0`.
+ * @param nexci number of excitations computed
+ * @param energies `float[nexci]` excitation energies (eigenvalues).
+ * @param amplitudes `float[nexci,ncsfs]` amplitudes for each excitation (eigenvectors).
+ * @param dipoles_MO `float[3,STDL_MATRIX_SP_SIZE(ctx->nmo)]`, the dipole moment matrix, **in MO basis**.
+ * @return error code
+ * @ingroup response
+ */
+int stdl_response_print_excitations(stdl_context *ctx, size_t nexci, float *energies, float *amplitudes, double* dipoles_MO);
+
 #endif //STDLITE_RESPONSE_H

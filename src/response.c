@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <lapacke.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "stdlite/response.h"
 #include "stdlite/logging.h"
@@ -46,6 +47,41 @@ int stdl_response_casida_TDA(stdl_context *ctx, size_t nexci, float *energies, f
     stdl_matrix_sge_transpose(ctx->ncsfs, nexci, amplitudes);
 
     STDL_FREE_ALL(ifail);
+
+    return STDL_ERR_OK;
+}
+
+int stdl_response_print_excitations(stdl_context *ctx, size_t nexci, float *energies, float *amplitudes, double* dipoles_MO) {
+    size_t nvirt = ctx->nmo - ctx->nocc;
+
+    printf("---- ------- Energy ------- ------ Transition dipole ---------\n");
+    printf("       (Eh)   (eV)    (nm)      X        Y        Z       fL  \n");
+    printf("---- ------- ------ ------- -------- -------- -------- -------\n");
+    for (size_t iexci = 0; iexci < nexci; ++iexci) {
+        // print energies
+        printf("%4ld %7.5f %6.3f %7.2f", iexci + 1, energies[iexci], energies[iexci] * STDL_CONST_AU_TO_EV, STDL_CONST_HCL / energies[iexci]);
+
+        // compute transition dipole
+        float dip[3] = {.0f, .0f, .0f};
+        for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
+            size_t i = ctx->csfs[kia] / nvirt, a = ctx->csfs[kia] % nvirt + ctx->nocc;
+
+            for (int cpt = 0; cpt < 3; ++cpt)
+                dip[cpt] += amplitudes[iexci * ctx->ncsfs + kia] * ((float) dipoles_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)]);
+        }
+
+        // print dipole
+        printf(" % 8.5f % 8.5f % 8.5f %7.5f",
+               dip[0],
+               dip[1],
+               dip[2],
+               energies[iexci] * (powf(dip[0], 2) + powf(dip[1], 2) + powf(dip[2], 2)) * 4.f / 3 /* TODO: 4/3?!? */
+               );
+
+        printf("\n");
+    }
+
+    printf("--------------------------------------------------------------\n");
 
     return STDL_ERR_OK;
 }

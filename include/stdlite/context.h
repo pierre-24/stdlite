@@ -49,7 +49,7 @@ struct stdlite_context_ {
     /// number of CSFs selected by a given scheme (monopole, ...). Zero as long as no CSFs has been selected.
     size_t ncsfs;
 
-    /// `size_t[ncsfs]`, the indices (`kia = i*ctx->nvirt + a`) of each selected CSF `i→a` (as `i = csfs[kia] / nvirt; a = csfs[kia] % nvirt`).
+    /// `size_t[ncsfs]`, the indices (`kia = i * nvirt + a - nocc`) of each selected CSF `i→a` (as `i = csfs[kia] / nvirt; a = csfs[kia] % nvirt + nocc`).
     /// They are given in increasing energy order, the energy being available at `ecsfs[kia]`.
     /// `NULL` as long as no CSFs has been selected.
     size_t* csfs;

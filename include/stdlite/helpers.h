@@ -1,6 +1,9 @@
 #ifndef STDLITE_HELPERS_H
 #define STDLITE_HELPERS_H
 
+
+#include <math.h>
+
 /**
  * Apply a function on a list of objects.
  * From B. Klemens in *21st century C* (O'Reilly).
@@ -25,6 +28,18 @@
  * @ingroup helpers
  */
 #define STDL_FREE_ALL(...) STDL_APPLY(void, STDL_FREE_IF_USED, __VA_ARGS__)
+
+/// Conversion to eV
+/// @ingroup helpers
+#ifndef STDL_CONST_AU_TO_EV
+#define STDL_CONST_AU_TO_EV 27.21139
+#endif
+
+/// Conversion to nanometers
+/// @ingroup helpers
+#ifndef STDL_CONST_HCL
+#define STDL_CONST_HCL 45.56335
+#endif
 
 
 #endif //STDLITE_HELPERS_H

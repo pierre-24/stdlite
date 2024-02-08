@@ -273,3 +273,19 @@ int stdl_matrix_ssp_blowsy(size_t n, char uplo, float *in, float *out) {
 
     return STDL_ERR_OK;
 }
+
+int stdl_matrix_dsy_shrinksp(size_t n, char uplo, double *in, double *out) {
+    assert(n > 0 && in != NULL && out != NULL && (uplo == 'U' || uplo == 'L'));
+
+    LAPACKE_dtrttp(LAPACK_ROW_MAJOR, uplo, (int) n, in, (int) n, out);
+
+    return STDL_ERR_OK;
+}
+
+int stdl_matrix_ssy_shrinksp(size_t n, char uplo, float *in, float *out) {
+    assert(n > 0 && in != NULL && out != NULL && (uplo == 'U' || uplo == 'L'));
+
+    LAPACKE_strttp(LAPACK_ROW_MAJOR, uplo, (int) n, in, (int) n, out);
+
+    return STDL_ERR_OK;
+}
