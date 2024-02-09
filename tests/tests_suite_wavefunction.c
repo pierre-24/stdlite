@@ -11,7 +11,7 @@
 #include <cblas.h>
 
 // check that the data are correct by computing the Mulliken population.
-// It should sum up to the number of electrons
+// It should sum up to the number of electrons (i.e., 2 * wf->nocc).
 void compute_population_and_check(stdl_wavefunction* wf, int sym) {
 
     // compute the density matrix
@@ -108,13 +108,28 @@ void test_sqrtS_ok() {
 
     ASSERT_STDL_OK(stdl_basis_delete(bs));
 
+    // sy
     double* sqrtS = malloc(wf->nao * wf->nao * sizeof(double));
     TEST_ASSERT_NOT_NULL(sqrtS);
 
+    stdl_matrix_dsp_sqrt_sy(wf->nao, wf->S, sqrtS);
+
+    // Compare in-place procedure and sy
+    double* Sp = malloc(STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
+    memcpy(Sp, wf->S, STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(Sp);
+
+    stdl_matrix_dsp_sqrt(wf->nao, Sp);
+
+    for (size_t mu = 0; mu < wf->nao; ++mu) {
+        for (size_t nu = 0; nu <= mu; ++nu) {
+            TEST_ASSERT_DOUBLE_WITHIN(1e-8, Sp[STDL_MATRIX_SP_IDX(mu, nu)], sqrtS[mu * wf->nao + nu]);
+        }
+    }
+
+    // compute S' = S^1/2 * S^1/2 and compare to S
     double* reS = malloc(wf->nao * wf->nao * sizeof(double));
     TEST_ASSERT_NOT_NULL(reS);
-
-    stdl_matrix_dsp_sqrt_sy(wf->nao, wf->S, sqrtS);
 
     cblas_dsymm(CblasRowMajor, CblasLeft, CblasLower,
                 (int) wf->nao, (int) wf->nao, 1.0, sqrtS, (int) wf->nao,
@@ -128,8 +143,7 @@ void test_sqrtS_ok() {
         }
     }
 
-    STDL_FREE_ALL(sqrtS, reS);
-
+    STDL_FREE_ALL(sqrtS, reS, Sp);
     ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
 }
 

@@ -170,22 +170,18 @@ int stdl_matrix_ssp_print(size_t n, float *matrix, char *title) {
 int stdl_matrix_dsp_sqrt_sy(size_t n, double *mat, double* matsy) {
     assert(mat != NULL && mat != NULL && n > 0 && matsy != NULL);
 
-    size_t sz = n * n * sizeof(double);
-
-
     // use temporary `matsy` to store `mat`, in order to avoid mat to be destroyed in the process
     memcpy(matsy, mat, STDL_MATRIX_SP_SIZE(n) * sizeof(double));
 
-    double* e = malloc(n * sizeof(double));
-    double* w = malloc(sz);
-    double* wcc = malloc(sz);
-
-    STDL_ERROR_HANDLE_AND_REPORT(e == NULL || w == NULL || wcc == NULL, STDL_FREE_ALL(e, w, wcc); return STDL_ERR_MALLOC, "malloc");
+    // make space
+    double* wrk = malloc(n * (n+1) * sizeof(double));
+    double *e = wrk, *w = wrk + n;
+    STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
     // eig
     int info = LAPACKE_dspev(LAPACK_ROW_MAJOR, 'V', 'L', (int) n, matsy, e, w, (int) n);
 
-    STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(e, w, wcc); return STDL_ERR_MALLOC, "dsyev() returned %d", info);
+    STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "dsyev() returned %d", info);
 
     // compute the square root of eigenvalues
     for(size_t i = 0; i < n; i++) {
@@ -196,22 +192,18 @@ int stdl_matrix_dsp_sqrt_sy(size_t n, double *mat, double* matsy) {
             e[i] = sqrt(e[i]);
     }
 
-    // wcc = e * w
-    memcpy(wcc, w, sz);
+    // wcc = w * e * w^T
     for(size_t i = 0; i < n; i++) {
-        for(size_t j=0; j < n; j++)
-            wcc[i * n + j]  *= e[j];
+        for(size_t j=0; j <= i; j++) {
+            double s = 0;
+            for (size_t k = 0; k < n; k++) {
+                s += w[i * n + k] * e[k] * w[j * n + k];
+            }
+            matsy[j * n + i] = matsy[i * n + j] = s;
+        }
     }
 
-    // (*mat)^1/2 = w * wcc^T
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-                (int) n, (int) n, (int) n,
-                1.f, w, (int) n,
-                wcc, (int) n,
-                .0f, matsy, (int) n
-    );
-
-    STDL_FREE_ALL(e, w, wcc);
+    STDL_FREE_ALL(wrk);
 
     return STDL_ERR_OK;
 }
@@ -219,14 +211,37 @@ int stdl_matrix_dsp_sqrt_sy(size_t n, double *mat, double* matsy) {
 int stdl_matrix_dsp_sqrt(size_t n, double *mat) {
     assert(mat != NULL && mat != NULL && n > 0);
 
-    double* matsy = malloc(n * n * sizeof(double));
-    STDL_ERROR_HANDLE_AND_REPORT(matsy == NULL, return STDL_ERR_MALLOC, "malloc");
+    // make space
+    double* wrk = malloc(n * (n+1) * sizeof(double));
+    double *e = wrk, *w = wrk + n;
+    STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
-    stdl_matrix_dsp_sqrt_sy(n, mat, matsy);
+    // eig
+    int info = LAPACKE_dspev(LAPACK_ROW_MAJOR, 'V', 'L', (int) n, mat, e, w, (int) n);
 
-    LAPACKE_dtrttp(LAPACK_ROW_MAJOR, 'L', (int) n, matsy, (int) n, mat);
+    STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "dsyev() returned %d", info);
 
-    STDL_FREE_ALL(matsy);
+    // compute the square root of eigenvalues
+    for(size_t i = 0; i < n; i++) {
+        if(e[i] < .0) {
+            STDL_WARN("eigenvalue of S #%d is < .0, will be set to 0", i);
+            e[i] = 0;
+        } else
+            e[i] = sqrt(e[i]);
+    }
+
+    // wcc = w * e * w^T
+    for(size_t i = 0; i < n; i++) {
+        for(size_t j=0; j <= i; j++) {
+            double s = 0;
+            for (size_t k = 0; k < n; k++) {
+                s += w[i * n + k] * e[k] * w[j * n + k];
+            }
+            mat[STDL_MATRIX_SP_IDX(i, j)]= s;
+        }
+    }
+
+    STDL_FREE_ALL(wrk);
 
     return STDL_ERR_OK;
 }
@@ -234,21 +249,18 @@ int stdl_matrix_dsp_sqrt(size_t n, double *mat) {
 int stdl_matrix_ssp_sqrt_sy(size_t n, float *mat, float * matsy) {
     assert(mat != NULL && mat != NULL && n > 0 && matsy != NULL);
 
-    size_t sz = n * n * sizeof(float );
-
     // use temporary `matsy` to store `mat`, in order to avoid mat to be destroyed in the process
     memcpy(matsy, mat, STDL_MATRIX_SP_SIZE(n) * sizeof(float ));
 
-    float * e = malloc(n * sizeof(float ));
-    float * w = malloc(sz);
-    float * wcc = malloc(sz);
-
-    STDL_ERROR_HANDLE_AND_REPORT(e == NULL || w == NULL || wcc == NULL, STDL_FREE_ALL(e, w, wcc); return STDL_ERR_MALLOC, "malloc");
+    // make space
+    float * wrk = malloc(n * (n+1) * sizeof(float ));
+    float *e = wrk, *w = wrk + n;
+    STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
     // eig
     int info = LAPACKE_sspev(LAPACK_ROW_MAJOR, 'V', 'L', (int) n, matsy, e, w, (int) n);
 
-    STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(e, w, wcc); return STDL_ERR_MALLOC, "dsyev() returned %d", info);
+    STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "ssyev() returned %d", info);
 
     // compute the square root of eigenvalues
     for(size_t i = 0; i < n; i++) {
@@ -259,22 +271,18 @@ int stdl_matrix_ssp_sqrt_sy(size_t n, float *mat, float * matsy) {
             e[i] = sqrtf(e[i]);
     }
 
-    // wcc = e * w
-    memcpy(wcc, w, sz);
+    // wcc = w * e * w^T
     for(size_t i = 0; i < n; i++) {
-        for(size_t j=0; j < n; j++)
-            wcc[i * n + j]  *= e[j];
+        for(size_t j=0; j <= i; j++) {
+            float s = 0;
+            for (size_t k = 0; k < n; k++) {
+                s += w[i * n + k] * e[k] * w[j * n + k];
+            }
+            matsy[j * n + i] = matsy[i * n + j] = s;
+        }
     }
 
-    // (*mat)^1/2 = w * wcc^T
-    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-                (int) n, (int) n, (int) n,
-                1.f, w, (int) n,
-                wcc, (int) n,
-                .0f, matsy, (int) n
-    );
-
-    STDL_FREE_ALL(e, w, wcc);
+    STDL_FREE_ALL(wrk);
 
     return STDL_ERR_OK;
 }
@@ -282,14 +290,37 @@ int stdl_matrix_ssp_sqrt_sy(size_t n, float *mat, float * matsy) {
 int stdl_matrix_ssp_sqrt(size_t n, float *mat) {
     assert(mat != NULL && mat != NULL && n > 0);
 
-    float * matsy = malloc(n * n * sizeof(float ));
-    STDL_ERROR_HANDLE_AND_REPORT(matsy == NULL, return STDL_ERR_MALLOC, "malloc");
+    // make space
+    float * wrk = malloc(n * (n+1) * sizeof(float ));
+    float *e = wrk, *w = wrk + n;
+    STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
-    stdl_matrix_ssp_sqrt_sy(n, mat, matsy);
+    // eig
+    int info = LAPACKE_sspev(LAPACK_ROW_MAJOR, 'V', 'L', (int) n, mat, e, w, (int) n);
 
-    LAPACKE_strttp(LAPACK_ROW_MAJOR, 'L', (int) n, matsy, (int) n, mat);
+    STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "ssyev() returned %d", info);
 
-    STDL_FREE_ALL(matsy);
+    // compute the square root of eigenvalues
+    for(size_t i = 0; i < n; i++) {
+        if(e[i] < .0) {
+            STDL_WARN("eigenvalue of S #%d is < .0, will be set to 0", i);
+            e[i] = 0;
+        } else
+            e[i] = sqrtf(e[i]);
+    }
+
+    // wcc = w * e * w^T
+    for(size_t i = 0; i < n; i++) {
+        for(size_t j=0; j <= i; j++) {
+            float s = 0;
+            for (size_t k = 0; k < n; k++) {
+                s += w[i * n + k] * e[k] * w[j * n + k];
+            }
+            mat[STDL_MATRIX_SP_IDX(i, j)]= s;
+        }
+    }
+
+    STDL_FREE_ALL(wrk);
 
     return STDL_ERR_OK;
 }
