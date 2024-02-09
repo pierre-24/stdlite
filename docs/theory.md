@@ -122,13 +122,22 @@ Solving this problem might be performed via 2 approaches:
 
 === "Full time-dependent approach (TD)"
 
-    Eq. (3) can be turned into a problem of the form:
+    Eq. (3) can be turned into a linear equation of the form:
     
     $$[(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}]\,[\mathbf x^\omega_\zeta + \mathbf y^\omega_\zeta] = -2\mathbf\eta_\zeta,$$
-    
-    so that the linear response vectors at frequency $\omega$ are given by:
 
-    $$\mathbf x^\omega_\zeta + \mathbf y^\omega_\zeta = \frac{-2\mathbf\eta_\zeta}{(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}}.$$
+    or:
+    
+    $$\mathbf L\,\mathbf u^\omega_{\zeta} = -2\mathbf\eta_\zeta,$$
+
+    where $\mathbf u^\omega_{\zeta} = \mathbf x^\omega_\zeta + \mathbf y^\omega_\zeta$, and which is solved using any of the usual methods for linear systems.
+    Since $\mathbf x^\omega_\zeta - \mathbf y^\omega_\zeta = \omega\,(\mathbf A-\mathbf B)^{-1}\,(\mathbf x^\omega_\zeta + \mathbf y^\omega_\zeta)$ [from Eq. (3)],
+    
+    $$\mathbf v^\omega_{\zeta} =\mathbf x^\omega_\zeta - \mathbf y^\omega_\zeta =  \omega\,(\mathbf A-\mathbf B)^{-1}\,\mathbf u^\omega_\zeta,$$
+    
+    the response vector are obtained: $\mathbf x^\omega_{\zeta} = \frac{1}{2}(\mathbf u^\omega_{\zeta} + \mathbf v^\omega_{\zeta})$ and $\mathbf y^\omega_{\zeta} = \frac{1}{2}(\mathbf u^\omega_{\zeta} - \mathbf v^\omega_{\zeta})$.
+
+
 
 === "Tamm-Dancoff approximation (TDA)"
 

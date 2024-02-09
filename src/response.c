@@ -162,3 +162,69 @@ int stdl_response_RPA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
 
     return STDL_ERR_OK;
 }
+
+int stdl_response_RPA_linear(stdl_context* ctx, float w, size_t dim, float* egrad, float* X, float* Y) {
+    // compute A+B and A-B
+    _make_apb_amb(ctx);
+
+    // allocate space for the L size of the linear response equation
+    float* L = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+    STDL_ERROR_HANDLE_AND_REPORT(L == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    // invert A-B, taking advantage of its `sp` storage
+    int* ipiv = malloc(ctx->ncsfs * sizeof(int));
+    STDL_ERROR_HANDLE_AND_REPORT(ipiv == NULL, STDL_FREE_ALL(L); return STDL_ERR_MALLOC, "malloc");
+
+    int err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, ctx->B, ipiv);
+    STDL_ERROR_HANDLE_AND_REPORT(err != 0,  STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", err);
+
+    err = LAPACKE_ssptri(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, ctx->B, ipiv);
+    STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptri(): %d", err);
+
+    // now, ctx->B contains (A-B)^(-1)
+    // make left side: L = (A+B)-w^2*(A-B)^(-1)
+    for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
+        for(size_t kjb = 0; kjb <= kia; ++kjb)
+            L[STDL_MATRIX_SP_IDX(kia, kjb)] = ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)] - powf(w, 2) * ctx->B[STDL_MATRIX_SP_IDX(kia, kjb)];
+    }
+
+    // copy egrad in X, to keep it for latter
+    memcpy(X, egrad, ctx->ncsfs * dim * sizeof(float ));
+
+    // solve the problem
+    err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, L, ipiv);
+    STDL_ERROR_HANDLE_AND_REPORT(err != 0,  STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", err);
+
+    err = LAPACKE_ssptrs(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, (int) dim, L, ipiv, X, (int) dim);
+    STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptrs(): %d", err);
+
+    stdl_matrix_sge_print(ctx->ncsfs, dim, X, "X'");
+
+    // separate X and Y
+    // Y' = w*(A-B)^(-1)*X'
+    for(size_t kia = 0; kia < ctx->ncsfs; kia++) {
+        for(size_t cpt = 0; cpt < dim; cpt++) {
+            float sum = .0f;
+            for (size_t kjb = 0; kjb < ctx->ncsfs; kjb++)
+                sum += ctx->B[STDL_MATRIX_SP_IDX(kia, kjb)] * w * X[kia * dim + cpt];
+
+            Y[kia * dim + cpt] = sum;
+        }
+    }
+
+    // X = 1/2*(X' + Y') && Y = 1/2*(X' - Y')
+    for(size_t kia = 0; kia < ctx->ncsfs; kia++) {
+        for(size_t cpt = 0; cpt < dim; cpt++) {
+             float u = X[kia * dim + cpt], v = Y[kia * dim + cpt];
+             X[kia * dim + cpt] = .5f * (u + v);
+             Y[kia * dim + cpt] = .5f * (u - v);
+        }
+    }
+
+    stdl_matrix_sge_print(ctx->ncsfs, dim, X, "X");
+    stdl_matrix_sge_print(ctx->ncsfs, dim, Y, "Y");
+
+    STDL_FREE_ALL(L, ipiv);
+
+    return STDL_ERR_OK;
+}

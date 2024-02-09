@@ -24,7 +24,7 @@ void read_fchk(char* fchk_path, stdl_wavefunction** wf, stdl_basis** bs) {
     fclose(f);
 }
 
-void test_response_TDA_ok() {
+void test_response_TDA_casida_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
@@ -117,7 +117,7 @@ void test_response_TDA_print_ok() {
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
 
-void test_response_RPA_ok() {
+void test_response_RPA_casida_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
@@ -157,6 +157,69 @@ void test_response_RPA_ok() {
     }
 
     STDL_FREE_ALL(energies, X, Y);
+
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
+}
+
+
+
+void test_response_RPA_linear_ok() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
+
+    stdl_context* ctx = NULL;
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
+
+    TEST_ASSERT_EQUAL_INT(ctx->nmo,7);
+    TEST_ASSERT_EQUAL_INT(ctx->nocc, 4);
+
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
+
+    TEST_ASSERT_EQUAL_INT(ctx->ncsfs, 10);
+
+    // compute dipole integrals and convert to MO
+    double* dipoles_sp_AO = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipoles_sp_AO);
+
+    double* dipoles_sp_MO = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipoles_sp_MO);
+
+    double* tmpsy_AO = malloc(wf->nao * wf->nao * sizeof(double));
+    TEST_ASSERT_NOT_NULL(tmpsy_AO);
+
+    double* tmpsy_MO = malloc(wf->nmo * wf->nmo * sizeof(double));
+    TEST_ASSERT_NOT_NULL(tmpsy_MO);
+
+    ASSERT_STDL_OK(stdl_basis_dsp_dipole(bs, dipoles_sp_AO));
+
+    for (int cpt = 0; cpt < 3; ++cpt) {
+        ASSERT_STDL_OK(stdl_matrix_dsp_blowsy(wf->nao, 'L', dipoles_sp_AO + cpt * STDL_MATRIX_SP_SIZE(wf->nao), tmpsy_AO));
+        ASSERT_STDL_OK(stdl_wavefunction_dsy_ao_to_mo(wf->nao, ctx->nmo, ctx->C_orig, tmpsy_AO, tmpsy_MO));
+        ASSERT_STDL_OK(stdl_matrix_dsy_shrinksp(ctx->nmo, 'L', tmpsy_MO, dipoles_sp_MO + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo)));
+    }
+
+    // build egrad
+    size_t nvirt = ctx->nmo - ctx->nocc;
+    float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(egrad);
+
+    for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
+        size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
+        for (int cpt = 0; cpt < 3; ++cpt) {
+            egrad[lia * 3 + cpt] = -2.f * (float) dipoles_sp_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)];
+        }
+    }
+
+    float* X = malloc(3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(X);
+
+    float* Y = malloc(3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(Y);
+
+    ASSERT_STDL_OK(stdl_response_RPA_linear(ctx, 4.2822696E-02, 3, egrad, X, Y));
+
+    STDL_FREE_ALL(dipoles_sp_AO, dipoles_sp_MO, tmpsy_AO, tmpsy_MO, egrad, X, Y);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }

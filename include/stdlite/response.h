@@ -44,4 +44,17 @@ int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
  */
 int stdl_response_RPA_casida(stdl_context *ctx, size_t nexci, float *e, float *X, float *Y);
 
+/**
+ * Solve the linear response equation at a frequency $\omega$ to get response vectors ($x^\omega$, $y^\omega$).
+ * @param ctx a valid context
+ * @param w frequency at which linear response should be computed
+ * @param dim dimension of the electronic gradient
+ * @param egrad `float[ncsfs,dim]` input $-2\eta$ electronic gradient
+ * @param[out] X `float[ncsfs,dim]` response vector X for each excitation.
+ * @param[out] Y `float[ncsfs,dim]` response vector Y for each excitation.
+ * @return error code
+ * @ingroup response
+ */
+int stdl_response_RPA_linear(stdl_context* ctx, float w, size_t dim, float* egrad, float* X, float* Y);
+
 #endif //STDLITE_RESPONSE_H
