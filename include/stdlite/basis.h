@@ -99,7 +99,7 @@ int stdl_basis_print(stdl_basis *bs, int denormalize);
  * @return error code.
  * @ingroup basis
  */
-int stdl_basis_compute_dsp_ovlp(stdl_basis *bs, double *S);
+int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S);
 
 
 /**
@@ -109,6 +109,6 @@ int stdl_basis_compute_dsp_ovlp(stdl_basis *bs, double *S);
  * @return error code.
  * @ingroup basis
  */
-int stdl_basis_compute_dsp_dipole(stdl_basis *bs, double *dipoles);
+int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles);
 
 #endif //STDLITE_BASIS_H

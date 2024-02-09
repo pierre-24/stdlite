@@ -112,6 +112,7 @@ int stdl_wavefunction_compute_density_dsy(size_t nocc, size_t nmo, size_t nao, d
  * @param X_AO `double[nao,nao]`, the matrix in AO basis
  * @param[out] X_MO `double[nmo,nmo]`, the matrix in MO basis
  * @return error code
+ * @ingroup wavefunction
  */
 int stdl_wavefunction_dsy_ao_to_mo(size_t nao, size_t nmo, double* C, double* X_AO, double* X_MO);
 

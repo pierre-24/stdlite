@@ -39,7 +39,7 @@
 
 The general workflow to use `libstdlite` in order to compute a given property is the following:
 
-![General workflow](../assets/activity_diagram_API.png)
+![General workflow](../assets/activity_diagram_API.svg)
 
 
 ## Specific topics

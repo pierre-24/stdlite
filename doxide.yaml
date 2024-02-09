@@ -9,11 +9,32 @@ files:
   - "include/*.h"
   - "include/**/*.h"
 groups:
+  - name: logging
+    title: Logging and errors
+    description: |
+      Handling of log, of errors, and of error messages.
+      
+      ```c
+      #include <stdlite/logging.h>
+      ```
+      
+      Also contains function to signal warnings and debug messages.
+      
+      By default `DEBUG_LVL=1 && LOG_LVL = 1`, which allows logs, errors and warnings to be printed. 
+      To shut down every messages, use `stdl_set_debug_level(-1); stdl_set_log_level(-1);`.
+  - name: wavefunction
+    title: Wavefunction
+    description: |
+      Store the result of a QC calculation, which is the input for subsequent (s)TD-DFT calculations.
+      
+      ```c
+      #include <stdlite/wavefunction.h>
+      ```
   - name: basis
     title: Basis set
     description: |
       Describe a set of basis functions, centered on atoms.
-      Also provide functions that computes integrals in AO basis.
+      Also provide functions that computes expectation values (integrals) in AO basis.
       
       ```c
       #include <stdlite/basis.h>
@@ -34,27 +55,13 @@ groups:
       ```c
       #include <stdlite/context.h>
       ```
-
-  - name: logging
-    title: Logging and errors
+  - name: property
+    title: Properties
     description: |
-      Handling of log, of errors, and of error messages.
+      Use the linear response vectors to compute some properties.
       
       ```c
-      #include <stdlite/logging.h>
-      ```
-      
-      Also contains function to signal warnings and debug messages.
-      
-      By default `DEBUG_LVL=1`, which allows errors and warnings to be printed. 
-      To shut down every messages, use `stdl_set_debug_level(-1)`.
-  - name: helpers
-    title: Helpers functions and macros
-    description: |
-      Helpers functions and macros.
-      
-      ```c
-      #include <stdlite/helpers.h>
+      #include <stdlite/property.h>
       ```
   - name: response
     title: Response functions
@@ -64,13 +71,13 @@ groups:
       ```c
       #include <stdlite/response.h>
       ```
-  - name: wavefunction
-    title: Wavefunction
+  - name: helpers
+    title: Helpers functions and macros
     description: |
-      Store the result of a QC calculation, which is the input for subsequent (s)TD-DFT calculations.
+      Helpers functions and macros.
       
       ```c
-      #include <stdlite/wavefunction.h>
+      #include <stdlite/helpers.h>
       ```
   - name: utilities
     title: Utilities

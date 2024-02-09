@@ -67,7 +67,7 @@ void test_ovlp_ok() {
     double* S = malloc(STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(S);
 
-    stdl_basis_compute_dsp_ovlp(bs, S);
+    stdl_basis_dsp_ovlp(bs, S);
 
     // check that <i|i> = 1
     for (size_t i = 0; i < wf->nao; ++i)
@@ -101,7 +101,7 @@ void test_dipoles_ok() {
     double* dipoles = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles);
 
-    stdl_basis_compute_dsp_dipole(bs, dipoles);
+    stdl_basis_dsp_dipole(bs, dipoles);
 
     /*
     stdl_matrix_dsp_print(wf->nao, dipoles + 0 * STDL_MATRIX_SP_SIZE(wf->nao), "xlint");

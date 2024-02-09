@@ -28,7 +28,7 @@
 int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X);
 
 /**
- * Solve the Casida equation to get excitation energies and responses vector ($x^\omega$, $y^\omega$).
+ * Solve the Casida equation to get excitation energies and their corresponding response vectors ($x^\omega$, $y^\omega$).
  * Only returns the first `nexci` first excitation energies. Works well if `nexci << ncsfs`.
  * The precision on the eigenvalues is given by `STDL_RESPONSE_EIGV_ABSTOL`.
  *
@@ -43,29 +43,5 @@ int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
  * @ingroup response
  */
 int stdl_response_RPA_casida(stdl_context *ctx, size_t nexci, float *e, float *X, float *Y);
-
-/**
- * Print (in stdout) the excitations that were computed.
- *
- * @param ctx a valid context, with `ctx->ncsfs > 0`.
- * @param nexci number of excitations computed
- * @param energies `float[nexci]` excitation energies (eigenvalues).
- * @param amplitudes `float[nexci,ncsfs]` amplitudes for each excitation: either `X` (TDA) or `X+Y` (TD).
- * @param dipoles_MO `float[3,STDL_MATRIX_SP_SIZE(ctx->nmo)]`, the dipole moment matrix, **in MO basis**.
- * @return error code
- * @ingroup response
- */
-int stdl_response_print_excitations(stdl_context *ctx, size_t nexci, float *energies, float *amplitudes, double* dipoles_MO);
-
-/**
- * Print (in stdout) the contribution of each CSF to the excitations that were computed.
- * @param ctx a valid context, with `ctx->ncsfs > 0`.
- * @param nexci number of excitations computed
- * @param energies `float[nexci]` excitation energies (eigenvalues).
- * @param amplitudes `float[nexci,ncsfs]` amplitudes for each excitation: either `X` (TDA) or `X+Y` (TD).
- * @param thresh threshold (on the square of the coefficient) above which a contribution is printed.
- * @return
- */
-int stdl_response_print_excitations_contribs(stdl_context *ctx, size_t nexci, float* energies, float *amplitudes, float thresh);
 
 #endif //STDLITE_RESPONSE_H

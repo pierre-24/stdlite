@@ -2,6 +2,7 @@ srcs += files(
     'basis.c',
     'context.c',
     'logging.c',
+    'property.c',
     'response.c',
     'utils/base_parser.c',
     'utils/fchk_parser.c',

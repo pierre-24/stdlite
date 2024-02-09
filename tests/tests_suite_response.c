@@ -2,6 +2,7 @@
 #include <stdlite/utils/fchk_parser.h>
 #include <stdlite/utils/matrix.h>
 #include <stdlite/helpers.h>
+#include <stdlite/property.h>
 #include <string.h>
 
 #include "tests_suite.h"
@@ -76,12 +77,12 @@ void test_response_TDA_print_ok() {
 
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
 
-    // request the 10 first excitations
-    size_t nrequested = 12;
-    float* first_energies = malloc(nrequested * sizeof(float));
-    float* first_amplitudes = malloc(nrequested * ctx->ncsfs * sizeof(float));
+    // request the first excitations
+    size_t nrequested = 10;
+    float* e = malloc(nrequested * sizeof(float));
+    float* X = malloc(nrequested * ctx->ncsfs * sizeof(float));
 
-    ASSERT_STDL_OK(stdl_response_TDA_casida(ctx, nrequested, first_energies, first_amplitudes));
+    ASSERT_STDL_OK(stdl_response_TDA_casida(ctx, nrequested, e, X));
 
     // compute the dipole moments
     double* dipoles_sp_AO = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
@@ -97,7 +98,7 @@ void test_response_TDA_print_ok() {
     TEST_ASSERT_NOT_NULL(tmpsy_MO);
 
     // compute dipole integrals and convert to MO
-    ASSERT_STDL_OK(stdl_basis_compute_dsp_dipole(bs, dipoles_sp_AO));
+    ASSERT_STDL_OK(stdl_basis_dsp_dipole(bs, dipoles_sp_AO));
 
     for (int cpt = 0; cpt < 3; ++cpt) {
         ASSERT_STDL_OK(stdl_matrix_dsp_blowsy(wf->nao, 'L', dipoles_sp_AO + cpt * STDL_MATRIX_SP_SIZE(wf->nao), tmpsy_AO));
@@ -105,10 +106,13 @@ void test_response_TDA_print_ok() {
         ASSERT_STDL_OK(stdl_matrix_dsy_shrinksp(ctx->nmo, 'L', tmpsy_MO, dipoles_sp_MO + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo)));
     }
 
-    // ASSERT_STDL_OK(stdl_response_print_excitations(ctx, nrequested, first_energies, first_amplitudes, dipoles_sp_MO));
-    // ASSERT_STDL_OK(stdl_response_print_excitations_contribs(ctx, nrequested, first_energies, first_amplitudes, .001f));
+    float* tdips = malloc(nrequested * 3 * sizeof(float ));
+    stdl_property_transition_dipoles(ctx, nrequested, dipoles_sp_MO, X, NULL, tdips);
 
-    STDL_FREE_ALL(first_energies, first_amplitudes, dipoles_sp_AO, dipoles_sp_MO, tmpsy_AO, tmpsy_MO);
+    ASSERT_STDL_OK(stdl_property_print_excitations(ctx, nrequested, e, tdips));
+    ASSERT_STDL_OK(stdl_property_print_excitations_contribs(ctx, nrequested, e, X, NULL,.001f));
+
+    STDL_FREE_ALL(e, X, dipoles_sp_AO, dipoles_sp_MO, tmpsy_AO, tmpsy_MO, tdips);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }

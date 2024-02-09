@@ -87,7 +87,7 @@ int stdl_basis_print(stdl_basis *bs, int denormalize) {
     return STDL_ERR_OK;
 }
 
-int stdl_basis_compute_dsp_ovlp(stdl_basis *bs, double *S) {
+int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S) {
     assert(bs != NULL && S != NULL);
 
     STDL_DEBUG("computing <i|j> to create the S matrix");
@@ -141,7 +141,7 @@ int stdl_basis_compute_dsp_ovlp(stdl_basis *bs, double *S) {
 }
 
 
-int stdl_basis_compute_dsp_dipole(stdl_basis *bs, double *dipoles) {
+int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles) {
     assert(bs != NULL && dipoles != NULL);
 
     STDL_DEBUG("computing <i|j> to create the S matrix");
