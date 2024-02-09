@@ -34,5 +34,12 @@
 
 + Apart from the creator functions (`stdl_*_new()`), the principle for outputs is "bring-your-own-space". 
   In other words, unless otherwise mentioned, outputs of functions (especially arrays) must have been allocated to their correct size.
-  
+
+## General workflow
+
+The general workflow to use `libstdlite` in order to compute a given property is the following:
+
+![General workflow](../assets/activity_diagram_API.png)
+
+
 ## Specific topics

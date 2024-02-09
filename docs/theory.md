@@ -1,15 +1,19 @@
 title: Theory
 
-!!! note
-    
-    In the following, $p$, $q$, $r$, $s$,... refer to molecular orbitals (MOs), $i$, $j$, $k$, $l$,... to occupied, $a$, $b$, $c$, $d$,... to unoccupied ones, and $\alpha$, $\beta$, $\gamma$, $\delta$,... to atomic orbitals (AOs). 
-    All quantities are in [atomic units](https://en.wikipedia.org/wiki/Atomic_units), unless otherwise mentioned.
-
 ## Introduction
 
 Molecular properties are defined as a response of a (molecular) system to an external perturbation (change of geometry, application of an external electric field, etc).
-The goal of `stdlite` is to compute response function/excited states.
-It requires a ground state HF or DFT wavefunction, from which the orbitals (i.e., the MO energies, $\varepsilon$, and LCAO coefficients, $\mathbf C$) are extracted and used in the sTDA/sTD-DFT procedures.
+The goal of `stdlite` is to compute ground state linear response functions or excited states properties within a simplified TDA/RPA/TD-DFT framework.
+
+!!! note "TL;DR:"
+
+    The following steps are required to perform a sTD-DFT calculation:
+    
+    1. Extract data (*i.e.*, the atomic orbitals, as well as the MO energies, $\varepsilon$, and LCAO coefficients, $\mathbf C$) from a QC calculation;
+    2. Select configuration state functions (CSFs, $i\to a$) using [a set of rules](#the-simplified-approaches-to-td-dft) and build the corresponding electronic hessian matrices $\mathbf A'$ and $\mathbf B'$ (might be zero);
+    3. Using said matrices, solve the [linear response equation](#application-to-dft-td-dft). This generally requires to compute extra [expectation values](#expectation-values-and-others) matrices in MO basis, such as the [dipole moment](#dipole-moment);
+    4. Use the response vectors to compute the actual [properties](#properties).
+
 
 ## Response function theory
 
@@ -78,6 +82,12 @@ Using a Fourier series of $\hat V$, one can obtain a TD version of the linear re
 
 ### Application to DFT: TD-DFT
 
+!!! note
+
+    In the following, $p$, $q$, $r$, $s$,... refer to molecular orbitals (MOs), $i$, $j$, $k$, $l$,... to occupied, $a$, $b$, $c$, $d$,... to unoccupied ones, and $\alpha$, $\beta$, $\gamma$, $\delta$,... to atomic orbitals (AOs). 
+    All quantities are in [atomic units](https://en.wikipedia.org/wiki/Atomic_units), unless otherwise mentioned.
+
+
 Under the conditions of the [Runge and Gross theorem](https://en.wikipedia.org/wiki/Runge%E2%80%93Gross_theorem), this theory can be applied to DFT.
 In the TD case and assuming the Hermicity of the different matrices and real orbitals, Eq. (2) can be written:
 
@@ -93,7 +103,7 @@ $$\tag{3}\left[\begin{pmatrix}
 \mathbf \eta_\zeta\\ \mathbf \eta_\zeta
 \end{pmatrix},$$
 
-where $\mathbf x^\omega$ and $\mathbf y^\omega$ are the frequency-dependent linear response vector (to be determined) in direction $\zeta$.
+where $\mathbf x^\omega$ and $\mathbf y^\omega$ are the frequency-dependent linear response vectors (to be determined) in direction $\zeta$.
 The $\mathbf A$ and $\mathbf B$ are electronic Hessian (super-)matrices (related to orbital rotations). 
 
 In the rest of this development a **global hybrid** density functional is assumed,
@@ -116,7 +126,7 @@ Solving this problem might be performed via 2 approaches:
     
     $$[(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}]\,[\mathbf x^\omega_\zeta + \mathbf y^\omega_\zeta] = -2\mathbf\eta_\zeta,$$
     
-    so that the linear response vector at frequency $\omega$ are given by:
+    so that the linear response vectors at frequency $\omega$ are given by:
 
     $$\mathbf x^\omega_\zeta + \mathbf y^\omega_\zeta = \frac{-2\mathbf\eta_\zeta}{(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}}.$$
 
@@ -126,7 +136,7 @@ Solving this problem might be performed via 2 approaches:
 
     $$[\mathbf{A} - \omega^2\,\mathbf{A}^{-1}]\,[\mathbf x^\omega_\zeta + \mathbf y^\omega_\zeta] = -2\eta_\zeta.$$
 
-    The linear response vector at frequency $\omega$ are given by:
+    The linear response vectors at frequency $\omega$ are given by:
 
     $$\mathbf x^\omega_\zeta + \mathbf y^\omega_\zeta = \frac{-2\mathbf\eta_\zeta}{\mathbf{A} - \omega^2\mathbf{A}^{-1}}.$$
 
@@ -261,12 +271,14 @@ $$(ia|jb)' \approx \sum_{B}^N (ia|BB)_K\,q_B^{jb}.$$
     
     The publication describing the XsTD-DFT implementation is not yet available. Thus, this approach is not yet implemented.
 
+## Expectation values and others
 
-## Properties
+Things that can be obtained without solving the linear response equation.
 
 !!! note
-    When required, conversion of $X$ from the AO to the MO basis is done using:
     
+    When required, conversion of $X$ from the AO to the MO basis is done using:
+
     $$X^{MO}_{pq} = \sum^{AO}_{\mu\nu} C_{p\mu} X_{\mu\nu} C_{q\nu}.$$
 
 ### Density matrix
@@ -297,6 +309,10 @@ $$\vec\mu_e = \sum^{AO}_{\mu\nu} P_{\mu\nu}\,D_{\nu\mu},$$
 where $\mathbf P$ is the density matrix. Alternatively, in MO basis:
 
 $$\vec\mu_e = \sum^{MO}_p n_p\,D^{MO}_{pp}.$$
+
+## Properties
+
+Things that can be obtained thanks to the linear response vectors.
 
 ### Transition dipole moment and oscillator strength
 
