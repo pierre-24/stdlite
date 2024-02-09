@@ -95,7 +95,8 @@ $$\tag{3}\left[\begin{pmatrix}
 
 where $\mathbf x^\omega$ and $\mathbf y^\omega$ are the frequency-dependent linear response vector (to be determined) in direction $\zeta$.
 The $\mathbf A$ and $\mathbf B$ are electronic Hessian (super-)matrices (related to orbital rotations). 
-In the rest of this devellopment a **global hybrid** density functional is assumed,
+
+In the rest of this development a **global hybrid** density functional is assumed,
 
 $$E_{XC}= (1-a_x)\,E_X^{GGA}+a_x\,E_X^{HF}+E_C^{GGA}.$$
 
@@ -107,12 +108,27 @@ $$\begin{aligned}
 \end{aligned}$$
 
 where, $\epsilon_i$ and $\epsilon_a$ are orbital energies, $a_x$ is the amount of non-local Fock exchange, $(ia|jb)$, $(ia|bj)$, and $(ib|aj)$ are exchange-type and $(ij|ab)$ Coulomb-type two-electron integrals, $(ia|f_{XC}|jb)$ and $(ia|f_{XC}|bj)$ are responses of the exchange-correlation functional.
+Solving this problem might be performed via 2 approaches:
 
-Eq. (3) can be turned into a pseudo-eigenvalue problem:
+=== "Full time-dependent approach (TD)"
 
-$$[(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}]\,[\mathbf x^\omega_\zeta + \mathbf y^\omega_\zeta] = -2\eta_\zeta,$$
+    Eq. (3) can be turned into a problem of the form:
+    
+    $$[(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}]\,[\mathbf x^\omega_\zeta + \mathbf y^\omega_\zeta] = -2\mathbf\eta_\zeta,$$
+    
+    so that the linear response vector at frequency $\omega$ are given by:
 
-which is solved to get the linear response vectors for a given time-dependent perturbation.
+    $$\mathbf x^\omega_\zeta + \mathbf y^\omega_\zeta = \frac{-2\mathbf\eta_\zeta}{(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}}.$$
+
+=== "Tamm-Dancoff approximation (TDA)"
+
+    The [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) ($\mathbf B = \mathbf 0$) leads to:
+
+    $$[\mathbf{A} - \omega^2\,\mathbf{A}^{-1}]\,[\mathbf x^\omega_\zeta + \mathbf y^\omega_\zeta] = -2\eta_\zeta.$$
+
+    The linear response vector at frequency $\omega$ are given by:
+
+    $$\mathbf x^\omega_\zeta + \mathbf y^\omega_\zeta = \frac{-2\mathbf\eta_\zeta}{\mathbf{A} - \omega^2\mathbf{A}^{-1}}.$$
 
 It is also customary to consider the case when $\eta = 0$, which lead to the following pseudo-hermitian problem:
 
@@ -128,32 +144,53 @@ $$\tag{4}\begin{pmatrix}
 \mathbf x_\zeta^\omega\\ \mathbf y_\zeta^\omega
 \end{pmatrix}$$
 
-which is generally referred to as the Casida equation [thought Eq. (3) may also be called that]. In this case, the $\omega$'s are the excitation energies while $\mathbf x^\omega$ and $\mathbf y^\omega$ might be seen as excitation and de-excitation vectors. 
-Solving this latter problem is done using two approaches. On the one hand, a common simplification to Eq. (4) is the [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) ($\mathbf B = \mathbf 0$) and therefore:
+which is generally referred to as the Casida equation. In this case, the $\omega$'s are the excitation energies while $\mathbf x^\omega$ and $\mathbf y^\omega$ might be seen as excitation and de-excitation vectors. 
+Solving this latter problem is done using the same two approaches. 
 
-$$\tag{5}\mathbf A\,\mathbf x^\omega = \omega\,\mathbf x^\omega,$$
 
-where the $\mathbf x_{ia}^\omega$ is simply the coefficient associated to the $i \to a$ transition.
+=== "Full time-dependent approach (TD)"
 
-On the other hand, Eq. (4) can be rewritten in another eigenvalue problem, namely:
+    Eq. (4) can be rewritten in an eigenvalue problem, namely:
+    
+    $$(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}+\mathbf{B})\,(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,\mathbf{Z} = \omega^2\,\mathbf{Z}, \text{ with } \mathbf{Z} = (\mathbf{A}-\mathbf{B})^{-\frac{1}{2}} (\mathbf x^\omega + \mathbf y^\omega).$$
+    
+    In this case, after $\mathbf Z$ have been obtained, one extract using the following procedure. First, from previous expression, one can obtain:
+    
+    $$ \mathbf u^\omega = \mathbf x^\omega + \mathbf y^\omega = \frac{1}{\sqrt\omega}\,(\mathbf A-\mathbf B)^\frac{1}{2}\,\mathbf Z.$$
+    
+    Now, since $(\mathbf A + \mathbf B)\,(\mathbf x^\omega+\mathbf y^\omega) = \omega\,(\mathbf x^\omega-\mathbf y^\omega)$ [obtained from Eq. (4)], one has:
+    
+    $$\mathbf v^\omega = \mathbf x^\omega-\mathbf y^\omega = \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,(\mathbf x^\omega+\mathbf y^\omega)  = \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,\mathbf u^\omega,$$
+    
+    and therefore the response vector are obtained: $\mathbf x^\omega = \frac{1}{2}(\mathbf u^\omega + \mathbf v^\omega)$ and $\mathbf y^\omega = \frac{1}{2}(\mathbf u^\omega - \mathbf v^\omega)$.
 
-$$\tag{6}(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}+\mathbf{B})\,(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,\mathbf{Z} = \omega^2\,\mathbf{Z}, \text{ with } \mathbf{Z} = (\mathbf{A}-\mathbf{B})^\frac{1}{2} (\mathbf x + \mathbf y).$$
+=== "Tamm-Dancoff approximation (TDA)"
+
+    Using TDA leads to a simplified expression and a true eigenvalue problem:
+    
+    $$\mathbf A\,\mathbf x^\omega = \omega\,\mathbf x^\omega,$$
+    
+    where the $\mathbf x^\omega$ contains the coefficient associated to each $i \to a$ transition (see [below](#transition-dipole-moment-and-oscillator-strength)).
 
 ## The simplified approaches to TD-DFT
 
-The simplified TD-DFT methods root in 3 approximations:
+The simplified TD-DFT methods root in 3 approximations which influence the content of $\mathbf A$ and $\mathbf B$:
 
-1. all integrals involving the XC-functionals are neglected,
+1. all integrals involving the XC-functionals are neglected (referred to as the [random phase approximation (RPA)](https://en.wikipedia.org/wiki/Random_phase_approximation) approach),
 2. the singly excited configuration space is truncated (see below), and
 3. the [zero-differential overlap](https://en.wikipedia.org/wiki/Zero_differential_overlap) (ZDO) approximation is used for two-electron integrals which built $\mathbf A$ and $\mathbf B$. Different approximations for the remaining integrals define different flavors of simplified TD-DFT (see below).
 
-The truncation of the CI space is done in two steps:
+Then, using those approximated $\mathbf A'$ and $\mathbf B'$ matrices, the linear response or Casida equations presented above are solved.
 
-1. an active MO space is defined by $\varepsilon_p \in [\varepsilon_{LUMO}-E_{w}, \varepsilon_{HOMO}+E_{w}]$, with $E_w = 2\,(1+0.8a_x)\,E_{thr}$, and then
-2. configuration state functions (CSF) are selected within this active space: first, a set of primary $i\to a$ CSFs (P-CSFs), for which $A_{ia,ia} < E_{thr}$, is built.
-   Then, from CSFs $j\to b$ for which $A_{jb,jb} > E_{thr}$, a set of secondary CSFs (S-CSFs), for which $E^{(2)}_{jb} > E^{(2)}_{thr}$ is build (typically, $E^{(2)}_{thr} = 10^{-4}$). Other CSFs are discarded.
+### Truncation of the active space
 
-The selection of S-CSFs is based on a perturbative approach, where $E^{(2)}_{jb}$ measure the cumulative perturbative contributions to all the P-CSFs:
+The truncation of the CI space is done in three steps:
+
+1. An active MO space is defined by $\varepsilon_p \in [\varepsilon_{LUMO}-E_{w}, \varepsilon_{HOMO}+E_{w}]$, with $E_w = 2\,(1+0.8a_x)\,E_{thr}$.
+2. From this active space, primary $i\to a$ configuration state functions (P-CSFs) are selected, for which $A_{ia,ia} < E_{thr}$.
+3. Then, from CSFs $j\to b$ for which $A_{jb,jb} > E_{thr}$, a set of secondary CSFs (S-CSFs), for which $E^{(2)}_{jb} > E^{(2)}_{thr}$ is build (typically, $E^{(2)}_{thr} = 10^{-4}$). Other CSFs are discarded.
+
+The selection of S-CSFs is based on a perturbative approach, where $E^{(2)}_{jb}$ measure the cumulative perturbative contributions of a given S-CSF $j\to b$ to all the P-CSFs:
 
 $$E^{(2)}_{jb} = \sum_{ia}^{\text{P-CSFs}} \frac{|A_{ia,jb}|^2}{A_{jb,jb}-A_{ia,ia}}.$$
 
@@ -165,7 +202,7 @@ $$(ia|jb) \approx (ia|jb)' = \sum_{AB}^N q_A^{ia}\,q_B^{jb}(AA|BB), \text{ with 
 
 where the $q_{ia}^A$'s are the transition charges on atom A, computed using Löwdin orthogonalized LCAO coefficients, $C^\perp_{i\mu} = \sum_\nu C_{i\nu}\,S^{1/2}_{\nu\mu}$.
 
-??? note "Application of the ZDO approximation"
+??? note "Details of the application of the ZDO approximation"
     
     Starting from the definition of a 4-center integral:
 
@@ -263,7 +300,7 @@ $$\vec\mu_e = \sum^{MO}_p n_p\,D^{MO}_{pp}.$$
 
 ### Transition dipole moment and oscillator strength
 
-The transition dipole moment (in the dipole length formalism) for excitation $\wp$, associated with response vectors $\mathbf x_{\wp}^\omega$ and $\mathbf y_{\wp}^\omega$ is given by:
+The transition dipole moment (in the dipole length formalism) for excitation $\wp$, associated with energy $\omega$ and response vectors $\mathbf x_{\wp}^\omega$ and $\mathbf y_{\wp}^\omega$ is given by:
 
 $$\vec{\mu}_{0\wp} =  \sqrt{2}\,\sum_{ia}^{CFS} D^{MO}_{ia}\,(x^\omega_{\wp,ia}+y^\omega_{\wp,ia}),$$
 
@@ -276,6 +313,7 @@ $$f_{0\wp} = \frac{2}{3}\,\Delta E_{0\wp}\,|\vec\mu_{0\wp}|^2.$$
 
 + J. Toulouse, [Introduction to the calculation of molecular properties by response theory](https://www.lct.jussieu.fr/pagesperso/toulouse/enseignement/molecular_properties.pdf) (last consultation: January 2023). 
 + E. Fromager, [Linear response time-dependent density functional theory](https://quantique.u-strasbg.fr/lib/exe/fetch.php?media=fr:pageperso:ef:lecture_rctf_tddft_e_fromager.pdf)  (last consultation: January 2023).
++ G. P. Chen, V. K. Voora, M. M. Agee, S. G. Balasubramani, and F. Furche, Random-Phase Approximation Methods. *Annu. Rev. Phys. Chem.* **2017**, 68, 421 ([10.1146/annurev-physchem-040215-112308](https://doi.org/10.1146/annurev-physchem-040215-112308))
 + M. E. Casida, Time-Dependent Density Functional Response Theory for Molecules. In D. E. Chong (ed.), *Recent Advances in Density Functional Methods*. World Scientific, **1995** ([10.1142/9789812830586_0005](https://doi.org/10.1142/9789812830586_0005)).
 + S. Hirata, M. Head-Gordon, Time-dependent density functional theory within the Tamm–Dancoff approximation. *Chem. Phys. Lett.*, **1999**, 314, 291 ([10.1016/S0009-2614(99)01149-5](https://doi.org/10.1016/S0009-2614(99)01149-5))
 + S. Löffelsender, P. Beaujean, M. de Wergifosse, Simplified quantum chemistry methods to evaluate non-linear optical properties of large systems. *WIREs Comput. Mol. Sci.* **2023**, 2023, e1695 ([10.1002/wcms.1695](https://dx.doi.org/10.1002/wcms.1695)). 
