@@ -163,7 +163,19 @@ int stdl_response_RPA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
     return STDL_ERR_OK;
 }
 
+int stdl_response_perturbed_gradient(stdl_context* ctx, size_t dim, double* eta_MO, float *egrad) {
+    size_t nvirt = ctx->nmo - ctx->nocc;
+    for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
+        size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
+        for (size_t cpt = 0; cpt < dim; ++cpt) {
+            egrad[lia * dim + cpt] = -2.f * (float) eta_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)];
+        }
+    }
+}
+
+
 int stdl_response_RPA_linear(stdl_context* ctx, float w, size_t dim, float* egrad, float* X, float* Y) {
+    assert(ctx != NULL && ctx->ncsfs > 0 && ctx->B != NULL && egrad != NULL && X != NULL && Y != NULL);
     // compute A+B and A-B
     _make_apb_amb(ctx);
 

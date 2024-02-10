@@ -44,12 +44,26 @@ int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
  */
 int stdl_response_RPA_casida(stdl_context *ctx, size_t nexci, float *e, float *X, float *Y);
 
+
+/**
+ * Create $-2\eta$, the perturbed electronic gradient matrix to be used in linear response equation.
+ *
+ * @param ctx a valid context
+ * @param dim dimension of the expectation value `eta_MO`
+ * @param eta_MO `double[dim,ctx->nmo,ctx->nmo]`, the value of $\eta$ in MO basis
+ * @param[out] egrad `float[ctx->ncsfs,dim]` $-2\eta$, the resulting perturbed electronic gradient
+ * @return error code
+ * @ingroup response
+ */
+int stdl_response_perturbed_gradient(stdl_context* ctx, size_t dim, double* eta_MO, float *egrad);
+
+
 /**
  * Solve the linear response equation at a frequency $\omega$ to get response vectors ($x^\omega$, $y^\omega$).
  * @param ctx a valid context
  * @param w frequency at which linear response should be computed
  * @param dim dimension of the electronic gradient
- * @param egrad `float[ncsfs,dim]` input $-2\eta$ electronic gradient
+ * @param egrad `float[ncsfs,dim]` input $-2\eta$, the perturbed electronic gradient.
  * @param[out] X `float[ncsfs,dim]` response vector X for each excitation.
  * @param[out] Y `float[ncsfs,dim]` response vector Y for each excitation.
  * @return error code

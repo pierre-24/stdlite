@@ -11,7 +11,7 @@
  * @param dips_MO `float[3,STDL_MATRIX_SP_SIZE(ctx->nmo)]`, the dipole moment matrix, **in MO basis**.
  * @param X `float[nexci,ncsfs]` linear response vector
  * @param Y `float[nexci,ncsfs]` linear response vector, might be `NULL` if TDA.
- * @param[out] tdips `float[nexci,3]` the transition tdips
+ * @param[out] tdips `float[3,nexci]` the transition tdips
  * @return error code
  * @ingroup property
  */
@@ -23,7 +23,7 @@ int stdl_property_transition_dipoles(stdl_context *ctx, size_t nexci, double* di
  * @param ctx a valid context, with `ctx->ncsfs > 0`.
  * @param nexci number of excitations computed
  * @param energies `float[nexci]` excitation energies (eigenvalues).
- * @param tdips `float[nexci,3]` transition dipoles.
+ * @param tdips `float[3,nexci]` transition dipoles.
  * @return error code
  * @ingroup property
  */

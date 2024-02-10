@@ -14,7 +14,7 @@ int stdl_property_transition_dipoles(stdl_context *ctx, size_t nexci, double* di
     float s2 = sqrtf(2);
 
     for (size_t iexci = 0; iexci < nexci; ++iexci) {
-        tdips[iexci * 3 + 0] =  tdips[iexci * 3 + 1] =  tdips[iexci * 3 + 2] = .0f;
+        tdips[0 * nexci + iexci] =  tdips[1 * nexci + iexci] =  tdips[2 * nexci + iexci] = .0f;
 
         for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
             size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
@@ -22,8 +22,8 @@ int stdl_property_transition_dipoles(stdl_context *ctx, size_t nexci, double* di
             if(Y != NULL)
                 amplitude += Y[iexci * ctx->ncsfs + lia];
 
-            for (int cpt = 0; cpt < 3; ++cpt)
-                tdips[iexci * 3 + cpt] += s2 * amplitude * ((float) dips_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)]);
+            for (size_t cpt = 0; cpt < 3; ++cpt)
+                tdips[cpt * nexci + iexci] += s2 * amplitude * ((float) dips_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)]);
         }
     }
 
@@ -42,10 +42,10 @@ int stdl_property_print_excitations(stdl_context *ctx, size_t nexci, float *ener
 
         // print transition dipole & oscillator strength
         printf(" % 8.5f % 8.5f % 8.5f %7.5f",
-               tdips[3 * iexci + 0],
-               tdips[3 * iexci + 1],
-               tdips[3 * iexci + 2],
-               energies[iexci] * (powf(tdips[3 * iexci + 0], 2) + powf(tdips[3 * iexci + 1], 2) + powf(tdips[3 * iexci + 2], 2)) * 2.f / 3
+               tdips[0 * nexci + iexci],
+               tdips[1 * nexci + iexci],
+               tdips[2 * nexci + iexci],
+               energies[iexci] * (powf(tdips[0 * nexci + iexci], 2) + powf(tdips[1 * nexci + iexci], 2) + powf(tdips[2 * nexci + iexci], 2)) * 2.f / 3
         );
 
         printf("\n");
