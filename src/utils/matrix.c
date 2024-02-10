@@ -359,10 +359,38 @@ int stdl_matrix_dsp_blowsy(size_t n, char uplo, double *in, double *out) {
     return STDL_ERR_OK;
 }
 
+int stdl_matrix_dsp_blowge(int issym, size_t n, double *in, double *out) {
+    assert(n > 0 && in != NULL && out != NULL);
+
+    LAPACKE_dtpttr(LAPACK_ROW_MAJOR, 'L', (int) n, in, out, (int) n);
+
+    for (size_t i = 0; i < n; ++i) {
+        for(size_t j = i + 1; j < n; ++j) {
+            out[i * n + j] = (issym ? 1 : -1) * out[j * n + i];
+        }
+    }
+
+    return STDL_ERR_OK;
+}
+
 int stdl_matrix_ssp_blowsy(size_t n, char uplo, float *in, float *out) {
     assert(n > 0 && in != NULL && out != NULL && (uplo == 'U' || uplo == 'L'));
 
     LAPACKE_stpttr(LAPACK_ROW_MAJOR, uplo, (int) n, in, out, (int) n);
+
+    return STDL_ERR_OK;
+}
+
+int stdl_matrix_ssp_blowge(int issym, size_t n, float *in, float *out) {
+    assert(n > 0 && in != NULL && out != NULL);
+
+    LAPACKE_stpttr(LAPACK_ROW_MAJOR, 'L', (int) n, in, out, (int) n);
+
+    for (size_t i = 0; i < n; ++i) {
+        for(size_t j = i + 1; j < n; ++j) {
+            out[i * n + j] = (issym ? 1.f : -1.f) * out[j * n + i];
+        }
+    }
 
     return STDL_ERR_OK;
 }

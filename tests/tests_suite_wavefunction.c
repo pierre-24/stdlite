@@ -15,30 +15,28 @@
 void compute_population_and_check(stdl_wavefunction* wf, int sym) {
 
     // compute the density matrix
-    double* P = malloc(wf->nao * wf->nao * sizeof(double));
+    double* P = malloc(STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(P);
 
-    ASSERT_STDL_OK(stdl_wavefunction_compute_density_dsy(wf->nocc, wf->nmo, wf->nao, wf->C, P));
+    ASSERT_STDL_OK(stdl_wavefunction_compute_density_dsp(wf->nocc, wf->nmo, wf->nao, wf->C, P));
 
-    // stdl_matrix_dge_print(wf->nao, wf->nao, P, "P");
-
-    // check that density is symmetric
-    for (size_t i = 0; i < wf->nao; ++i) {
-        for (size_t j = 0; j <=i ; ++j) {
-            TEST_ASSERT_EQUAL_DOUBLE(P[i * wf->nao + j], P[j * wf->nao + i]);
-        }
-    }
+    // stdl_matrix_dsp_print(wf->nao, P, "P");
 
     // compute Mulliken population as `M = 1/2*(P*S+S*P)`
     // See, e.g., https://doi.org/10.26434/chemrxiv.12722072.v1
-    double* mulliken_pop = malloc(wf->nao * wf->nao * sizeof(double));
+    double* mulliken_pop = malloc(STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(mulliken_pop);
 
     if(!sym) {
         double* Ssy = malloc(wf->nao * wf->nao * sizeof(double));
         TEST_ASSERT_NOT_NULL(Ssy);
 
-        LAPACKE_dtpttr(LAPACK_ROW_MAJOR, 'L', (int) wf->nao, wf->S, Ssy, (int) wf->nao);
+        stdl_matrix_dsp_blowsy(wf->nao, 'L', wf->S, Ssy);
+
+        double* Pge = malloc(wf->nao * wf->nao * sizeof(double));
+        TEST_ASSERT_NOT_NULL(Pge);
+
+        stdl_matrix_dsp_blowge(1, wf->nao, P, Pge);
 
         double* tmp = malloc(wf->nao * wf->nao * sizeof(double));
         TEST_ASSERT_NOT_NULL(tmp);
@@ -46,26 +44,26 @@ void compute_population_and_check(stdl_wavefunction* wf, int sym) {
         cblas_dsymm(CblasRowMajor, CblasRight, CblasLower,
                     (int) wf->nao, (int) wf->nao,
                     1.f, Ssy, (int) wf->nao,
-                    P, (int) wf->nao,
+                    Pge, (int) wf->nao,
                     .0, tmp, (int) wf->nao
         );
 
         // `1/2*(P*S+S*P) = 1/2*(P*S+S^T*P^T) = 1/2*(P*S+(P*S)^T)`
-        for (size_t i = 0; i < wf->nao; ++i) {
-            for (size_t j = 0; j < wf->nao; ++j) {
-                mulliken_pop[i * wf->nao + j] = .5 * (tmp[i * wf->nao + j] + tmp[j * wf->nao + i]);
+        for (size_t mu = 0; mu < wf->nao; ++mu) {
+            for (size_t nu = 0; nu < wf->nao; ++nu) {
+                mulliken_pop[STDL_MATRIX_SP_IDX(mu, nu)] = .5 * (tmp[mu * wf->nao + nu] + tmp[nu * wf->nao + mu]);
             }
         }
 
-        STDL_FREE_ALL(tmp, Ssy);
+        STDL_FREE_ALL(tmp, Ssy, Pge);
     } else // S=1, so 1/2*(S*D+D*S) = D
-        memcpy(mulliken_pop, P, wf->nao * wf->nao * sizeof(double));
+        memcpy(mulliken_pop, P, STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
 
     // stdl_matrix_dge_print(wf->nao, 0, mulliken_pop, "1/2*(PS+SP)");
 
     double total = .0;
-    for(size_t i=0; i < wf->nao; i++)
-        total += mulliken_pop[i * wf->nao + i];
+    for(size_t mu=0; mu < wf->nao; mu++)
+        total += mulliken_pop[STDL_MATRIX_SP_IDX(mu, mu)];
 
     TEST_ASSERT_DOUBLE_WITHIN(1e-8, (double) wf->nocc * 2, total);
 
@@ -232,18 +230,23 @@ void test_dipole() {
 
     // compute through density
     // dipz = sum_mu (P * D)_mu,mu
-    double* P = malloc(wf->nao * wf->nao * sizeof(double ));
+    double* P = malloc(STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double ));
     TEST_ASSERT_NOT_NULL(P);
+
+    ASSERT_STDL_OK(stdl_wavefunction_compute_density_dsp(wf->nocc, wf->nmo, wf->nao, wf->C, P));
+
+    double* Pge = malloc(wf->nao * wf->nao * sizeof(double ));
+    TEST_ASSERT_NOT_NULL(Pge);
+
+    stdl_matrix_dsp_blowge(1, wf->nao, P, Pge);
 
     double* result = malloc(wf->nao * wf->nao * sizeof(double ));
     TEST_ASSERT_NOT_NULL(result);
 
-    ASSERT_STDL_OK(stdl_wavefunction_compute_density_dsy(wf->nocc, wf->nmo, wf->nao, wf->C, P));
-
     cblas_dsymm(CblasRowMajor, CblasRight, CblasLower,
                 (int) wf->nao, (int) wf->nao,
                 1.f, dipole_z_sy, (int) wf->nao,
-                P, (int) wf->nao,
+                Pge, (int) wf->nao,
                 .0, result, (int) wf->nao
     );
 
@@ -268,7 +271,7 @@ void test_dipole() {
 
     TEST_ASSERT_DOUBLE_WITHIN(1e-6, dipz1, dipz3);
 
-    STDL_FREE_ALL(dipoles_sp, dipole_z_sy, dipole_z_mo_sy, P, result);
+    STDL_FREE_ALL(dipoles_sp, dipole_z_sy, dipole_z_mo_sy, P, Pge, result);
 
     ASSERT_STDL_OK(stdl_basis_delete(bs));
     ASSERT_STDL_OK(stdl_wavefunction_delete(wf));

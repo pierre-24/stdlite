@@ -75,29 +75,18 @@ int stdl_wavefunction_orthogonalize_C_dge(size_t nmo, size_t nao, double *S, dou
     return STDL_ERR_OK;
 }
 
-int stdl_wavefunction_compute_density_dsy(size_t nocc, size_t nmo, size_t nao, double *C, double *D) {
+int stdl_wavefunction_compute_density_dsp(size_t nocc, size_t nmo, size_t nao, double *C, double *D) {
     assert(C != NULL && D != NULL && nocc > 0 && nmo > 0 && nao > 0 && D != NULL);
 
-    // X_ik = n_k*C_ik
-    double* X = malloc(nmo * nao * sizeof(double));
-    STDL_ERROR_HANDLE_AND_REPORT(X == NULL, return STDL_ERR_MALLOC, "malloc");
-
-    for (size_t i = 0; i < nmo; ++i) {
-        for (size_t j = 0; j < nao; ++j) {
-            X[i * nao + j] = C[i * nao + j] * ((i < nocc) ? 2 : 0);
+    for (size_t mu = 0; mu < nao; ++mu) {
+        for (size_t nu = 0; nu <= mu; ++nu) {
+            double sum = .0f;
+            for (size_t p = 0; p < nmo; ++p) {
+                sum += C[p * nao + mu] * ((p < nocc) ? 2 : 0) *  C[p * nao + nu] ;
+            }
+            D[STDL_MATRIX_SP_IDX(mu, nu)] = sum;
         }
     }
-
-    // D = X^T * C
-    cblas_dgemm(
-            CblasRowMajor, CblasTrans, CblasNoTrans,
-            (int) nao, (int) nao, (int) nmo,
-            1.f, X, (int) nao,
-            C, (int) nao,
-            .0, D, (int) nao
-    );
-
-    STDL_FREE_ALL(X);
 
     return STDL_ERR_OK;
 }

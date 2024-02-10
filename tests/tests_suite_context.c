@@ -51,22 +51,15 @@ void test_context_select_MO_ok() {
     }
 
     // compute the density matrix
-    double* P = malloc(wf->nao * wf->nao * sizeof(double));
+    double* P = malloc(STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(P);
 
-    ASSERT_STDL_OK(stdl_wavefunction_compute_density_dsy(ctx->nocc, ctx->nmo, wf->nao, ctx->C, P));
-
-    // check that density is symmetric
-    for (size_t i = 0; i < wf->nao; ++i) {
-        for (size_t j = 0; j <=i ; ++j) {
-            TEST_ASSERT_EQUAL_DOUBLE(P[i * wf->nao + j], P[j * wf->nao + i]);
-        }
-    }
+    ASSERT_STDL_OK(stdl_wavefunction_compute_density_dsp(ctx->nocc, ctx->nmo, wf->nao, ctx->C, P));
 
     // count electrons
     double total = .0;
-    for(size_t i=0; i < wf->nao; i++)
-        total += P[i * wf->nao + i];
+    for(size_t mu=0; mu < wf->nao; mu++)
+        total += P[STDL_MATRIX_SP_IDX(mu, mu)];
 
     TEST_ASSERT_DOUBLE_WITHIN(1e-6, 2.f * ctx->nocc, total);
 
@@ -109,18 +102,23 @@ void test_dipole() {
 
     // compute through density
     // dipz = sum_mu (P * D)_mu,mu
-    double* P = malloc(wf->nao * wf->nao * sizeof(double ));
+    double* P = malloc(STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double ));
     TEST_ASSERT_NOT_NULL(P);
+
+    ASSERT_STDL_OK(stdl_wavefunction_compute_density_dsp(ctx->nocc, ctx->nmo, wf->nao, ctx->C_orig, P));
+
+    double* Pge = malloc(wf->nao * wf->nao * sizeof(double ));
+    TEST_ASSERT_NOT_NULL(Pge);
+
+    stdl_matrix_dsp_blowge(1, wf->nao, P, Pge);
 
     double* result = malloc(wf->nao * wf->nao * sizeof(double ));
     TEST_ASSERT_NOT_NULL(result);
 
-    ASSERT_STDL_OK(stdl_wavefunction_compute_density_dsy(ctx->nocc, ctx->nmo, wf->nao, ctx->C_orig, P));
-
     cblas_dsymm(CblasRowMajor, CblasRight, CblasLower,
                 (int) wf->nao, (int) wf->nao,
                 1.f, dipole_z_sy, (int) wf->nao,
-                P, (int) wf->nao,
+                Pge, (int) wf->nao,
                 .0, result, (int) wf->nao
     );
 
@@ -146,7 +144,7 @@ void test_dipole() {
 
     TEST_ASSERT_DOUBLE_WITHIN(1e-6, dipz1, dipz3);
 
-    STDL_FREE_ALL(dipoles_sp, dipole_z_sy, dipole_z_mo_sy, P, result);
+    STDL_FREE_ALL(dipoles_sp, dipole_z_sy, dipole_z_mo_sy, P, Pge, result);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }

@@ -94,11 +94,11 @@ int stdl_wavefunction_orthogonalize_C_dge(size_t nmo, size_t nao, double *S, dou
  * @param nocc number of occupied orbitals, must be >0.
  * @param nmo number of MO, must be >0.
  * @param nao number of AO, must be >0.
- * @param[out] D `double[nao*nao]` the density matrix.
+ * @param[out] D `double[STDL_MATRIX_SP_SIZE(nao)]` the density matrix.
  * @return error code.
  * @ingroup wavefunction
  */
-int stdl_wavefunction_compute_density_dsy(size_t nocc, size_t nmo, size_t nao, double *C, double *D);
+int stdl_wavefunction_compute_density_dsp(size_t nocc, size_t nmo, size_t nao, double *C, double *D);
 
 
 /**

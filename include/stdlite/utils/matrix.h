@@ -159,6 +159,18 @@ int stdl_matrix_sge_transpose(size_t nrows, size_t ncols, float* mat);
 int stdl_matrix_dsp_blowsy(size_t n, char uplo, double *in, double *out);
 
 /**
+ * Blow a (double-precision) symmetry packed matrix (`in`) into a full storage (`ge`) matrix (`out`).
+ *
+ * @param issym whether the input is symmetric (`issym != 0 => out[i,j] = out[j,i]`) or antisymmetric (`issym == 0 => out[i,j] = -out[j,i]`)
+ * @param n order of `in` and `out`
+ * @param in `double[STDL_SP_SIZE(n)]` a matrix in symmetry packed storage
+ * @param[in,out] out `double[n,n]` the resulting matrix.
+ * @return error code
+ * @ingroup matrix
+ */
+int stdl_matrix_dsp_blowge(int issym, size_t n, double *in, double *out);
+
+/**
  * Blow a (single-precision) symmetry packed matrix (`in`) into a full storage (symmetric, `sy`) matrix (`out`).
  *
  * @param n order of `in` and `out`
@@ -169,6 +181,19 @@ int stdl_matrix_dsp_blowsy(size_t n, char uplo, double *in, double *out);
  * @ingroup matrix
  */
 int stdl_matrix_ssp_blowsy(size_t n, char uplo, float *in, float *out);
+
+/**
+ * Blow a (single-precision) symmetry packed matrix (`in`) into a full storage (`ge`) matrix (`out`).
+ *
+ * @param issym whether the input is symmetric (`issym != 0 => out[i,j] = out[j,i]`) or antisymmetric (`issym == 0 => out[i,j] = -out[j,i]`)
+ * @param n order of `in` and `out`
+ * @param in `float[STDL_SP_SIZE(n)]` a matrix in symmetry packed storage
+ * @param[in,out] out `float[n,n]` the resulting matrix.
+ * @return error code
+ * @ingroup matrix
+ */
+int stdl_matrix_ssp_blowge(int issym, size_t n, float *in, float *out);
+
 
 /**
  * Shrink a (double-precision) full storage (symmetric, `sy`) matrix (`in`) into a symmetry packed matrix (`out`).
