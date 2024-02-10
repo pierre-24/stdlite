@@ -102,9 +102,21 @@ int stdl_wavefunction_compute_density_dsp(size_t nocc, size_t nmo, size_t nao, d
 
 
 /**
- * Convert $X$ expressed from AO to MO basis.
+ * Convert $X$ expressed from AO to MO basis. Assume a **symmetric** property (i.e., `X_AO[i,j] = X_AO[j, i]`).
  *
- * $$X^{MO}_{pq} = \sum_{\mu\nu} C_{p\mu}\,X^{AO}_{\mu\nu}\,C_{q\nu}.$$
+ * @param nao number of AO, must be >0.
+ * @param nmo number of MO, must be `0 < nmo <= nao`.
+ * @param C the LCAO coefficients
+ * @param X_AO `double[STDL_MATRIX_SP_SIZE(nao)]`, the matrix in AO basis
+ * @param[out] X_MO `double[STDL_MATRIX_SP_SIZE(nmo)]`, the matrix in MO basis
+ * @return error code
+ * @ingroup wavefunction
+ */
+int stdl_wavefunction_dsp_ao_to_dsp_mo(size_t nao, size_t nmo, double* C, double* X_AO, double* X_MO);
+
+
+/**
+ * Convert $X$ expressed from AO to MO basis.
  *
  * @param nao number of AO, must be >0.
  * @param nmo number of MO, must be `0 < nmo <= nao`.
@@ -114,7 +126,7 @@ int stdl_wavefunction_compute_density_dsp(size_t nocc, size_t nmo, size_t nao, d
  * @return error code
  * @ingroup wavefunction
  */
-int stdl_wavefunction_dsy_ao_to_mo(size_t nao, size_t nmo, double* C, double* X_AO, double* X_MO);
+int stdl_wavefunction_dge_ao_to_dge_mo(size_t nao, size_t nmo, double *C, double *X_AO, double *X_MO);
 
 
 #endif //STDLITE_WAVEFUNCTION_H

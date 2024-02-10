@@ -95,13 +95,13 @@ void test_dipole() {
     }
 
     // blow the matrix
-    double* dipole_z_sy = malloc(wf->nao * wf->nao * sizeof(double));
-    TEST_ASSERT_NOT_NULL(dipole_z_sy);
+    double* dipole_z_ge = malloc(wf->nao * wf->nao * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipole_z_ge);
 
-    stdl_matrix_dsp_blowsy(wf->nao, 'L', dipoles_sp + 2 * STDL_MATRIX_SP_SIZE(wf->nao), dipole_z_sy);
+    stdl_matrix_dsp_blowge(1, wf->nao, dipoles_sp + 2 * STDL_MATRIX_SP_SIZE(wf->nao), dipole_z_ge);
 
     // compute through density
-    // dipz = sum_mu (P * D)_mu,mu
+    // dipz = tr(P*D)
     double* P = malloc(STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double ));
     TEST_ASSERT_NOT_NULL(P);
 
@@ -117,7 +117,7 @@ void test_dipole() {
 
     cblas_dsymm(CblasRowMajor, CblasRight, CblasLower,
                 (int) wf->nao, (int) wf->nao,
-                1.f, dipole_z_sy, (int) wf->nao,
+                1.f, dipole_z_ge, (int) wf->nao,
                 Pge, (int) wf->nao,
                 .0, result, (int) wf->nao
     );
@@ -131,20 +131,20 @@ void test_dipole() {
 
     // compute through MO basis
     // dipz = sum_p n_p * D_pp = 2 * sum^occ_p D_pp (where n_p is the occupancy of MO p)
-    double* dipole_z_mo_sy = malloc(ctx->nocc * ctx->nocc * sizeof(double));
-    TEST_ASSERT_NOT_NULL(dipole_z_mo_sy);
+    double* dipole_z_mo = malloc(STDL_MATRIX_SP_SIZE(ctx->nocc) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipole_z_mo);
 
-    // only use occupied MOs
-    ASSERT_STDL_OK(stdl_wavefunction_dsy_ao_to_mo(wf->nao, ctx->nocc, ctx->C_orig, dipole_z_sy, dipole_z_mo_sy));
+    // only use occupied MOs!
+    ASSERT_STDL_OK(stdl_wavefunction_dsp_ao_to_dsp_mo(wf->nao, ctx->nocc, ctx->C_orig, dipoles_sp + 2 * STDL_MATRIX_SP_SIZE(wf->nao), dipole_z_mo));
 
     double dipz3 = .0;
     for (size_t p = 0; p < ctx->nocc; ++p) {
-        dipz3 += 2 * dipole_z_mo_sy[p * ctx->nocc + p];
+        dipz3 += 2 * dipole_z_mo[STDL_MATRIX_SP_IDX(p, p)];
     }
 
     TEST_ASSERT_DOUBLE_WITHIN(1e-6, dipz1, dipz3);
 
-    STDL_FREE_ALL(dipoles_sp, dipole_z_sy, dipole_z_mo_sy, P, Pge, result);
+    STDL_FREE_ALL(dipoles_sp, dipole_z_ge, dipole_z_mo, P, Pge, result);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }

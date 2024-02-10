@@ -313,7 +313,7 @@ $$D_{\mu\nu} = -\,\braket{\mu|\vec{r}-\vec R_0|\nu},$$
 where the dipole moment integral have been multiplied by the value of the electronic charge (-1 in atomic units) and $\vec R_0$ is the origin.
 The electronic dipole moment is computed via:
 
-$$\vec\mu_e = \sum^{AO}_{\mu\nu} P_{\mu\nu}\,D_{\nu\mu},$$
+$$\vec\mu_e = \sum^{AO}_{\mu\nu} P_{\mu\nu}\,D_{\nu\mu} = tr(\mathbf P\mathbf D),$$
 
 where $\mathbf P$ is the density matrix. Alternatively, in MO basis:
 

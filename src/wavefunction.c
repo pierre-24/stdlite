@@ -84,6 +84,7 @@ int stdl_wavefunction_compute_density_dsp(size_t nocc, size_t nmo, size_t nao, d
             for (size_t p = 0; p < nmo; ++p) {
                 sum += C[p * nao + mu] * ((p < nocc) ? 2 : 0) *  C[p * nao + nu] ;
             }
+
             D[STDL_MATRIX_SP_IDX(mu, nu)] = sum;
         }
     }
@@ -91,28 +92,40 @@ int stdl_wavefunction_compute_density_dsp(size_t nocc, size_t nmo, size_t nao, d
     return STDL_ERR_OK;
 }
 
-int stdl_wavefunction_dsy_ao_to_mo(size_t nao, size_t nmo, double* C, double* X_AO, double* X_MO) {
-    double* X_tmp = malloc(nao * nmo * sizeof(double));
-    STDL_ERROR_HANDLE_AND_REPORT(X_tmp == NULL, return STDL_ERR_MALLOC, "malloc");
+int stdl_wavefunction_dsp_ao_to_dsp_mo(size_t nao, size_t nmo, double* C, double* X_AO, double* X_MO) {
+    assert(C != NULL && X_AO != NULL && nmo > 0 && nao > 0 && X_MO != NULL);
 
-    // X_tmp = C * X_AO
-    cblas_dsymm(CblasRowMajor, CblasRight, CblasLower,
-                (int) nmo, (int) nao,
-                1.f, X_AO, (int) nao,
-                C, (int) nao,
-                .0, X_tmp, (int) nao
-    );
+    for (size_t p = 0; p < nmo; ++p) {
+        for (size_t q = 0; q <= p; ++q) {
+            double sum = 0;
+            for (size_t mu = 0; mu < nao; ++mu) {
+                for (size_t nu = 0; nu < nao; ++nu) {
+                    sum += C[p * nao + mu] * X_AO[STDL_MATRIX_SP_IDX(mu, nu)] * C[q * nao + nu];
+                }
+            }
 
-    // X_MO = X * C^T
-    cblas_dgemm(
-            CblasRowMajor, CblasNoTrans, CblasTrans,
-            (int) nmo, (int) nmo, (int) nao,
-            1.f, X_tmp, (int) nao,
-            C, (int) nao,
-            .0, X_MO, (int) nmo
-    );
+            X_MO[STDL_MATRIX_SP_IDX(p, q)] = sum;
+        }
+    }
 
-    STDL_FREE_ALL(X_tmp);
+    return STDL_ERR_OK;
+}
+
+int stdl_wavefunction_dge_ao_to_dge_mo(size_t nao, size_t nmo, double *C, double *X_AO, double *X_MO) {
+    assert(C != NULL && X_AO != NULL && nmo > 0 && nao > 0 && X_MO != NULL);
+
+    for (size_t p = 0; p < nmo; ++p) {
+        for (size_t q = 0; q < nmo; ++q) {
+            double sum = 0;
+            for (size_t mu = 0; mu < nao; ++mu) {
+                for (size_t nu = 0; nu < nao; ++nu) {
+                    sum += C[p * nao + mu] * X_AO[mu * nao + nu] * C[q * nao + nu];
+                }
+            }
+
+            X_MO[p * nmo + q] = sum;
+        }
+    }
 
     return STDL_ERR_OK;
 }

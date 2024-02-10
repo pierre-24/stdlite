@@ -185,7 +185,7 @@ int stdl_matrix_ssp_blowsy(size_t n, char uplo, float *in, float *out);
 /**
  * Blow a (single-precision) symmetry packed matrix (`in`) into a full storage (`ge`) matrix (`out`).
  *
- * @param issym whether the input is symmetric (`issym != 0 => out[i,j] = out[j,i]`) or antisymmetric (`issym == 0 => out[i,j] = -out[j,i]`)
+ * @param issym whether the input is symmetric (`issym != 0 => in[i,j] = in[j,i]`) or antisymmetric (`issym == 0 => in[i,j] = -in[j,i]`)
  * @param n order of `in` and `out`
  * @param in `float[STDL_SP_SIZE(n)]` a matrix in symmetry packed storage
  * @param[in,out] out `float[n,n]` the resulting matrix.
