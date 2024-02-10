@@ -17,8 +17,6 @@ The goal of `stdlite` is to compute ground state linear response functions or ex
 
 ## Response function theory
 
-### Time-independent and dependent frameworks
-
 In the time-independent (or static) case, a general expression for the electronic energy under perturbation is:
 
 $$E(\{\kappa_i\}, \lambda) = \Braket{\Psi(\{\kappa_i\}) | \hat H(\lambda) | \Psi(\{\kappa_i\})},$$
@@ -80,7 +78,7 @@ $$\mathcal{Q} = \frac{1}{T}\,\int_0^T dt\,\Braket{\tilde\Psi(\{\kappa_i\},t)|\ha
 The quasienergy $\mathcal Q$ acts similarly to $E$ in the time-independent case, wich allows to obtain a TD version of the Hellman-Feynman theorem, and of the linear response equations.
 Using a Fourier series of $\hat V$, one can obtain a TD version of the linear response equations [Eqs. (1) and (2)].
 
-### Application to DFT: TD-DFT
+## Application to DFT: TD-DFT
 
 !!! note
 
@@ -88,8 +86,10 @@ Using a Fourier series of $\hat V$, one can obtain a TD version of the linear re
     All quantities are in [atomic units](https://en.wikipedia.org/wiki/Atomic_units), unless otherwise mentioned.
 
 
+### Linear response
+
 Under the conditions of the [Runge and Gross theorem](https://en.wikipedia.org/wiki/Runge%E2%80%93Gross_theorem), this theory can be applied to DFT.
-In the TD case and assuming the Hermicity of the different matrices and real orbitals, Eq. (2) can be written:
+In the TD case and assuming the Hermicity of the different matrices and real orbitals, Eq. (2) can be written (the superscripts $\lambda$ have been dropped for clarity):
 
 $$\tag{3}\left[\begin{pmatrix}
 \mathbf A & \mathbf B \\
@@ -103,8 +103,10 @@ $$\tag{3}\left[\begin{pmatrix}
 \mathbf \eta_\zeta\\ \mathbf \eta_\zeta
 \end{pmatrix},$$
 
-where $\mathbf x^\omega$ and $\mathbf y^\omega$ are the frequency-dependent linear response vectors (to be determined) in direction $\zeta$.
+where $\mathbf x^\omega_\zeta$ and $\mathbf y^\omega_\zeta$ are the frequency-dependent linear response vectors (to be determined) in direction $\zeta$.
 The $\mathbf A$ and $\mathbf B$ are electronic Hessian (super-)matrices (related to orbital rotations). 
+
+The perturbed electronic gradient vector elements $\eta_{ia,\zeta}$ are elements of the expectation value matrix corresponding to the perturbation (e.g., when the perturbation is an electric field, $\eta$ corresponds to the dipole moment) for MOs $i$ and $a$ (in MO basis).
 
 In the rest of this development a **global hybrid** density functional is assumed,
 
@@ -137,8 +139,6 @@ Solving this problem might be performed via 2 approaches:
     
     the response vector are obtained: $\mathbf x^\omega_{\zeta} = \frac{1}{2}(\mathbf u^\omega_{\zeta} + \mathbf v^\omega_{\zeta})$ and $\mathbf y^\omega_{\zeta} = \frac{1}{2}(\mathbf u^\omega_{\zeta} - \mathbf v^\omega_{\zeta})$.
 
-
-
 === "Tamm-Dancoff approximation (TDA)"
 
     The [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) ($\mathbf B = \mathbf 0$) leads to:
@@ -148,6 +148,8 @@ Solving this problem might be performed via 2 approaches:
     The linear response vectors at frequency $\omega$ are given by:
 
     $$\mathbf x^\omega_\zeta + \mathbf y^\omega_\zeta = \frac{-2\mathbf\eta_\zeta}{\mathbf{A} - \omega^2\mathbf{A}^{-1}}.$$
+
+### Excitations
 
 It is also customary to consider the case when $\eta = 0$, which lead to the following pseudo-hermitian problem:
 
@@ -163,7 +165,7 @@ $$\tag{4}\begin{pmatrix}
 \mathbf x_\zeta^\omega\\ \mathbf y_\zeta^\omega
 \end{pmatrix}$$
 
-which is generally referred to as the Casida equation. In this case, the $\omega$'s are the excitation energies while $\mathbf x^\omega$ and $\mathbf y^\omega$ might be seen as excitation and de-excitation vectors. 
+which is generally referred to as the Casida equation. In this case, the $\omega$'s are the excitation energies while $\mathbf x^\omega$ and $\mathbf y^\omega$ might be seen as amplitude vectors associated to excitation and de-excitation, respectively. 
 Solving this latter problem is done using the same two approaches. 
 
 
@@ -317,22 +319,24 @@ $$\vec\mu_e = \sum^{AO}_{\mu\nu} P_{\mu\nu}\,D_{\nu\mu} = tr(\mathbf P\mathbf D)
 
 where $\mathbf P$ is the density matrix. Alternatively, in MO basis:
 
-$$\vec\mu_e = \sum^{MO}_p n_p\,D^{MO}_{pp}.$$
+$$\vec\mu_e = \sum^{MO}_p n_p\,\vec\mu_{pp},$$
+
+where $\vec\mu_{pp}$ is a shorthand for $D^{MO}_{pp}$.
 
 ## Properties
 
-Things that can be obtained thanks to the linear response vectors.
+Things that can be obtained thanks to the amplitude/linear response vectors.
 
 ### Transition dipole moment and oscillator strength
 
-The transition dipole moment (in the dipole length formalism) for excitation $\wp$, associated with energy $\omega$ and response vectors $\mathbf x_{\wp}^\omega$ and $\mathbf y_{\wp}^\omega$ is given by:
+The transition dipole moment (in the dipole length formalism) for excitation $\wp$, associated with energy $\omega$ and amplitude vectors $\mathbf x^\omega$ and $\mathbf y^\omega$ is given by:
 
-$$\vec{\mu}_{0\wp} =  \sqrt{2}\,\sum_{ia}^{CFS} D^{MO}_{ia}\,(x^\omega_{\wp,ia}+y^\omega_{\wp,ia}),$$
+$$\mu_{0\wp,\zeta} =  \sqrt{2}\,\sum_{ia}^{CFS} \vec\mu_{ia,\zeta}\,(x^\omega_{ia}+y^\omega_{ia}),$$
 
-where the $\sqrt 2$ factor is required for singlet excitations (it is 0 for triplet).
+where $\zeta$ is a cartesian direction and the $\sqrt 2$ factor is required for singlet excitations (it is 0 for triplet).
 The associated [oscillator strength](https://en.wikipedia.org/wiki/Oscillator_strength) is defined by:
 
-$$f_{0\wp} = \frac{2}{3}\,\Delta E_{0\wp}\,|\vec\mu_{0\wp}|^2.$$
+$$f_{0\wp} = \frac{2}{3}\,\omega\,|\vec\mu_{0\wp}|^2.$$
 
 ## Sources and references
 

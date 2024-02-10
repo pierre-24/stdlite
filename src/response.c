@@ -171,11 +171,16 @@ int stdl_response_perturbed_gradient(stdl_context* ctx, size_t dim, double* eta_
             egrad[lia * dim + cpt] = -2.f * (float) eta_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)];
         }
     }
+
+    return STDL_ERR_OK;
 }
 
 
-int stdl_response_RPA_linear(stdl_context* ctx, float w, size_t dim, float* egrad, float* X, float* Y) {
-    assert(ctx != NULL && ctx->ncsfs > 0 && ctx->B != NULL && egrad != NULL && X != NULL && Y != NULL);
+int stdl_response_RPA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, float *egrad, float *X, float *Y) {
+    assert(ctx != NULL && ctx->ncsfs > 0 && nw > 0 && ndim > 0 && ctx->B != NULL && egrad != NULL && X != NULL && Y != NULL);
+
+    size_t szXY = ctx->ncsfs * ndim;
+
     // compute A+B and A-B
     _make_apb_amb(ctx);
 
@@ -192,49 +197,53 @@ int stdl_response_RPA_linear(stdl_context* ctx, float w, size_t dim, float* egra
 
     err = LAPACKE_ssptri(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, ctx->B, ipiv);
     STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptri(): %d", err);
-
     // now, ctx->B contains (A-B)^(-1)
-    // make left side: L = (A+B)-w^2*(A-B)^(-1)
-    for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
-        for(size_t kjb = 0; kjb <= kia; ++kjb)
-            L[STDL_MATRIX_SP_IDX(kia, kjb)] = ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)] - powf(w, 2) * ctx->B[STDL_MATRIX_SP_IDX(kia, kjb)];
-    }
 
-    // copy egrad in X, to keep it for latter
-    memcpy(X, egrad, ctx->ncsfs * dim * sizeof(float ));
+    for (size_t iw = 0; iw < nw; ++iw) {
+        // make left side: L = (A+B)-w^2*(A-B)^(-1)
+        for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
+            for(size_t kjb = 0; kjb <= kia; ++kjb)
+                L[STDL_MATRIX_SP_IDX(kia, kjb)] = ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)] - powf(w[iw], 2) * ctx->B[STDL_MATRIX_SP_IDX(kia, kjb)];
+        }
 
-    // solve the problem
-    err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, L, ipiv);
-    STDL_ERROR_HANDLE_AND_REPORT(err != 0,  STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", err);
+        float *Xi = X + iw * szXY, *Yi = Y + iw * szXY;
 
-    err = LAPACKE_ssptrs(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, (int) dim, L, ipiv, X, (int) dim);
-    STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptrs(): %d", err);
+        // copy egrad in X, to keep it for latter
+        memcpy(Xi, egrad, ctx->ncsfs * ndim * sizeof(float ));
 
-    stdl_matrix_sge_print(ctx->ncsfs, dim, X, "X'");
+        // solve the problem
+        err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, L, ipiv);
+        STDL_ERROR_HANDLE_AND_REPORT(err != 0,  STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", err);
 
-    // separate X and Y
-    // Y' = w*(A-B)^(-1)*X'
-    for(size_t kia = 0; kia < ctx->ncsfs; kia++) {
-        for(size_t cpt = 0; cpt < dim; cpt++) {
-            float sum = .0f;
-            for (size_t kjb = 0; kjb < ctx->ncsfs; kjb++)
-                sum += ctx->B[STDL_MATRIX_SP_IDX(kia, kjb)] * w * X[kia * dim + cpt];
+        err = LAPACKE_ssptrs(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, (int) ndim, L, ipiv, Xi, (int) ndim);
+        STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptrs(): %d", err);
 
-            Y[kia * dim + cpt] = sum;
+        // stdl_matrix_sge_print(ctx->ncsfs, ndim, Xi, "X'");
+
+        // separate X and Y
+        // Yi' = w*(A-B)^(-1)*Xi'
+        for(size_t kia = 0; kia < ctx->ncsfs; kia++) {
+            for(size_t cpt = 0; cpt < ndim; cpt++) {
+                float sum = .0f;
+                for (size_t kjb = 0; kjb < ctx->ncsfs; kjb++)
+                    sum += ctx->B[STDL_MATRIX_SP_IDX(kia, kjb)] * w[iw] * Xi[kia * ndim + cpt];
+
+                Yi[kia * ndim + cpt] = sum;
+            }
+        }
+
+        // Xi = 1/2*(Xi' + Yi') && Yi = 1/2*(Xi' - Yi')
+        for(size_t kia = 0; kia < ctx->ncsfs; kia++) {
+            for(size_t cpt = 0; cpt < ndim; cpt++) {
+                float u = Xi[kia * ndim + cpt], v = Yi[kia * ndim + cpt];
+                Xi[kia * ndim + cpt] = .5f * (u + v);
+                Yi[kia * ndim + cpt] = .5f * (u - v);
+            }
         }
     }
 
-    // X = 1/2*(X' + Y') && Y = 1/2*(X' - Y')
-    for(size_t kia = 0; kia < ctx->ncsfs; kia++) {
-        for(size_t cpt = 0; cpt < dim; cpt++) {
-             float u = X[kia * dim + cpt], v = Y[kia * dim + cpt];
-             X[kia * dim + cpt] = .5f * (u + v);
-             Y[kia * dim + cpt] = .5f * (u - v);
-        }
-    }
-
-    stdl_matrix_sge_print(ctx->ncsfs, dim, X, "X");
-    stdl_matrix_sge_print(ctx->ncsfs, dim, Y, "Y");
+    stdl_matrix_sge_print(nw * ctx->ncsfs, ndim, X, "X");
+    stdl_matrix_sge_print(nw * ctx->ncsfs, ndim, Y, "Y");
 
     STDL_FREE_ALL(L, ipiv);
 

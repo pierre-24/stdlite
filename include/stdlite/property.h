@@ -30,7 +30,7 @@ int stdl_property_transition_dipoles(stdl_context *ctx, size_t nexci, double* di
 int stdl_property_print_excitations(stdl_context *ctx, size_t nexci, float *energies, float *tdips);
 
 /**
- * Print (in stdout) the contribution ($c_{\wp,ia} = x_{\wp,ia}^2-y_{\wp,ia}^2$) of each CSF to the excitations that were computed.
+ * Print (in stdout) the contribution ($c^\wp_{ia} = (x^\omega_{ia})^2-(y^\omega_{ia})^2$) of each CSF to the excitations that were computed.
  *
  * @param ctx a valid context, with `ctx->ncsfs > 0`.
  * @param nexci number of excitations computed

@@ -103,7 +103,7 @@ int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S);
 
 
 /**
- * Compute the electronic dipole matrix in AO basis, $D_{\mu\nu} = \braket{\mu|e\,(\hat r - R_0)|\nu}$ (single precision).
+ * Compute the electronic dipole matrix in AO basis, $D_{\mu\nu} = \braket{\mu|e\,(\hat r - R_0)|\nu}$.
  * @param bs a valid basis set
  * @param[out] dipoles `float[3, STDL_MATRIX_SP_SIZE(nao)]` the resulting dipole matrix. The component of the dipole is thus the slowest varying index.
  * @return error code.

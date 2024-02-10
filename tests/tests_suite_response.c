@@ -209,13 +209,13 @@ void test_response_RPA_linear_ok() {
 
     stdl_response_perturbed_gradient(ctx, 3, dipoles_sp_MO, egrad);
 
-    float* X = malloc(3 * ctx->ncsfs * sizeof(float ));
+    float* X = malloc(2 * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(X);
 
-    float* Y = malloc(3 * ctx->ncsfs * sizeof(float ));
+    float* Y = malloc(2 * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Y);
 
-    ASSERT_STDL_OK(stdl_response_RPA_linear(ctx, 4.2822696E-02, 3, egrad, X, Y));
+    ASSERT_STDL_OK(stdl_response_RPA_linear(ctx, 2, (float[]) {0, 4.2822696E-02}, 3, egrad, X, Y));
 
     STDL_FREE_ALL(dipoles_sp_AO, dipoles_sp_MO, egrad, X, Y);
 

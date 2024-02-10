@@ -12,7 +12,7 @@
 #endif
 
 /**
- * Solve the Casida equation to get excitation energies and amplitudes ($x^\omega$), within the Tamm-Dancoff approximation.
+ * Solve the Casida equation to get excitation energies and amplitudes ($\mathbf x^\omega$), within the Tamm-Dancoff approximation.
  * Only returns the first `nexci` first excitation energies. Works well if `nexci << ncsfs`.
  * The precision on the eigenvalues is given by `STDL_RESPONSE_EIGV_ABSTOL`.
  *
@@ -28,7 +28,7 @@
 int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X);
 
 /**
- * Solve the Casida equation to get excitation energies and their corresponding response vectors ($x^\omega$, $y^\omega$).
+ * Solve the Casida equation to get excitation energies and their corresponding amplitude vectors ($\mathbf x^\omega$, $\mathbf y^\omega$).
  * Only returns the first `nexci` first excitation energies. Works well if `nexci << ncsfs`.
  * The precision on the eigenvalues is given by `STDL_RESPONSE_EIGV_ABSTOL`.
  *
@@ -46,9 +46,9 @@ int stdl_response_RPA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
 
 
 /**
- * Create $-2\eta$, the perturbed electronic gradient matrix to be used in linear response equation.
+ * Create $-2\eta$, the perturbed electronic gradient matrix to be used in linear response equation (`stdl_response_RPA_linear()`).
  *
- * @param ctx a valid context
+ * @param ctx a valid context, with `ctx->ncsfs > 0`.
  * @param dim dimension of the expectation value `eta_MO`
  * @param eta_MO `double[dim,ctx->nmo,ctx->nmo]`, the value of $\eta$ in MO basis
  * @param[out] egrad `float[ctx->ncsfs,dim]` $-2\eta$, the resulting perturbed electronic gradient
@@ -59,16 +59,20 @@ int stdl_response_perturbed_gradient(stdl_context* ctx, size_t dim, double* eta_
 
 
 /**
- * Solve the linear response equation at a frequency $\omega$ to get response vectors ($x^\omega$, $y^\omega$).
- * @param ctx a valid context
- * @param w frequency at which linear response should be computed
- * @param dim dimension of the electronic gradient
- * @param egrad `float[ncsfs,dim]` input $-2\eta$, the perturbed electronic gradient.
- * @param[out] X `float[ncsfs,dim]` response vector X for each excitation.
- * @param[out] Y `float[ncsfs,dim]` response vector Y for each excitation.
+ * Solve the linear response equation at a `nw` energies $\omega_i$ to get response vectors ($\mathbf x^{\omega_i}$, $\mathbf y^{\omega_i}$).
+ *
+ * @warning the `ctx->A` and `ctx->B` matrices are irreversibly modified in the process.
+ *
+ * @param ctx a valid context, with `ctx->ncsfs > 0 && ctx->B != NULL`.
+ * @param nw number of energies at which linear response should be computed
+ * @param w `float[nw]` energies at which linear response should be computed
+ * @param ndim dimension of the electronic gradient
+ * @param egrad `float[ncsfs,ndim]` $-2\eta$, the perturbed electronic gradient in each dimension.
+ * @param[out] X `float[nw,ncsfs,ndim]` response vector X for each energy, in each dimension.
+ * @param[out] Y `float[nw,ncsfs,ndim]` response vector Y for each energy, in each dimension.
  * @return error code
  * @ingroup response
  */
-int stdl_response_RPA_linear(stdl_context* ctx, float w, size_t dim, float* egrad, float* X, float* Y);
+int stdl_response_RPA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, float *egrad, float *X, float *Y);
 
 #endif //STDLITE_RESPONSE_H
