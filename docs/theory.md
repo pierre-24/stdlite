@@ -324,6 +324,12 @@ where $\vec\mu_{pp}$ is a shorthand for $D^{MO}_{pp}$.
 
 Things that can be obtained thanks to the amplitude/linear response vectors.
 
+### Polarizability
+
+The dynamic polarizability tensor elements are obtained by:
+
+$$\alpha_{\zeta\xi}(-\omega;\omega) = -\braket{\braket{\hat\mu_\zeta;\hat\mu_\xi}}_\omega = -2\,\sum_{ia}^{CSF} \mu_{ia,\zeta}\,[x_{ia,\xi}(\omega)+y_{ia,\xi}(\omega)].$$
+
 ### Transition dipole moment and oscillator strength
 
 The transition dipole moment (in the dipole length formalism) for excitation $\wp$, associated with energy $\omega$ and amplitude vectors $\mathbf x^\omega$ and $\mathbf y^\omega$ is given by:
