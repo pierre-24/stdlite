@@ -89,7 +89,7 @@ Using a Fourier series of $\hat V$, one can obtain a TD version of the linear re
 ### Linear response
 
 Under the conditions of the [Runge and Gross theorem](https://en.wikipedia.org/wiki/Runge%E2%80%93Gross_theorem), this theory can be applied to DFT.
-In the TD case and assuming the Hermicity of the different matrices and real orbitals, Eq. (2) can be written (the superscripts $\lambda$ have been dropped for clarity):
+For a time-dependent perturbation at frequency $\omega$, and assuming the Hermicity of the different matrices and real orbitals, Eq. (2) can be written (the superscripts $\lambda$ have been dropped for clarity):
 
 $$\tag{3}\left[\begin{pmatrix}
 \mathbf A & \mathbf B \\
@@ -98,14 +98,13 @@ $$\tag{3}\left[\begin{pmatrix}
 \mathbf 1 & \mathbf 0\\
 \mathbf 0 & -\mathbf 1
 \end{pmatrix}\right]\,\begin{pmatrix}
-\mathbf x_\zeta^\omega\\ \mathbf y_\zeta^\omega
+\mathbf x_\zeta(\omega)\\ \mathbf y_\zeta(\omega)
 \end{pmatrix}=-\begin{pmatrix}
 \mathbf \eta_\zeta\\ \mathbf \eta_\zeta
 \end{pmatrix},$$
 
-where $\mathbf x^\omega_\zeta$ and $\mathbf y^\omega_\zeta$ are the frequency-dependent linear response vectors (to be determined) in direction $\zeta$.
-The $\mathbf A$ and $\mathbf B$ are electronic Hessian (super-)matrices (related to orbital rotations). 
-
+where $\mathbf x_\zeta(\omega)$ and $\mathbf y_\zeta(\omega)$ are the frequency-dependent linear response vectors (to be determined) in direction $\zeta$.
+The $\mathbf A$ and $\mathbf B$ are electronic Hessian (super-)matrices (related to orbital rotations).
 The perturbed electronic gradient vector elements $\eta_{ia,\zeta}$ are elements of the expectation value matrix corresponding to the perturbation (e.g., when the perturbation is an electric field, $\eta$ corresponds to the dipole moment) for MOs $i$ and $a$ (in MO basis).
 
 In the rest of this development a **global hybrid** density functional is assumed,
@@ -120,34 +119,29 @@ $$\begin{aligned}
 \end{aligned}$$
 
 where, $\epsilon_i$ and $\epsilon_a$ are orbital energies, $a_x$ is the amount of non-local Fock exchange, $(ia|jb)$, $(ia|bj)$, and $(ib|aj)$ are exchange-type and $(ij|ab)$ Coulomb-type two-electron integrals, $(ia|f_{XC}|jb)$ and $(ia|f_{XC}|bj)$ are responses of the exchange-correlation functional.
-Solving this problem might be performed via 2 approaches:
 
-=== "Full time-dependent approach (TD)"
-
-    Eq. (3) can be turned into a linear equation of the form:
+To solve this problem, Eq. (3) can be turned into a linear equation of the form:
     
-    $$[(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}]\,[\mathbf x^\omega_\zeta + \mathbf y^\omega_\zeta] = -2\mathbf\eta_\zeta,$$
+$$[(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}]\,[\mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)] = -2\mathbf\eta_\zeta.$$
 
-    or:
+
+??? note "Detailed solution"
     
-    $$\mathbf L\,\mathbf u^\omega_{\zeta} = -2\mathbf\eta_\zeta,$$
+    The previous equation is easier seen as a linear system written in the following form:
 
-    where $\mathbf u^\omega_{\zeta} = \mathbf x^\omega_\zeta + \mathbf y^\omega_\zeta$, and which is solved using any of the usual methods for linear systems.
-    Since $\mathbf x^\omega_\zeta - \mathbf y^\omega_\zeta = \omega\,(\mathbf A-\mathbf B)^{-1}\,(\mathbf x^\omega_\zeta + \mathbf y^\omega_\zeta)$ [from Eq. (3)],
+    $$\mathbf L(\omega)\,\mathbf u_{\zeta}(\omega) = -2\mathbf\eta_\zeta,$$
     
-    $$\mathbf v^\omega_{\zeta} =\mathbf x^\omega_\zeta - \mathbf y^\omega_\zeta =  \omega\,(\mathbf A-\mathbf B)^{-1}\,\mathbf u^\omega_\zeta,$$
+    where $\mathbf L(\omega) = (\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}$ and $\mathbf u_{\zeta}(\omega)  = \mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)$, and which is solved using any of the usual methods for linear systems.
+    Since, from Eq. (3),
     
-    the response vector are obtained: $\mathbf x^\omega_{\zeta} = \frac{1}{2}(\mathbf u^\omega_{\zeta} + \mathbf v^\omega_{\zeta})$ and $\mathbf y^\omega_{\zeta} = \frac{1}{2}(\mathbf u^\omega_{\zeta} - \mathbf v^\omega_{\zeta})$.
+    $$\mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega) = \omega\,(\mathbf A-\mathbf B)^{-1}\,[\mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)],$$
+    
+    then one can define $$\mathbf v_{\zeta}(\omega)$ as:
 
-=== "Tamm-Dancoff approximation (TDA)"
+    $$\mathbf v_{\zeta}(\omega)  =\mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega) =  \omega\,(\mathbf A-\mathbf B)^{-1}\,\mathbf u_{\zeta}(\omega),$$
+    
+    the response vector are obtained: $\mathbf x_{\zeta}(\omega) = \frac{1}{2}[\mathbf u_{\zeta}(\omega)  + \mathbf v_{\zeta}(\omega)]$ and $\mathbf y_{\zeta}(\omega) = \frac{1}{2}[\mathbf u_{\zeta}(\omega)  - \mathbf v_{\zeta}(\omega)]$.
 
-    The [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) ($\mathbf B = \mathbf 0$) leads to:
-
-    $$[\mathbf{A} - \omega^2\,\mathbf{A}^{-1}]\,[\mathbf x^\omega_\zeta + \mathbf y^\omega_\zeta] = -2\eta_\zeta.$$
-
-    The linear response vectors at frequency $\omega$ are given by:
-
-    $$\mathbf x^\omega_\zeta + \mathbf y^\omega_\zeta = \frac{-2\mathbf\eta_\zeta}{\mathbf{A} - \omega^2\mathbf{A}^{-1}}.$$
 
 ### Excitations
 
@@ -157,37 +151,40 @@ $$\tag{4}\begin{pmatrix}
 \mathbf A & \mathbf B \\
 \mathbf B & \mathbf A
 \end{pmatrix}\,\begin{pmatrix}
-\mathbf x_\zeta^\omega\\ \mathbf y_\zeta^\omega
+\mathbf x^\omega\\ \mathbf y^\omega
 \end{pmatrix}=\omega\begin{pmatrix}
 \mathbf 1 & \mathbf 0\\
 \mathbf 0 & -\mathbf 1
 \end{pmatrix}\,\begin{pmatrix}
-\mathbf x_\zeta^\omega\\ \mathbf y_\zeta^\omega
+\mathbf x^\omega\\ \mathbf y^\omega
 \end{pmatrix}$$
 
-which is generally referred to as the Casida equation. In this case, the $\omega$'s are the excitation energies while $\mathbf x^\omega$ and $\mathbf y^\omega$ might be seen as amplitude vectors associated to excitation and de-excitation, respectively. 
-Solving this latter problem is done using the same two approaches. 
+which is generally referred to as the Casida equation. 
+In this case, each $\omega$ (eigenvalue) is associated to one $\mathbf x^\omega$ and one $\mathbf y^\omega$ ("eigenfunction"), might be seen as amplitude vectors associated to excitation and de-excitation, respectively. 
+Solving this problem is done using two approaches. 
 
 
 === "Full time-dependent approach (TD)"
 
-    Eq. (4) can be rewritten in an eigenvalue problem, namely:
+    Eq. (4) can be rewritten in an true eigenvalue problem, namely:
     
     $$(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}+\mathbf{B})\,(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,\mathbf{Z} = \omega^2\,\mathbf{Z}, \text{ with } \mathbf{Z} = (\mathbf{A}-\mathbf{B})^{-\frac{1}{2}} (\mathbf x^\omega + \mathbf y^\omega).$$
     
-    In this case, after $\mathbf Z$ have been obtained, one extract using the following procedure. First, from previous expression, one can obtain:
-    
-    $$ \mathbf u^\omega = \mathbf x^\omega + \mathbf y^\omega = \frac{1}{\sqrt\omega}\,(\mathbf A-\mathbf B)^\frac{1}{2}\,\mathbf Z.$$
-    
-    Now, since $(\mathbf A + \mathbf B)\,(\mathbf x^\omega+\mathbf y^\omega) = \omega\,(\mathbf x^\omega-\mathbf y^\omega)$ [obtained from Eq. (4)], one has:
-    
-    $$\mathbf v^\omega = \mathbf x^\omega-\mathbf y^\omega = \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,(\mathbf x^\omega+\mathbf y^\omega)  = \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,\mathbf u^\omega,$$
-    
-    and therefore the response vector are obtained: $\mathbf x^\omega = \frac{1}{2}(\mathbf u^\omega + \mathbf v^\omega)$ and $\mathbf y^\omega = \frac{1}{2}(\mathbf u^\omega - \mathbf v^\omega)$.
+    ??? note "Detailed solution"
+
+        In this case, after $\mathbf Z$ have been obtained, one extract using the following procedure. First, from previous expression, one can obtain:
+        
+        $$ \mathbf u^\omega = \mathbf x^\omega + \mathbf y^\omega = \frac{1}{\sqrt\omega}\,(\mathbf A-\mathbf B)^\frac{1}{2}\,\mathbf Z.$$
+        
+        Now, since $(\mathbf A + \mathbf B)\,(\mathbf x^\omega+\mathbf y^\omega) = \omega\,(\mathbf x^\omega-\mathbf y^\omega)$ [obtained from Eq. (4)], one has:
+        
+        $$\mathbf v^\omega = \mathbf x^\omega-\mathbf y^\omega = \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,(\mathbf x^\omega+\mathbf y^\omega)  = \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,\mathbf u^\omega,$$
+        
+        and therefore the response vector are obtained: $\mathbf x^\omega = \frac{1}{2}(\mathbf u^\omega + \mathbf v^\omega)$ and $\mathbf y^\omega = \frac{1}{2}(\mathbf u^\omega - \mathbf v^\omega)$.
 
 === "Tamm-Dancoff approximation (TDA)"
 
-    Using TDA leads to a simplified expression and a true eigenvalue problem:
+    The [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) ($\mathbf B = \mathbf 0$) leads to:
     
     $$\mathbf A\,\mathbf x^\omega = \omega\,\mathbf x^\omega,$$
     
