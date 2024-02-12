@@ -10,7 +10,7 @@ The goal of `stdlite` is to compute ground state linear response functions or ex
     The following steps are required to perform a sTD-DFT calculation:
     
     1. Extract data (*i.e.*, the atomic orbitals, as well as the MO energies, $\varepsilon$, and LCAO coefficients, $\mathbf C$) from a QC calculation;
-    2. Select configuration state functions (CSFs, $i\to a$) using [a set of rules](#the-simplified-approaches-to-td-dft) and build the corresponding electronic hessian matrices $\mathbf A'$ and $\mathbf B'$ (might be zero);
+    2. Select configuration state functions (CSFs, $\Psi_i^a$, or singly excited determinants) using [a set of rules](#the-simplified-approaches-to-td-dft) and build the corresponding electronic hessian matrices $\mathbf A'$ and $\mathbf B'$ (might be zero);
     3. Using said matrices, solve the [linear response equation](#application-to-dft-td-dft). This generally requires to compute extra [expectation values](#expectation-values-and-others) matrices in MO basis, such as the [dipole moment](#dipole-moment);
     4. Use the response vectors to compute the actual [properties](#properties).
 
@@ -82,7 +82,7 @@ Using a Fourier series of $\hat V$, one can obtain a TD version of the linear re
 
 !!! note
 
-    In the following, $p$, $q$, $r$, $s$,... refer to molecular orbitals (MOs), $i$, $j$, $k$, $l$,... to occupied, $a$, $b$, $c$, $d$,... to unoccupied ones, and $\alpha$, $\beta$, $\gamma$, $\delta$,... to atomic orbitals (AOs). 
+    In the following, $p$, $q$, $r$, $s$,... refer to molecular orbitals (MOs), $i$, $j$, $k$, $l$,... to occupied, $a$, $b$, $c$, $d$,... to unoccupied ones, $\mu$, $\nu$, $\xi$... to atomic orbitals (AOs) and $\zeta$, $\sigma$, $\tau$, $\upsilon$, ... to cartesian direction. 
     All quantities are in [atomic units](https://en.wikipedia.org/wiki/Atomic_units), unless otherwise mentioned.
 
 
@@ -105,7 +105,7 @@ $$\tag{3}\left[\begin{pmatrix}
 
 where $\mathbf x_\zeta(\omega)$ and $\mathbf y_\zeta(\omega)$ are the frequency-dependent linear response vectors (to be determined) in direction $\zeta$.
 The $\mathbf A$ and $\mathbf B$ are electronic Hessian (super-)matrices (related to orbital rotations).
-The perturbed electronic gradient vector elements $\eta_{ia,\zeta}$ are elements of the expectation value matrix corresponding to the perturbation (e.g., when the perturbation is an electric field, $\eta$ corresponds to the dipole moment) for MOs $i$ and $a$ (in MO basis).
+The perturbed electronic gradient vector elements $\eta_{ia,\zeta} = \braket{i|\hat\eta_\zeta|a}$ are elements of the expectation value matrix corresponding to the perturbation (e.g., when the perturbation is an electric field, $\hat\eta$ corresponds to the dipole moment operator).
 
 In the rest of this development a **global hybrid** density functional is assumed,
 
@@ -118,7 +118,7 @@ $$\begin{aligned}
 &B_{ia,jb} = 2\,(ia|bj) - a_x\,(ib|aj) + (1-a_x)\,(ia|f_{XC}|bj),
 \end{aligned}$$
 
-where, $\epsilon_i$ and $\epsilon_a$ are orbital energies, $a_x$ is the amount of non-local Fock exchange, $(ia|jb)$, $(ia|bj)$, and $(ib|aj)$ are exchange-type and $(ij|ab)$ Coulomb-type two-electron integrals, $(ia|f_{XC}|jb)$ and $(ia|f_{XC}|bj)$ are responses of the exchange-correlation functional.
+where, $\varepsilon_i$ and $\varepsilon_a$ are orbital energies, $a_x$ is the amount of non-local Fock exchange, $(ia|jb)$, $(ia|bj)$, and $(ib|aj)$ are exchange-type and $(ij|ab)$ Coulomb-type two-electron integrals, $(ia|f_{XC}|jb)$ and $(ia|f_{XC}|bj)$ are responses of the exchange-correlation functional.
 
 To solve this problem, Eq. (3) can be turned into a linear equation of the form:
     
@@ -131,12 +131,12 @@ $$[(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}]\,[\mathbf x
 
     $$\mathbf L(\omega)\,\mathbf u_{\zeta}(\omega) = -2\mathbf\eta_\zeta,$$
     
-    where $\mathbf L(\omega) = (\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}$ and $\mathbf u_{\zeta}(\omega)  = \mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)$, and which is solved using any of the usual methods for linear systems.
-    Since, from Eq. (3),
+    where $\mathbf L(\omega) = (\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}$ and $\mathbf u_{\zeta}(\omega)  = \mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)$, and which is solved using any of the usual methods for linear systems (worst case scenario: $\mathbf u_\zeta(\omega) = -2\mathbf L^{-1}(\omega)\,\eta_\zeta$).
+    Then, since, from Eq. (3),
     
     $$\mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega) = \omega\,(\mathbf A-\mathbf B)^{-1}\,[\mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)],$$
     
-    then one can define $$\mathbf v_{\zeta}(\omega)$ as:
+    one can define $\mathbf v_{\zeta}(\omega)$ as:
 
     $$\mathbf v_{\zeta}(\omega)  =\mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega) =  \omega\,(\mathbf A-\mathbf B)^{-1}\,\mathbf u_{\zeta}(\omega),$$
     
@@ -198,7 +198,7 @@ y_{ai,\zeta}(\omega) &= \sum_{\wp} \eta_{ia,\zeta}\,(x^{\omega_\wp}_{ia} + y^{\o
 \end{aligned}$$
 
 where these expression involves a summation over all $\{\omega_\wp\}$ excited states.
-These representation leads to simplification when taking residue of response functions.
+These representations lead to simplification when taking residue of response functions.
 
 ## The simplified approaches to TD-DFT
 
@@ -215,10 +215,10 @@ Then, using those approximated $\mathbf A'$ and $\mathbf B'$ matrices, the linea
 The truncation of the CI space is done in three steps:
 
 1. An active MO space is defined by $\varepsilon_p \in [\varepsilon_{LUMO}-E_{w}, \varepsilon_{HOMO}+E_{w}]$, with $E_w = 2\,(1+0.8a_x)\,E_{thr}$.
-2. From this active space, primary $i\to a$ configuration state functions (P-CSFs) are selected, for which $A_{ia,ia} < E_{thr}$.
-3. Then, from CSFs $j\to b$ for which $A_{jb,jb} > E_{thr}$, a set of secondary CSFs (S-CSFs), for which $E^{(2)}_{jb} > E^{(2)}_{thr}$ is build (typically, $E^{(2)}_{thr} = 10^{-4}$). Other CSFs are discarded.
+2. From this active space, primary $\Psi_i^a$ configuration state functions (P-CSFs) are selected, for which $A_{ia,ia} < E_{thr}$.
+3. Then, from CSFs $\Psi_j^b$ for which $A_{jb,jb} > E_{thr}$, a set of secondary CSFs (S-CSFs), for which $E^{(2)}_{jb} > E^{(2)}_{thr}$ is build (typically, $E^{(2)}_{thr} = 10^{-4}$). Other CSFs are discarded.
 
-The selection of S-CSFs is based on a perturbative approach, where $E^{(2)}_{jb}$ measure the cumulative perturbative contributions of a given S-CSF $j\to b$ to all the P-CSFs:
+The selection of S-CSFs is based on a perturbative approach, where $E^{(2)}_{jb}$ measure the cumulative perturbative contributions of a given S-CSF $\Psi_j^b$ to all the P-CSFs $\Psi_i^a$:
 
 $$E^{(2)}_{jb} = \sum_{ia}^{\text{P-CSFs}} \frac{|A_{ia,jb}|^2}{A_{jb,jb}-A_{ia,ia}}.$$
 
@@ -317,7 +317,7 @@ where $Z_A$ and $\vec r_A$ are the charge and position of nuclei $A$, respective
 The electronic dipole moment, $\vec\mu_e$, is an expectation value of the wavefunction.
 The electric dipole moment matrix elements (in AO basis) are computed as:
 
-$$D_{\mu\nu} = -\,\braket{\mu|\vec{r}-\vec R_0|\nu},$$
+$$D_{\mu\nu} = \braket{\mu|\hat\mu|\nu} = -\,\braket{\mu|\vec{r}-\vec R_0|\nu},$$
 
 where the dipole moment integral have been multiplied by the value of the electronic charge (-1 in atomic units) and $\vec R_0$ is the origin.
 The electronic dipole moment is computed via:
@@ -339,11 +339,11 @@ Things that can be obtained thanks to the amplitude/linear response vectors.
     Linear and quadratic response functions are generally noted $\braket{\braket{\hat A; \hat B}}_{\omega_B}$ and $\braket{\braket{\hat A; \hat B, \hat C}}_{\omega_B,\omega_C}$, which describes how the expectation value of $\hat A$ (at frequency $\omega_A = -\omega_B - \omega_C$) responds to a set of perturbation to first and second order in perturbation.
     Residue of the response functions provide information on the (excited states of the) unperturbed system.
 
-    For example, the linear response function might be extended tothe fthe following spectral representation:
+    For example, the linear response function might be extended in the following spectral representation:
 
     $$\braket{\braket{\hat A; \hat B}}_{\omega_B} = \sum_\wp \frac{\braket{0|\hat A|\wp}\braket{\wp|\hat B|0}}{\omega_B-\omega_\wp} + \frac{\braket{0|\hat B|\wp}\braket{\wp|\hat A|0}}{\omega_A+\omega_\wp},$$
 
-    and a single residue might be:
+    and a corresponding single residue might be:
 
     $$\lim_{\omega_B\to\omega_\wp} (\omega_B-\omega_\wp)\,\braket{\braket{\hat A; \hat B}}_{\omega_B} = \braket{0|\hat A|\wp}\braket{\wp|\hat B|0},$$
 
@@ -352,15 +352,19 @@ Things that can be obtained thanks to the amplitude/linear response vectors.
 
 ### Polarizability
 
-The dynamic polarizability tensor elements are obtained by:
+The dynamic (electric) polarizability tensor elements are defined:
 
-$$\alpha_{\zeta\xi}(-\omega;\omega) = -\braket{\braket{\hat\mu_\zeta;\hat\mu_\xi}}_\omega = -2\,\sum_{ia}^{CSF} \mu_{ia,\zeta}\,[x_{ia,\xi}(\omega)+y_{ia,\xi}(\omega)].$$
+$$\alpha_{\zeta\sigma}(-\omega;\omega) = -\braket{\braket{\hat\mu_\zeta;\hat\mu_\sigma}}_\omega = -2\,\sum_{ia}^{CSF} \mu_{ia,\zeta}\,[x_{ia,\sigma}(\omega)+y_{ia,\sigma}(\omega)].$$
 
-### Transition dipole moment and oscillator strength
+### Ground to excited transition dipole moment (and oscillator strength)
 
-The transition dipole moment (in the dipole length formalism) for excitation $\wp$, associated with energy $\omega$ and amplitude vectors $\mathbf x^\omega$ and $\mathbf y^\omega$ is given by:
+From the single residue of the electric polarizability, 
 
-$$\mu_{0\wp,\zeta} =  \sqrt{2}\,\sum_{ia}^{CFS} \vec\mu_{ia,\zeta}\,(x^\omega_{ia}+y^\omega_{ia}),$$
+$$\lim_{\omega\to\omega_\wp} (\omega-\omega_\wp)\,\braket{\braket{\mu_\zeta;\mu_\sigma}}_\omega =  \braket{0|\hat\mu_\zeta|\wp}\,\braket{\wp|\hat\mu_\sigma|0},$$
+
+the transition dipole moment elements (in the dipole length formalism) for excitation $\wp$, associated with energy $\omega$ are given by:
+
+$$\mu_{0\wp,\zeta} = \braket{0|\hat\mu_\zeta|\wp} =  \sqrt{2}\,\sum_{ia}^{CSF} \vec\mu_{ia,\zeta}\,(x^\omega_{ia}+y^\omega_{ia}),$$
 
 where $\zeta$ is a cartesian direction and the $\sqrt 2$ factor is required for singlet excitations (it is 0 for triplet).
 The associated [oscillator strength](https://en.wikipedia.org/wiki/Oscillator_strength) is defined by:
