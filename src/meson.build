@@ -8,5 +8,6 @@ srcs += files(
     'utils/fchk_parser.c',
     'utils/lexer.c',
     'utils/matrix.c',
+    'utils/permutations.c',
     'wavefunction.c',
 )

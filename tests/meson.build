@@ -24,6 +24,7 @@ tests_to_run = [
     'response',
     'utils_base_parser',
     'utils_fchk_parser',
+    'utils_permutations',
     'wavefunction',
 ]
 

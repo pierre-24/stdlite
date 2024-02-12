@@ -168,3 +168,11 @@ groups:
           ```c
           #include <stdlite/matrix.h>
           ```
+      - name: permutations
+        title: Permutations
+        description: |
+          Deal with permutations.
+          
+          ```c
+          #include <stdlite/utils/permutations.h>
+          ```
