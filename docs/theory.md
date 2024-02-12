@@ -184,11 +184,21 @@ Solving this problem is done using two approaches.
 
 === "Tamm-Dancoff approximation (TDA)"
 
-    The [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) ($\mathbf B = \mathbf 0$) leads to:
+    The [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) ($\mathbf B = \mathbf 0$ and thus $\mathbf y^\omega = 0$) leads to:
     
     $$\mathbf A\,\mathbf x^\omega = \omega\,\mathbf x^\omega,$$
     
     where the $\mathbf x^\omega$ contains the coefficient associated to each $i \to a$ transition (see [below](#transition-dipole-moment-and-oscillator-strength)).
+
+The amplitude vectors are linked to their linear response counterparts through the following spectral representation:
+
+$$\begin{aligned}
+x_{ai,\zeta}(\omega) &= \sum_{\wp} \eta_{ia,\zeta}\,(x^{\omega_\wp}_{ia} + y^{\omega_\wp}_{ia})\,\left[\frac{x_{ia}^{\omega_\wp}}{\omega-\omega_\wp}-\frac{y_{ia}^{\omega_\wp}}{\omega+\omega_\wp}\right],\\
+y_{ai,\zeta}(\omega) &= \sum_{\wp} \eta_{ia,\zeta}\,(x^{\omega_\wp}_{ia} + y^{\omega_\wp}_{ia})\,\left[\frac{y_{ia}^{\omega_\wp}}{\omega-\omega_\wp}-\frac{x_{ia}^{\omega_\wp}}{\omega+\omega_\wp}\right],
+\end{aligned}$$
+
+where these expression involves a summation over all $\{\omega_\wp\}$ excited states.
+These representation leads to simplification when taking residue of response functions.
 
 ## The simplified approaches to TD-DFT
 
@@ -320,9 +330,25 @@ $$\vec\mu_e = \sum^{MO}_p n_p\,\vec\mu_{pp},$$
 
 where $\vec\mu_{pp}$ is a shorthand for $D^{MO}_{pp}$.
 
-## Properties
+## Responses (properties)
 
 Things that can be obtained thanks to the amplitude/linear response vectors.
+
+!!! note
+    
+    Linear and quadratic response functions are generally noted $\braket{\braket{\hat A; \hat B}}_{\omega_B}$ and $\braket{\braket{\hat A; \hat B, \hat C}}_{\omega_B,\omega_C}$, which describes how the expectation value of $\hat A$ (at frequency $\omega_A = -\omega_B - \omega_C$) responds to a set of perturbation to first and second order in perturbation.
+    Residue of the response functions provide information on the (excited states of the) unperturbed system.
+
+    For example, the linear response function might be extended tothe fthe following spectral representation:
+
+    $$\braket{\braket{\hat A; \hat B}}_{\omega_B} = \sum_\wp \frac{\braket{0|\hat A|\wp}\braket{\wp|\hat B|0}}{\omega_B-\omega_\wp} + \frac{\braket{0|\hat B|\wp}\braket{\wp|\hat A|0}}{\omega_A+\omega_\wp},$$
+
+    and a single residue might be:
+
+    $$\lim_{\omega_B\to\omega_\wp} (\omega_B-\omega_\wp)\,\braket{\braket{\hat A; \hat B}}_{\omega_B} = \braket{0|\hat A|\wp}\braket{\wp|\hat B|0},$$
+
+    which provides access to trasition matrix elements $\braket{0|\hat A|\wp}$ between the ground state and an excited state $\wp$. 
+    In practice, such residues are thus evaluated thanks to amplitude vectors.
 
 ### Polarizability
 
