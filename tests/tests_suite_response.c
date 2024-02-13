@@ -27,7 +27,7 @@ void test_response_TDA_casida_ok() {
     ASSERT_STDL_OK(stdl_response_TDA_casida(ctx, ctx->ncsfs, energies, amplitudes));
 
     // replace A, which has now been severely damaged.
-    STDL_FREE_ALL(ctx->A);
+    free(ctx->A);
     ctx->A = Ap;
 
     // request the 5 first excitations
@@ -71,7 +71,7 @@ void test_response_RPA_casida_ok() {
     float* Y = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Y);
 
-    ASSERT_STDL_OK(stdl_response_RPA_casida(ctx, ctx->ncsfs, energies, X, Y));
+    ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, energies, X, Y));
 
     for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
         // in this case, the eigenvalues are more or less the diagonal elements of A.

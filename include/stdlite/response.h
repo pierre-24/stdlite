@@ -4,7 +4,7 @@
 #include <stdlite/context.h>
 
 /**
- * `ABSTOL` parameter for the precision of eigenvalue with bisect algorithm.
+ * `ABSTOL` parameter for the precision of eigenvalue in bisect algorithms used by LAPACK.
  * @ingroup response
  */
 #ifndef STDL_RESPONSE_EIGV_ABSTOL
@@ -42,11 +42,11 @@ int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
  * @return error code
  * @ingroup response
  */
-int stdl_response_RPA_casida(stdl_context *ctx, size_t nexci, float *e, float *X, float *Y);
+int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X, float *Y);
 
 
 /**
- * Create $-2\eta$, the perturbed electronic gradient matrix to be used in linear response equation (`stdl_response_RPA_linear()`).
+ * Create $-2\eta$, the perturbed electronic gradient matrix to be used in linear response equation (`stdl_response_TD_linear()`).
  *
  * @param ctx a valid context, with `ctx->ncsfs > 0`.
  * @param dim dimension of the expectation value `eta_MO`
@@ -59,7 +59,7 @@ int stdl_response_perturbed_gradient(stdl_context* ctx, size_t dim, double* eta_
 
 
 /**
- * Solve the linear response equation at a `nw` energies $\omega_i$ to get response vectors ($\mathbf x^{\omega_i}$, $\mathbf y^{\omega_i}$).
+ * Solve the linear response equation at `nw` energies $\{\omega_i\}$  to get the corresponding response vectors ($\mathbf x^{\omega_i}$, $\mathbf y^{\omega_i}$).
  *
  * @warning the `ctx->A` and `ctx->B` matrices are irreversibly modified in the process.
  *
@@ -73,6 +73,21 @@ int stdl_response_perturbed_gradient(stdl_context* ctx, size_t dim, double* eta_
  * @return error code
  * @ingroup response
  */
-int stdl_response_RPA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, float *egrad, float *X, float *Y);
+int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, float *egrad, float *X, float *Y);
+
+/**
+ * Solve the linear response equation at`nw` energies $\{\omega_i\}$ within the Tamm-Dancoff approximation, to get the corresponding response vector ($\mathbf x^{\omega_i}$).
+ *
+ * @param ctx a valid context, with `ctx->ncsfs > 0`.
+ * @param nw number of energies at which linear response should be computed
+ * @param w `float[nw]` energies at which linear response should be computed
+ * @param ndim dimension of the electronic gradient
+ * @param egrad `float[ncsfs,ndim]` $-2\eta$, the perturbed electronic gradient in each dimension.
+ * @param[out] X `float[nw,ncsfs,ndim]` response vector X for each energy, in each dimension.
+ * @return error code
+ * @ingroup response
+ */
+int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, float *egrad, float *X);
+
 
 #endif //STDLITE_RESPONSE_H

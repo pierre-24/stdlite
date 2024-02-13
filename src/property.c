@@ -8,7 +8,7 @@
 #include "stdlite/utils/matrix.h"
 
 
-int stdl_property_electric_polarizability(stdl_context* ctx, double* dips_MO, float* X, float* Y, float* alpha) {
+int stdl_property_polarizability(stdl_context* ctx, double* dips_MO, float* X, float* Y, float* alpha) {
     assert(ctx != NULL && dips_MO != NULL && X != NULL && alpha != NULL);
 
     size_t nvirt = ctx->nmo - ctx->nocc;
@@ -36,6 +36,13 @@ int stdl_property_electric_polarizability(stdl_context* ctx, double* dips_MO, fl
         }
     }
 
+    return STDL_ERR_OK;
+}
+
+int stdl_property_mean_polarizability(float * alpha, float* mean)  {
+    assert(alpha != NULL && mean != NULL);
+
+    *mean = 1.f / 3 * (alpha[STDL_MATRIX_SP_IDX(0, 0)] + alpha[STDL_MATRIX_SP_IDX(1, 1)] + alpha[STDL_MATRIX_SP_IDX(2, 2)]);
     return STDL_ERR_OK;
 }
 
