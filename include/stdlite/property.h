@@ -57,7 +57,7 @@ int stdl_property_print_excitations_contribs(stdl_context *ctx, size_t nexci, fl
 int stdl_property_polarizability(stdl_context* ctx, double* dips_MO, float* X, float* Y, float* alpha);
 
 /**
- * Compute the mean polarizability
+ * Compute the mean polarizability.
  *
  * @param alpha `float[STDL_MATRIX_SP_SIZE(3)]` the polarizability tensor
  * @param[out] mean the mean polarizability
