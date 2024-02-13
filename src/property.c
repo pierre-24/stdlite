@@ -7,6 +7,38 @@
 #include "stdlite/helpers.h"
 #include "stdlite/utils/matrix.h"
 
+
+int stdl_property_electric_polarizability(stdl_context* ctx, double* dips_MO, float* X, float* Y, float* alpha) {
+    assert(ctx != NULL && dips_MO != NULL && X != NULL && alpha != NULL);
+
+    size_t nvirt = ctx->nmo - ctx->nocc;
+
+    for (int zeta = 0; zeta < 3; ++zeta) {
+        for (int sigma = 0; sigma < 3; ++sigma) {
+            alpha[zeta * 3 + sigma] = .0f;
+        }
+    }
+
+    float s, d;
+
+    for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
+        size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
+
+        for (int zeta = 0; zeta < 3; ++zeta) {
+            d = (float) dips_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)];
+            for (int sigma = 0; sigma <= zeta; ++sigma) {
+                s = X[lia * 3 + sigma];
+                if(Y != NULL)
+                    s += Y[lia * 3 + sigma];
+
+                alpha[STDL_MATRIX_SP_IDX(zeta, sigma)] += -2.f * d * s;
+            }
+        }
+    }
+
+    return STDL_ERR_OK;
+}
+
 int stdl_property_transition_dipoles(stdl_context *ctx, size_t nexci, double* dips_MO, float* X, float* Y, float * tdips) {
     assert(ctx != NULL && nexci > 0 && dips_MO != NULL && X != NULL && tdips != NULL);
 

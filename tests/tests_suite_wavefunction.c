@@ -1,14 +1,11 @@
 #include <string.h>
-#include <unistd.h>
-#include <lapacke.h>
+#include <cblas.h>
 
 #include <stdlite/utils/fchk_parser.h>
 #include <stdlite/utils/matrix.h>
 #include <stdlite/helpers.h>
 
 #include "tests_suite.h"
-
-#include <cblas.h>
 
 // check that the data are correct by computing the Mulliken population.
 // It should sum up to the number of electrons (i.e., 2 * wf->nocc).
@@ -69,23 +66,6 @@ void compute_population_and_check(stdl_wavefunction* wf, int sym) {
 
     free(mulliken_pop);
     free(P);
-}
-
-// Read a FCHK file and extract both basis set and wavefunction
-void read_fchk(char* fchk_path, stdl_wavefunction** wf, stdl_basis** bs) {
-
-    FILE* f = fopen(fchk_path, "r");
-    TEST_ASSERT_NOT_NULL(f);
-
-    stdl_lexer* lx = NULL;
-    ASSERT_STDL_OK(stdl_lexer_new(f, &lx));
-    ASSERT_STDL_OK(stdl_fchk_parser_skip_intro(lx));
-
-    ASSERT_STDL_OK(stdl_fchk_parser_extract(lx, wf, bs));
-
-    ASSERT_STDL_OK(stdl_lexer_delete(lx));
-
-    fclose(f);
 }
 
 void test_content_ok() {

@@ -25,6 +25,7 @@ tests_to_run = [
     'utils_base_parser',
     'utils_fchk_parser',
     'utils_permutations',
+    'property',
     'wavefunction',
 ]
 
@@ -34,7 +35,7 @@ foreach t: tests_to_run
     test('tests_suite_' + t,
         executable(
             'tests_suite_' +  t,
-            sources: [source_file, runner_gen.process(source_file)],
+            sources: [source_file, runner_gen.process(source_file), 'helpers.c'],
             dependencies: tests_dep,
             install: false,
             build_by_default: false,

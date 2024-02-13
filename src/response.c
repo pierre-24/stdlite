@@ -242,8 +242,8 @@ int stdl_response_RPA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
         }
     }
 
-    stdl_matrix_sge_print(nw * ctx->ncsfs, ndim, X, "X");
-    stdl_matrix_sge_print(nw * ctx->ncsfs, ndim, Y, "Y");
+    // stdl_matrix_sge_print(nw * ctx->ncsfs, ndim, X, "X");
+    // stdl_matrix_sge_print(nw * ctx->ncsfs, ndim, Y, "Y");
 
     STDL_FREE_ALL(L, ipiv);
 

@@ -4,7 +4,8 @@
 #include <stdlib.h>
 
 /**
- * Chained list of permutations.
+ * Sequence of permutations.
+ * Implemented as a linked list.
  * @ingroup permutations
  */
 struct stdl_permutation_ {
