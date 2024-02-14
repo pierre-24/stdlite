@@ -147,9 +147,9 @@ where, $\varepsilon_i$ and $\varepsilon_a$ are orbital energies, $a_x$ is the am
 
     The [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) ($\mathbf B = \mathbf 0$ and thus $\mathbf y_\zeta(\omega) = 0$) leads to:
     
-    $$[\mathbf{A} - \omega^2\,\mathbf{A}^{-1}]\,\mathbf x_\zeta(\omega) = -2\mathbf\eta_\zeta,$$
+    $$[\mathbf{A} - \omega\,\mathbf 1]\,\mathbf x_\zeta(\omega) = -\mathbf\eta_\zeta,$$
 
-    which is a simple linear equation of the form $\mathbf L'(\omega)\,\mathbf x_{\zeta}(\omega) = -2\mathbf\eta_\zeta$, with $\mathbf L'(\omega) = \mathbf{A} - \omega^2\,\mathbf{A}^{-1}$, to solve.
+    which is a simple linear equation to solve.
 
 
 ### Excitations
