@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "tests_suite.h"
+#include <stdlite/utils/matrix.h>
 
 
 void read_fchk(char* fchk_path, stdl_wavefunction** wf, stdl_basis** bs) {
@@ -17,4 +18,23 @@ void read_fchk(char* fchk_path, stdl_wavefunction** wf, stdl_basis** bs) {
     ASSERT_STDL_OK(stdl_lexer_delete(lx));
 
     fclose(f);
+}
+
+void make_dipoles_MO(stdl_wavefunction* wf, stdl_basis* bs, stdl_context* ctx, double* dipoles_sp_MO) {
+    // compute dipole integrals and convert to MO
+    double* dipoles_sp_AO = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipoles_sp_AO);
+
+    ASSERT_STDL_OK(stdl_basis_dsp_dipole(bs, dipoles_sp_AO));
+
+    for (int cpt = 0; cpt < 3; ++cpt)
+        ASSERT_STDL_OK(stdl_wavefunction_dsp_ao_to_dsp_mo(
+                wf->nao,
+                ctx->nmo,
+                ctx->C_orig,
+                dipoles_sp_AO + cpt * STDL_MATRIX_SP_SIZE(wf->nao),
+                dipoles_sp_MO + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo))
+        );
+
+    free(dipoles_sp_AO);
 }

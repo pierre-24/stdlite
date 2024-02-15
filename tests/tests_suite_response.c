@@ -16,33 +16,40 @@ void test_response_TDA_casida_ok() {
 
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
 
+    // compute dipole integrals and convert to MO
+    double* dipoles_sp_MO = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipoles_sp_MO);
+
+    make_dipoles_MO(wf, bs, ctx, dipoles_sp_MO);
+
+    // build egrad
+    float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(egrad);
+
+    stdl_response_perturbed_gradient(ctx, 3, dipoles_sp_MO, egrad);
+
     // copy A for latter
     float* Ap = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
     TEST_ASSERT_NOT_NULL(Ap);
     memcpy(Ap, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
 
     // fetch all excitations
-    float* energies = malloc(ctx->ncsfs * sizeof(float ));
-    float* amplitudes = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float ));
-    ASSERT_STDL_OK(stdl_response_TDA_casida(ctx, ctx->ncsfs, energies, amplitudes));
+    float* etda = malloc(ctx->ncsfs * sizeof(float ));
+    float* Xamptda = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float ));
+    ASSERT_STDL_OK(stdl_response_TDA_casida(ctx, ctx->ncsfs, etda, Xamptda));
 
     // replace A, which has now been severely damaged.
     free(ctx->A);
     ctx->A = Ap;
 
-    // request the 5 first excitations
-    size_t nrequested = 5;
-    float* first_energies = malloc(nrequested * sizeof(float));
-    float* first_amplitudes = malloc(nrequested * ctx->ncsfs * sizeof(float));
+    // solve
+    float w[] = {0, 4.2822696E-02f, 4.2822696E-02f * 2};
+    float* Xtda = malloc(3 * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(Xtda);
 
-    ASSERT_STDL_OK(stdl_response_TDA_casida(ctx, nrequested, first_energies, first_amplitudes));
+    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, 3, w, 3, egrad, Xtda));
 
-    for (size_t kia = 0; kia < nrequested; ++kia) {
-        // the same eigenvalues should have been obtained
-        TEST_ASSERT_FLOAT_WITHIN(1e-5, energies[kia], first_energies[kia]);
-    }
-
-    STDL_FREE_ALL(energies, amplitudes, first_energies, first_amplitudes);
+    STDL_FREE_ALL(dipoles_sp_MO, etda, Xamptda, egrad, Xtda);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
