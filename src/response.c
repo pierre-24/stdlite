@@ -184,6 +184,9 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
     // compute A+B and A-B
     _make_apb_amb(ctx);
 
+    // stdl_matrix_ssp_print(ctx->ncsfs, ctx->A, "A+B");
+    // stdl_matrix_ssp_print(ctx->ncsfs, ctx->B, "A-B");
+
     // allocate space for the L size of the linear response equation
     float* L = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
     STDL_ERROR_HANDLE_AND_REPORT(L == NULL, return STDL_ERR_MALLOC, "malloc");
@@ -254,7 +257,7 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
 int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, float *egrad, float *X) {
     assert(ctx != NULL && ctx->ncsfs > 0 && nw > 0 && ndim > 0 && egrad != NULL && X != NULL);
 
-    size_t szXY = ctx->ncsfs * ndim;
+    size_t szX = ctx->ncsfs * ndim;
     int err;
 
     // allocate space for the left size of the linear response equation
@@ -272,9 +275,9 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
                 L[STDL_MATRIX_SP_IDX(kia, kjb)] = 2 * ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)] - (kia == kjb ? 2 * w[iw] : 0);
         }
 
-        float *Xi = X + iw * szXY;
+        float *Xi = X + iw * szX;
 
-        // copy egrad in X, to keep it for latter
+        // copy egrad in Xi, to keep it for latter
         memcpy(Xi, egrad, ctx->ncsfs * ndim * sizeof(float ));
 
         // solve the problem
