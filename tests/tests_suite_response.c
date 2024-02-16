@@ -88,16 +88,16 @@ void test_response_TDA_ok() {
 
     // solve linear response
     size_t nw = 3;
-    float w[] = {0, 4.2822696E-02f, 4.2822696E-02f * 2};
+    float w[] = {0, 4.282270E-2f, 4.282270E-2f * 2};
 
-    float* Xtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    float* Xtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(Xtda);
 
     ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, egrad, Xtda));
 
     // stdl_matrix_sge_print(ctx->ncsfs, 3, Xtda + 2 * 3 * ctx->ncsfs, "X");
 
-    float* reXtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    float* reXtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(reXtda);
 
     for (size_t iexci = 0; iexci < nw; ++iexci) {
@@ -140,10 +140,10 @@ void test_response_TD_ok() {
     float* etd = malloc(ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(etd);
 
-    float* Xamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float ));
+    float* Xamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(Xamptd);
 
-    float* Yamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float ));
+    float* Yamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(Yamptd);
 
     ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, etd, Xamptd, Yamptd));
@@ -181,7 +181,7 @@ void test_response_TD_ok() {
 
     // solve linear response
     size_t nw = 3;
-    float w[] = {0, 4.2822696E-02f, 4.2822696E-02f * 2};
+    float w[] = {0, 4.282270E-2f, 4.282270E-2f * 2};
 
     float* Xtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Xtd);
@@ -194,10 +194,10 @@ void test_response_TD_ok() {
     // stdl_matrix_sge_print(ctx->ncsfs, 3, Xtd + 1 * 3 * ctx->ncsfs, "X");
     // stdl_matrix_sge_print(ctx->ncsfs, 3, Ytd + 1 * 3 * ctx->ncsfs, "Y");
 
-    float* reXtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    float* reXtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(reXtd);
 
-    float* reYtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    float* reYtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(reYtd);
 
     for (size_t iexci = 0; iexci < nw; ++iexci) {

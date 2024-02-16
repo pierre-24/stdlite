@@ -33,23 +33,11 @@ void test_property_print_excitations_ok() {
     TEST_ASSERT_NOT_NULL(Ap);
     memcpy(Ap, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
 
-    // compute the dipole moments
-    double* dipoles_sp_AO = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
-    TEST_ASSERT_NOT_NULL(dipoles_sp_AO);
-
-    ASSERT_STDL_OK(stdl_basis_dsp_dipole(bs, dipoles_sp_AO));
-
-    double* dipoles_sp_MO = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+    // compute dipole integrals and convert to MO
+    double* dipoles_sp_MO = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_sp_MO);
 
-    for (int cpt = 0; cpt < 3; ++cpt)
-        ASSERT_STDL_OK(stdl_wavefunction_dsp_ao_to_dsp_mo(
-                wf->nao,
-                ctx->nmo,
-                ctx->C_orig,
-                dipoles_sp_AO + cpt * STDL_MATRIX_SP_SIZE(wf->nao),
-                dipoles_sp_MO + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo))
-        );
+    make_dipoles_MO(wf, bs, ctx, dipoles_sp_MO);
 
     // request all excitations
     size_t nrequested =  ctx->ncsfs;
@@ -84,12 +72,12 @@ void test_property_print_excitations_ok() {
 
     ASSERT_STDL_OK(stdl_property_print_excitations(ctx, nrequested, etd, tdipstd));
 
-    STDL_FREE_ALL(dipoles_sp_MO, dipoles_sp_AO, etda, Xtda, tdipstda, etd, Xtd, Ytd, tdipstd);
+    STDL_FREE_ALL(dipoles_sp_MO, etda, Xtda, tdipstda, etd, Xtd, Ytd, tdipstd);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
 
-void test_polarizability_ok() {
+void test_polarizability_TD_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
@@ -105,39 +93,39 @@ void test_polarizability_ok() {
     TEST_ASSERT_EQUAL_INT(ctx->ncsfs, 10);
 
     // compute dipole integrals and convert to MO
-    double* dipoles_sp_MO = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
-    TEST_ASSERT_NOT_NULL(dipoles_sp_MO);
+    double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipoles_mat);
 
-    make_dipoles_MO(wf, bs, ctx, dipoles_sp_MO);
+    make_dipoles_MO(wf, bs, ctx, dipoles_mat);
 
     // build egrad
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(egrad);
 
-    stdl_response_perturbed_gradient(ctx, 3, dipoles_sp_MO, egrad);
+    stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
 
     // solve response
-    float* X = malloc(2 * 3 * ctx->ncsfs * sizeof(float ));
+    size_t nw = 3;
+    float w[] = {0, 4.282270E-2f, 4.282270E-2f * 2};
+
+    float* X = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(X);
 
-    float* Y = malloc(2 * 3 * ctx->ncsfs * sizeof(float ));
+    float* Y = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Y);
 
-    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, 2, (float[]) {0, 4.2822696E-02}, 3, egrad, X, Y));
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, egrad, X, Y));
 
     // compute polarizabilities
-    /*float alpha_static[6], alpha_dynamic[6], static_mean, dynamic_mean;
-    stdl_property_polarizability(ctx, dipoles_sp_MO, X, Y, alpha_static);
-    stdl_property_mean_polarizability(alpha_static, &static_mean);
-    TEST_ASSERT_DOUBLE_WITHIN(1e-2, 4.06, static_mean);
+    float alpha[6], alpha_iso, result[] = {4.061f, 4.103f, 4.236f};
 
-    stdl_property_polarizability(ctx, dipoles_sp_MO, X + 3 * ctx->ncsfs, Y + 3 * ctx->ncsfs, alpha_dynamic);
-    stdl_property_mean_polarizability(alpha_dynamic, &dynamic_mean);
-    TEST_ASSERT_DOUBLE_WITHIN(1e-2, 4.102, dynamic_mean);*/
+    for (size_t iw = 0; iw < nw; ++iw) {
+        stdl_property_polarizability(ctx, dipoles_mat, X + iw * 3 * ctx->ncsfs, Y + iw * 3 * ctx->ncsfs, alpha);
+        stdl_property_mean_polarizability(alpha, &alpha_iso);
+        TEST_ASSERT_FLOAT_WITHIN(1e-2, result[iw], alpha_iso);
+    }
 
-    // stdl_matrix_ssp_print(3, alpha_dynamic, "a(-w;w)");
-
-    STDL_FREE_ALL(dipoles_sp_MO, egrad, X, Y);
+    STDL_FREE_ALL(dipoles_mat, egrad, X, Y);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
@@ -159,66 +147,36 @@ void test_polarizability_TDA_ok() {
     TEST_ASSERT_EQUAL_INT(ctx->ncsfs, 10);
 
     // compute dipole integrals and convert to MO
-    double* dipoles_sp_MO = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
-    TEST_ASSERT_NOT_NULL(dipoles_sp_MO);
+    double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipoles_mat);
 
-    make_dipoles_MO(wf, bs, ctx, dipoles_sp_MO);
+    make_dipoles_MO(wf, bs, ctx, dipoles_mat);
 
     // build egrad
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(egrad);
 
-    stdl_response_perturbed_gradient(ctx, 3, dipoles_sp_MO, egrad);
-
-    // copy A for latter
-    float* Ap = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Ap);
-    memcpy(Ap, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+    stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
 
     // solve response
-    float* X = malloc(2 * 3 * ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(X);
-
-    float* Y = malloc(2 * 3 * ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(Y);
-
-    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, 2, (float[]) {0, 4.2822696E-02 * 2}, 3, egrad, X, Y));
-
-    // compute polarizability
-    float alpha_static[6], alpha_dynamic[6], static_mean, dynamic_mean;
-
-    /*stdl_property_polarizability(ctx, dipoles_sp_MO, X, Y, alpha_static);
-    stdl_property_mean_polarizability(alpha_static, &static_mean);
-    stdl_property_polarizability(ctx, dipoles_sp_MO, X + 3 * ctx->ncsfs, Y + 3 * ctx->ncsfs, alpha_dynamic);
-    stdl_property_mean_polarizability(alpha_dynamic, &dynamic_mean);*/
-
-    // stdl_matrix_ssp_print(3, alpha_dynamic, "a(-w;w)");
-
-    // replace A
-    free(ctx->A);
-    ctx->A = Ap;
+    size_t nw = 3;
+    float w[] = {0, 4.282270E-2f, 4.282270E-2f * 2};
 
     // solve
-    float* Xtda = malloc(2 * 3 * ctx->ncsfs * sizeof(float ));
+    float* Xtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Xtda);
 
-    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, 2, (float[]) {0, 4.2822696E-02 * 2}, 3, egrad, Xtda));
+    // compute polarizabilities
+    float alpha[6], alpha_iso, result[] = {2.064f, 2.283f, 2.566f};
+    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, egrad, Xtda));
 
-    // compute polarizability
-    /*float alpha_static_tda[6], alpha_dynamic_tda[6], static_mean_tda, dynamic_mean_tda;
-    stdl_property_polarizability(ctx, dipoles_sp_MO, Xtda, NULL, alpha_static_tda);
-    stdl_property_mean_polarizability(alpha_static_tda, &static_mean_tda);
-    stdl_property_polarizability(ctx, dipoles_sp_MO, Xtda + 3 * ctx->ncsfs, NULL, alpha_dynamic_tda);
-    stdl_property_mean_polarizability(alpha_dynamic_tda, &dynamic_mean_tda);*/
+    for (size_t iw = 0; iw < nw; ++iw) {
+        stdl_property_polarizability(ctx, dipoles_mat, Xtda + iw * 3 * ctx->ncsfs, NULL, alpha);
+        stdl_property_mean_polarizability(alpha, &alpha_iso);
+        TEST_ASSERT_FLOAT_WITHIN(1e-2, result[iw], alpha_iso);
+    }
 
-    //printf("static: %f → %f\n", static_mean, static_mean_tda);
-    //printf("dynamic: %f → %f\n", dynamic_mean, dynamic_mean_tda);
-
-    // stdl_matrix_ssp_print(3, alpha_dynamic_tda, "a(-w;w)");
-
-    // TEST_ASSERT_FLOAT_WITHIN(1e-1, dynamic_mean / static_mean, dynamic_mean_tda / static_mean_tda);
-
-    STDL_FREE_ALL(dipoles_sp_MO, egrad, X, Y, Xtda);
+    STDL_FREE_ALL(dipoles_mat, egrad, Xtda);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
