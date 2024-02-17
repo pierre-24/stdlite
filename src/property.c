@@ -13,20 +13,16 @@ int stdl_property_polarizability(stdl_context* ctx, double* dips_MO, float* X, f
 
     size_t nvirt = ctx->nmo - ctx->nocc;
 
-    for (int zeta = 0; zeta < 3; ++zeta) {
-        for (int sigma = 0; sigma < 3; ++sigma) {
-            alpha[zeta * 3 + sigma] = .0f;
-        }
-    }
-
     float s, d;
 
-    for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
-        size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
+    for (int zeta = 0; zeta < 3; ++zeta) {
+        for (int sigma = 0; sigma <= zeta; ++sigma) {
+            alpha[STDL_MATRIX_SP_IDX(zeta, sigma)] = .0f;
 
-        for (int zeta = 0; zeta < 3; ++zeta) {
-            d = (float) dips_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)];
-            for (int sigma = 0; sigma <= zeta; ++sigma) {
+            for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
+                size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
+
+                d = (float) dips_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)];
                 s = X[lia * 3 + sigma];
                 if(Y != NULL)
                     s += Y[lia * 3 + sigma];

@@ -177,13 +177,13 @@ Solving this problem is done using two approaches.
 
     Eq. (4) can be rewritten in an true eigenvalue problem, namely:
     
-    $$(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}+\mathbf{B})\,(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,\mathbf{Z} = \omega^2\,\mathbf{Z}, \text{ with } \mathbf{Z} = (\mathbf{A}-\mathbf{B})^{-\frac{1}{2}} (\mathbf x^\omega + \mathbf y^\omega).$$
+    $$(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}+\mathbf{B})\,(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,\mathbf{z}^\omega = \omega^2\,\mathbf{z}^\omega, \text{ with } \mathbf{z}^\omega = (\mathbf{A}-\mathbf{B})^{-\frac{1}{2}} (\mathbf x^\omega + \mathbf y^\omega).$$
     
     ??? note "Detailed solution"
 
-        In this case, after $\mathbf Z$ have been obtained, one extract using the following procedure. First, from previous expression, one can obtain:
+        In this case, after $\mathbf z^\omega$ have been obtained, one extract using the following procedure. First, from previous expression, one can obtain:
         
-        $$ \mathbf u^\omega = \mathbf x^\omega + \mathbf y^\omega = \frac{1}{\sqrt\omega}\,(\mathbf A-\mathbf B)^\frac{1}{2}\,\mathbf Z.$$
+        $$ \mathbf u^\omega = \mathbf x^\omega + \mathbf y^\omega = \frac{1}{\sqrt\omega}\,(\mathbf A-\mathbf B)^\frac{1}{2}\,\mathbf z^\omega.$$
         
         Now, since $(\mathbf A + \mathbf B)\,(\mathbf x^\omega+\mathbf y^\omega) = \omega\,(\mathbf x^\omega-\mathbf y^\omega)$ [obtained from Eq. (4)], one has:
         

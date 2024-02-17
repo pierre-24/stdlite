@@ -77,7 +77,7 @@ void test_property_print_excitations_ok() {
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
 
-void test_polarizability_TD_ok() {
+void test_property_polarizability_TD_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
@@ -130,8 +130,97 @@ void test_polarizability_TD_ok() {
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
 
+void test_property_polarizability_TD_SOS_ok() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
 
-void test_polarizability_TDA_ok() {
+    stdl_context* ctx = NULL;
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
+
+    TEST_ASSERT_EQUAL_INT(ctx->nmo,7);
+    TEST_ASSERT_EQUAL_INT(ctx->nocc, 4);
+
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
+    TEST_ASSERT_EQUAL_INT(ctx->ncsfs, 10);
+
+    // copy A&B for latter
+    float* Ap = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+    TEST_ASSERT_NOT_NULL(Ap);
+    memcpy(Ap, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+
+    float* Bp = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+    TEST_ASSERT_NOT_NULL(Bp);
+    memcpy(Bp, ctx->B, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+
+    // fetch excitations
+    float* etd = malloc(ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(etd);
+
+    float* Xamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(Xamptd);
+
+    float* Yamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(Yamptd);
+
+    ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, etd, Xamptd, Yamptd));
+
+    // compute dipole integrals and convert to MO
+    double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipoles_mat);
+
+    make_dipoles_MO(wf, bs, ctx, dipoles_mat);
+
+    // get transition dipoles
+    float* tdipstd = malloc(ctx->ncsfs * 3 * sizeof(float ));
+    stdl_property_transition_dipoles(ctx, ctx->ncsfs, dipoles_mat, Xamptd, Yamptd, tdipstd);
+
+    // build egrad
+    float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(egrad);
+
+    stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
+
+    // replace A&B
+    free(ctx->A);
+    ctx->A = Ap;
+    free(ctx->B);
+    ctx->B = Bp;
+
+    // solve linear response
+    size_t nw = 3;
+    float w[] = {0, 4.282270E-2f, 4.282270E-2f * 2};
+
+    float* Xtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(Xtd);
+
+    float* Ytd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(Ytd);
+
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, egrad, Xtd, Ytd));
+
+    // compute polarizabilities
+    float alpha[6], alpha_zz;
+
+    for (size_t iw = 0; iw < nw; ++iw) {
+        stdl_property_polarizability(ctx, dipoles_mat, Xtd + iw * 3 * ctx->ncsfs, Ytd + iw * 3 * ctx->ncsfs, alpha);
+
+        // stdl_matrix_ssp_print(3, alpha, "alpha");
+
+        // compute alpha_zz from SOS
+        alpha_zz = .0f;
+        for (size_t iexci = 0; iexci < ctx->ncsfs; ++iexci)
+            alpha_zz += -powf(tdipstd[2 * ctx->ncsfs + iexci], 2) / (w[iw] - etd[iexci]) + powf(tdipstd[2 * ctx->ncsfs + iexci], 2) / (w[iw] + etd[iexci]);
+
+        TEST_ASSERT_FLOAT_WITHIN(1e-2, alpha_zz, alpha[STDL_MATRIX_SP_IDX(2, 2)]);
+    }
+
+    STDL_FREE_ALL(etd, Xamptd, Yamptd, dipoles_mat, tdipstd, egrad, Xtd, Ytd);
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
+}
+
+
+void test_property_polarizability_TDA_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
@@ -177,6 +266,76 @@ void test_polarizability_TDA_ok() {
     }
 
     STDL_FREE_ALL(dipoles_mat, egrad, Xtda);
+
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
+}
+
+void test_property_polarizability_TDA_SOS_ok() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
+
+    stdl_context* ctx = NULL;
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
+
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
+
+    // compute dipole integrals and convert to MO
+    double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipoles_mat);
+
+    make_dipoles_MO(wf, bs, ctx, dipoles_mat);
+
+    // build egrad
+    float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(egrad);
+
+    stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
+
+    // copy A for latter
+    float* Ap = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+    TEST_ASSERT_NOT_NULL(Ap);
+    memcpy(Ap, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+
+    // fetch all excitations
+    float* etda = malloc(ctx->ncsfs * sizeof(float ));
+    float* Xamptda = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float ));
+    ASSERT_STDL_OK(stdl_response_TDA_casida(ctx, ctx->ncsfs, etda, Xamptda));
+
+    // get transition dipoles
+    float* tdipstda = malloc(ctx->ncsfs * 3 * sizeof(float ));
+    ASSERT_STDL_OK(stdl_property_transition_dipoles(ctx, ctx->ncsfs, dipoles_mat, Xamptda, NULL, tdipstda));
+
+    // replace A, which has now been severely damaged.
+    free(ctx->A);
+    ctx->A = Ap;
+
+    // solve linear response
+    size_t nw = 3;
+    float w[] = {0, 4.282270E-2f, 4.282270E-2f * 2};
+
+    float* Xtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(Xtda);
+
+    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, egrad, Xtda));
+
+    // compute polarizabilities
+    float alpha[6], alpha_zz;
+
+    for (size_t iw = 0; iw < nw; ++iw) {
+        stdl_property_polarizability(ctx, dipoles_mat, Xtda + iw * 3 * ctx->ncsfs, NULL, alpha);
+
+        stdl_matrix_ssp_print(3, alpha, "alpha");
+
+        // compute alpha_zz from SOS
+        alpha_zz = .0f;
+        for (size_t iexci = 0; iexci < ctx->ncsfs; ++iexci)
+            alpha_zz += -powf(tdipstda[2 * ctx->ncsfs + iexci], 2) / (w[iw] - etda[iexci]) + powf(tdipstda[2 * ctx->ncsfs + iexci], 2) / (w[iw] + etda[iexci]);
+
+        printf("%.3f %.3f\n", alpha_zz, alpha[STDL_MATRIX_SP_IDX(2, 2)]);
+    }
+
+    STDL_FREE_ALL(dipoles_mat, etda, Xamptda, egrad, Xtda, tdipstda);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }

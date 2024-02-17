@@ -272,7 +272,7 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
         // make left side: L = 2*(A-w*1)
         for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
             for(size_t kjb = 0; kjb <= kia; ++kjb)
-                L[STDL_MATRIX_SP_IDX(kia, kjb)] = 2 * ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)] - (kia == kjb ? 2 * w[iw] : 0);
+                L[STDL_MATRIX_SP_IDX(kia, kjb)] = 2 * (ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)] - (kia == kjb ? w[iw] : 0));
         }
 
         float *Xi = X + iw * szX;
