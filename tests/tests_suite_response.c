@@ -6,7 +6,6 @@
 
 #include "tests_suite.h"
 
-
 // Use the spectral representation of a linear response vector to re-create Wlin, which is either X(w) or Y(w) depending on `getX`
 void _make_response_vector(stdl_context* ctx, float w, double* dipoles, float* e, float* Xamp, float* Yamp, int getX, float* Wlin) {
     size_t nvirt = ctx->nmo - ctx->nocc;
@@ -93,22 +92,31 @@ void test_response_TDA_ok() {
     float* Xtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(Xtda);
 
-    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, egrad, Xtda));
+    float* Ytda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(Ytda);
+
+    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, egrad, Xtda, Ytda));
 
     // stdl_matrix_sge_print(ctx->ncsfs, 3, Xtda + 2 * 3 * ctx->ncsfs, "X");
 
     float* reXtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(reXtda);
 
+    float* reYtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(reYtda);
+
     for (size_t iexci = 0; iexci < nw; ++iexci) {
         _make_response_vector(ctx, w[iexci], dipoles_mat, etda, Xamptda, NULL, 1, reXtda);
+        _make_response_vector(ctx, w[iexci], dipoles_mat, etda, Xamptda, NULL, 0, reYtda);
         for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
-            for (int zeta = 0; zeta < 3; ++zeta)
+            for (int zeta = 0; zeta < 3; ++zeta) {
                 TEST_ASSERT_FLOAT_WITHIN(1e-1, Xtda[iexci * 3 * ctx->ncsfs + lia * 3 + zeta], reXtda[lia * 3 + zeta]);
+                TEST_ASSERT_FLOAT_WITHIN(1e-1, Ytda[iexci * 3 * ctx->ncsfs + lia * 3 + zeta], reYtda[lia * 3 + zeta]);
+            }
         }
     }
 
-    STDL_FREE_ALL(dipoles_mat, etda, Xamptda, egrad, Xtda, reXtda);
+    STDL_FREE_ALL(dipoles_mat, etda, Xamptda, egrad, Xtda, Ytda, reXtda, reYtda);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }

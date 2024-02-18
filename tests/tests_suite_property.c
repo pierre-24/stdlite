@@ -210,9 +210,9 @@ void test_property_polarizability_TD_SOS_ok() {
         // compute alpha_zz from SOS
         alpha_zz = .0f;
         for (size_t iexci = 0; iexci < ctx->ncsfs; ++iexci)
-            alpha_zz += -powf(tdipstd[2 * ctx->ncsfs + iexci], 2) / (w[iw] - etd[iexci]) + powf(tdipstd[2 * ctx->ncsfs + iexci], 2) / (w[iw] + etd[iexci]);
+            alpha_zz += powf(tdipstd[2 * ctx->ncsfs + iexci], 2) / (etd[iexci] - w[iw]) + powf(tdipstd[2 * ctx->ncsfs + iexci], 2) / (etd[iexci] + w[iw]);
 
-        TEST_ASSERT_FLOAT_WITHIN(1e-2, alpha_zz, alpha[STDL_MATRIX_SP_IDX(2, 2)]);
+        TEST_ASSERT_FLOAT_WITHIN(1e-2, alpha[STDL_MATRIX_SP_IDX(2, 2)], alpha_zz);
     }
 
     STDL_FREE_ALL(etd, Xamptd, Yamptd, dipoles_mat, tdipstd, egrad, Xtd, Ytd);
@@ -255,17 +255,20 @@ void test_property_polarizability_TDA_ok() {
     float* Xtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Xtda);
 
+    float* Ytda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(Ytda);
+
     // compute polarizabilities
-    float alpha[6], alpha_iso, result[] = {2.064f, 2.283f, 2.566f};
-    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, egrad, Xtda));
+    float alpha[6], alpha_iso, result[] = {4.128f, 4.170f, 4.303f};
+    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, egrad, Xtda, Ytda));
 
     for (size_t iw = 0; iw < nw; ++iw) {
-        stdl_property_polarizability(ctx, dipoles_mat, Xtda + iw * 3 * ctx->ncsfs, NULL, alpha);
+        stdl_property_polarizability(ctx, dipoles_mat, Xtda + iw * 3 * ctx->ncsfs, Ytda + iw * 3 * ctx->ncsfs, alpha);
         stdl_property_mean_polarizability(alpha, &alpha_iso);
         TEST_ASSERT_FLOAT_WITHIN(1e-2, result[iw], alpha_iso);
     }
 
-    STDL_FREE_ALL(dipoles_mat, egrad, Xtda);
+    STDL_FREE_ALL(dipoles_mat, egrad, Xtda, Ytda);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
@@ -317,25 +320,28 @@ void test_property_polarizability_TDA_SOS_ok() {
     float* Xtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(Xtda);
 
-    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, egrad, Xtda));
+    float* Ytda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(Ytda);
+
+    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, egrad, Xtda, Ytda));
 
     // compute polarizabilities
     float alpha[6], alpha_zz;
 
     for (size_t iw = 0; iw < nw; ++iw) {
-        stdl_property_polarizability(ctx, dipoles_mat, Xtda + iw * 3 * ctx->ncsfs, NULL, alpha);
+        stdl_property_polarizability(ctx, dipoles_mat, Xtda + iw * 3 * ctx->ncsfs, Ytda + iw * 3 * ctx->ncsfs, alpha);
 
-        stdl_matrix_ssp_print(3, alpha, "alpha");
+        // stdl_matrix_ssp_print(3, alpha, "alpha");
 
         // compute alpha_zz from SOS
         alpha_zz = .0f;
         for (size_t iexci = 0; iexci < ctx->ncsfs; ++iexci)
-            alpha_zz += -powf(tdipstda[2 * ctx->ncsfs + iexci], 2) / (w[iw] - etda[iexci]) + powf(tdipstda[2 * ctx->ncsfs + iexci], 2) / (w[iw] + etda[iexci]);
+            alpha_zz += powf(tdipstda[2 * ctx->ncsfs + iexci], 2) / (etda[iexci] - w[iw]) + powf(tdipstda[2 * ctx->ncsfs + iexci], 2) / (w[iw] + etda[iexci]);
 
-        printf("%.3f %.3f\n", alpha_zz, alpha[STDL_MATRIX_SP_IDX(2, 2)]);
+        TEST_ASSERT_FLOAT_WITHIN(1e-2, alpha[STDL_MATRIX_SP_IDX(2, 2)], alpha_zz);
     }
 
-    STDL_FREE_ALL(dipoles_mat, etda, Xamptda, egrad, Xtda, tdipstda);
+    STDL_FREE_ALL(dipoles_mat, etda, Xamptda, egrad, Xtda, Ytda, tdipstda);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }

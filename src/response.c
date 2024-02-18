@@ -254,28 +254,39 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
 }
 
 
-int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, float *egrad, float *X) {
-    assert(ctx != NULL && ctx->ncsfs > 0 && nw > 0 && ndim > 0 && egrad != NULL && X != NULL);
+int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, float *egrad, float *X, float *Y) {
+    assert(ctx != NULL && ctx->ncsfs > 0 && nw > 0 && ndim > 0 && egrad != NULL && X != NULL && Y != NULL);
 
-    size_t szX = ctx->ncsfs * ndim;
+    size_t szXY = ctx->ncsfs * ndim;
     int err;
 
     // allocate space for the left size of the linear response equation
     float* L = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
     STDL_ERROR_HANDLE_AND_REPORT(L == NULL, return STDL_ERR_MALLOC, "malloc");
 
-    // tmp
+    // invert A
     int* ipiv = malloc(ctx->ncsfs * sizeof(int));
     STDL_ERROR_HANDLE_AND_REPORT(ipiv == NULL, STDL_FREE_ALL(L); return STDL_ERR_MALLOC, "malloc");
 
+    float* Ai = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+    STDL_ERROR_HANDLE_AND_REPORT(Ai == NULL, STDL_FREE_ALL(L, ipiv); return STDL_ERR_MALLOC, "malloc");
+
+    memcpy(Ai, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+
+    err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, Ai, ipiv);
+    STDL_ERROR_HANDLE_AND_REPORT(err != 0,  STDL_FREE_ALL(L, ipiv, Ai); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", err);
+
+    err = LAPACKE_ssptri(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, Ai, ipiv);
+    STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(L, ipiv, Ai); return STDL_ERR_RESPONSE, "error while ssptri(): %d", err);
+
     for (size_t iw = 0; iw < nw; ++iw) {
-        // make left side: L = 2*(A-w*1)
+        // make left side: L = A-w^2*A^(-1)
         for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
             for(size_t kjb = 0; kjb <= kia; ++kjb)
-                L[STDL_MATRIX_SP_IDX(kia, kjb)] = 2 * (ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)] - (kia == kjb ? w[iw] : 0));
+                L[STDL_MATRIX_SP_IDX(kia, kjb)] = ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)] - powf(w[iw], 2) * Ai[STDL_MATRIX_SP_IDX(kia, kjb)];
         }
 
-        float *Xi = X + iw * szX;
+        float *Xi = X + iw * szXY, *Yi = Y + iw * szXY;
 
         // copy egrad in Xi, to keep it for latter
         memcpy(Xi, egrad, ctx->ncsfs * ndim * sizeof(float ));
@@ -286,9 +297,30 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
 
         err = LAPACKE_ssptrs(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, (int) ndim, L, ipiv, Xi, (int) ndim);
         STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptrs(): %d", err);
+
+        // separate X and Y
+        // Yi' = w*A^(-1)*Xi'
+        for(size_t kia = 0; kia < ctx->ncsfs; kia++) {
+            for(size_t cpt = 0; cpt < ndim; cpt++) {
+                float sum = .0f;
+                for (size_t kjb = 0; kjb < ctx->ncsfs; kjb++)
+                    sum += Ai[STDL_MATRIX_SP_IDX(kia, kjb)] * w[iw] * Xi[kia * ndim + cpt];
+
+                Yi[kia * ndim + cpt] = sum;
+            }
+        }
+
+        // Xi = 1/2*(Xi' + Yi') && Yi = 1/2*(Xi' - Yi')
+        for(size_t kia = 0; kia < ctx->ncsfs; kia++) {
+            for(size_t cpt = 0; cpt < ndim; cpt++) {
+                float u = Xi[kia * ndim + cpt], v = Yi[kia * ndim + cpt];
+                Xi[kia * ndim + cpt] = .5f * (u + v);
+                Yi[kia * ndim + cpt] = .5f * (u - v);
+            }
+        }
     }
 
-    STDL_FREE_ALL(L, ipiv);
+    STDL_FREE_ALL(L, ipiv, Ai);
 
     return STDL_ERR_OK;
 }

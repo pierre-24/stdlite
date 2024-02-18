@@ -120,37 +120,29 @@ $$\begin{aligned}
 
 where, $\varepsilon_i$ and $\varepsilon_a$ are orbital energies, $a_x$ is the amount of non-local Fock exchange, $(ia|jb)$, $(ia|bj)$, and $(ib|aj)$ are exchange-type and $(ij|ab)$ Coulomb-type two-electron integrals, $(ia|f_{XC}|jb)$ and $(ia|f_{XC}|bj)$ are responses of the exchange-correlation functional.
 
-=== "Full time-dependent approach (TD)"
 
-    To solve this problem, Eq. (3) can be turned into a linear equation of the form:
-        
-    $$[(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}]\,[\mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)] = -2\mathbf\eta_\zeta.$$
+To solve this problem, Eq. (3) can be turned into a linear equation of the form:
     
-    ??? note "Detailed solution"
-        
-        The previous equation is easier seen as a linear system written in the following form:
+$$[(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}]\,[\mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)] = -2\mathbf\eta_\zeta.$$
+
+??? note "Detailed solution"
     
-        $$\mathbf L(\omega)\,\mathbf u_{\zeta}(\omega) = -2\mathbf\eta_\zeta,$$
-        
-        where $\mathbf L(\omega) = (\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}$ and $\mathbf u_{\zeta}(\omega)  = \mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)$, and which is solved using any of the usual methods for linear systems (worst case scenario: $\mathbf u_\zeta(\omega) = -2\mathbf L^{-1}(\omega)\,\eta_\zeta$).
-        Then, since, from Eq. (3),
-        
-        $$\mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega) = \omega\,(\mathbf A-\mathbf B)^{-1}\,[\mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)],$$
-        
-        one can define $\mathbf v_{\zeta}(\omega)$ as:
+    The previous equation is easier seen as a linear system written in the following form:
+
+    $$\mathbf L(\omega)\,\mathbf u_{\zeta}(\omega) = -2\mathbf\eta_\zeta,$$
     
-        $$\mathbf v_{\zeta}(\omega)  =\mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega) =  \omega\,(\mathbf A-\mathbf B)^{-1}\,\mathbf u_{\zeta}(\omega),$$
-        
-        the response vector are obtained: $\mathbf x_{\zeta}(\omega) = \frac{1}{2}[\mathbf u_{\zeta}(\omega)  + \mathbf v_{\zeta}(\omega)]$ and $\mathbf y_{\zeta}(\omega) = \frac{1}{2}[\mathbf u_{\zeta}(\omega)  - \mathbf v_{\zeta}(\omega)]$.
-
-=== "Tamm-Dancoff approximation (TDA)"
-
-    The [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) ($\mathbf B = \mathbf 0$ and thus $\mathbf y_\zeta(\omega) = 0$) leads to:
+    where $\mathbf L(\omega) = (\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}$ and $\mathbf u_{\zeta}(\omega)  = \mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)$, and which is solved using any of the usual methods for linear systems (worst case scenario: $\mathbf u_\zeta(\omega) = -2\mathbf L^{-1}(\omega)\,\eta_\zeta$).
+    Then, since, from Eq. (3),
     
-    $$[\mathbf{A} - \omega\,\mathbf 1]\,\mathbf x_\zeta(\omega) = -\mathbf\eta_\zeta,$$
+    $$\mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega) = \omega\,(\mathbf A-\mathbf B)^{-1}\,[\mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)],$$
+    
+    one can define $\mathbf v_{\zeta}(\omega)$ as:
 
-    which is a simple linear equation to solve.
+    $$\mathbf v_{\zeta}(\omega)  =\mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega) =  \omega\,(\mathbf A-\mathbf B)^{-1}\,\mathbf u_{\zeta}(\omega),$$
+    
+    the response vector are obtained: $\mathbf x_{\zeta}(\omega) = \frac{1}{2}[\mathbf u_{\zeta}(\omega)  + \mathbf v_{\zeta}(\omega)]$ and $\mathbf y_{\zeta}(\omega) = \frac{1}{2}[\mathbf u_{\zeta}(\omega)  - \mathbf v_{\zeta}(\omega)]$.
 
+The [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) (setting $\mathbf B = \mathbf 0$ in all previous equations) can also be used.
 
 ### Excitations
 
@@ -170,43 +162,36 @@ $$\tag{4}\begin{pmatrix}
 
 which is generally referred to as the Casida equation. 
 In this case, each $\omega$ (eigenvalue) is associated to one $\mathbf x^\omega$ and one $\mathbf y^\omega$ ("eigenfunction"), might be seen as amplitude vectors associated to excitation and de-excitation, respectively. 
-Solving this problem is done using two approaches. 
+Solving this problem is done using two approaches.
 
+On the one hand, Eq. (4) can be rewritten in an true eigenvalue problem, namely:
 
-=== "Full time-dependent approach (TD)"
+$$(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}+\mathbf{B})\,(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,\mathbf{z}^\omega = \omega^2\,\mathbf{z}^\omega, \text{ with } \mathbf{z}^\omega = (\mathbf{A}-\mathbf{B})^{-\frac{1}{2}} (\mathbf x^\omega + \mathbf y^\omega).$$
 
-    Eq. (4) can be rewritten in an true eigenvalue problem, namely:
+??? note "Detailed solution"
+
+    In this case, after $\mathbf z^\omega$ have been obtained, one extract using the following procedure. First, from previous expression, one can obtain:
     
-    $$(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}+\mathbf{B})\,(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,\mathbf{z}^\omega = \omega^2\,\mathbf{z}^\omega, \text{ with } \mathbf{z}^\omega = (\mathbf{A}-\mathbf{B})^{-\frac{1}{2}} (\mathbf x^\omega + \mathbf y^\omega).$$
+    $$ \mathbf u^\omega = \mathbf x^\omega + \mathbf y^\omega = \frac{1}{\sqrt\omega}\,(\mathbf A-\mathbf B)^\frac{1}{2}\,\mathbf z^\omega.$$
     
-    ??? note "Detailed solution"
-
-        In this case, after $\mathbf z^\omega$ have been obtained, one extract using the following procedure. First, from previous expression, one can obtain:
-        
-        $$ \mathbf u^\omega = \mathbf x^\omega + \mathbf y^\omega = \frac{1}{\sqrt\omega}\,(\mathbf A-\mathbf B)^\frac{1}{2}\,\mathbf z^\omega.$$
-        
-        Now, since $(\mathbf A + \mathbf B)\,(\mathbf x^\omega+\mathbf y^\omega) = \omega\,(\mathbf x^\omega-\mathbf y^\omega)$ [obtained from Eq. (4)], one has:
-        
-        $$\mathbf v^\omega = \mathbf x^\omega-\mathbf y^\omega = \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,(\mathbf x^\omega+\mathbf y^\omega)  = \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,\mathbf u^\omega,$$
-        
-        and therefore the response vector are obtained: $\mathbf x^\omega = \frac{1}{2}(\mathbf u^\omega + \mathbf v^\omega)$ and $\mathbf y^\omega = \frac{1}{2}(\mathbf u^\omega - \mathbf v^\omega)$.
-
-=== "Tamm-Dancoff approximation (TDA)"
-
-    The [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) ($\mathbf B = \mathbf 0$ and thus $\mathbf y^\omega = 0$) leads to:
+    Now, since $(\mathbf A + \mathbf B)\,(\mathbf x^\omega+\mathbf y^\omega) = \omega\,(\mathbf x^\omega-\mathbf y^\omega)$ [obtained from Eq. (4)], one has:
     
-    $$\mathbf A\,\mathbf x^\omega = \omega\,\mathbf x^\omega,$$
+    $$\mathbf v^\omega = \mathbf x^\omega-\mathbf y^\omega = \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,(\mathbf x^\omega+\mathbf y^\omega)  = \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,\mathbf u^\omega,$$
     
-    where the $\mathbf x^\omega$ contains the coefficient associated to each $i \to a$ transition (see [below](#transition-dipole-moment-and-oscillator-strength)).
+    and therefore the response vector are obtained: $\mathbf x^\omega = \frac{1}{2}(\mathbf u^\omega + \mathbf v^\omega)$ and $\mathbf y^\omega = \frac{1}{2}(\mathbf u^\omega - \mathbf v^\omega)$.
 
-The amplitude vectors are linked to their linear response counterparts through the following spectral representation:
+On the other hand, the [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) ($\mathbf B = \mathbf 0$ and thus $\mathbf y^\omega = 0$) simply leads to:
+
+$$\mathbf A\,\mathbf x^\omega = \omega\,\mathbf x^\omega.$$
+
+In both cases, these amplitude vectors are linked to their linear response counterparts through the following spectral representation:
 
 $$\begin{aligned}
 x_{ai,\zeta}(\omega) &= \sum_{\wp} \eta_{ia,\zeta}\,(x^{\omega_\wp}_{ia} + y^{\omega_\wp}_{ia})\,\left[\frac{x_{ia}^{\omega_\wp}}{\omega-\omega_\wp}-\frac{y_{ia}^{\omega_\wp}}{\omega+\omega_\wp}\right],\\
 y_{ai,\zeta}(\omega) &= \sum_{\wp} \eta_{ia,\zeta}\,(x^{\omega_\wp}_{ia} + y^{\omega_\wp}_{ia})\,\left[\frac{y_{ia}^{\omega_\wp}}{\omega-\omega_\wp}-\frac{x_{ia}^{\omega_\wp}}{\omega+\omega_\wp}\right],
 \end{aligned}$$
 
-where these expression involves a summation over all $\{\omega_\wp\}$ excited states.
+where these expression involves a summation over all $\{\omega_\wp\}$ excited states (and one can set $\mathbf y^\omega = 0$ to get the TDA version).
 These representations lead to simplification when taking residue of response functions.
 
 ## The simplified approaches to TD-DFT
