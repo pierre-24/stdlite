@@ -203,29 +203,29 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     /*
      * 1) Prepare charges and intermediates, as one big block of (continuous) memory.
      *
-     *  <--- natm --------->
+     *  ←--- natm ---------→
      * +--------------------+ 0
      * |  AABB_J            |
      * +--------------------+ natm
      * |  AABB_K            |
      * +--------------------+ natm
-     * |  qAij [packed]     |
-     * +--------------------+ nexci_ij
-     * |  qAab [packed]     |
-     * +--------------------+ nexci_ab
-     * |  qAia              |
-     * +--------------------+ nexci_ia
+     * |  qAij [packed]     |           ↑
+     * +--------------------+ nexci_ij  |
+     * |  qAab [packed]     |           | = STDL_MATRIX_SP_SIZE(nmo)
+     * +--------------------+ nexci_ab  |
+     * |  qAia              |           |
+     * +--------------------+ nexci_ia  ↓
      * |  ijBB_J [packed]   |
      * +--------------------+ nexci_ij
      * |  iaBB_K            |
      * +--------------------+ nexci_ia
      *
-     * TOTAL = natm * (2 * natm + 2 * nexci_ij + 2 * nexci_ia + nexci_ab)
+     * TOTAL = natm * (2 * natm + STDL_MATRIX_SP_SIZE(nmo) + nexci_ij + nexci_ia)
      */
 
     double* atm = ctx->original_wf->atm;
 
-    float* env = malloc(natm * (2 * natm + 2 * nexci_ij + 2 * nexci_ia + nexci_ab) * sizeof(float));
+    float* env = malloc(natm * (2 * natm + STDL_MATRIX_SP_SIZE(ctx->nmo) + nexci_ij + nexci_ia) * sizeof(float));
     STDL_ERROR_HANDLE_AND_REPORT(env == NULL, return STDL_ERR_MALLOC, "malloc");
 
     // Coulomb and exchange-like integrals (AA|BB), `float[natm * natm]`
@@ -259,7 +259,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
 
     for(size_t i=0; i < ctx->nocc; i++) {
         for(size_t j=0; j <= i; j++) {
-            size_t k = i * (i + 1) / 2 + j;
+            size_t k = STDL_MATRIX_SP_IDX(i, j);
 
             for(size_t A_=0; A_ < natm; A_++)
                 qAij[k * natm + A_] = .0f;
@@ -274,7 +274,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
 
     for(size_t a=0; a < nvirt; a++) {
         for(size_t b=0; b <= a; b++) {
-            size_t k = a * (a + 1) / 2 + b;
+            size_t k = STDL_MATRIX_SP_IDX(a, b);
 
             for(size_t A_=0; A_ < natm; A_++)
                 qAab[k * natm + A_] = .0f;
@@ -303,8 +303,8 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     // stdl_matrix_sge_print(nexci_ia, natm, qAia, "Q_A^ia");
 
     // 2. Intermediates: (ij|BB)_J [in packed form], and (ia|BB)_K:
-    float* ijBB_J = env + (2 * natm + nexci_ij + nexci_ab + nexci_ia) * natm;
-    float* iaBB_K = env + (2 * natm + 2 * nexci_ij + nexci_ab + nexci_ia) * natm;
+    float* ijBB_J = env + (2 * natm + STDL_MATRIX_SP_SIZE(ctx->nmo)) * natm;
+    float* iaBB_K = env + (2 * natm + STDL_MATRIX_SP_SIZE(ctx->nmo) + nexci_ij) * natm;
 
     cblas_ssymm(
             CblasRowMajor, CblasRight, CblasLower,
@@ -507,14 +507,15 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     return STDL_ERR_OK;
 }
 
-// evaluate (pq|rs)'. `wrk` is a working space of `2*natm`.
+// evaluate (pq|rs): `wrk` is a working space of size `2*natm` to store transition charges for pq and rs.
 float _pqrs_monopole_wrk(stdl_context* ctx, size_t p, size_t q, size_t r, size_t s, float* AABB, float* wrk) {
-
+    // set wrk to zero
     for (size_t A = 0; A < ctx->original_wf->natm; ++A) {
         wrk[A] = .0f;
         wrk[ctx->original_wf->natm + A] = .0f;
     }
 
+    // compute transition charges on each atom
     for (size_t mu = 0; mu < ctx->original_wf->nao; ++mu) {
         wrk[ctx->original_wf->aotoatm[mu]] += (float) (ctx->C[p * ctx->original_wf->nao + mu] * ctx->C[q * ctx->original_wf->nao + mu]);
         wrk[ctx->original_wf->natm + ctx->original_wf->aotoatm[mu]] += (float) (ctx->C[r * ctx->original_wf->nao + mu] * ctx->C[s * ctx->original_wf->nao + mu]);
