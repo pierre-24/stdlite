@@ -107,20 +107,6 @@ where $\mathbf x_\zeta(\omega)$ and $\mathbf y_\zeta(\omega)$ are the frequency-
 The $\mathbf A$ and $\mathbf B$ are electronic Hessian (super-)matrices (related to orbital rotations).
 The perturbed electronic gradient vector elements $\eta_{ia,\zeta} = \braket{i|\hat\eta_\zeta|a}$ are elements of the expectation value matrix corresponding to the perturbation (e.g., when the perturbation is an electric field, $\hat\eta$ corresponds to the dipole moment operator).
 
-In the rest of this development a **global hybrid** density functional is assumed,
-
-$$E_{XC}= (1-a_x)\,E_X^{GGA}+a_x\,E_X^{HF}+E_C^{GGA}.$$
-
-Thanks to the [Slater-Condon rules](https://en.wikipedia.org/wiki/Slater%E2%80%93Condon_rules), one can evaluate the elements of $\mathbf A$ and $\mathbf B$, which are:
-
-$$\begin{aligned}
-&A_{ia, jb} = \delta_{ij}\delta_{ab} (\varepsilon_a - \varepsilon_i) + 2\,(ia|jb) - a_x\,(ij|ab) + (1-a_x)\,(ia|f_{XC}|jb),\\
-&B_{ia,jb} = 2\,(ia|bj) - a_x\,(ib|aj) + (1-a_x)\,(ia|f_{XC}|bj),
-\end{aligned}$$
-
-where, $\varepsilon_i$ and $\varepsilon_a$ are orbital energies, $a_x$ is the amount of non-local Fock exchange, $(ia|jb)$, $(ia|bj)$, and $(ib|aj)$ are exchange-type and $(ij|ab)$ Coulomb-type two-electron integrals, $(ia|f_{XC}|jb)$ and $(ia|f_{XC}|bj)$ are responses of the exchange-correlation functional.
-
-
 To solve this problem, Eq. (3) can be turned into a linear equation of the form:
     
 $$[(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}]\,[\mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)] = -2\mathbf\eta_\zeta.$$
@@ -196,7 +182,20 @@ These representations lead to simplification when taking residue of response fun
 
 ## The simplified approaches to TD-DFT
 
-The simplified TD-DFT methods root in 3 approximations which influence the content of $\mathbf A$ and $\mathbf B$:
+In the rest of this development a **global hybrid** density functional is assumed,
+
+$$E_{XC}= (1-a_x)\,E_X^{GGA}+a_x\,E_X^{HF}+E_C^{GGA}.$$
+
+Thanks to the [Slater-Condon rules](https://en.wikipedia.org/wiki/Slater%E2%80%93Condon_rules), one can evaluate the elements of $\mathbf A$ and $\mathbf B$, which are:
+
+$$\begin{aligned}
+&A_{ia, jb} = \delta_{ij}\delta_{ab} (\varepsilon_a - \varepsilon_i) + 2\,(ia|jb) - a_x\,(ij|ab) + (1-a_x)\,(ia|f_{XC}|jb),\\
+&B_{ia,jb} = 2\,(ia|bj) - a_x\,(ib|aj) + (1-a_x)\,(ia|f_{XC}|bj),
+\end{aligned}$$
+
+where, $\varepsilon_i$ and $\varepsilon_a$ are orbital energies, $a_x$ is the amount of non-local Fock exchange, $(ia|jb)$, $(ia|bj)$, and $(ib|aj)$ are exchange-type and $(ij|ab)$ Coulomb-type two-electron integrals, $(ia|f_{XC}|jb)$ and $(ia|f_{XC}|bj)$ are responses of the exchange-correlation functional.
+
+The simplified TD-DFT methods root in 3 approximations which simplify the content of $\mathbf A$ and $\mathbf B$:
 
 1. all integrals involving the XC-functionals are neglected (referred to as the [random phase approximation (RPA)](https://en.wikipedia.org/wiki/Random_phase_approximation) approach),
 2. the singly excited configuration space is truncated (see below), and
@@ -261,20 +260,23 @@ $$(AA|BB)_K = \left[\frac{1}{R_{AB}^{\gamma_K}+\eta_{AB}^{-\gamma_K}}\right]^{1/
 
 In both cases, $\eta_{AB} = \frac{1}{2}\,(\eta_A + \eta_B)$ where $\eta_A$ is the chemical hardness of A (obtained from [here](https://dx.doi.org/10.1002/qua.22202)), while $\gamma_J$ and $\gamma_K$ are globally fitted parameters.  
 
-In practice, the elements of the (approximated) electronic Hessian matrices are:
+In practice, the remaining elements of the (now approximated) electronic Hessian matrices $\mathbf A'$ and $\mathbf B'$ are:
 
 $$\begin{aligned}
 A'_{ia,jb} =& \delta_{ij}\delta_{ab} (\varepsilon_a - \varepsilon_i) + 2\,(ia|jb)' - (ij|ab)',\\ 
-B'_{ia,jb} =& 2\,(ia|bj)' -a_x\,(ib|aj)',
+B'_{ia,jb} =& 2\,(ia|bj)' -a_x\,(ib|aj)'.
 \end{aligned}$$
 
-which are evaluated in a computationally efficient way by precomputing three kind of transition charges: $q_A^{ij}$, $q_A^{ia}$, and $q_A^{ab}$, and two intermediates:
-
-$$(ij|BB)_J = \sum_A^N q_A^{ij}\,(AA|BB)_J \text{ and } (ia|BB)_K = \sum_A^N q_A^{ia}\,(AA|BB)_K,$$
-
-so that a scalar product leads to the value of the different integrals. For example,
-
-$$(ia|jb)' \approx \sum_{B}^N (ia|BB)_K\,q_B^{jb}.$$
+??? note "Implementation detail"
+    In order to be computationally efficient, these element can be evaluated by precomputing three kind of transition charges: $q_A^{ij}$, $q_A^{ia}$, and $q_A^{ab}$, and two intermediates:
+    
+    $$(ij|BB)_J = \sum_A^N q_A^{ij}\,(AA|BB)_J \text{ and } (ia|BB)_K = \sum_A^N q_A^{ia}\,(AA|BB)_K,$$
+    
+    so that a scalar product leads to the value of the different integrals. For example,
+    
+    $$(ia|jb)' \approx \sum_{B}^N (ia|BB)_K\,q_B^{jb}.$$
+    
+    However, these intermediates have a huge memory cost [$\mathcal O (N_{atm}\times N_{MO}^2)$ altogether], so a direct version (integrals are evaluated when requested) is also available.
 
 
 ### XsTD-DFT
