@@ -66,4 +66,19 @@ int stdl_property_polarizability(stdl_context* ctx, double* dips_MO, float* X, f
  */
 int stdl_property_mean_polarizability(float * alpha, float* mean);
 
+/**
+ * Compute the hyperpolarizability $\beta(-\omega_\sigma;\omega_1,\omega_2)$ tensor elements.
+ *
+ * @param ctx a valid context, with `ctx->ncsfs > 0`.
+ * @param dips_MO `float[3,STDL_MATRIX_SP_SIZE(ctx->nmo)]`, the dipole moment matrix, **in MO basis**.
+ * @param X `float*[3]` linear response vectors $\mathbf x(\omega)$ for $-\omega_\sigma$, $\omega_1$, and $\omega_2$.
+ * @param Y `float*[3]` linear response vectors $\mathbf y(\omega)$  for $-\omega_\sigma$, $\omega_1$, and $\omega_2$.
+ * @param[out] beta `float[3,3,3]` the hyperpolarizability tensor
+ * @return error code
+ * @ingroup property
+ */
+int stdl_property_first_hyperpolarizability(stdl_context* ctx, double* dips_MO, float *X[3], float *Y[3], float* beta);
+
+int stdl_property_first_hyperpolarizability_component(stdl_context* ctx, int component[3], double* dips_MO, float * X[3], float * Y[3], float* val);
+
 #endif //STDLITE_PROPERTY_H

@@ -220,6 +220,55 @@ void test_property_polarizability_TD_SOS_ok() {
 }
 
 
+void test_property_first_hyperpolarizability_TD_ok() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
+
+    stdl_context* ctx = NULL;
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
+
+    TEST_ASSERT_EQUAL_INT(ctx->nmo,7);
+    TEST_ASSERT_EQUAL_INT(ctx->nocc, 4);
+
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
+
+    TEST_ASSERT_EQUAL_INT(ctx->ncsfs, 10);
+
+    // compute dipole integrals and convert to MO
+    double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipoles_mat);
+
+    make_dipoles_MO(wf, bs, ctx, dipoles_mat);
+
+    // build egrad
+    float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(egrad);
+
+    stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
+
+    // solve response
+    size_t nw = 3;
+    float w[] = {0, 4.282270E-2f, 4.282270E-2f * -2};
+
+    float* X = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(X);
+
+    float* Y = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(Y);
+
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, egrad, X, Y));
+
+    // compute beta
+    float component = .0f;
+    ASSERT_STDL_OK(stdl_property_first_hyperpolarizability_component(ctx, (int[]) {2, 2, 2}, dipoles_mat, (float* []) {X, X, X}, (float* [])  {Y, Y, Y}, &component));
+    printf("cpt = %f\n", component);
+
+    STDL_FREE_ALL(dipoles_mat, egrad, X, Y);
+
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
+}
+
 void test_property_polarizability_TDA_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;

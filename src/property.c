@@ -6,6 +6,7 @@
 #include "stdlite/logging.h"
 #include "stdlite/helpers.h"
 #include "stdlite/utils/matrix.h"
+#include "stdlite/utils/permutations.h"
 
 
 int stdl_property_polarizability(stdl_context* ctx, double* dips_MO, float* X, float* Y, float* alpha) {
@@ -133,6 +134,69 @@ int stdl_property_print_excitations_contribs(stdl_context *ctx, size_t nexci, fl
     }
 
     printf("-------------------------------------------\n");
+
+    return STDL_ERR_OK;
+}
+
+typedef struct _bperm_ {
+    float* X;
+    float* Y;
+    int cpt;
+} _bperm;
+
+
+int stdl_property_first_hyperpolarizability(stdl_context* ctx, double* dips_MO, float * X[3], float * Y[3], float* beta) {
+
+
+    return STDL_ERR_OK;
+}
+
+
+int stdl_property_first_hyperpolarizability_component(stdl_context* ctx, int component[3], double* dips_MO, float * X[3], float * Y[3], float* val) {
+    size_t nvirt = ctx->nmo - ctx->nocc;
+
+    stdl_permutations* set = NULL;
+    stdl_permutations_new((_bperm []) {{X[0], Y[0], component[0]}, {X[1], Y[1],component[1]}, {X[2], Y[2],component[2]}}, 3, sizeof(_bperm), &set);
+    //stdl_permutations_remove_duplicates(set, 3, sizeof(_bperm));
+
+    stdl_permutations* current = set;
+    size_t nperm = 0;
+
+    *val = .0f;
+
+    while(current != NULL) {
+        _bperm* e0 = (_bperm*) current->perm, *e1 = e0 + 1, *e2 = e0 + 2;
+
+        float* cX = e0->X, *cY = e2->Y;
+        int zeta = e0->cpt, sigma = e1->cpt, tau = e2->cpt;
+
+        printf("(%d, %d, %d)\n", zeta, sigma, tau);
+
+        for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
+            size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt;
+            float x = cX[lia * 3 + zeta];
+
+            for (size_t ljb = 0; ljb < ctx->ncsfs; ++ljb) {
+                size_t j = ctx->csfs[ljb] / nvirt, b = ctx->csfs[ljb] % nvirt;
+                float y = cY[ljb * 3 + tau];
+                if(b == a) { // jb == ja, so A'
+                    float d = (float) -dips_MO[sigma * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)];
+                    *val += x * d * y;
+                } else if(j == i) {// jb == ib so B'
+                    float d = (float) -dips_MO[sigma * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)];
+                    *val -= x * d * y;
+                }
+            }
+        }
+
+        current = current->next;
+        nperm++;
+    }
+
+    printf("nperm = %ld\n", nperm);
+    // *val *= (float) (6 / nperm);
+
+    stdl_permutations_delete(set);
 
     return STDL_ERR_OK;
 }
