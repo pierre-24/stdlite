@@ -176,3 +176,7 @@ groups:
           ```c
           #include <stdlite/utils/permutations.h>
           ```
+          
+          !!! warning
+          
+              When using permutations on an array of structure, keep in mind [structure padding](https://www.geeksforgeeks.org/structure-member-alignment-padding-and-data-packing/), especially when removing duplicates.

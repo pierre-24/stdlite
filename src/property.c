@@ -138,18 +138,19 @@ int stdl_property_print_excitations_contribs(stdl_context *ctx, size_t nexci, fl
     return STDL_ERR_OK;
 }
 
-typedef struct _bperm_ {
-    float* X;
-    float* Y;
-    int cpt;
-} _bperm;
-
-
 int stdl_property_first_hyperpolarizability(stdl_context* ctx, double* dips_MO, float * X[3], float * Y[3], float* beta) {
 
 
     return STDL_ERR_OK;
 }
+
+// a small structure to hold permutations in beta tensor calculations
+typedef struct _bperm_ {
+    float* X;
+    float* Y;
+    size_t cpt; // size_t is chosen for padding
+} _bperm;
+
 
 
 int stdl_property_first_hyperpolarizability_component(stdl_context* ctx, int component[3], double* dips_MO, float * X[3], float * Y[3], float* val) {
@@ -167,7 +168,7 @@ int stdl_property_first_hyperpolarizability_component(stdl_context* ctx, int com
             &set
             );
 
-    //stdl_permutations_remove_duplicates(set, 3, sizeof(_bperm));
+    stdl_permutations_remove_duplicates(set, 3, sizeof(_bperm));
 
     stdl_permutations* current = set;
     size_t nperm = 0;
@@ -207,8 +208,7 @@ int stdl_property_first_hyperpolarizability_component(stdl_context* ctx, int com
         nperm++;
     }
 
-    *val = A - B;
-    // *val *= (float) (6 / nperm);
+    *val = (A - B) * (6 / (float) nperm);
 
     stdl_permutations_delete(set);
 

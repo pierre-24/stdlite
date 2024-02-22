@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 /**
- * Sequence of permutations.
+ * A sequence of permutations.
  * Implemented as a linked list.
  * @ingroup permutations
  */
@@ -19,7 +19,7 @@ struct stdl_permutation_ {
 typedef struct stdl_permutation_ stdl_permutations;
 
 /**
- * Build an ensemble of `fac(nelm)` permutations from `original_set` (with duplicates if elements of `original_set` are equals).
+ * Build a sequence of `fac(nelm)` permutations from `original_set` (with duplicates if elements of `original_set` are equals).
  *
  * @param original_set `uint8_t[nelm*elemz]` a set of `nelm` elements of `elmsz` bytes each to be permuted.
  * @param nelm number of element in the original_set
@@ -31,7 +31,7 @@ typedef struct stdl_permutation_ stdl_permutations;
 int stdl_permutations_new(void* original_set, size_t nelm, size_t elmsz, stdl_permutations** permutations);
 
 /**
- * Delete an ensemble of permutations.
+ * Delete a sequence of permutations.
  *
  * @param permutations a valid sequence of permutations
  * @return error code
@@ -41,11 +41,11 @@ int stdl_permutations_delete(stdl_permutations* permutations);
 
 /**
  * Remove duplicates in a sequence of permutations.
- * Note that this implementation scales in $\mathcal{O}(N^2)$, with $N$ the length of the sequence.
+ * Note that this implementation scales as $\mathcal{O}(N^2)$ in the worst case, with $N$ the length of the sequence.
  *
  * @param permutations a valid sequence of permutations
- * @param nelm number of element in the original_set
- * @param elmsz size of each element of the original_set **in byte** (use `sizeof()`)
+ * @param nelm number of element in the original set
+ * @param elmsz size of each element of the original set **in byte** (use `sizeof()`)
  * @return error code
  * @ingroup permutations
  */
