@@ -261,7 +261,24 @@ void test_property_first_hyperpolarizability_TD_ok() {
 
     // compute beta
     float component = .0f;
-    ASSERT_STDL_OK(stdl_property_first_hyperpolarizability_component(ctx, (int[]) {2, 2, 2}, dipoles_mat, (float* []) {X, X, X}, (float* [])  {Y, Y, Y}, &component));
+    ASSERT_STDL_OK(stdl_property_first_hyperpolarizability_component(
+            ctx,
+            (int[]) {2, 2, 2},
+            dipoles_mat,
+            (float* []) {X, X, X},
+            (float* []) {Y, Y, Y},
+            &component
+            ));
+    printf("cpt = %f\n", component);
+
+    ASSERT_STDL_OK(stdl_property_first_hyperpolarizability_component(
+            ctx,
+            (int[]) {2, 2, 2},
+            dipoles_mat,
+            (float* []) {X + 2 * 3 * ctx->ncsfs, X + 1 * 3 * ctx->ncsfs, X + 1 * 3 * ctx->ncsfs},
+            (float* []) {Y + 2 * 3 * ctx->ncsfs, Y + 1 * 3 * ctx->ncsfs, Y + 1 * 3 * ctx->ncsfs},
+            &component
+            ));
     printf("cpt = %f\n", component);
 
     STDL_FREE_ALL(dipoles_mat, egrad, X, Y);
