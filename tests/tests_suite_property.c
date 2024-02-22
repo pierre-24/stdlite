@@ -2,6 +2,7 @@
 #include <stdlite/utils/matrix.h>
 #include <stdlite/helpers.h>
 #include <stdlite/property.h>
+#include <stdlite/utils/experimental_quantity.h>
 #include <string.h>
 
 #include "tests_suite.h"
@@ -54,8 +55,8 @@ void test_property_print_excitations_ok() {
     float* tdipstda = malloc(nrequested * 3 * sizeof(float ));
     stdl_property_transition_dipoles(ctx, nrequested, dipoles_sp_MO, Xtda, NULL, tdipstda);
 
-    ASSERT_STDL_OK(stdl_property_print_excitations(ctx, nrequested, etda, tdipstda));
-    ASSERT_STDL_OK(stdl_property_print_excitations_contribs(ctx, nrequested, etda, Xtda, NULL, .0001f));
+    ASSERT_STDL_OK(stdl_qexp_excitations_print(ctx, nrequested, etda, tdipstda));
+    ASSERT_STDL_OK(stdl_qexp_excitations_contribs_print(ctx, nrequested, etda, Xtda, NULL, .0001f));
 
     // replace A
     free(ctx->A);
@@ -75,7 +76,7 @@ void test_property_print_excitations_ok() {
     float* tdipstd = malloc(nrequested * 3 * sizeof(float ));
     stdl_property_transition_dipoles(ctx, nrequested, dipoles_sp_MO, Xtd, Ytd, tdipstd);
 
-    ASSERT_STDL_OK(stdl_property_print_excitations(ctx, nrequested, etd, tdipstd));
+    ASSERT_STDL_OK(stdl_qexp_excitations_print(ctx, nrequested, etd, tdipstd));
 
     STDL_FREE_ALL(dipoles_sp_MO, etda, Xtda, tdipstda, etd, Xtd, Ytd, tdipstd);
 
@@ -122,11 +123,11 @@ void test_property_polarizability_TD_ok() {
     ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, egrad, X, Y));
 
     // compute polarizabilities
-    float alpha[6], alpha_iso, result[] = {4.061f, 4.103f, 4.236f};
+    float alpha[6], alpha_iso, alpha_aniso, result[] = {4.061f, 4.103f, 4.236f};
 
     for (size_t iw = 0; iw < nw; ++iw) {
         stdl_property_polarizability(ctx, dipoles_mat, X + iw * 3 * ctx->ncsfs, Y + iw * 3 * ctx->ncsfs, alpha);
-        stdl_property_mean_polarizability(alpha, &alpha_iso);
+        stdl_qexp_polarizability(alpha, &alpha_iso, &alpha_aniso);
         TEST_ASSERT_FLOAT_WITHIN(1e-2, result[iw], alpha_iso);
     }
 
@@ -265,7 +266,7 @@ void test_property_first_hyperpolarizability_TD_ok() {
     ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, egrad, X, Y));
 
     // compute beta
-    float beta[27];
+    float beta[3][3][3], beta2_ZZZ, beta2_ZXX;
     ASSERT_STDL_OK(stdl_property_first_hyperpolarizability(
             ctx,
             dipoles_mat,
@@ -274,7 +275,11 @@ void test_property_first_hyperpolarizability_TD_ok() {
             beta
             ));
 
-    stdl_matrix_sge_print(9, 3, beta, "beta");
+    // stdl_matrix_sge_print(9, 3, beta, "beta");
+    stdl_qexp_first_hyperpolarizability_hrs(beta, &beta2_ZZZ, &beta2_ZXX);
+
+    TEST_ASSERT_FLOAT_WITHIN(1e-2, 234.07, beta2_ZZZ);
+    TEST_ASSERT_FLOAT_WITHIN(1e-2, 38.16, beta2_ZXX);
 
     ASSERT_STDL_OK(stdl_property_first_hyperpolarizability(
             ctx,
@@ -284,7 +289,11 @@ void test_property_first_hyperpolarizability_TD_ok() {
             beta
             ));
 
-    stdl_matrix_sge_print(9, 3, beta, "beta");
+    // stdl_matrix_sge_print(9, 3, beta, "beta");
+    stdl_qexp_first_hyperpolarizability_hrs(beta, &beta2_ZZZ, &beta2_ZXX);
+
+    TEST_ASSERT_FLOAT_WITHIN(1e-2, 272.19, beta2_ZZZ);
+    TEST_ASSERT_FLOAT_WITHIN(1e-2, 43.85, beta2_ZXX);
 
     STDL_FREE_ALL(dipoles_mat, egrad, X, Y);
 
@@ -330,12 +339,12 @@ void test_property_polarizability_TDA_ok() {
     TEST_ASSERT_NOT_NULL(Ytda);
 
     // compute polarizabilities
-    float alpha[6], alpha_iso, result[] = {4.128f, 4.170f, 4.303f};
+    float alpha[6], alpha_iso, alpha_aniso, result[] = {4.128f, 4.170f, 4.303f};
     ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, egrad, Xtda, Ytda));
 
     for (size_t iw = 0; iw < nw; ++iw) {
         stdl_property_polarizability(ctx, dipoles_mat, Xtda + iw * 3 * ctx->ncsfs, Ytda + iw * 3 * ctx->ncsfs, alpha);
-        stdl_property_mean_polarizability(alpha, &alpha_iso);
+        stdl_qexp_polarizability(alpha, &alpha_iso, &alpha_aniso);
         TEST_ASSERT_FLOAT_WITHIN(1e-2, result[iw], alpha_iso);
     }
 

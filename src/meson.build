@@ -5,6 +5,7 @@ srcs += files(
     'property.c',
     'response.c',
     'utils/base_parser.c',
+    'utils/experimental_quantity.c',
     'utils/fchk_parser.c',
     'utils/lexer.c',
     'utils/matrix.c',

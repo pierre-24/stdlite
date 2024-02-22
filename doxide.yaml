@@ -99,6 +99,16 @@ groups:
           ```c
           #include <stdlite/utils/base_parser.h>
           ```
+      - name: qexp
+        title: Experimental quantities
+        description: |
+          Utilities to compute experimental quantities (generally from rotational averaging).
+          
+          ```c
+          #include <stdlite/utils/experimental_quantity.h>
+          ```
+          
+          --8<-- "docs/includes/experimental_quantity.md"
       - name: fchk_parser
         title: FCHK parser
         description: |
@@ -166,7 +176,7 @@ groups:
               + Symmetry packed storage (`sp`) refers to the [lower triangle form](https://netlib.org/lapack/lug/node123.html) (`UPLO=L`), so: `[a_00, a_10, a_11, a_20, a_21, ..., a_NN]`.
           
           ```c
-          #include <stdlite/matrix.h>
+          #include <stdlite/utils/matrix.h>
           ```
       - name: permutations
         title: Permutations
