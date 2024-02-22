@@ -108,10 +108,11 @@ float eta[] = {
         0.223701390f,
 };
 
-int
-stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float gammaK, float ethr, float e2thr, float ax,
+int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float gammaK, float ethr, float e2thr, float ax,
                  stdl_context **ctx) {
     assert(ctx != NULL && wf != NULL && bs != NULL && gammaJ > 0 && gammaK > 0 && ethr > 0 && e2thr > 0 && ax >= 0 && ax <= 1);
+
+    STDL_DEBUG("Create new context from wavefunction and basis set (with gammaJ=%f, gammaK=%f)", gammaJ, gammaK);
 
     *ctx = malloc(sizeof(stdl_context));
     STDL_ERROR_HANDLE_AND_REPORT(*ctx == NULL, return STDL_ERR_MALLOC, "malloc");
@@ -131,14 +132,12 @@ stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float gamm
     (*ctx)->B = NULL;
 
     // select MO to include
-    STDL_DEBUG("range: %f Eh (%.3f eV)", ethr, ethr * 27.212);
+    STDL_DEBUG("Select MO within %f Eh (%.3f eV)", ethr, ethr * 27.212);
 
     size_t ohomo = (int) wf->nocc - 1, omin = 0, omax = 0;
     double ehomo = wf->e[ohomo], elumo = wf->e[ohomo + 1], ewin = 2 * (1 + .8 * ax)  * ethr, emin = elumo -ewin, emax = ehomo+ ewin;
 
-    STDL_DEBUG("window: %f Eh (%.3f eV)", ewin, ewin * 27.212);
-    STDL_DEBUG("occ MO cutoff: %f Eh (%.3f eV)", emin, emin * 27.212);
-    STDL_DEBUG("virt MO cutoff: %f Eh (%.3f eV)", emax, emax * 27.212);
+    STDL_DEBUG("Resuling MO cutoff: %f Eh (%.3f eV) -- %f Eh (%.3f eV)", emin, emin * 27.212, emax, emax * 27.212);
 
     for(size_t i=0; i < wf->nmo; i++) {
         if(wf->e[i] >= emin && omin == 0)
@@ -194,6 +193,8 @@ int stdl_context_delete(stdl_context* ctx) {
 int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     assert(ctx != NULL && ctx->ncsfs == 0);
 
+    STDL_DEBUG("Select CSFs (monopole)");
+
     size_t natm = ctx->original_wf->natm,
             nvirt = ctx->nmo - ctx->nocc,
             nexci_ij = STDL_MATRIX_SP_SIZE(ctx->nocc),
@@ -228,6 +229,8 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     float* env = malloc(natm * (2 * natm + STDL_MATRIX_SP_SIZE(ctx->nmo) + nexci_ij + nexci_ia) * sizeof(float));
     STDL_ERROR_HANDLE_AND_REPORT(env == NULL, return STDL_ERR_MALLOC, "malloc");
 
+    STDL_DEBUG("Create (AA|BB)_J and (AA|BB)_K");
+
     // Coulomb and exchange-like integrals (AA|BB), `float[natm * natm]`
     float * AABB_J = env;
     float * AABB_K = env + natm * natm;
@@ -251,6 +254,8 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
 
     // stdl_matrix_sge_print(natm, 0, AABB_J, "(AA|BB)_J");
     // stdl_matrix_sge_print(natm, 0, AABB_K, "(AA|BB)_K");
+
+    STDL_DEBUG("Create Q_A^ij, Q_A^ab, and Q_A^ia");
 
     // 1. density charges for Coulomb terms: Q_A^ij [in packed form, float[STDL_SP_SIZE(nocc)]], Q_A^ab [in packed form, float[STDL_SP_SIZE(nocc)]], and Q_A^ia [float[nocc * nvirt]].
     float* qAij = env + (2 * natm) * natm;
@@ -303,6 +308,8 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     // stdl_matrix_sge_print(nexci_ia, natm, qAia, "Q_A^ia");
 
     // 2. Intermediates: (ij|BB)_J [in packed form], and (ia|BB)_K:
+    STDL_DEBUG("Create (ij|BB)_J and (ia|BB)_K");
+
     float* ijBB_J = env + (2 * natm + STDL_MATRIX_SP_SIZE(ctx->nmo)) * natm;
     float* iaBB_K = env + (2 * natm + STDL_MATRIX_SP_SIZE(ctx->nmo) + nexci_ij) * natm;
 
@@ -330,6 +337,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
      *  2) To select primary CSFs i→a, one needs to evaluate A'_ia,ia = (e_a - e_i) + 2*(ia|ia)' - (ii|aa)'.
      *     Then, CSFs are selected if A'_ia,ia <= E_thr.
      */
+    STDL_DEBUG("Select primary CSFs below %f Eh", ctx->ethr);
 
     // marks csfs_ensemble as not-included (0), primary (1), or secondary (2).
     char* csfs_ensemble = malloc(nexci_ia * sizeof(short));
@@ -403,6 +411,8 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
         }
     }
 
+    STDL_DEBUG("Select secondary CSFs with E^(2) < %f Eh", ctx->e2thr);
+
     if(ctx->ncsfs > 0) {
         /*
          * 3) Now, select S-CSFs j→b so that E^(2)_jb > E^(2)_thr.
@@ -442,7 +452,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
             }
         }
 
-        STDL_DEBUG("selected %ld CSFs (%.2f%% of %ld CSFs)", ctx->ncsfs, (float) ctx->ncsfs / (float) nexci_ia * 100, nexci_ia);
+        STDL_DEBUG("Build A' (and B') matrices with %ld CSFs (%.2f%% of %ld CSFs)", ctx->ncsfs, (float) ctx->ncsfs / (float) nexci_ia * 100, nexci_ia);
 
         /*
          * 4) Store selected CSFs (in increasing energy order), and create A', B' matrices
@@ -502,6 +512,8 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
         STDL_WARN("no CSFs selected. `E_thr` should be at least %f Eh!", A_diag[csfs_sorted_indices[0]]);
     }
 
+    STDL_DEBUG("Done selecting CSFs");
+
     STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices);
 
     return STDL_ERR_OK;
@@ -534,6 +546,8 @@ float _pqrs_monopole_wrk(stdl_context* ctx, size_t p, size_t q, size_t r, size_t
 
 int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
     assert(ctx != NULL && ctx->ncsfs == 0);
+
+    STDL_DEBUG("Select CSFs (monopole) -- Direct");
 
     size_t natm = ctx->original_wf->natm,
             nvirt = ctx->nmo - ctx->nocc,
@@ -571,6 +585,8 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
      *  2) To select primary CSFs i→a, one needs to evaluate A'_ia,ia = (e_a - e_i) + 2*(ia|ia)' - (ii|aa)'.
      *     Then, CSFs are selected if A'_ia,ia <= E_thr.
      */
+
+    STDL_DEBUG("Select primary CSFs below %f Eh", ctx->ethr);
 
     // marks csfs_ensemble as not-included (0), primary (1), or secondary (2).
     char* csfs_ensemble = malloc(nexci_ia * sizeof(short));
@@ -642,6 +658,8 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
          * 3) Now, select S-CSFs j→b so that E^(2)_jb > E^(2)_thr.
          */
 
+        STDL_DEBUG("Select secondary CSFs with E^(2) < %f Eh", ctx->e2thr);
+
         for(size_t kjb=0; kjb < nexci_ia; kjb++) { // loop over possible S-CSFs
             if(csfs_ensemble[kjb] == 2) {
                 size_t b = kjb % nvirt, j = kjb / nvirt;
@@ -669,7 +687,7 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
             }
         }
 
-        STDL_DEBUG("selected %ld CSFs (%.2f%% of %ld CSFs)", ctx->ncsfs, (float) ctx->ncsfs / (float) nexci_ia * 100, nexci_ia);
+        STDL_DEBUG("Build A' (and B') matrices with %ld CSFs (%.2f%% of %ld CSFs)", ctx->ncsfs, (float) ctx->ncsfs / (float) nexci_ia * 100, nexci_ia);
 
         /*
          * 4) Store selected CSFs (in increasing energy order), and create A', B' matrices
@@ -720,6 +738,9 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
     } else {
         STDL_WARN("no CSFs selected. `E_thr` should be at least %f Eh!", A_diag[csfs_sorted_indices[0]]);
     }
+
+    STDL_DEBUG("Done selecting CSFs");
+
 
     STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices);
 

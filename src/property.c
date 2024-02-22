@@ -12,6 +12,8 @@
 int stdl_property_polarizability(stdl_context* ctx, double* dips_MO, float* X, float* Y, float* alpha) {
     assert(ctx != NULL && dips_MO != NULL && X != NULL && Y != NULL && alpha != NULL);
 
+    STDL_DEBUG("compute polarizability tensor");
+
     size_t nvirt = ctx->nmo - ctx->nocc;
 
     float s, d;
@@ -45,6 +47,8 @@ int stdl_property_mean_polarizability(float * alpha, float* mean)  {
 
 int stdl_property_transition_dipoles(stdl_context *ctx, size_t nexci, double* dips_MO, float* X, float* Y, float * tdips) {
     assert(ctx != NULL && nexci > 0 && dips_MO != NULL && X != NULL && tdips != NULL);
+
+    STDL_DEBUG("compute ground to excited transition dipoles");
 
     size_t nvirt = ctx->nmo - ctx->nocc;
     float s2 = sqrtf(2);
@@ -215,7 +219,9 @@ int _first_hyperpolarizability_component(stdl_context* ctx, int component[3], do
 int stdl_property_first_hyperpolarizability(stdl_context* ctx, double* dips_MO, float * Xs[3], float * Ys[3], float* beta) {
     assert(ctx != NULL && dips_MO != NULL && Xs[0] != NULL && Xs[1] != NULL && Xs[2] != NULL && Ys[0] != NULL && Ys[1] != NULL && Ys[2] != NULL && beta != NULL);
 
-    float isset[3][3][3] = {.0f};
+    STDL_DEBUG("compute first hyperpolarizability tensor");
+
+    int isset[3][3][3] = {0};
     stdl_permutations* set = NULL;
     int err;
 
