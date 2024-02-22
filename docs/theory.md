@@ -367,6 +367,21 @@ The associated [oscillator strength](https://en.wikipedia.org/wiki/Oscillator_st
 
 $$f_{0\wp} = \frac{2}{3}\,\omega\,|\vec\mu_{0\wp}|^2.$$
 
+### First hyperpolarizability
+
+By neglecting the response of the XC kernel and the Hartree XC kernel, the element of the first hyperpolarizability tensor in the sTD-DFT framework are:
+
+$$\beta_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) = -\braket{\braket{\hat\mu_\zeta;\hat\mu_\sigma,\hat\mu_\tau}}_{\omega_1,\omega_2} = \mathcal A_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) - \mathcal B_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2),$$
+
+with $\omega_\varsigma = \omega_1 + \omega_2$, and:
+
+$$\begin{aligned}
+\mathcal A_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) &= \sum_{\mathcal P} \sum_{ia,ja} x_{ia,\zeta}(-\omega_\varsigma)\,[-\mu_{ij,\sigma}]\,y_{ja,\tau}(\omega_2), \\
+\mathcal B_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) &= \sum_{\mathcal P} \sum_{ia,ib} x_{ia,\zeta}(-\omega_\varsigma)\,[-\mu_{ab,\sigma}]\,y_{ib,\tau}(\omega_2),
+\end{aligned}$$
+
+where $\sum_{\mathcal P}$ is the sum over the sequence of permutations of $\{(\zeta,-\omega_\varsigma), (\sigma, \omega_1), (\tau,\omega_2)\}$.
+
 ## Sources and references
 
 + J. Toulouse, [Introduction to the calculation of molecular properties by response theory](https://www.lct.jussieu.fr/pagesperso/toulouse/enseignement/molecular_properties.pdf) (last consultation: January 2023). 
@@ -374,6 +389,6 @@ $$f_{0\wp} = \frac{2}{3}\,\omega\,|\vec\mu_{0\wp}|^2.$$
 + G. P. Chen, V. K. Voora, M. M. Agee, S. G. Balasubramani, and F. Furche, Random-Phase Approximation Methods. *Annu. Rev. Phys. Chem.* **2017**, 68, 421 ([10.1146/annurev-physchem-040215-112308](https://doi.org/10.1146/annurev-physchem-040215-112308))
 + M. E. Casida, Time-Dependent Density Functional Response Theory for Molecules. In D. E. Chong (ed.), *Recent Advances in Density Functional Methods*. World Scientific, **1995** ([10.1142/9789812830586_0005](https://doi.org/10.1142/9789812830586_0005)).
 + S. Hirata, M. Head-Gordon, Time-dependent density functional theory within the Tamm–Dancoff approximation. *Chem. Phys. Lett.*, **1999**, 314, 291 ([10.1016/S0009-2614(99)01149-5](https://doi.org/10.1016/S0009-2614(99)01149-5))
-+ S. Löffelsender, P. Beaujean, M. de Wergifosse, Simplified quantum chemistry methods to evaluate non-linear optical properties of large systems. *WIREs Comput. Mol. Sci.* **2023**, 2023, e1695 ([10.1002/wcms.1695](https://dx.doi.org/10.1002/wcms.1695)). 
++ S. Löffelsender, P. Beaujean, M. de Wergifosse, Simplified quantum chemistry methods to evaluate non-linear optical properties of large systems. *WIREs Comput. Mol. Sci.* **2023**, 2023, e1695 ([10.1002/wcms.1695](https://dx.doi.org/10.1002/wcms.1695)) [and references therein]. 
 + S. Grimme, A simplified Tamm-Dancoff density functional approach for the electronic excitation spectra of very large molecules. *J Chem Phys.* **2013**, 138, 244104 ([10.1063/1.4811331](https://doi.org/10.1063/1.4811331)).
 + C. Bannwarth, S. Grimme, A simplified time-dependent density functional theory approach for electronic ultraviolet and circular dichroism spectra of very large molecules. *Comput Theor Chem.* **2014**, 1040, 45 ([10.1016/j.comptc.2014.02.023](https://doi.org/10.1016/j.comptc.2014.02.023)).

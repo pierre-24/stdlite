@@ -68,17 +68,18 @@ int stdl_property_mean_polarizability(float * alpha, float* mean);
 
 /**
  * Compute the hyperpolarizability $\beta(-\omega_\sigma;\omega_1,\omega_2)$ tensor elements.
+ * Use intrinsic permutations to alleviate some costs if possible.
+ *
+ * @note Since permutations relies on the addresses of the response vectors, the same $\mathbf x(\omega)$ (and $\mathbf y(\omega)$) should be used if some frequencies are the same (e.g., for a static calculation, the input for `Xs` should be `(float*[]) {Xs, Xs, Xs}`).
  *
  * @param ctx a valid context, with `ctx->ncsfs > 0`.
  * @param dips_MO `float[3,STDL_MATRIX_SP_SIZE(ctx->nmo)]`, the dipole moment matrix, **in MO basis**.
- * @param X `float*[3]` linear response vectors $\mathbf x(\omega)$ for $-\omega_\sigma$, $\omega_1$, and $\omega_2$.
- * @param Y `float*[3]` linear response vectors $\mathbf y(\omega)$  for $-\omega_\sigma$, $\omega_1$, and $\omega_2$.
+ * @param Xs `float*[3]` the 3 linear response vectors corresponding to $\mathbf x(-\omega_\sigma)$, $\mathbf x(\omega_1)$, and $\mathbf x(\omega_2)$.
+ * @param Ys `float*[3]` the 3 linear response vectors corresponding to $\mathbf y(-\omega_\sigma)$, $\mathbf y(\omega_1)$, and $\mathbf y(\omega_2)$.
  * @param[out] beta `float[3,3,3]` the hyperpolarizability tensor
  * @return error code
  * @ingroup property
  */
-int stdl_property_first_hyperpolarizability(stdl_context* ctx, double* dips_MO, float *X[3], float *Y[3], float* beta);
-
-int stdl_property_first_hyperpolarizability_component(stdl_context* ctx, int component[3], double* dips_MO, float * X[3], float * Y[3], float* val);
+int stdl_property_first_hyperpolarizability(stdl_context* ctx, double* dips_MO, float *Xs[3], float *Ys[3], float* beta);
 
 #endif //STDLITE_PROPERTY_H

@@ -90,7 +90,7 @@ int stdl_basis_print(stdl_basis *bs, int denormalize) {
 int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S) {
     assert(bs != NULL && S != NULL);
 
-    STDL_DEBUG("computing <i|j> to create the S matrix");
+    STDL_DEBUG("computing <i|j>");
 
     size_t nao = 0;
     for(int i=0; i < bs->nbas; i++) {
@@ -144,7 +144,7 @@ int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S) {
 int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles) {
     assert(bs != NULL && dipoles != NULL);
 
-    STDL_DEBUG("computing <i|j> to create the S matrix");
+    STDL_DEBUG("computing <i|µ|j>");
 
     size_t nao = 0;
     for(int i=0; i < bs->nbas; i++) {

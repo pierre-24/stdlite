@@ -6,6 +6,11 @@
 
 #include "tests_suite.h"
 
+void setUp() {
+    stdl_set_debug_level(-1);
+}
+
+
 void test_property_print_excitations_ok() {
     TEST_IGNORE_MESSAGE("for manual check only");
 
@@ -260,26 +265,26 @@ void test_property_first_hyperpolarizability_TD_ok() {
     ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, egrad, X, Y));
 
     // compute beta
-    float component = .0f;
-    ASSERT_STDL_OK(stdl_property_first_hyperpolarizability_component(
+    float beta[27];
+    ASSERT_STDL_OK(stdl_property_first_hyperpolarizability(
             ctx,
-            (int[]) {2, 2, 2},
             dipoles_mat,
             (float* []) {X, X, X},
             (float* []) {Y, Y, Y},
-            &component
+            beta
             ));
-    printf("cpt = %f\n", component);
 
-    ASSERT_STDL_OK(stdl_property_first_hyperpolarizability_component(
+    stdl_matrix_sge_print(9, 3, beta, "beta");
+
+    ASSERT_STDL_OK(stdl_property_first_hyperpolarizability(
             ctx,
-            (int[]) {2, 2, 2},
             dipoles_mat,
             (float* []) {X + 2 * 3 * ctx->ncsfs, X + 1 * 3 * ctx->ncsfs, X + 1 * 3 * ctx->ncsfs},
             (float* []) {Y + 2 * 3 * ctx->ncsfs, Y + 1 * 3 * ctx->ncsfs, Y + 1 * 3 * ctx->ncsfs},
-            &component
+            beta
             ));
-    printf("cpt = %f\n", component);
+
+    stdl_matrix_sge_print(9, 3, beta, "beta");
 
     STDL_FREE_ALL(dipoles_mat, egrad, X, Y);
 
