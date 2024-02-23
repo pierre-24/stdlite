@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <lapacke.h>
 #include <string.h>
-#include <stdio.h>
 #include <cblas.h>
 
 #include "stdlite/response.h"
@@ -12,7 +11,7 @@
 int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X) {
     assert(ctx != NULL && ctx->ncsfs > 0 && nexci > 0 && nexci <= ctx->ncsfs && e != NULL && X != NULL);
 
-    STDL_DEBUG("Compute excitation amplitude vectors (TDA-DFT)");
+    stdl_log_msg(0, "Compute excitation amplitude vectors (TDA-DFT) >");
 
     int err;
 
@@ -44,7 +43,7 @@ int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
     err = stdl_matrix_sge_transpose(ctx->ncsfs, nexci, X);
     STDL_ERROR_CODE_HANDLE(err, return err);
 
-    STDL_DEBUG("done with amplitude vectors");
+    stdl_log_msg(0, "< done\n");
 
     return STDL_ERR_OK;
 }
@@ -64,7 +63,7 @@ void _make_apb_amb(stdl_context* ctx) {
 int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X, float* Y) {
     assert(ctx != NULL && ctx->ncsfs > 0 && nexci <= ctx->ncsfs && ctx->B != NULL && e != NULL && X != NULL && Y != NULL);
 
-    STDL_DEBUG("Compute excitation amplitude vectors (TD-DFT)");
+    stdl_log_msg(0, "Compute excitation amplitude vectors (TD-DFT) >");
 
     size_t sz = ctx->ncsfs * ctx->ncsfs;
     float * wrk = malloc(3 * sz * sizeof(float));
@@ -96,6 +95,8 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
                 W, (int) ctx->ncsfs,
                 .0f, U, (int) ctx->ncsfs
     );
+
+    stdl_log_msg(0, "-");
 
     int err;
 
@@ -132,6 +133,8 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
 
     STDL_ERROR_CODE_HANDLE(err, free(wrk); return err);
 
+    stdl_log_msg(0, "-");
+
     // Get energies and compute X and Y
     for (size_t iexci = 0; iexci < nexci; ++iexci) {
         e[iexci]  = sqrtf(e[iexci]);
@@ -164,7 +167,7 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
         }
     }
 
-    STDL_DEBUG("done with amplitude vectors");
+    stdl_log_msg(0, "< done\n");
 
     STDL_FREE_ALL(wrk);
 
@@ -172,6 +175,7 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
 }
 
 int stdl_response_perturbed_gradient(stdl_context* ctx, size_t dim, double* eta_MO, float *egrad) {
+    stdl_log_msg(0, "Compute perturbed gradient >");
     size_t nvirt = ctx->nmo - ctx->nocc;
     for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
         size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
@@ -180,6 +184,8 @@ int stdl_response_perturbed_gradient(stdl_context* ctx, size_t dim, double* eta_
         }
     }
 
+    stdl_log_msg(0, "< done\n");
+
     return STDL_ERR_OK;
 }
 
@@ -187,7 +193,7 @@ int stdl_response_perturbed_gradient(stdl_context* ctx, size_t dim, double* eta_
 int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, float *egrad, float *X, float *Y) {
     assert(ctx != NULL && ctx->ncsfs > 0 && nw > 0 && ndim > 0 && ctx->B != NULL && egrad != NULL && X != NULL && Y != NULL);
 
-    STDL_DEBUG("Compute linear response vectors (TD-DFT)");
+    stdl_log_msg(0, "Compute linear response vectors (TD-DFT) >");
 
     size_t szXY = ctx->ncsfs * ndim;
 
@@ -213,7 +219,7 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
     // now, ctx->B contains (A-B)^(-1)
 
     for (size_t iw = 0; iw < nw; ++iw) {
-        STDL_DEBUG("- w=%f", w[iw]);
+        stdl_log_msg(0, "-");
 
         // make left side: L = (A+B)-w^2*(A-B)^(-1)
         for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
@@ -260,7 +266,7 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
     // stdl_matrix_sge_print(nw * ctx->ncsfs, ndim, X, "X");
     // stdl_matrix_sge_print(nw * ctx->ncsfs, ndim, Y, "Y");
 
-    STDL_DEBUG("done with linear response vectors");
+    stdl_log_msg(0, "< done\n");
 
     STDL_FREE_ALL(L, ipiv);
 

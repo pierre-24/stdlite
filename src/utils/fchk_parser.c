@@ -609,6 +609,8 @@ size_t _count_nao(size_t nbas, long* shell_types) {
 int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr) {
     assert(wf_ptr != NULL && bs_ptr != NULL && lx != NULL);
 
+    stdl_log_msg(0, "Extract wavefunction and basis set from FCHK >");
+
     STDL_DEBUG("reading FCHK file");
 
     // useful variables
@@ -733,6 +735,8 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
         free(name);
     }
 
+    stdl_log_msg(0, "-");
+
     STDL_DEBUG("reading done");
 
     STDL_ERROR_HANDLE_AND_REPORT(!finished, error = STDL_ERR_UTIL_FCHK; goto _end, "FCHK was missing certain sections (dt=0x%x, wf_ptr=0x%x)", dt, wf_ptr);
@@ -743,12 +747,16 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
     free(atm);
     atm = NULL;
 
+    stdl_log_msg(0, "-");
+
     // create the basis set
     error = _make_basis_set(bs_ptr, *wf_ptr, dt);
     STDL_ERROR_CODE_HANDLE(error, goto _end);
 
     _fchk_data_delete(dt);
     dt = NULL;
+
+    stdl_log_msg(0, "-");
 
     // map each AO to its atom
     int si, center, shift = 0;
@@ -766,8 +774,12 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
         shift += si;
     }
 
+    stdl_log_msg(0, "-");
+
     // create the S matrix
     error = stdl_basis_dsp_ovlp((*bs_ptr), (*wf_ptr)->S);
+
+    stdl_log_msg(0, "< done\n");
 
     // clean up stuffs
     _end:

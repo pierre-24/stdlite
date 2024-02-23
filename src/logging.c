@@ -27,7 +27,7 @@ int stdl_get_debug_level() {
 void stdl_log_msg(int loglevel, char *format, ...) {
     assert(format != NULL);
 
-    if(loglevel < LOG_LVL)
+    if(LOG_LVL < loglevel)
         return;
 
     va_list arglist;

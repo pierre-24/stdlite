@@ -6,6 +6,10 @@
 
 #include "tests_suite.h"
 
+void setUp() {
+    stdl_set_debug_level(-1);
+}
+
 // Use the spectral representation of a linear response vector to re-create Wlin, which is either X(w) or Y(w) depending on `getX`
 void _make_response_vector(stdl_context* ctx, float w, double* dipoles, float* e, float* Xamp, float* Yamp, int getX, float* Wlin) {
     size_t nvirt = ctx->nmo - ctx->nocc;

@@ -41,6 +41,8 @@ int stdl_lexer_new(FILE *input, stdl_lexer **lx_ptr) {
     *lx_ptr = malloc(sizeof(stdl_lexer));
     STDL_ERROR_HANDLE_AND_REPORT(*lx_ptr == NULL, return STDL_ERR_MALLOC, "malloc");
 
+    STDL_DEBUG("create lexer %p", lx_ptr);
+
     (*lx_ptr)->file = input;
 
     (*lx_ptr)->stream = malloc(STDL_LEXER_STREAM_BUFF_SIZE * sizeof(char));
@@ -64,6 +66,8 @@ int stdl_lexer_new(FILE *input, stdl_lexer **lx_ptr) {
 
 int stdl_lexer_delete(stdl_lexer *lx) {
     assert(lx != NULL);
+
+    STDL_DEBUG("delete lexer %p", lx);
 
     STDL_FREE_ALL(lx->stream, lx);
 

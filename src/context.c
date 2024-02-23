@@ -112,10 +112,12 @@ int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float 
                  stdl_context **ctx) {
     assert(ctx != NULL && wf != NULL && bs != NULL && gammaJ > 0 && gammaK > 0 && ethr > 0 && e2thr > 0 && ax >= 0 && ax <= 1);
 
-    STDL_DEBUG("Create new context from wavefunction and basis set (with gammaJ=%f, gammaK=%f)", gammaJ, gammaK);
+    stdl_log_msg(0, "Create new context and select MO >", gammaJ, gammaK);
 
     *ctx = malloc(sizeof(stdl_context));
     STDL_ERROR_HANDLE_AND_REPORT(*ctx == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    STDL_DEBUG("create context %p", *ctx);
 
     (*ctx)->original_wf = wf;
     (*ctx)->bs = bs;
@@ -149,6 +151,8 @@ int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float 
             break;
     }
 
+    stdl_log_msg(0, "-");
+
     (*ctx)->nmo = omax - omin + 1;
     (*ctx)->nocc = ohomo - omin + 1;
     size_t nvirt = omax - ohomo;
@@ -173,11 +177,15 @@ int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float 
     int error = stdl_wavefunction_orthogonalize_C_dge((*ctx)->nmo, wf->nao, wf->S, (*ctx)->C);
     STDL_ERROR_CODE_HANDLE(error, stdl_context_delete(*ctx); return error);
 
+    stdl_log_msg(0, "< done\n");
+
     return STDL_ERR_OK;
 }
 
 int stdl_context_delete(stdl_context* ctx) {
     assert(ctx != NULL);
+
+    STDL_DEBUG("delete context %p", ctx);
 
     if(ctx->original_wf != NULL)
         stdl_wavefunction_delete(ctx->original_wf);
@@ -193,7 +201,7 @@ int stdl_context_delete(stdl_context* ctx) {
 int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     assert(ctx != NULL && ctx->ncsfs == 0);
 
-    STDL_DEBUG("Select CSFs (monopole)");
+    stdl_log_msg(0, "Select CSFs (monopole approximation) >");
 
     size_t natm = ctx->original_wf->natm,
             nvirt = ctx->nmo - ctx->nocc,
@@ -255,6 +263,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     // stdl_matrix_sge_print(natm, 0, AABB_J, "(AA|BB)_J");
     // stdl_matrix_sge_print(natm, 0, AABB_K, "(AA|BB)_K");
 
+    stdl_log_msg(0, "-");
     STDL_DEBUG("Create Q_A^ij, Q_A^ab, and Q_A^ia");
 
     // 1. density charges for Coulomb terms: Q_A^ij [in packed form, float[STDL_SP_SIZE(nocc)]], Q_A^ab [in packed form, float[STDL_SP_SIZE(nocc)]], and Q_A^ia [float[nocc * nvirt]].
@@ -305,6 +314,8 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
         }
     }
 
+    stdl_log_msg(0, "-");
+
     // stdl_matrix_sge_print(nexci_ia, natm, qAia, "Q_A^ia");
 
     // 2. Intermediates: (ij|BB)_J [in packed form], and (ia|BB)_K:
@@ -332,6 +343,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     );
 
     // stdl_matrix_sge_print(nexci_ia, natm, iaBB_K, "(ia|BB)_K");
+    stdl_log_msg(0, "-");
 
     /*
      *  2) To select primary CSFs i→a, one needs to evaluate A'_ia,ia = (e_a - e_i) + 2*(ia|ia)' - (ii|aa)'.
@@ -411,6 +423,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
         }
     }
 
+    stdl_log_msg(0, "-");
     STDL_DEBUG("Select secondary CSFs with E^(2) < %f Eh", ctx->e2thr);
 
     if(ctx->ncsfs > 0) {
@@ -452,6 +465,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
             }
         }
 
+        stdl_log_msg(0, "-");
         STDL_DEBUG("Build A' (and B') matrices with %ld CSFs (%.2f%% of %ld CSFs)", ctx->ncsfs, (float) ctx->ncsfs / (float) nexci_ia * 100, nexci_ia);
 
         /*
@@ -512,7 +526,8 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
         STDL_WARN("no CSFs selected. `E_thr` should be at least %f Eh!", A_diag[csfs_sorted_indices[0]]);
     }
 
-    STDL_DEBUG("Done selecting CSFs");
+    stdl_log_msg(0, "< done\n");
+    stdl_log_msg(0, "Selected %ld CSFs (%.2f%% of %ld CSFs)\n", ctx->ncsfs, (float) ctx->ncsfs / (float) nexci_ia * 100, nexci_ia);
 
     STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices);
 
@@ -547,7 +562,7 @@ float _pqrs_monopole_wrk(stdl_context* ctx, size_t p, size_t q, size_t r, size_t
 int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
     assert(ctx != NULL && ctx->ncsfs == 0);
 
-    STDL_DEBUG("Select CSFs (monopole) -- Direct");
+    stdl_log_msg(0, "Select CSFs (monopole approximation -- direct method) >");
 
     size_t natm = ctx->original_wf->natm,
             nvirt = ctx->nmo - ctx->nocc,
@@ -580,6 +595,8 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
             AABB_K[STDL_MATRIX_SP_IDX(A_, B_)] = 1.f / powf(powf(r_AB, ctx->gammaK) + powf(etaAB, -ctx->gammaK), 1.f / ctx->gammaK);
         }
     }
+
+    stdl_log_msg(0, "-");
 
     /*
      *  2) To select primary CSFs i→a, one needs to evaluate A'_ia,ia = (e_a - e_i) + 2*(ia|ia)' - (ii|aa)'.
@@ -658,6 +675,7 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
          * 3) Now, select S-CSFs j→b so that E^(2)_jb > E^(2)_thr.
          */
 
+        stdl_log_msg(0, "-");
         STDL_DEBUG("Select secondary CSFs with E^(2) < %f Eh", ctx->e2thr);
 
         for(size_t kjb=0; kjb < nexci_ia; kjb++) { // loop over possible S-CSFs
@@ -687,6 +705,8 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
             }
         }
 
+
+        stdl_log_msg(0, "-");
         STDL_DEBUG("Build A' (and B') matrices with %ld CSFs (%.2f%% of %ld CSFs)", ctx->ncsfs, (float) ctx->ncsfs / (float) nexci_ia * 100, nexci_ia);
 
         /*
@@ -739,7 +759,8 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
         STDL_WARN("no CSFs selected. `E_thr` should be at least %f Eh!", A_diag[csfs_sorted_indices[0]]);
     }
 
-    STDL_DEBUG("Done selecting CSFs");
+    stdl_log_msg(0, "< done\n");
+    stdl_log_msg(0, "Selected %ld CSFs (%.2f%% of %ld CSFs)\n", ctx->ncsfs, (float) ctx->ncsfs / (float) nexci_ia * 100, nexci_ia);
 
 
     STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices);

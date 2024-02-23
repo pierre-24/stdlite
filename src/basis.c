@@ -11,6 +11,8 @@ int stdl_basis_new(int natm, int nbas, size_t env_size, int use_spherical, stdl_
     *bs_ptr = malloc(sizeof(stdl_basis));
     STDL_ERROR_HANDLE_AND_REPORT(*bs_ptr == NULL, return STDL_ERR_MALLOC, "malloc");
 
+    STDL_DEBUG("create basis %p", *bs_ptr);
+
     (*bs_ptr)->natm = natm;
     (*bs_ptr)->nbas = nbas;
     (*bs_ptr)->use_spherical = use_spherical;
@@ -35,6 +37,8 @@ int stdl_basis_new(int natm, int nbas, size_t env_size, int use_spherical, stdl_
 
 int stdl_basis_delete(stdl_basis *bs) {
     assert(bs != NULL);
+
+    STDL_DEBUG("delete basis %p", bs);
 
     STDL_FREE_ALL(bs->atm, bs->bas, bs->env, bs);
 
@@ -90,7 +94,7 @@ int stdl_basis_print(stdl_basis *bs, int denormalize) {
 int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S) {
     assert(bs != NULL && S != NULL);
 
-    STDL_DEBUG("computing <i|j>");
+    stdl_log_msg(1, "Computing <i|j> >");
 
     size_t nao = 0;
     for(int i=0; i < bs->nbas; i++) {
@@ -137,6 +141,8 @@ int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S) {
 
     free(buff);
 
+    stdl_log_msg(1, "< done\n");
+
     return STDL_ERR_OK;
 }
 
@@ -144,7 +150,7 @@ int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S) {
 int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles) {
     assert(bs != NULL && dipoles != NULL);
 
-    STDL_DEBUG("computing <i|µ|j>");
+    stdl_log_msg(1, "Computing <i|µ|j> >");
 
     size_t nao = 0;
     for(int i=0; i < bs->nbas; i++) {
@@ -194,6 +200,8 @@ int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles) {
     }
 
     free(buff);
+
+    stdl_log_msg(1, "< done\n");
 
     return STDL_ERR_OK;
 }

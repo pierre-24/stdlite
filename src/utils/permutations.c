@@ -90,11 +90,15 @@ int stdl_permutations_new(void* original_set, size_t nelm, size_t elmsz, stdl_pe
     *permutations = first->next;
     free(first);
 
+    STDL_DEBUG("create permutation %p", *permutations);
+
     return STDL_ERR_OK;
 }
 
 int stdl_permutations_delete(stdl_permutations* permutations) {
     assert(permutations != NULL);
+
+    STDL_DEBUG("delete permutation element %p", permutations);
 
     if(permutations->next != NULL)
         stdl_permutations_delete(permutations->next);
