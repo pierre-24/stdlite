@@ -139,7 +139,7 @@ int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float 
     size_t ohomo = (int) wf->nocc - 1, omin = 0, omax = 0;
     double ehomo = wf->e[ohomo], elumo = wf->e[ohomo + 1], ewin = 2 * (1 + .8 * ax)  * ethr, emin = elumo -ewin, emax = ehomo+ ewin;
 
-    STDL_DEBUG("Resuling MO cutoff: %f Eh (%.3f eV) -- %f Eh (%.3f eV)", emin, emin * 27.212, emax, emax * 27.212);
+    STDL_DEBUG("Resulting MO cutoff: %f Eh (%.3f eV) -- %f Eh (%.3f eV)", emin, emin * 27.212, emax, emax * 27.212);
 
     for(size_t i=0; i < wf->nmo; i++) {
         if(wf->e[i] >= emin && omin == 0)
@@ -171,6 +171,8 @@ int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float 
         (*ctx)->e[i] = wf->e[omin + i];
         memcpy(&((*ctx)->C[i * wf->nao]), &(wf->C[(i + omin) * wf->nao]), wf->nao * sizeof(double));
     }
+
+    stdl_log_msg(0, "-");
 
     STDL_DEBUG("Orthogonalize MOs");
 
@@ -571,7 +573,7 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
     double* atm = ctx->original_wf->atm;
 
     /*
-     * 1) Prepare charges and intermediates, as one big block of (continuous) memory.
+     * 1) (AA|BB)_J and (AA|BB)_K
      */
 
     float* env = malloc((2 * STDL_MATRIX_SP_SIZE(natm) + 2 * natm) * sizeof(float));

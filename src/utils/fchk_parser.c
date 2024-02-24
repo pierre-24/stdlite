@@ -466,6 +466,8 @@ int _make_basis_set(stdl_basis** bs_ptr, stdl_wavefunction* wf, struct _fchk_dat
     int nbas = (int) dt->nbas, extra_coefs = 0, fct_type = 0 /* 1 = cartesian, -1 = spherical */;
 
     for(int i=0; i < (int) dt->nbas; i++) {
+        STDL_ERROR_HANDLE_AND_REPORT(dt->shell_types[i] > 1 || dt->shell_types[i] < -3, return STDL_ERR_UTIL_FCHK, "only spherical basis functions up to f and cartesian functions up to p are supported");
+
         if(dt->shell_types[i] == -1) { // count extra p function due to sp
             nbas += 1;
             extra_coefs += (int) dt->prims_per_shell[i];
@@ -606,6 +608,57 @@ size_t _count_nao(size_t nbas, long* shell_types) {
     return total;
 }
 
+// transpose the LCAO coefficients so that they match libcint
+int* TRANSPOSE_CART[] = {
+        /* s */ (int[]) {0,},
+        /* p */ (int[]) {0, 1, 2},
+        /* d */ (int[]) {0, 3, 5, 1, 2, 4},
+        /* f */ (int[]) {0, 6, 9, 3, 1, 2, 8, 5, 7, 4},
+};
+
+int* TRANSPOSE_SPH[] = {
+        /* s */ (int[]) {0,},
+        /* p */ (int[]) {0, 1, 2},
+        /* d */ (int[]) {2, 3, 1, 4, 0},
+        /* f */ (int[]) {3, 4, 2, 5, 1, 6, 0},
+};
+
+void _fix_AO_order_in_C(stdl_wavefunction* wf, stdl_basis* bs) {
+    int** transpose = TRANSPOSE_CART;
+    if(bs->use_spherical)
+        transpose = TRANSPOSE_SPH;
+
+    double buff[10] = {0}; // maximum that can be handled at the moment
+
+    int sj, joffset;
+
+    for (size_t i = 0; i < wf->nmo; ++i) {
+
+        joffset = 0;
+
+        for(int j=0; j < bs->nbas; j++) {
+            int angmom = bs->bas[j * 8 + 1];
+
+            if (bs->use_spherical)
+                sj = CINTcgto_spheric(j, bs->bas);
+            else
+                sj = CINTcgtos_cart(j, bs->bas);
+
+            if(angmom > 1) { // s & p functions are ok
+                // reorder
+                for(int mu = 0; mu < sj; mu++) {
+                    buff[transpose[angmom][mu]] = wf->C[i * wf->nao + joffset + mu];
+                }
+
+                // and copy back
+                memcpy(wf->C + i * wf->nao + joffset, buff, sj * sizeof(double ));
+            }
+
+            joffset += sj;
+        }
+    }
+}
+
 int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr) {
     assert(wf_ptr != NULL && bs_ptr != NULL && lx != NULL);
 
@@ -739,7 +792,7 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
 
     STDL_DEBUG("reading done");
 
-    STDL_ERROR_HANDLE_AND_REPORT(!finished, error = STDL_ERR_UTIL_FCHK; goto _end, "FCHK was missing certain sections (dt=0x%x, wf_ptr=0x%x)", dt, wf_ptr);
+    STDL_ERROR_HANDLE_AND_REPORT(!finished, error = STDL_ERR_UTIL_FCHK; goto _end, "FCHK was missing certain sections (dt=%p, wf_ptr=%p)", dt, wf_ptr);
 
     // at that point, we should have read everything
     // copy remaining stuffs
@@ -776,10 +829,16 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
 
     stdl_log_msg(0, "-");
 
+    // fix AO ordering
+    _fix_AO_order_in_C(*wf_ptr, *bs_ptr);
+
+    stdl_log_msg(0, "-");
+
     // create the S matrix
     error = stdl_basis_dsp_ovlp((*bs_ptr), (*wf_ptr)->S);
 
     stdl_log_msg(0, "< done\n");
+    stdl_log_msg(0, "Got %d atoms, %d AOs (%d primitives in %d basis functions), and %d MOs\n", natm, nao, nprim, nbas, nmo);
 
     // clean up stuffs
     _end:

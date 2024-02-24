@@ -39,14 +39,8 @@ groups:
       ```c
       #include <stdlite/basis.h>
       ```
-      
-      Follows the structure of [`libcint`](https://github.com/sunqm/libcint/blob/master/doc/program_ref.txt), so that it can be used to compute extra integrals.
-      
-      !!! note
-          
-          Most of the documentation (and all examples) of libcint actually refers to the old (version < 3.0) API.
-          The new API actually includes two extra parameters [described there](https://github.com/sunqm/libcint/blob/master/doc/program_ref.tex#L228).
-          Furthermore, according to [this](https://github.com/sunqm/libcint/issues/76), the first 20 values of `env` are reserved.
+  
+      --8<-- "docs/includes/basis.md"
   - name: context
     title: Context handler
     description: |
@@ -119,53 +113,7 @@ groups:
           #include <stdlite/utils/fchk_parser.h>
           ```
           
-          While this parser contains a few safeguards, it works better if the FCHK is correctly formatted.
-          
-          !!! warning
-          
-              The logical type, `L`, is not implemented. However, it does not seems to be used in production FCHK.
-              Scalar `C` is also not implemented nor used.
-          
-          In order to parse a FCHK, use something of the form:
-          
-          ```c
-          char* name = NULL;
-          char type;
-          int error, is_scalar;
-          
-          // 1. Open file, create lexer
-          FILE* f = fopen("file.fchk", "r");
-          stdl_lexer* lx = stdl_lexer_new(f);
-          
-          // 2. Skip intro
-          stdl_fchk_parser_skip_intro(lx);
-          
-          // 3. Read sections
-          while (lx->current_tk_type != STDL_TK_EOF) {
-            // read section info, giving:
-            // a) the name of the section, b) its type, and c) if it is a scalar
-            error = stdl_fchk_parser_get_section_info(lx, &name, &type, &is_scalar);
-            
-            if(error == STDL_ERR_OK) {
-              if(strcmp("an interesting section", name) == 0) {
-                /* Read the content of this section by using either:
-                 * - `stdl_fchk_parser_get_scalar_*()`, or
-                 * - `stdl_fchk_parser_get_vector_*()`.
-                 * Don't forget to free the result after use.
-                 */
-              } else if(/* ... */) {
-                /* ... */
-              } else {
-                // not interesting, skip section
-                stdl_fchk_parser_skip_section(lx, type, is_scalar);
-              }
-              free(name);
-            }
-          }
-      
-          stdl_lexer_delete(lx);
-          fclose(f);
-          ```
+          --8<-- "docs/includes/fchk_parser.md"
       - name: matrix
         title: Matrices
         description: |

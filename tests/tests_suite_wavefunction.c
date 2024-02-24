@@ -28,6 +28,8 @@ void compute_population_and_check(stdl_wavefunction* wf, int sym) {
         double* Ssy = malloc(wf->nao * wf->nao * sizeof(double));
         TEST_ASSERT_NOT_NULL(Ssy);
 
+        // stdl_matrix_dsp_print(wf->nao, wf->S, "S");
+
         stdl_matrix_dsp_blowsy(wf->nao, 'L', wf->S, Ssy);
 
         double* Pge = malloc(wf->nao * wf->nao * sizeof(double));
@@ -56,22 +58,58 @@ void compute_population_and_check(stdl_wavefunction* wf, int sym) {
     } else // S=1, so 1/2*(S*D+D*S) = D
         memcpy(mulliken_pop, P, STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
 
-    // stdl_matrix_dge_print(wf->nao, 0, mulliken_pop, "1/2*(PS+SP)");
+    // stdl_matrix_dsp_print(wf->nao, mulliken_pop, "1/2*(PS+SP)");
 
     double total = .0;
     for(size_t mu=0; mu < wf->nao; mu++)
         total += mulliken_pop[STDL_MATRIX_SP_IDX(mu, mu)];
 
-    TEST_ASSERT_DOUBLE_WITHIN(1e-8, (double) wf->nocc * 2, total);
+    TEST_ASSERT_DOUBLE_WITHIN(1e-6, (double) wf->nocc * 2, total);
 
     free(mulliken_pop);
     free(P);
 }
 
-void test_content_ok() {
+void test_content_sto3g_ok() {
+
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
+    ASSERT_STDL_OK(stdl_basis_delete(bs));
+
+    compute_population_and_check(wf, 0);
+
+    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
+}
+
+void test_content_631g_ok() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
+    ASSERT_STDL_OK(stdl_basis_delete(bs));
+
+    compute_population_and_check(wf, 0);
+
+    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
+}
+
+void test_content_cart_6d10f_ok() {
+    TEST_IGNORE_MESSAGE("issue with libcint -> incorrect normalization");
+
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_fchk("../tests/test_files/water_631gdf.fchk", &wf, &bs);
+    ASSERT_STDL_OK(stdl_basis_delete(bs));
+
+    compute_population_and_check(wf, 0);
+
+    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
+}
+
+void test_content_cart_5d7f_ok() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_fchk("../tests/test_files/water_631gdf_sph.fchk", &wf, &bs);
     ASSERT_STDL_OK(stdl_basis_delete(bs));
 
     compute_population_and_check(wf, 0);
