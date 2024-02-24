@@ -94,11 +94,9 @@ void test_content_631g_ok() {
 }
 
 void test_content_cart_6d10f_ok() {
-    TEST_IGNORE_MESSAGE("issue with libcint -> incorrect normalization");
-
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
-    read_fchk("../tests/test_files/water_631gdf.fchk", &wf, &bs);
+    read_fchk("../tests/test_files/water_631gd.fchk", &wf, &bs);
     ASSERT_STDL_OK(stdl_basis_delete(bs));
 
     compute_population_and_check(wf, 0);
@@ -166,7 +164,7 @@ void test_sqrtS_ok() {
 void test_orthogonalize_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
-    read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
+    read_fchk("../tests/test_files/water_631gdf_sph.fchk", &wf, &bs);
 
     ASSERT_STDL_OK(stdl_basis_delete(bs));
 

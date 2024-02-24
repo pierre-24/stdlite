@@ -466,7 +466,7 @@ int _make_basis_set(stdl_basis** bs_ptr, stdl_wavefunction* wf, struct _fchk_dat
     int nbas = (int) dt->nbas, extra_coefs = 0, fct_type = 0 /* 1 = cartesian, -1 = spherical */;
 
     for(int i=0; i < (int) dt->nbas; i++) {
-        STDL_ERROR_HANDLE_AND_REPORT(dt->shell_types[i] > 1 || dt->shell_types[i] < -3, return STDL_ERR_UTIL_FCHK, "only spherical basis functions up to f and cartesian functions up to p are supported");
+        STDL_ERROR_HANDLE_AND_REPORT(dt->shell_types[i] > 3 || dt->shell_types[i] < -3, return STDL_ERR_UTIL_FCHK, "only spherical basis functions up to f and cartesian functions up to p are supported");
 
         if(dt->shell_types[i] == -1) { // count extra p function due to sp
             nbas += 1;
@@ -613,7 +613,7 @@ int* TRANSPOSE_CART[] = {
         /* s */ (int[]) {0,},
         /* p */ (int[]) {0, 1, 2},
         /* d */ (int[]) {0, 3, 5, 1, 2, 4},
-        /* f */ (int[]) {0, 6, 9, 3, 1, 2, 8, 5, 7, 4},
+        /* f */ (int[]) {0, 6, 9, 3, 1, 2, 5, 8, 7, 4},
 };
 
 int* TRANSPOSE_SPH[] = {

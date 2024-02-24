@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 #include "stdlite/basis.h"
 #include "stdlite/logging.h"
 #include "stdlite.h"
@@ -91,45 +92,73 @@ int stdl_basis_print(stdl_basis *bs, int denormalize) {
     return STDL_ERR_OK;
 }
 
+// compute renormalization factors for cartesian functions with l > 1.
+void _compute_renormalization(stdl_basis* bs, double* renorm, double* buff) {
+    int si, ioffset = 0;
+
+    for(int ibas=0; ibas < bs->nbas; ibas++) {
+        int angmom = bs->bas[ibas * 8 + 1];
+
+        if(bs->use_spherical)
+            si = CINTcgto_spheric(ibas, bs->bas);
+        else
+            si = CINTcgtos_cart(ibas, bs->bas);
+
+        if(bs->use_spherical || angmom < 2) {
+            for (int mu = 0; mu < si; ++mu)
+                renorm[ioffset + mu] = 1.;
+        } else {
+            int1e_ovlp_cart(buff, NULL, (int[]) {ibas, ibas}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
+            for (int mu = 0; mu < si; ++mu)
+                renorm[ioffset + mu] = 1 / sqrt(buff[mu * si + mu]);
+        }
+
+        ioffset += si;
+    }
+}
+
+
 int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S) {
     assert(bs != NULL && S != NULL);
 
     stdl_log_msg(1, "Computing <i|j> >");
 
     size_t nao = 0;
-    for(int i=0; i < bs->nbas; i++) {
+    for(int ibas=0; ibas < bs->nbas; ibas++) {
         if (bs->use_spherical)
-            nao += CINTcgto_spheric(i, bs->bas);
+            nao += CINTcgto_spheric(ibas, bs->bas);
         else
-            nao += CINTcgtos_cart(i, bs->bas);
+            nao += CINTcgtos_cart(ibas, bs->bas);
     }
 
-    int si, sj, ioffset=0, joffset;
+    double buff[CART_MAX * CART_MAX];
+    double* renorm = malloc(nao * sizeof(double));
+    STDL_ERROR_HANDLE_AND_REPORT(renorm == NULL, return STDL_ERR_MALLOC, "malloc");
 
-    double* buff= malloc(28 * 28 * sizeof(double)); // the maximum libcint can handle
-    STDL_ERROR_HANDLE_AND_REPORT(buff == NULL, return STDL_ERR_MALLOC, "malloc");
+    _compute_renormalization(bs, renorm, buff);
 
-    for(int i=0; i < bs->nbas; i++) {
+    int si, sj, ioffset = 0, joffset;
+    for(int ibas=0; ibas < bs->nbas; ibas++) {
         if(bs->use_spherical)
-            si = CINTcgto_spheric(i, bs->bas);
+            si = CINTcgto_spheric(ibas, bs->bas);
         else
-            si = CINTcgtos_cart(i, bs->bas);
+            si = CINTcgtos_cart(ibas, bs->bas);
 
         joffset = 0;
 
-        for(int j=0; j <= i; j++) {
+        for(int jbas=0; jbas <= ibas; jbas++) {
             if(bs->use_spherical) {
-                sj = CINTcgto_spheric(j, bs->bas);
-                int1e_ovlp_sph(buff, NULL, (int[]) {i, j}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
+                sj = CINTcgto_spheric(jbas, bs->bas);
+                int1e_ovlp_sph(buff, NULL, (int[]) {ibas, jbas}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
             }
             else {
-                sj = CINTcgtos_cart(j, bs->bas);
-                int1e_ovlp_cart(buff, NULL, (int[]) {i, j}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
+                sj = CINTcgtos_cart(jbas, bs->bas);
+                int1e_ovlp_cart(buff, NULL, (int[]) {ibas, jbas}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
             }
 
             for(int iprim=0; iprim < si; iprim++) {
                 for(int jprim=0; jprim < sj && joffset + jprim <= ioffset + iprim; jprim++) {
-                    S[STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = buff[iprim * sj + jprim];
+                    S[STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = buff[iprim * sj + jprim] * renorm[ioffset + iprim] * renorm[joffset + jprim];
                 }
             }
 
@@ -139,7 +168,7 @@ int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S) {
         ioffset += si;
     }
 
-    free(buff);
+    free(renorm);
 
     stdl_log_msg(1, "< done\n");
 
@@ -153,43 +182,46 @@ int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles) {
     stdl_log_msg(1, "Computing <i|µ|j> >");
 
     size_t nao = 0;
-    for(int i=0; i < bs->nbas; i++) {
+    for(int ibas=0; ibas < bs->nbas; ibas++) {
         if (bs->use_spherical)
-            nao += CINTcgto_spheric(i, bs->bas);
+            nao += CINTcgto_spheric(ibas, bs->bas);
         else
-            nao += CINTcgtos_cart(i, bs->bas);
+            nao += CINTcgtos_cart(ibas, bs->bas);
     }
 
     int si, sj, ioffset=0, joffset;
 
-    double* buff= malloc(3 * 28 * 28 * sizeof(double)); // the maximum libcint can handle
-    STDL_ERROR_HANDLE_AND_REPORT(buff == NULL, return STDL_ERR_MALLOC, "malloc");
+    double buff[3 * CART_MAX * CART_MAX];
+    double* renorm = malloc(nao * sizeof(double));
+    STDL_ERROR_HANDLE_AND_REPORT(renorm == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    _compute_renormalization(bs, renorm, buff);
 
     size_t ndips = STDL_MATRIX_SP_SIZE(nao);
 
-    for(int i=0; i < bs->nbas; i++) {
+    for(int ibas=0; ibas < bs->nbas; ibas++) {
         if(bs->use_spherical)
-            si = CINTcgto_spheric(i, bs->bas);
+            si = CINTcgto_spheric(ibas, bs->bas);
         else
-            si = CINTcgtos_cart(i, bs->bas);
+            si = CINTcgtos_cart(ibas, bs->bas);
 
         joffset = 0;
 
-        for(int j=0; j <= i; j++) {
+        for(int jbas=0; jbas <= ibas; jbas++) {
             if(bs->use_spherical) {
-                sj = CINTcgto_spheric(j, bs->bas);
-                int1e_r_sph(buff, NULL, (int[]) {i, j}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
+                sj = CINTcgto_spheric(jbas, bs->bas);
+                int1e_r_sph(buff, NULL, (int[]) {ibas, jbas}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
             }
             else {
-                sj = CINTcgtos_cart(j, bs->bas);
-                int1e_r_cart(buff, NULL, (int[]) {i, j}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
+                sj = CINTcgtos_cart(jbas, bs->bas);
+                int1e_r_cart(buff, NULL, (int[]) {ibas, jbas}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
             }
 
             for(int iprim=0; iprim < si; iprim++) {
                 for(int jprim=0; jprim < sj && joffset + jprim <= ioffset + iprim; jprim++) {
-                    dipoles[0 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = -buff[0 * si * sj + iprim * sj + jprim];
-                    dipoles[1 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = -buff[1 * si * sj + iprim * sj + jprim];
-                    dipoles[2 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = -buff[2 * si * sj + iprim * sj + jprim];
+                    dipoles[0 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = -buff[0 * si * sj + iprim * sj + jprim] * renorm[ioffset + iprim] * renorm[joffset + jprim];
+                    dipoles[1 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = -buff[1 * si * sj + iprim * sj + jprim] * renorm[ioffset + iprim] * renorm[joffset + jprim];
+                    dipoles[2 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = -buff[2 * si * sj + iprim * sj + jprim] * renorm[ioffset + iprim] * renorm[joffset + jprim];
                 }
             }
 
@@ -199,7 +231,7 @@ int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles) {
         ioffset += si;
     }
 
-    free(buff);
+    free(renorm);
 
     stdl_log_msg(1, "< done\n");
 
