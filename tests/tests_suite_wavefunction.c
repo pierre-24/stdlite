@@ -96,7 +96,7 @@ void test_content_631g_ok() {
 void test_content_cart_6d10f_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
-    read_fchk("../tests/test_files/water_631gd.fchk", &wf, &bs);
+    read_fchk("../tests/test_files/water_631gdf.fchk", &wf, &bs);
     ASSERT_STDL_OK(stdl_basis_delete(bs));
 
     compute_population_and_check(wf, 0);

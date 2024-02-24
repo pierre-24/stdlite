@@ -838,7 +838,7 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
     error = stdl_basis_dsp_ovlp((*bs_ptr), (*wf_ptr)->S);
 
     stdl_log_msg(0, "< done\n");
-    stdl_log_msg(0, "Got %d atoms, %d AOs (%d primitives in %d basis functions), and %d MOs\n", natm, nao, nprim, nbas, nmo);
+    stdl_log_msg(0, "Got %d atoms, %d AOs (%d primitives in %d basis functions), and %d MOs\n", natm, nao, nprim, (*bs_ptr)->nbas, nmo);
 
     // clean up stuffs
     _end:

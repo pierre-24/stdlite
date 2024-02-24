@@ -186,7 +186,7 @@ int stdl_matrix_dsp_sqrt_sy(size_t n, double *mat, double* matsy) {
     // compute the square root of eigenvalues
     for(size_t i = 0; i < n; i++) {
         if(e[i] < .0) {
-            STDL_WARN("eigenvalue of S #%d is < .0, will be set to 0", i);
+            STDL_WARN("eigenvalue of S #%d is %f (<0), will be set to 0", e[i], i);
             e[i] = 0;
         } else
             e[i] = sqrt(e[i]);

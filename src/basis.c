@@ -158,7 +158,7 @@ int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S) {
 
             for(int iprim=0; iprim < si; iprim++) {
                 for(int jprim=0; jprim < sj && joffset + jprim <= ioffset + iprim; jprim++) {
-                    S[STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = buff[iprim * sj + jprim] * renorm[ioffset + iprim] * renorm[joffset + jprim];
+                    S[STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = buff[jprim * si + iprim] * renorm[ioffset + iprim] * renorm[joffset + jprim];
                 }
             }
 
@@ -219,9 +219,9 @@ int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles) {
 
             for(int iprim=0; iprim < si; iprim++) {
                 for(int jprim=0; jprim < sj && joffset + jprim <= ioffset + iprim; jprim++) {
-                    dipoles[0 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = -buff[0 * si * sj + iprim * sj + jprim] * renorm[ioffset + iprim] * renorm[joffset + jprim];
-                    dipoles[1 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = -buff[1 * si * sj + iprim * sj + jprim] * renorm[ioffset + iprim] * renorm[joffset + jprim];
-                    dipoles[2 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = -buff[2 * si * sj + iprim * sj + jprim] * renorm[ioffset + iprim] * renorm[joffset + jprim];
+                    dipoles[0 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = -buff[0 * si * sj + jprim * si + iprim] * renorm[ioffset + iprim] * renorm[joffset + jprim];
+                    dipoles[1 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = -buff[1 * si * sj + jprim * si + iprim] * renorm[ioffset + iprim] * renorm[joffset + jprim];
+                    dipoles[2 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = -buff[2 * si * sj + jprim * si + iprim] * renorm[ioffset + iprim] * renorm[joffset + jprim];
                 }
             }
 
