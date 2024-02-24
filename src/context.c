@@ -157,8 +157,6 @@ int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float 
     (*ctx)->nocc = ohomo - omin + 1;
     size_t nvirt = omax - ohomo;
 
-    STDL_DEBUG("Resulting partition: [%d || %d | %d || %d] (occ + virt = %d, %.2f%% of %d MOs)", omin, (*ctx)->nocc, nvirt, wf->nmo - omax - 1, (*ctx)->nmo, (double) (*ctx)->nmo / wf->nmo * 100, wf->nmo);
-
     (*ctx)->e = malloc((*ctx)->nmo * sizeof(double));
     (*ctx)->C = malloc((*ctx)->nmo * wf->nao * sizeof(double));
 
@@ -180,6 +178,8 @@ int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float 
     STDL_ERROR_CODE_HANDLE(error, stdl_context_delete(*ctx); return error);
 
     stdl_log_msg(0, "< done\n");
+
+    stdl_log_msg(0, "Resulting partition: [%d\\%d|%d/%d] (active space of %d MOs, %.2f%% of total)\n", omin, (*ctx)->nocc, nvirt, wf->nmo - omax - 1, (*ctx)->nmo, (double) (*ctx)->nmo / (double) wf->nmo * 100);
 
     return STDL_ERR_OK;
 }

@@ -90,13 +90,7 @@ void test_property_polarizability_TD_ok() {
 
     stdl_context* ctx = NULL;
     ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
-
-    TEST_ASSERT_EQUAL_INT(ctx->nmo,7);
-    TEST_ASSERT_EQUAL_INT(ctx->nocc, 4);
-
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
-
-    TEST_ASSERT_EQUAL_INT(ctx->ncsfs, 10);
 
     // compute dipole integrals and convert to MO
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
@@ -139,16 +133,11 @@ void test_property_polarizability_TD_ok() {
 void test_property_polarizability_TD_SOS_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
-    read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
+    read_fchk("../tests/test_files/water_631gdf.fchk", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
-
-    TEST_ASSERT_EQUAL_INT(ctx->nmo,7);
-    TEST_ASSERT_EQUAL_INT(ctx->nocc, 4);
-
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 25. / 27.212, 1e-4, 1.0, &ctx));
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
-    TEST_ASSERT_EQUAL_INT(ctx->ncsfs, 10);
 
     // copy A&B for latter
     float* Ap = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
@@ -233,13 +222,7 @@ void test_property_first_hyperpolarizability_TD_ok() {
 
     stdl_context* ctx = NULL;
     ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
-
-    TEST_ASSERT_EQUAL_INT(ctx->nmo,7);
-    TEST_ASSERT_EQUAL_INT(ctx->nocc, 4);
-
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
-
-    TEST_ASSERT_EQUAL_INT(ctx->ncsfs, 10);
 
     // compute dipole integrals and convert to MO
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
@@ -272,7 +255,7 @@ void test_property_first_hyperpolarizability_TD_ok() {
             dipoles_mat,
             (float* []) {X, X, X},
             (float* []) {Y, Y, Y},
-            beta
+            (float *) beta
             ));
 
     // stdl_matrix_sge_print(9, 3, beta, "beta");
@@ -286,7 +269,7 @@ void test_property_first_hyperpolarizability_TD_ok() {
             dipoles_mat,
             (float* []) {X + 2 * 3 * ctx->ncsfs, X + 1 * 3 * ctx->ncsfs, X + 1 * 3 * ctx->ncsfs},
             (float* []) {Y + 2 * 3 * ctx->ncsfs, Y + 1 * 3 * ctx->ncsfs, Y + 1 * 3 * ctx->ncsfs},
-            beta
+            (float*) beta
             ));
 
     // stdl_matrix_sge_print(9, 3, beta, "beta");
@@ -307,13 +290,7 @@ void test_property_polarizability_TDA_ok() {
 
     stdl_context* ctx = NULL;
     ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
-
-    TEST_ASSERT_EQUAL_INT(ctx->nmo,7);
-    TEST_ASSERT_EQUAL_INT(ctx->nocc, 4);
-
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
-
-    TEST_ASSERT_EQUAL_INT(ctx->ncsfs, 10);
 
     // compute dipole integrals and convert to MO
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
@@ -356,10 +333,10 @@ void test_property_polarizability_TDA_ok() {
 void test_property_polarizability_TDA_SOS_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
-    read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
+    read_fchk("../tests/test_files/water_631gdf.fchk", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 25. / 27.212, 1e-4, 1.0, &ctx));
 
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
 

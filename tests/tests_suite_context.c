@@ -54,6 +54,48 @@ void test_context_select_MO_ok() {
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
 
+void test_context_select_MO_631gdf_ok() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_fchk("../tests/test_files/water_631gdf.fchk", &wf, &bs);
+
+    stdl_context* ctx = NULL;
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
+
+    TEST_ASSERT_EQUAL_INT(9, ctx->nmo);
+    TEST_ASSERT_EQUAL_INT(4, ctx->nocc);
+
+    // check that the MO are normalized
+    for (size_t i = 0; i < ctx->nmo; ++i) {
+        double sum = .0;
+
+        for (size_t j = 0; j < wf->nao; ++j) {
+            sum += pow(ctx->C[i * wf->nao + j], 2.0);
+        }
+
+        TEST_ASSERT_DOUBLE_WITHIN(1e-8, 1., sum);
+    }
+
+    // compute the density matrix
+    double* P = malloc(STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(P);
+
+    ASSERT_STDL_OK(stdl_wavefunction_compute_density_dsp(ctx->nocc, ctx->nmo, wf->nao, ctx->C, P));
+
+    // count electrons
+    double total = .0;
+    for(size_t mu=0; mu < wf->nao; mu++)
+        total += P[STDL_MATRIX_SP_IDX(mu, mu)];
+
+    TEST_ASSERT_DOUBLE_WITHIN(1e-6, 2.f * ctx->nocc, total);
+
+    // stdl_matrix_dge_print(wf->nao, 0, P, "D");
+
+    free(P);
+
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
+}
+
 void test_dipole() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
