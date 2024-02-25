@@ -55,7 +55,7 @@ int stdl_lexer_new(FILE *input, stdl_lexer **lx_ptr) {
 
     (*lx_ptr)->pos_in_stream = 0;
     (*lx_ptr)->current_line = 1;
-    (*lx_ptr)->current_pos_in_line = 0;
+    (*lx_ptr)->current_pos_in_line = 1;
     (*lx_ptr)->current_tk_value = (*lx_ptr)->stream[0];
 
     stdl_lexer_advance(*lx_ptr, 0);

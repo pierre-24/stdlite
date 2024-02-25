@@ -2,12 +2,11 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include <lapacke.h>
 
 #include "stdlite/logging.h"
 #include "stdlite/utils/fchk_parser.h"
-#include "stdlite.h"
 #include "stdlite/basis.h"
+#include "stdlite/helpers.h"
 
 int stdl_fchk_parser_get_section_info(stdl_lexer* lx, char** name, char* type, int* is_scalar) {
     assert(lx != NULL && name != NULL && type != NULL && is_scalar != NULL);

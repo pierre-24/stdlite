@@ -52,7 +52,7 @@ void test_lexer_line_ok() {
     stdl_lexer* lx = NULL;
     ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
 
-    int line = 1, pos_in_line = 0;
+    int line = 1, pos_in_line = 1;
 
     for(size_t i=0; i < l; i++) {
         TEST_ASSERT_EQUAL_INT(line, lx->current_line);
@@ -98,7 +98,7 @@ void test_lexer_skip_ok() {
     ASSERT_STDL_OK(stdl_lexer_skip(lx, isalpha)); // advance up to `1`
 
     TEST_ASSERT_EQUAL_INT(3, lx->pos_in_stream);
-    TEST_ASSERT_EQUAL_INT(3, lx->current_pos_in_line);
+    TEST_ASSERT_EQUAL_INT(4, lx->current_pos_in_line);
     TEST_ASSERT_EQUAL_CHAR(lx->current_tk_value, '1');
 
     ASSERT_STDL_OK(stdl_lexer_delete(lx));

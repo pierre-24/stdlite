@@ -130,7 +130,12 @@ int stdl_fchk_parser_skip_section(stdl_lexer* lx, char type, int is_scalar);
  * Expects that the introduction has been skipped (with `stdl_fchk_parser_skip_intro()`).
  * Expects that the section comes in the order in which Gaussian prints them.
  * The FCHK is read up to the "Alpha MO coefficients" section.
- * Then, it computes the overlap matrix (`S`) as this is not available in the FCHK.
+ * Then, it:
+ *
+ * + build the wavefunction and basis set,
+ * + reorder the LCAO coefficients to match the order of `libcint`,
+ * + computes the overlap matrix (`S`) as this is not available in the FCHK.
+ *
  * @param lx a valid lexer, opened on a FCHK
  * @param[out] wf_ptr a wavefunction to be created
  * @param[out] bs_ptr a basis set to be created
@@ -141,6 +146,7 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
 
 
 /// Structure that holds basis set data in a format that resemble the one used by Gaussian in its FCHK.
+/// @ingroup fchk_parser
 struct stdl_basis_data_ {
     /// number of basis functions
     size_t nbas;
@@ -169,8 +175,9 @@ typedef struct stdl_basis_data_ stdl_basis_data;
  *
  * @param nbas Number of basis function, must be >0
  * @param nprims Number of primitives, must be `nprims >= nbas`
- * @param[out] dt_ptr Resulting data
+ * @param[out] dt_ptr data to be created
  * @return error code
+ * @ingroup fchk_parser
  */
 int stdl_basis_data_new(size_t nbas, size_t nprims, stdl_basis_data **dt_ptr);
 
@@ -178,6 +185,7 @@ int stdl_basis_data_new(size_t nbas, size_t nprims, stdl_basis_data **dt_ptr);
  * Delete a basis set data holder.
  * @param dt a valid pointer to data
  * @return error code
+ * @ingroup fchk_parser
  */
 int stdl_basis_data_delete(stdl_basis_data* dt);
 
@@ -188,7 +196,8 @@ int stdl_basis_data_delete(stdl_basis_data* dt);
  * @param natm number of atoms, must be > 0.
  * @param atm `double[4*natm]` list of atoms with nuclear charge (0) and coordinates (1:3)
  * @param[out] bs_ptr Resulting basis set.
- * @return
+ * @return error code
+ * @ingroup fchk_parser
  */
 int stdl_basis_data_to_basis(stdl_basis_data *dt, size_t natm, double *atm, stdl_basis **bs_ptr);
 

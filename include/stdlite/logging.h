@@ -51,13 +51,16 @@ enum stdl_error_code_ {
     /// Error in the `fchk_parser` module
     STDL_ERR_UTIL_FCHK = 13,
 
-    /// Error in the `response` module
-    STDL_ERR_RESPONSE = 14,
+    /// Error in the `molden_parser` module
+    STDL_ERR_UTIL_MOLDEN = 14,
 
     /// Error in the `basis` module
     STDL_ERR_BASIS = 15,
 
-    STDL_ERR_LAST = 16
+    /// Error in the `response` module
+    STDL_ERR_RESPONSE = 16,
+
+    STDL_ERR_LAST = 17
 };
 
 /**

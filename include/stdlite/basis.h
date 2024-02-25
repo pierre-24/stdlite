@@ -100,6 +100,7 @@ int stdl_basis_print(stdl_basis *bs, int denormalize);
  * @param bs a valid basis
  * @param maxshell the maximum shell that the transposition array contains
  * @param transpose `int*[maxshells]`, an array of transpositions
+ * @ingroup basis
  */
 int stdl_basis_reorder_C(size_t nmo, size_t nao, double *C, stdl_basis *bs, size_t maxshell, int **transpose);
 

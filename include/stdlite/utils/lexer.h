@@ -56,14 +56,14 @@ typedef enum stdl_token_type_ stdl_token_type;
  * @ingroup lexer
  */
 struct stdl_lexer_ {
-    /** Current position of the token in the temporary buffer. */
+    /** Current (0-based) position of the token **in the temporary buffer**. */
     int pos_in_stream;
 
-    /** Current position of the token in the line. */
-    int current_pos_in_line;
-
-    /** Current line in the file. */
+    /** current (1-based) line in the file. */
     int current_line;
+
+    /** current (1-based) position of the token in the line. */
+    int current_pos_in_line;
 
     /** Current token value, equals to `lx->stream[lx->pos_in_stream]`. */
     char current_tk_value;
