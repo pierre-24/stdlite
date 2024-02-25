@@ -1,11 +1,12 @@
 #include "tests_suite.h"
 
+#include <stdlite/utils/matrix.h>
 #include <stdlite/utils/molden_parser.h>
 
 FILE* stream;
 
 void setUp(void) {
-    stdl_set_debug_level(-1);
+    stdl_set_debug_level(3);
 
     stream = tmpfile();
 }
@@ -39,13 +40,14 @@ void test_read_title_ok() {
 void test_parse_incorrect_title_ko() {
     char* incorrect[] = {
             "[x", // too short
-            "[x\ny]" // contains \n
+            "[x\ny]", // contains \n
+            " [x", // not the first character of the line
     };
 
     char* title = NULL;
     stdl_lexer* lx = NULL;
 
-    for(int i=0; i < 2; i++) {
+    for(int i=0; i < 3; i++) {
         rewind(stream);
         fputs(incorrect[i], stream);
         rewind(stream);
@@ -84,4 +86,36 @@ void test_skip_section_ok() {
     free(rtitle);
 
     ASSERT_STDL_OK(stdl_lexer_delete(lx));
+}
+
+
+void test_read_atoms_section() {
+    char* molden_path = "../tests/test_files/water_sto3g.molden";
+
+    FILE* f = fopen(molden_path, "r");
+    TEST_ASSERT_NOT_NULL(f);
+
+    stdl_lexer* lx = NULL;
+    ASSERT_STDL_OK(stdl_lexer_new(f, &lx));
+
+    char* title = NULL;
+    ASSERT_STDL_OK(stdl_molden_parser_read_section_title(lx, &title));
+    TEST_ASSERT_EQUAL_STRING("Molden Format", title);
+    free(title);
+
+    ASSERT_STDL_OK(stdl_molden_parser_skip_section(lx));
+
+    ASSERT_STDL_OK(stdl_molden_parser_read_section_title(lx, &title));
+    TEST_ASSERT_EQUAL_STRING("Atoms", title);
+    free(title);
+
+    size_t natm;
+    double* atm;
+    ASSERT_STDL_OK(stdl_molden_parser_read_atoms_section(lx, &natm, &atm));
+    TEST_ASSERT_EQUAL_INT(3, natm);
+
+    free(atm);
+
+    ASSERT_STDL_OK(stdl_lexer_delete(lx));
+    fclose(f);
 }

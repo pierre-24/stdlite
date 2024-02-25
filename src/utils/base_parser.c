@@ -7,28 +7,6 @@
 #include "stdlite/logging.h"
 
 
-void stdl_error_msg_parser(char *file, int line, stdl_lexer* lx, char *format, ...) {
-    assert(file != NULL && lx != NULL && format != NULL);
-
-    if(stdl_get_debug_level() < 0)
-        return;
-
-    va_list arglist;
-
-    char buff[64];
-
-    fprintf(stderr, "ERROR (%s:%d):", file, line);
-
-    sprintf(buff, isgraph(lx->current_tk_value) ? "%c": "0x%x", lx->current_tk_value);
-    fprintf(stderr, "file@%d+%d(%s=%d): ", lx->current_line, lx->current_pos_in_line, buff, lx->current_tk_type);
-
-    va_start(arglist, format);
-    vfprintf(stderr, format, arglist);
-    va_end(arglist);
-    fprintf(stderr, "\n");
-}
-
-
 int stdl_grow_string(char** str_ptr, int sz, int* fac) {
     assert(str_ptr != NULL && fac != NULL && sz >= 0 && *fac >= 0);
 
@@ -154,10 +132,7 @@ int stdl_parser_get_number(stdl_lexer* lx, double* result) {
                 if(lx->current_tk_type == STDL_TK_PLUS || lx->current_tk_type == STDL_TK_DASH) // check for PLUS|DASH
                     err = stdl_parser_store_value_and_grow_string(lx, &str, &sz, &fac);
 
-                if(lx->current_tk_type != STDL_TK_DIGIT) {
-                    stdl_error_msg_parser(__FILE__, __LINE__, lx, "expected DIGIT after exp mark");
-                    err = STDL_ERR_UTIL_PARSER;
-                }
+                STDL_LEXER_ERROR_HAR(lx, lx->current_tk_type != STDL_TK_DIGIT, err = STDL_ERR_UTIL_PARSER, "expected DIGIT after exp mark");
             }
         }
 

@@ -21,27 +21,6 @@
 int stdl_grow_string(char** str_ptr, int sz, int* fac);
 
 /**
- * Output a specific error message indicating the current token if `DEBUG_LVL` is above or equal to 0.
- * @param file source file (use `__FILE__`)
- * @param line line (use `__LINE__`)
- * @param lx a valid lexer
- * @param format format of the string
- * @param ... extra parameters
- * @ingroup base_parser
- */
-void stdl_error_msg_parser(char *file, int line, stdl_lexer* lx, char *format, ...);
-
-/**
- * Copycat of `STDL_ERROR_HANDLE_AND_REPORT`, but using the `stdl_error_msg_parser` function instead.
- * @ingroup base_parser
- */
-#define STDL_LEXER_ERROR_HAR(lx, assertion, error_action, ...)       \
-    if(assertion) {                                                  \
-        stdl_error_msg_parser(__FILE__, __LINE__, lx, __VA_ARGS__);  \
-        {error_action;}                                              \
-    }
-
-/**
  * Store the current token value in a string, increase its size by 1, then grow it.
  * Also advance the lexer to the next token
  * @param lx a valid lexer

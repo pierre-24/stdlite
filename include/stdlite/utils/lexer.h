@@ -133,4 +133,25 @@ int stdl_lexer_skip(stdl_lexer *lx, int (*predicate)(int));
  */
 int stdl_lexer_skip_whitespace_and_nl(stdl_lexer *lx);
 
+/**
+ * Output a specific error message indicating the current token if `DEBUG_LVL` is above or equal to 0.
+ * @param file source file (use `__FILE__`)
+ * @param line line (use `__LINE__`)
+ * @param lx a valid lexer
+ * @param format format of the string
+ * @param ... extra parameters
+ * @ingroup base_parser
+ */
+void stdl_error_msg_lexer(char *file, int line, stdl_lexer* lx, char *format, ...);
+
+/**
+ * Copycat of `STDL_ERROR_HANDLE_AND_REPORT`, but using the `stdl_error_msg_lexer` function instead.
+ * @ingroup base_parser
+ */
+#define STDL_LEXER_ERROR_HAR(lx, assertion, error_action, ...)       \
+    if(assertion) {                                                  \
+        stdl_error_msg_lexer(__FILE__, __LINE__, lx, __VA_ARGS__);  \
+        {error_action;}                                              \
+    }
+
 #endif //STDL_LEXER_H

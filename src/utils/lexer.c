@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include "stdlite/helpers.h"
 #include "stdlite/logging.h"
@@ -34,6 +35,28 @@ int lexer_translator[] = {
 };
 
 
+void stdl_error_msg_lexer(char *file, int line, stdl_lexer* lx, char *format, ...) {
+    assert(file != NULL && lx != NULL && format != NULL);
+
+    if(stdl_get_debug_level() < 0)
+        return;
+
+    va_list arglist;
+
+    char buff[64];
+
+    fprintf(stderr, "ERROR (%s:%d):", file, line);
+
+    sprintf(buff, isgraph(lx->current_tk_value) ? "%c": "0x%x", lx->current_tk_value);
+    fprintf(stderr, "file@%d+%d(%s=%d): ", lx->current_line, lx->current_pos_in_line, buff, lx->current_tk_type);
+
+    va_start(arglist, format);
+    vfprintf(stderr, format, arglist);
+    va_end(arglist);
+    fprintf(stderr, "\n");
+}
+
+
 int stdl_lexer_new(FILE *input, stdl_lexer **lx_ptr) {
     assert(lx_ptr != NULL && input != NULL);
 
@@ -41,7 +64,7 @@ int stdl_lexer_new(FILE *input, stdl_lexer **lx_ptr) {
     *lx_ptr = malloc(sizeof(stdl_lexer));
     STDL_ERROR_HANDLE_AND_REPORT(*lx_ptr == NULL, return STDL_ERR_MALLOC, "malloc");
 
-    STDL_DEBUG("create lexer %p", lx_ptr);
+    STDL_DEBUG("create lexer %p", *lx_ptr);
 
     (*lx_ptr)->file = input;
 
@@ -79,7 +102,7 @@ int stdl_lexer_advance(stdl_lexer *lx, int shift) {
     assert(lx != NULL && lx->file != NULL && lx->stream != NULL);
     assert(shift == 0 || shift == 1);
 
-    STDL_ERROR_HANDLE_AND_REPORT(lx->current_tk_value == '\0', lx->current_tk_type = STDL_TK_EOF; return STDL_ERR_UTIL_LEXER, "reading past EOF");
+    STDL_LEXER_ERROR_HAR(lx, lx->current_tk_value == '\0', lx->current_tk_type = STDL_TK_EOF; return STDL_ERR_UTIL_LEXER, "reading past EOF");
 
     if (lx->pos_in_stream == STDL_LEXER_STREAM_BUFF_SIZE - 1) {
         // need to read next bytes
@@ -125,7 +148,7 @@ int stdl_lexer_advance(stdl_lexer *lx, int shift) {
 
 int stdl_lexer_eat(stdl_lexer *lx, stdl_token_type t) {
     assert(lx != NULL);
-    STDL_ERROR_HANDLE_AND_REPORT(lx->current_tk_type != t, return STDL_ERR_UTIL_LEXER, "expected token type %d, got %d", t, lx->current_tk_type);
+    STDL_LEXER_ERROR_HAR(lx, lx->current_tk_type != t, return STDL_ERR_UTIL_LEXER, "expected token type %d, got %d", t, lx->current_tk_type);
 
     return stdl_lexer_advance(lx, 1);
 }
