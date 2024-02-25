@@ -392,54 +392,32 @@ int stdl_fchk_parser_skip_intro(stdl_lexer* lx) {
 }
 
 
-// what is required to build a basis set
-struct _fchk_data_basis {
-    size_t
-        nbas, // number of basis functions
-        nprim // number of primitives, nprim >= nbas
-        ;
-    long
-        *shell_types,  // [nbas]
-        *prims_per_shell, // [nbas]
-        *bastoatm // [nbas], 1-based list
-        ;
-    double
-        *benv // [3 * nprim]
-        ;
-};
-
-
-int _fchk_data_delete(struct _fchk_data_basis* dt) {
-    STDL_FREE_ALL(dt->shell_types, dt->prims_per_shell, dt->bastoatm, dt->benv,dt);
-
-    return STDL_ERR_OK;
-}
-
-// create the structure. If it fails, it is an issue with `malloc()`
-int _fchk_data_new(struct _fchk_data_basis **dt_ptr, size_t nbas, size_t nprims) {
+int stdl_basis_data_new(size_t nbas, size_t nprims, stdl_basis_data **dt_ptr) {
     assert(nbas > 0 && nprims > 0 && nbas <= nprims);
 
-    *dt_ptr = malloc(sizeof(struct _fchk_data_basis));
+    *dt_ptr = malloc(sizeof(struct stdl_basis_data_));
     STDL_ERROR_HANDLE_AND_REPORT(*dt_ptr == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    STDL_DEBUG("create basis data %p", *dt_ptr);
 
     (*dt_ptr)->nbas = nbas;
     (*dt_ptr)->nprim = nprims;
 
     // ints
-    (*dt_ptr)->shell_types = NULL;
-    (*dt_ptr)->prims_per_shell = NULL;
+    (*dt_ptr)->bas_types = NULL;
+    (*dt_ptr)->prims_per_bas = NULL;
 
     // doubles
     (*dt_ptr)->benv = NULL;
 
     // ints
-    (*dt_ptr)->shell_types = malloc(nbas * sizeof(long));
-    (*dt_ptr)->prims_per_shell = malloc(nbas * sizeof(long));
+    (*dt_ptr)->bas_types = malloc(nbas * sizeof(long));
+    (*dt_ptr)->prims_per_bas = malloc(nbas * sizeof(long));
     (*dt_ptr)->bastoatm = malloc(nbas * sizeof(long));
 
     STDL_ERROR_HANDLE_AND_REPORT(
-        (*dt_ptr)->shell_types == NULL || (*dt_ptr)->prims_per_shell == NULL || (*dt_ptr)->bastoatm == NULL,
-        _fchk_data_delete(*dt_ptr); return STDL_ERR_MALLOC,
+            (*dt_ptr)->bas_types == NULL || (*dt_ptr)->prims_per_bas == NULL || (*dt_ptr)->bastoatm == NULL,
+        stdl_basis_data_delete(*dt_ptr); return STDL_ERR_MALLOC,
         "malloc"
     );
 
@@ -449,34 +427,41 @@ int _fchk_data_new(struct _fchk_data_basis **dt_ptr, size_t nbas, size_t nprims)
 
     STDL_ERROR_HANDLE_AND_REPORT(
         (*dt_ptr)->benv == NULL,
-        _fchk_data_delete(*dt_ptr); return STDL_ERR_MALLOC,
+        stdl_basis_data_delete(*dt_ptr); return STDL_ERR_MALLOC,
         "malloc"
     );
 
     return STDL_ERR_OK;
 }
 
-// make the basis set, so shuffle things around to convert the format of Gaussian to the one of libcint.
-// If this fails, it is most probably from `malloc()`.
-int _make_basis_set(stdl_basis** bs_ptr, stdl_wavefunction* wf, struct _fchk_data_basis* dt) {
-    assert(bs_ptr != NULL && wf != NULL && dt != NULL);
+
+int stdl_basis_data_delete(stdl_basis_data* dt) {
+    assert(dt != NULL);
+
+    STDL_DEBUG("delete basis data %p", dt);
+
+    STDL_FREE_ALL(dt->bas_types, dt->prims_per_bas, dt->bastoatm, dt->benv, dt);
+
+    return STDL_ERR_OK;
+}
+
+int stdl_basis_data_to_basis(stdl_basis_data *dt, size_t natm, double *atm, stdl_basis **bs_ptr) {
+    assert(bs_ptr != NULL && natm > 0  && atm != NULL && dt != NULL);
 
     STDL_DEBUG("creating the basis set");
 
     int nbas = (int) dt->nbas, extra_coefs = 0, fct_type = 0 /* 1 = cartesian, -1 = spherical */;
 
     for(int i=0; i < (int) dt->nbas; i++) {
-        STDL_ERROR_HANDLE_AND_REPORT(dt->shell_types[i] > 3 || dt->shell_types[i] < -3, return STDL_ERR_UTIL_FCHK, "only spherical basis functions up to f and cartesian functions up to p are supported");
-
-        if(dt->shell_types[i] == -1) { // count extra p function due to sp
+        if(dt->bas_types[i] == -1) { // count extra p function due to sp
             nbas += 1;
-            extra_coefs += (int) dt->prims_per_shell[i];
+            extra_coefs += (int) dt->prims_per_bas[i];
         }
 
-        if(dt->shell_types[i] < -1) {
+        if(dt->bas_types[i] < -1) {
             STDL_ERROR_HANDLE_AND_REPORT(fct_type == 1, return STDL_ERR_UTIL_FCHK, "mixing cartesian and spherical basis functions is not supported");
             fct_type = -1;
-        } else if(dt->shell_types[i] > 0) {
+        } else if(dt->bas_types[i] > 0) {
             STDL_ERROR_HANDLE_AND_REPORT(fct_type == -1, return STDL_ERR_UTIL_FCHK, "mixing cartesian and spherical basis functions is not supported");
             fct_type = 1;
         }
@@ -485,26 +470,26 @@ int _make_basis_set(stdl_basis** bs_ptr, stdl_wavefunction* wf, struct _fchk_dat
     if(fct_type == 0)
         fct_type = 1;
 
-    size_t env_size = 20 + wf->natm * 3 /* coordinates */ + 2 * dt->nprim /* exp + contractions */ + extra_coefs /* sp functions */;
-    stdl_debug_msg(__FILE__, __LINE__, "%d atoms and %d basis functions (including sp→s,p) = %ld bytes of env", wf->natm, nbas, env_size);
+    size_t env_size = 20 + natm * 3 /* coordinates */ + 2 * dt->nprim /* exp + contractions */ + extra_coefs /* sp functions */;
+    stdl_debug_msg(__FILE__, __LINE__, "%d atoms and %d basis functions (including sp→s,p) = %ld bytes of env", natm, nbas, env_size);
 
-    int err = stdl_basis_new((int) wf->natm, nbas, env_size, fct_type == -1, bs_ptr);
+    int err = stdl_basis_new((int) natm, nbas, env_size, fct_type == -1, bs_ptr);
     STDL_ERROR_CODE_HANDLE(err, return err);
 
     size_t base_offset = 20;
 
     // atoms
-    for(size_t i=0; i < wf->natm; i++) {
-        (*bs_ptr)->atm[i * 6 + 0] = (int) wf->atm[i * 4 + 0];
+    for(size_t i=0; i < natm; i++) {
+        (*bs_ptr)->atm[i * 6 + 0] = (int) atm[i * 4 + 0];
         (*bs_ptr)->atm[i * 6 + 1] = (int) (base_offset + i * 3);
 
-        (*bs_ptr)->env[base_offset + i * 3 + 0] = wf->atm[i * 4 + 1];
-        (*bs_ptr)->env[base_offset + i * 3 + 1] = wf->atm[i * 4 + 2];
-        (*bs_ptr)->env[base_offset + i * 3 + 2] = wf->atm[i * 4 + 3];
+        (*bs_ptr)->env[base_offset + i * 3 + 0] = atm[i * 4 + 1];
+        (*bs_ptr)->env[base_offset + i * 3 + 1] = atm[i * 4 + 2];
+        (*bs_ptr)->env[base_offset + i * 3 + 2] = atm[i * 4 + 3];
     }
 
     // copy exps and coefs
-    size_t offset_exps = base_offset + 3 * wf->natm, offset_coefs = base_offset +3 * wf->natm + dt->nprim, offset_coefs_sp = base_offset +3 * wf->natm + 2 * dt->nprim;
+    size_t offset_exps = base_offset + 3 * natm, offset_coefs = base_offset +3 * natm + dt->nprim, offset_coefs_sp = base_offset + 3 * natm + 2 * dt->nprim;
     memcpy(&((*bs_ptr)->env[offset_exps]), dt->benv, 2 * dt->nprim * sizeof(double));
 
     size_t offset_bas = 0;
@@ -512,38 +497,38 @@ int _make_basis_set(stdl_basis** bs_ptr, stdl_wavefunction* wf, struct _fchk_dat
 
     // basis
     for(size_t i=0; i < dt->nbas; i++) {
-        int angular = (dt->shell_types[i] == -1) ? 0 : abs((int) dt->shell_types[i]);
+        int angular = (dt->bas_types[i] == -1) ? 0 : abs((int) dt->bas_types[i]);
 
         (*bs_ptr)->bas[(offset_bas + i) * 8 + 0] = (int) dt->bastoatm[i] - 1; // Gaussian gives a 1-based list
         (*bs_ptr)->bas[(offset_bas + i) * 8 + 1] = angular;
-        (*bs_ptr)->bas[(offset_bas + i) * 8 + 2] = (int) dt->prims_per_shell[i];
+        (*bs_ptr)->bas[(offset_bas + i) * 8 + 2] = (int) dt->prims_per_bas[i];
         (*bs_ptr)->bas[(offset_bas + i) * 8 + 3] = 1;
         (*bs_ptr)->bas[(offset_bas + i) * 8 + 5] = (int) offset_exps + iprim;
         (*bs_ptr)->bas[(offset_bas + i) * 8 + 6] = (int) offset_coefs + iprim;
 
         // normalize coefs
-        for(int j=0; j < (int) dt->prims_per_shell[i]; j++)
+        for(int j=0; j < (int) dt->prims_per_bas[i]; j++)
             (*bs_ptr)->env[(int) offset_coefs + iprim + j] *= CINTgto_norm(angular, (*bs_ptr)->env[(int) offset_exps + iprim + j]);
 
-        if(dt->shell_types[i] == -1) { // sp
+        if(dt->bas_types[i] == -1) { // sp
             offset_bas += 1;
 
             (*bs_ptr)->bas[(offset_bas + i) * 8 + 0] = (int) dt->bastoatm[i] - 1; // Gaussian gives a 1-based list
             (*bs_ptr)->bas[(offset_bas + i) * 8 + 1] = 1;
-            (*bs_ptr)->bas[(offset_bas + i) * 8 + 2] = (int) dt->prims_per_shell[i];
+            (*bs_ptr)->bas[(offset_bas + i) * 8 + 2] = (int) dt->prims_per_bas[i];
             (*bs_ptr)->bas[(offset_bas + i) * 8 + 3] = 1;
             (*bs_ptr)->bas[(offset_bas + i) * 8 + 5] = (int) offset_exps + iprim;
             (*bs_ptr)->bas[(offset_bas + i) * 8 + 6] = (int) offset_coefs_sp + ipprim;
 
             // copy p-coefs and normalize them
-            memcpy(&((*bs_ptr)->env[offset_coefs_sp + ipprim]), &(dt->benv[2 * dt->nprim + iprim]), ((int) dt->prims_per_shell[i]) * sizeof(double));
-            for(int j=0; j < (int) dt->prims_per_shell[i]; j++)
+            memcpy(&((*bs_ptr)->env[offset_coefs_sp + ipprim]), &(dt->benv[2 * dt->nprim + iprim]), ((int) dt->prims_per_bas[i]) * sizeof(double));
+            for(int j=0; j < (int) dt->prims_per_bas[i]; j++)
                 (*bs_ptr)->env[(int) offset_coefs_sp + ipprim + j] *= CINTgto_norm(1, (*bs_ptr)->env[(int) offset_exps + iprim + j]);
 
-            ipprim += (int) dt->prims_per_shell[i];
+            ipprim += (int) dt->prims_per_bas[i];
         }
 
-        iprim += (int) dt->prims_per_shell[i];
+        iprim += (int) dt->prims_per_bas[i];
     }
 
     return STDL_ERR_OK;
@@ -623,41 +608,6 @@ int* TRANSPOSE_SPH[] = {
         /* f */ (int[]) {3, 4, 2, 5, 1, 6, 0},
 };
 
-void _fix_AO_order_in_C(stdl_wavefunction* wf, stdl_basis* bs) {
-    int** transpose = TRANSPOSE_CART;
-    if(bs->use_spherical)
-        transpose = TRANSPOSE_SPH;
-
-    double buff[10] = {0}; // maximum that can be handled at the moment
-
-    int sj, joffset;
-
-    for (size_t i = 0; i < wf->nmo; ++i) {
-
-        joffset = 0;
-
-        for(int j=0; j < bs->nbas; j++) {
-            int angmom = bs->bas[j * 8 + 1];
-
-            if (bs->use_spherical)
-                sj = CINTcgto_spheric(j, bs->bas);
-            else
-                sj = CINTcgtos_cart(j, bs->bas);
-
-            if(angmom > 1) { // s & p functions are ok
-                // reorder
-                for(int mu = 0; mu < sj; mu++) {
-                    buff[transpose[angmom][mu]] = wf->C[i * wf->nao + joffset + mu];
-                }
-
-                // and copy back
-                memcpy(wf->C + i * wf->nao + joffset, buff, sj * sizeof(double ));
-            }
-
-            joffset += sj;
-        }
-    }
-}
 
 int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr) {
     assert(wf_ptr != NULL && bs_ptr != NULL && lx != NULL);
@@ -677,7 +627,7 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
     double* a_vector = NULL;
     size_t a_size, nocc = 0, natm = 0, nao = 0, nmo = 0, nbas = 0, nprim = 0;
 
-    struct _fchk_data_basis* dt = NULL;
+    struct stdl_basis_data_* dt = NULL;
     double* atm = NULL; // [natm*4]
 
     // read the file and extract what is required
@@ -727,19 +677,19 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
             STDL_ERROR_CODE_HANDLE(error, free(name); goto _end);
 
             nprim = (size_t) an_integer;
-            error = _fchk_data_new(&dt, nbas, nprim);
+            error = stdl_basis_data_new(nbas, nprim, &dt);
             STDL_ERROR_CODE_HANDLE(error, free(name); goto _end);
         } else if(strcmp("Shell types", name) == 0) {
             /* Note: assume that "Number of primitive shells" was read before. */
-            error = stdl_fchk_parser_get_vector_integers_immediate(lx, nbas, &(dt->shell_types));
+            error = stdl_fchk_parser_get_vector_integers_immediate(lx, nbas, &(dt->bas_types));
             STDL_ERROR_CODE_HANDLE(error, free(name); goto _end);
 
-            nao = _count_nao(nbas, dt->shell_types);
+            nao = _count_nao(nbas, dt->bas_types);
             if(nao != nmo)
                 stdl_warning_msg(__FILE__, __LINE__, "number of MO (%d) and AO (%d) does not match", nmo, nao);
         } else if(strcmp("Number of primitives per shell", name) == 0) {
             /* Note: assume that "Number of primitive shells" was read before. */
-            error = stdl_fchk_parser_get_vector_integers_immediate(lx, nbas, &(dt->prims_per_shell));
+            error = stdl_fchk_parser_get_vector_integers_immediate(lx, nbas, &(dt->prims_per_bas));
             STDL_ERROR_CODE_HANDLE(error, free(name); goto _end);
         } else if(strcmp("Shell to atom map", name) == 0) {
             /* Note: assume that "Number of primitive shells" was read before. */
@@ -803,10 +753,10 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
     stdl_log_msg(0, "-");
 
     // create the basis set
-    error = _make_basis_set(bs_ptr, *wf_ptr, dt);
+    error = stdl_basis_data_to_basis(dt, natm, (*wf_ptr)->atm, bs_ptr);
     STDL_ERROR_CODE_HANDLE(error, goto _end);
 
-    _fchk_data_delete(dt);
+    stdl_basis_data_delete(dt);
     dt = NULL;
 
     stdl_log_msg(0, "-");
@@ -830,7 +780,11 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
     stdl_log_msg(0, "-");
 
     // fix AO ordering
-    _fix_AO_order_in_C(*wf_ptr, *bs_ptr);
+    int** transpose = TRANSPOSE_CART;
+    if((*bs_ptr)->use_spherical)
+        transpose = TRANSPOSE_SPH;
+
+    stdl_basis_reorder_C(nmo, nao, (*wf_ptr)->C, *bs_ptr, 3, transpose);
 
     stdl_log_msg(0, "-");
 
@@ -844,7 +798,7 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
     _end:
         STDL_FREE_IF_USED(atm);
         if(dt != NULL)
-            _fchk_data_delete(dt);
+            stdl_basis_data_delete(dt);
         if(error != STDL_ERR_OK && *wf_ptr != NULL)
             stdl_wavefunction_delete(*wf_ptr);
 

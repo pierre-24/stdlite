@@ -54,7 +54,10 @@ enum stdl_error_code_ {
     /// Error in the `response` module
     STDL_ERR_RESPONSE = 14,
 
-    STDL_ERR_LAST = 15
+    /// Error in the `basis` module
+    STDL_ERR_BASIS = 15,
+
+    STDL_ERR_LAST = 16
 };
 
 /**

@@ -93,6 +93,17 @@ int stdl_basis_delete(stdl_basis* bs);
 int stdl_basis_print(stdl_basis *bs, int denormalize);
 
 /**
+ * Reorder the coefficients so that they match the one of libcint, using `transpose`.
+ * @param nmo Number of MO, must be `nmo <= nao`
+ * @param nao Number of AO must be > 0.
+ * @param C `double[nmo*nao]`, the LCAO coefficients
+ * @param bs a valid basis
+ * @param maxshell the maximum shell that the transposition array contains
+ * @param transpose `int*[maxshells]`, an array of transpositions
+ */
+int stdl_basis_reorder_C(size_t nmo, size_t nao, double *C, stdl_basis *bs, size_t maxshell, int **transpose);
+
+/**
  * Compute the overlap matrix, $S_{\mu\nu} = \braket{\mu|\nu}$ (double precision).
  * @param bs a valid basis set
  * @param[out] S `double[STDL_MATRIX_SP_SIZE(nao)]` the resulting overlap matrix.

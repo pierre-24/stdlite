@@ -237,3 +237,42 @@ int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles) {
 
     return STDL_ERR_OK;
 }
+
+
+
+int stdl_basis_reorder_C(size_t nmo, size_t nao, double *C, stdl_basis *bs, size_t maxshell, int **transpose) {
+    assert(nao > 0 && nmo <= nao && C != NULL && bs != NULL && maxshell > 0 && transpose != NULL);
+
+    double buff[CART_MAX] = {0}; // maximum that can be handled at the moment
+
+    int sj, joffset;
+
+    for (size_t i = 0; i < nmo; ++i) {
+
+        joffset = 0;
+
+        for(int j=0; j < bs->nbas; j++) {
+            int angmom = bs->bas[j * 8 + 1];
+            STDL_ERROR_HANDLE_AND_REPORT((size_t) angmom > maxshell, return STDL_ERR_BASIS, "Angular momentum %d is larger than possible (%ld)", angmom, maxshell);
+
+            if (bs->use_spherical)
+                sj = CINTcgto_spheric(j, bs->bas);
+            else
+                sj = CINTcgtos_cart(j, bs->bas);
+
+            if(angmom > 1) { // s & p functions are ok
+                // reorder
+                for(int mu = 0; mu < sj; mu++) {
+                    buff[transpose[angmom][mu]] = C[i * nao + joffset + mu];
+                }
+
+                // and copy back
+                memcpy(C + i * nao + joffset, buff, sj * sizeof(double ));
+            }
+
+            joffset += sj;
+        }
+    }
+
+    return STDL_ERR_OK;
+}

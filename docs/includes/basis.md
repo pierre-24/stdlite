@@ -8,4 +8,7 @@ Follows the structure of [`libcint`](https://github.com/sunqm/libcint/blob/maste
 
 !!! warning
 
-    Per [this comment](https://github.com/sunqm/libcint/issues/22#issuecomment-333268020), cartesian Gaussians are not (correctly) normalized by libcint :(
+    According to [this comment](https://github.com/sunqm/libcint/issues/22#issuecomment-333268020), cartesian Gaussians are not (correctly) normalized by libcint.
+    Thus every integral $\braket{\mu|\hat A|\nu}$ between $\mu$ and $\nu$ (cartesian AOs) should be multiplied by a (re)normalization constant $N'_{\mu\nu} = N'_\mu\,N'_\nu$ with:
+    
+    $$N'_\mu = \frac{1}{\sqrt{\braket{\mu|\mu}}}.$$

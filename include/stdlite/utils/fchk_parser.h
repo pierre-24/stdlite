@@ -140,4 +140,56 @@ int stdl_fchk_parser_skip_section(stdl_lexer* lx, char type, int is_scalar);
 int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr);
 
 
+/// Structure that holds basis set data in a format that resemble the one used by Gaussian in its FCHK.
+struct stdl_basis_data_ {
+    /// number of basis functions
+    size_t nbas;
+
+    /// number of primitives, `nprim >= nbas`
+    size_t nprim;
+
+    /// `long[nbas]`, the angular moment of each basis function.
+    /// Use the Gaussian specification, so `0=s, 1=p, -1=sp, 2=6d, -2=5d, 3=10f, -3=7f` (and so all).
+    long *bas_types;
+
+    /// `long[nbas]` the number of primitive in each basis function
+    long *prims_per_bas; // [nbas]
+
+    /// `long[nbas]`, 1-based list of correspondence between basis function and atom
+    long *bastoatm;
+
+    /// `double[3 * nprim]`, list of exponents, coefs, ans S=P coefs, as `[e0, e1, ..., eN, c0, c1, ..., cN, cp0, cp1, ..., cpN]`.
+    double *benv;
+};
+
+typedef struct stdl_basis_data_ stdl_basis_data;
+
+/**
+ * Create a new basis set data holder.
+ *
+ * @param nbas Number of basis function, must be >0
+ * @param nprims Number of primitives, must be `nprims >= nbas`
+ * @param[out] dt_ptr Resulting data
+ * @return error code
+ */
+int stdl_basis_data_new(size_t nbas, size_t nprims, stdl_basis_data **dt_ptr);
+
+/**
+ * Delete a basis set data holder.
+ * @param dt a valid pointer to data
+ * @return error code
+ */
+int stdl_basis_data_delete(stdl_basis_data* dt);
+
+/**
+ * Convert a basis set data to an actual `stdl_basis`.
+ *
+ * @param dt a valid pointer to data
+ * @param natm number of atoms, must be > 0.
+ * @param atm `double[4*natm]` list of atoms with nuclear charge (0) and coordinates (1:3)
+ * @param[out] bs_ptr Resulting basis set.
+ * @return
+ */
+int stdl_basis_data_to_basis(stdl_basis_data *dt, size_t natm, double *atm, stdl_basis **bs_ptr);
+
 #endif //STDL_FCHK_PARSER_H
