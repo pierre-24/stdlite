@@ -174,12 +174,12 @@ typedef struct stdl_basis_data_ stdl_basis_data;
  * Create a new basis set data holder.
  *
  * @param nbas Number of basis function, must be >0
- * @param nprims Number of primitives, must be `nprims >= nbas`
+ * @param nprim Number of primitives, must be `nprim >= nbas`
  * @param[out] dt_ptr data to be created
  * @return error code
  * @ingroup fchk_parser
  */
-int stdl_basis_data_new(size_t nbas, size_t nprims, stdl_basis_data **dt_ptr);
+int stdl_basis_data_new(size_t nbas, size_t nprim, stdl_basis_data **dt_ptr);
 
 /**
  * Delete a basis set data holder.

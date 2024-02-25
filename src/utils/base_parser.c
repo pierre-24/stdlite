@@ -122,13 +122,17 @@ int stdl_parser_get_number(stdl_lexer* lx, double* result) {
             if (exp_found) // that would be two exps, break!
                 break;
 
-            if (lx->current_tk_value != 'e' && lx->current_tk_value != 'E')
+            if (lx->current_tk_value != 'e' && lx->current_tk_value != 'E' && lx->current_tk_value != 'd' && lx->current_tk_value != 'D')
                 break;
 
             exp_found = 1;
+
             err = stdl_parser_store_value_and_grow_string(lx, &str, &sz, &fac);
 
             if(err == STDL_ERR_OK) {
+                if(str[sz-1] == 'd' || str[sz-1] == 'D')
+                    str[sz-1] = 'e';
+
                 if(lx->current_tk_type == STDL_TK_PLUS || lx->current_tk_type == STDL_TK_DASH) // check for PLUS|DASH
                     err = stdl_parser_store_value_and_grow_string(lx, &str, &sz, &fac);
 

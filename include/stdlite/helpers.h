@@ -41,5 +41,10 @@
 #define STDL_CONST_HCL 45.56335
 #endif
 
+/// Conversion to Angstrom
+/// @ingroup helpers
+#ifndef STDL_CONST_AU_TO_ANG
+#define STDL_CONST_AU_TO_ANG  0.529177210903
+#endif
 
 #endif //STDLITE_HELPERS_H

@@ -391,8 +391,8 @@ int stdl_fchk_parser_skip_intro(stdl_lexer* lx) {
 }
 
 
-int stdl_basis_data_new(size_t nbas, size_t nprims, stdl_basis_data **dt_ptr) {
-    assert(nbas > 0 && nprims > 0 && nbas <= nprims);
+int stdl_basis_data_new(size_t nbas, size_t nprim, stdl_basis_data **dt_ptr) {
+    assert(nbas > 0 && nprim > 0 && nbas <= nprim);
 
     *dt_ptr = malloc(sizeof(struct stdl_basis_data_));
     STDL_ERROR_HANDLE_AND_REPORT(*dt_ptr == NULL, return STDL_ERR_MALLOC, "malloc");
@@ -400,7 +400,7 @@ int stdl_basis_data_new(size_t nbas, size_t nprims, stdl_basis_data **dt_ptr) {
     STDL_DEBUG("create basis data %p", *dt_ptr);
 
     (*dt_ptr)->nbas = nbas;
-    (*dt_ptr)->nprim = nprims;
+    (*dt_ptr)->nprim = nprim;
 
     // ints
     (*dt_ptr)->bas_types = NULL;
@@ -422,7 +422,7 @@ int stdl_basis_data_new(size_t nbas, size_t nprims, stdl_basis_data **dt_ptr) {
 
 
     // doubles
-    (*dt_ptr)->benv = malloc(3 * nprims * sizeof(double));
+    (*dt_ptr)->benv = malloc(3 * nprim * sizeof(double));
 
     STDL_ERROR_HANDLE_AND_REPORT(
         (*dt_ptr)->benv == NULL,
@@ -470,7 +470,7 @@ int stdl_basis_data_to_basis(stdl_basis_data *dt, size_t natm, double *atm, stdl
         fct_type = 1;
 
     size_t env_size = 20 + natm * 3 /* coordinates */ + 2 * dt->nprim /* exp + contractions */ + extra_coefs /* sp functions */;
-    stdl_debug_msg(__FILE__, __LINE__, "%d atoms and %d basis functions (including sp→s,p) = %ld bytes of env", natm, nbas, env_size);
+    STDL_DEBUG("%d atoms and %d basis functions (after sp→s,p) = %ld bytes of env", natm, nbas, env_size);
 
     int err = stdl_basis_new((int) natm, nbas, env_size, fct_type == -1, bs_ptr);
     STDL_ERROR_CODE_HANDLE(err, return err);

@@ -6,7 +6,7 @@
 FILE* stream;
 
 void setUp(void) {
-    stdl_set_debug_level(3);
+    stdl_set_debug_level(-1);
 
     stream = tmpfile();
 }
@@ -88,9 +88,8 @@ void test_skip_section_ok() {
     ASSERT_STDL_OK(stdl_lexer_delete(lx));
 }
 
-
-void test_read_atoms_section() {
-    char* molden_path = "../tests/test_files/water_sto3g.molden";
+void test_read_file_ok() {
+    char* molden_path = "../tests/test_files/water_631g.molden";
 
     FILE* f = fopen(molden_path, "r");
     TEST_ASSERT_NOT_NULL(f);
@@ -98,23 +97,13 @@ void test_read_atoms_section() {
     stdl_lexer* lx = NULL;
     ASSERT_STDL_OK(stdl_lexer_new(f, &lx));
 
-    char* title = NULL;
-    ASSERT_STDL_OK(stdl_molden_parser_read_section_title(lx, &title));
-    TEST_ASSERT_EQUAL_STRING("Molden Format", title);
-    free(title);
+    stdl_wavefunction* wf = NULL;
+    stdl_basis* bs = NULL;
 
-    ASSERT_STDL_OK(stdl_molden_parser_skip_section(lx));
+    ASSERT_STDL_OK(stdl_molden_parser_extract(lx, &wf, &bs));
 
-    ASSERT_STDL_OK(stdl_molden_parser_read_section_title(lx, &title));
-    TEST_ASSERT_EQUAL_STRING("Atoms", title);
-    free(title);
-
-    size_t natm;
-    double* atm;
-    ASSERT_STDL_OK(stdl_molden_parser_read_atoms_section(lx, &natm, &atm));
-    TEST_ASSERT_EQUAL_INT(3, natm);
-
-    free(atm);
+    // ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
+    ASSERT_STDL_OK(stdl_basis_delete(bs));
 
     ASSERT_STDL_OK(stdl_lexer_delete(lx));
     fclose(f);

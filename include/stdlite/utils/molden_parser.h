@@ -40,11 +40,11 @@ int stdl_molden_parser_read_atoms_section(stdl_lexer* lx, size_t* natm, double**
  *
  * @param lx a valid lexer
  * @param atm number of atoms, must be >0.
- * @param[out] dt basis data to be created
+ * @param[out] dt_ptr basis data to be created
  * @return error code
  * @ingroup molden_parser
  */
-int stdl_molden_parser_read_basis_section(stdl_lexer* lx, size_t natm, stdl_basis_data** dt);
+int stdl_molden_parser_read_gto_section(stdl_lexer* lx, size_t natm, stdl_basis_data** dt_ptr);
 
 /**
  * Read `[MO]` section content. Expects `]`. Ends on `[`.
@@ -64,12 +64,12 @@ int stdl_molden_parser_read_mo_section(stdl_lexer* lx, size_t nao, size_t* nmo, 
  * Expects the file to starts with `[Molden Format]`.
  *
  * @param lx a valid lexer
- * @param wf
- * @param bs
+ * @param wf_ptr wavefunction to be created
+ * @param bs_ptr basis set to be created
  * @return error code
  * @ingroup molden_parser
  *
  */
-int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction* wf, stdl_basis* bs);
+int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction** wf_ptr, stdl_basis** bs_ptr);
 
 #endif //STDLITE_MOLDEN_PARSER_H
