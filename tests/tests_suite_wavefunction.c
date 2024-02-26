@@ -4,12 +4,13 @@
 #include <stdlite/utils/fchk_parser.h>
 #include <stdlite/utils/matrix.h>
 #include <stdlite/helpers.h>
+#include <stdlite/utils/molden_parser.h>
 
 #include "tests_suite.h"
 
 // check that the data are correct by computing the Mulliken population.
-// It should sum up to the number of electrons (i.e., 2 * wf->nocc).
-void compute_population_and_check(stdl_wavefunction* wf, int sym) {
+// It should sum up to the number of electrons (i.e., 2 * wf->nocc), within `prec`.
+void compute_population_and_check(stdl_wavefunction *wf, int sym, double prec) {
 
     // compute the density matrix
     double* P = malloc(STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
@@ -64,7 +65,7 @@ void compute_population_and_check(stdl_wavefunction* wf, int sym) {
     for(size_t mu=0; mu < wf->nao; mu++)
         total += mulliken_pop[STDL_MATRIX_SP_IDX(mu, mu)];
 
-    TEST_ASSERT_DOUBLE_WITHIN(1e-6, (double) wf->nocc * 2, total);
+    TEST_ASSERT_DOUBLE_WITHIN(prec, (double) wf->nocc * 2, total);
 
     free(mulliken_pop);
     free(P);
@@ -77,7 +78,7 @@ void test_content_sto3g_ok() {
     read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
     ASSERT_STDL_OK(stdl_basis_delete(bs));
 
-    compute_population_and_check(wf, 0);
+    compute_population_and_check(wf, 0, 1e-6);
 
     ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
 }
@@ -88,7 +89,7 @@ void test_content_631g_ok() {
     read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
     ASSERT_STDL_OK(stdl_basis_delete(bs));
 
-    compute_population_and_check(wf, 0);
+    compute_population_and_check(wf, 0, 1e-6);
 
     ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
 }
@@ -99,7 +100,7 @@ void test_content_cart_6d10f_ok() {
     read_fchk("../tests/test_files/water_631gdf.fchk", &wf, &bs);
     ASSERT_STDL_OK(stdl_basis_delete(bs));
 
-    compute_population_and_check(wf, 0);
+    compute_population_and_check(wf, 0, 1e-6);
 
     ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
 }
@@ -110,7 +111,31 @@ void test_content_cart_5d7f_ok() {
     read_fchk("../tests/test_files/water_631gdf_sph.fchk", &wf, &bs);
     ASSERT_STDL_OK(stdl_basis_delete(bs));
 
-    compute_population_and_check(wf, 0);
+    compute_population_and_check(wf, 0, 1e-6);
+
+    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
+}
+
+void test_molden() {
+    char* molden_path = "../tests/test_files/water_631g.molden";
+
+    FILE* f = fopen(molden_path, "r");
+    TEST_ASSERT_NOT_NULL(f);
+
+    stdl_lexer* lx = NULL;
+    ASSERT_STDL_OK(stdl_lexer_new(f, &lx));
+
+    stdl_wavefunction* wf = NULL;
+    stdl_basis* bs = NULL;
+
+    ASSERT_STDL_OK(stdl_molden_parser_extract(lx, &wf, &bs));
+
+    fclose(f);
+    ASSERT_STDL_OK(stdl_lexer_delete(lx));
+
+    ASSERT_STDL_OK(stdl_basis_delete(bs));
+
+    compute_population_and_check(wf, 0, 1e-4); /* LCAO coefficients are not very precise in this MOLDEN */
 
     ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
 }
@@ -187,7 +212,7 @@ void test_orthogonalize_ok() {
             wf->S[STDL_MATRIX_SP_IDX(i, j)] = i == j ? 1.:.0;
     }
 
-    compute_population_and_check(wf, 1);
+    compute_population_and_check(wf, 1, 1e-6);
 
     ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
 }
@@ -207,7 +232,7 @@ void test_remove_mo_ok() {
     wf->nmo = 5;
     wf->nocc = 3;
 
-    compute_population_and_check(wf, 0);
+    compute_population_and_check(wf, 0, 1e-6);
 
     // put back C
     wf->C = tmp;

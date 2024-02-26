@@ -57,7 +57,7 @@ int stdl_molden_parser_read_gto_section(stdl_lexer* lx, size_t natm, stdl_basis_
  * @return error code
  * @ingroup molden_parser
  */
-int stdl_molden_parser_read_mo_section(stdl_lexer* lx, size_t nao, size_t* nmo, double* e, double* C);
+int stdl_molden_parser_read_mo_section(stdl_lexer *lx, size_t nao, size_t *nmo, size_t *nocc, double **e, double **C);
 
 /**
  * Extract a wavefunction (`stdl_wavefunction`) and a basis set (`stdl_basis`) from a MOLDEN file.

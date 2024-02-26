@@ -87,24 +87,3 @@ void test_skip_section_ok() {
 
     ASSERT_STDL_OK(stdl_lexer_delete(lx));
 }
-
-void test_read_file_ok() {
-    char* molden_path = "../tests/test_files/water_631g.molden";
-
-    FILE* f = fopen(molden_path, "r");
-    TEST_ASSERT_NOT_NULL(f);
-
-    stdl_lexer* lx = NULL;
-    ASSERT_STDL_OK(stdl_lexer_new(f, &lx));
-
-    stdl_wavefunction* wf = NULL;
-    stdl_basis* bs = NULL;
-
-    ASSERT_STDL_OK(stdl_molden_parser_extract(lx, &wf, &bs));
-
-    // ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
-    ASSERT_STDL_OK(stdl_basis_delete(bs));
-
-    ASSERT_STDL_OK(stdl_lexer_delete(lx));
-    fclose(f);
-}

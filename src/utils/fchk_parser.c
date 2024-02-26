@@ -469,13 +469,13 @@ int stdl_basis_data_to_basis(stdl_basis_data *dt, size_t natm, double *atm, stdl
     if(fct_type == 0)
         fct_type = 1;
 
-    size_t env_size = 20 + natm * 3 /* coordinates */ + 2 * dt->nprim /* exp + contractions */ + extra_coefs /* sp functions */;
+    size_t env_size = PTR_ENV_START + natm * 3 /* coordinates */ + 2 * dt->nprim /* exp + contractions */ + extra_coefs /* sp functions */;
     STDL_DEBUG("%d atoms and %d basis functions (after sp→s,p) = %ld bytes of env", natm, nbas, env_size);
 
     int err = stdl_basis_new((int) natm, nbas, env_size, fct_type == -1, bs_ptr);
     STDL_ERROR_CODE_HANDLE(err, return err);
 
-    size_t base_offset = 20;
+    size_t base_offset = PTR_ENV_START;
 
     // atoms
     for(size_t i=0; i < natm; i++) {
@@ -536,60 +536,60 @@ int stdl_basis_data_to_basis(stdl_basis_data *dt, size_t natm, double *atm, stdl
 // Get the number of ao, given the type of each basis function.
 // According to the Gaussian documentation, `0=s, 1=p, -1=sp, 2=6d, -2=5d, 3=10f, -3=7f` (and so all).
 // In most of the case, `nao=nmo`.
-size_t _count_nao(size_t nbas, long* shell_types) {
-    assert(nbas > 0);
+int stdl_basis_data_count_nao(stdl_basis_data* dt, size_t* total) {
+    assert(dt != NULL);
 
-    size_t total = 0;
+    *total = 0;
 
-    for (size_t i = 0; i < nbas; ++i) {
-        switch (shell_types[i]) {
+    for (size_t i = 0; i < dt->nbas; ++i) {
+        switch (dt->bas_types[i]) {
             case 0:
-                total += 1;
+                *total += 1;
                 break;
             // cartesian's
             case 1: // 3p
-                total += 3;
+                *total += 3;
                 break;
             case 2: // 6d
-                total += 6;
+                *total += 6;
                 break;
             case 3: // 10f
-                total += 10;
+                *total += 10;
                 break;
             case 4: // 15g
-                total += 15;
+                *total += 15;
                 break;
             case 5: // 21h
-                total += 21;
+                *total += 21;
                 break;
             case 6: // 28i
-                total += 28;
+                *total += 28;
                 break;
             // spherical's
             case -1: // sp
-                total += 4;
+                *total += 4;
                 break;
             case -2: // 5d
-                total += 5;
+                *total += 5;
                 break;
             case -3: // 7f
-                total += 7;
+                *total += 7;
                 break;
             case -4: // 9g
-                total += 9;
+                *total += 9;
                 break;
             case -5: // 11h
-                total += 11;
+                *total += 11;
                 break;
             case -6: // 13i
-                total += 13;
+                *total += 13;
                 break;
             default:
-                STDL_ERROR_HANDLE_AND_REPORT(1, return 0, "encountered shell type=%d, but it was not taken into account. This will cause issues.", shell_types[i]);
+                STDL_ERROR_HANDLE_AND_REPORT(1, return 0, "encountered basis function type=%d, which is not handled", dt->bas_types[i]);
         }
     }
 
-    return total;
+    return STDL_ERR_OK;
 }
 
 // transpose the LCAO coefficients so that they match libcint
@@ -680,10 +680,9 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
             STDL_ERROR_CODE_HANDLE(error, free(name); goto _end);
         } else if(strcmp("Shell types", name) == 0) {
             /* Note: assume that "Number of primitive shells" was read before. */
-            error = stdl_fchk_parser_get_vector_integers_immediate(lx, nbas, &(dt->bas_types));
+            error = stdl_fchk_parser_get_vector_integers_immediate(lx, nbas, &(dt->bas_types)) || stdl_basis_data_count_nao(dt, &nao);
             STDL_ERROR_CODE_HANDLE(error, free(name); goto _end);
 
-            nao = _count_nao(nbas, dt->bas_types);
             if(nao != nmo)
                 stdl_warning_msg(__FILE__, __LINE__, "number of MO (%d) and AO (%d) does not match", nmo, nao);
         } else if(strcmp("Number of primitives per shell", name) == 0) {
@@ -762,12 +761,15 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
 
     // map each AO to its atom
     int si, center, shift = 0;
-    for (int i = 0; i < (*bs_ptr)->nbas; ++i) {
-        center = (*bs_ptr)->bas[i * 8 + 0];
+    nprim = 0;
+    for (int ibas = 0; ibas < (*bs_ptr)->nbas; ++ibas) {
+        center = (*bs_ptr)->bas[ibas * 8 + 0];
+        nprim += (*bs_ptr)->bas[ibas * 8 + 2];
+
         if((*bs_ptr)->use_spherical)
-            si = CINTcgto_spheric(i, (*bs_ptr)->bas);
+            si = CINTcgto_spheric(ibas, (*bs_ptr)->bas);
         else
-            si = CINTcgtos_cart(i, (*bs_ptr)->bas);
+            si = CINTcgtos_cart(ibas, (*bs_ptr)->bas);
 
         for(int j = 0; j < si; j++) {
             (*wf_ptr)->aotoatm[shift + j] = center;
@@ -789,6 +791,7 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
 
     // create the S matrix
     error = stdl_basis_dsp_ovlp((*bs_ptr), (*wf_ptr)->S);
+    STDL_ERROR_CODE_HANDLE(error, goto _end);
 
     stdl_log_msg(0, "< done\n");
     stdl_log_msg(0, "Got %d atoms, %d AOs (%d primitives in %d basis functions), and %d MOs\n", natm, nao, nprim, (*bs_ptr)->nbas, nmo);

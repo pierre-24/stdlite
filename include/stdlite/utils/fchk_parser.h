@@ -201,4 +201,13 @@ int stdl_basis_data_delete(stdl_basis_data* dt);
  */
 int stdl_basis_data_to_basis(stdl_basis_data *dt, size_t natm, double *atm, stdl_basis **bs_ptr);
 
+/**
+ * Count the number of AO expected for a given basis
+ * @param dt a valid pointer to data
+ * @param[out] total the number of AO
+ * @return error code
+ * @ingroup fchk_parser
+ */
+int stdl_basis_data_count_nao(stdl_basis_data* dt, size_t* total);
+
 #endif //STDL_FCHK_PARSER_H

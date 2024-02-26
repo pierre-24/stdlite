@@ -256,10 +256,8 @@ int stdl_molden_parser_read_gto_section(stdl_lexer* lx, size_t natm, stdl_basis_
     int err;
     size_t nbas = 0, nprim = 0;
 
-    err = stdl_lexer_eat(lx, STDL_TK_CHAR);
+    err = stdl_lexer_eat(lx, STDL_TK_CHAR) || stdl_lexer_skip_whitespace_and_nl(lx);
     STDL_ERROR_CODE_HANDLE(err, return err);
-
-    stdl_lexer_skip_whitespace_and_nl(lx);
 
     struct _basis_info_* first = NULL;
     struct _basis_info_* current;
@@ -372,9 +370,182 @@ int stdl_molden_parser_read_gto_section(stdl_lexer* lx, size_t natm, stdl_basis_
     return STDL_ERR_OK;
 }
 
+// linked chained list to store MO
+struct _mo_info_ {
+    double e;
+    double* c;
+
+    struct _mo_info_* next;
+};
+
+void _mo_info_delete(struct _mo_info_* inf) {
+    if(inf != NULL) {
+        if(inf->next != NULL)
+            _mo_info_delete(inf->next);
+
+        STDL_FREE_ALL(inf->c, inf);
+    }
+}
+
+int _mo_info_new(size_t nao, struct _mo_info_** inf_ptr) {
+    assert(nao > 0 && inf_ptr != NULL);
+
+    *inf_ptr = malloc(sizeof(struct _mo_info_));
+    STDL_ERROR_HANDLE_AND_REPORT(*inf_ptr == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    (*inf_ptr)->e = .0;
+    (*inf_ptr)->next = NULL;
+    (*inf_ptr)->c = calloc(nao, sizeof(double ));
+    STDL_ERROR_HANDLE_AND_REPORT((*inf_ptr)->c == NULL, _mo_info_delete(*inf_ptr); return STDL_ERR_MALLOC, "malloc");
+
+    return STDL_ERR_OK;
+}
+
+int stdl_molden_parser_read_mo_section(stdl_lexer *lx, size_t nao, size_t *nmo, size_t *nocc, double **e, double **C) {
+    assert(lx != NULL && nao > 0 && nmo != NULL && e != NULL && C != NULL);
+
+    STDL_DEBUG("Read [MO] section");
+
+    STDL_LEXER_ERROR_HAR(
+            lx,
+            lx->current_tk_value != ']',
+            return STDL_ERR_UTIL_MOLDEN,
+            "expected `]` to continue section"
+    );
+
+    int err;
+
+    err = stdl_lexer_eat(lx, STDL_TK_CHAR) || stdl_lexer_skip_whitespace_and_nl(lx);
+    STDL_ERROR_CODE_HANDLE(err, return err);
+
+    // read each MO
+    *nmo = 0;
+    *nocc = 0;
+
+    struct _mo_info_* first = NULL;
+    struct _mo_info_* current;
+    while (lx->current_tk_type != STDL_TK_EOF && lx->current_tk_value != '[') {
+        struct _mo_info_* inf = NULL;
+        err = _mo_info_new(nao, &inf);
+        STDL_ERROR_CODE_HANDLE(err, _mo_info_delete(first); return err);
+
+        // Sym=occ
+        char* tmp;
+        err = stdl_parser_get_literal(lx, isalpha, &tmp);
+        STDL_ERROR_CODE_HANDLE(err, free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return err);
+        STDL_LEXER_ERROR_HAR(lx, strcmp("Sym", tmp) != 0,  free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return STDL_ERR_UTIL_MOLDEN, "expected Sym");
+        free(tmp);
+
+        // Ene=occ
+        err = stdl_lexer_skip(lx, _pred_notnl)
+           || stdl_lexer_eat(lx, STDL_TK_NL)
+           || stdl_lexer_skip(lx, isblank)
+           || stdl_parser_get_literal(lx, isalpha, &tmp);
+        STDL_ERROR_CODE_HANDLE(err, free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return err);
+        STDL_LEXER_ERROR_HAR(lx, strcmp("Ene", tmp) != 0,  free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return STDL_ERR_UTIL_MOLDEN, "expected Ene");
+        free(tmp);
+
+        err = stdl_lexer_eat(lx, STDL_TK_EQ)
+                || stdl_lexer_skip(lx, isblank)
+                || stdl_parser_get_number(lx, &(inf->e));
+        STDL_ERROR_CODE_HANDLE(err, free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return err);
+
+        // Spin=occ
+        err = stdl_lexer_skip(lx, _pred_notnl)
+              || stdl_lexer_eat(lx, STDL_TK_NL)
+              || stdl_lexer_skip(lx, isblank)
+              || stdl_parser_get_literal(lx, isalpha, &tmp);
+        STDL_ERROR_CODE_HANDLE(err, free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return err);
+        STDL_LEXER_ERROR_HAR(lx, strcmp("Spin", tmp) != 0,  free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return STDL_ERR_UTIL_MOLDEN, "expected Spin");
+        free(tmp);
+
+        // Occ=occ
+        err = stdl_lexer_skip(lx, _pred_notnl)
+              || stdl_lexer_eat(lx, STDL_TK_NL)
+              || stdl_lexer_skip(lx, isblank)
+              || stdl_parser_get_literal(lx, isalpha, &tmp);
+        STDL_ERROR_CODE_HANDLE(err, free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return err);
+        STDL_LEXER_ERROR_HAR(lx, strcmp("Occup", tmp) != 0,  free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return STDL_ERR_UTIL_MOLDEN, "expected Occup");
+        free(tmp);
+
+        double occ;
+        err = stdl_lexer_eat(lx, STDL_TK_EQ)
+              || stdl_lexer_skip(lx, isblank)
+              || stdl_parser_get_number(lx, &occ);
+        STDL_ERROR_CODE_HANDLE(err, free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return err);
+
+        if(occ > .01)
+            *nocc += 1;
+
+        // skip to coefficients (finally!)
+        err = stdl_lexer_skip(lx, isblank)
+              || stdl_lexer_eat(lx, STDL_TK_NL)
+              || stdl_lexer_skip(lx, isblank);
+        STDL_ERROR_CODE_HANDLE(err, free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return err);
+
+        size_t icoef = 0;
+        while(lx->current_tk_type == STDL_TK_DIGIT) {
+            // read coef
+            long n;
+            err = stdl_parser_get_integer(lx, &n);
+            STDL_ERROR_CODE_HANDLE(err, free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return err);
+
+            err = stdl_lexer_skip(lx, isblank)
+                  || stdl_parser_get_number(lx, inf->c + n - 1 /* index in 1-based */);
+            STDL_ERROR_CODE_HANDLE(err, free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return err);
+
+            // skip to next coef
+            err = stdl_lexer_skip(lx, isblank)
+                  || stdl_lexer_eat(lx, STDL_TK_NL)
+                  || stdl_lexer_skip(lx, isblank);
+            STDL_ERROR_CODE_HANDLE(err, free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return err);
+
+            icoef++;
+        }
+
+        STDL_DEBUG("read MO %ld (%ld coefficients set)", *nmo + 1, icoef);
+
+        (*nmo)++;
+
+        if(first == NULL) {
+            first = inf;
+            current = first;
+        } else {
+            current->next = inf;
+            current = current->next;
+        }
+    }
+
+    STDL_ERROR_HANDLE_AND_REPORT(*nmo > nao, _mo_info_delete(first); return STDL_ERR_UTIL_MOLDEN, "found %ld MOs, which is larger than the number of AO (%ld)", *nmo, nao);
+    STDL_DEBUG("Found %ld MOs", *nmo);
+
+    *e = malloc(*nmo * sizeof(double ));
+    *C = malloc(*nmo * nao * sizeof(double ));
+    STDL_ERROR_HANDLE_AND_REPORT(*e == NULL || *C == NULL, _mo_info_delete(first); return STDL_ERR_MALLOC, "malloc");
+
+    current = first;
+    struct _mo_info_* prev;
+    size_t imo = 0;
+    while (current != NULL) {
+        (*e)[imo] = current->e;
+        memcpy((*C) + imo * nao, current->c, nao * sizeof(double ));
+        imo++;
+
+        prev = current;
+        current = current->next;
+
+        prev->next = NULL;
+        _mo_info_delete(prev); // free linked list while we're at it
+    }
+
+    return STDL_ERR_OK;
+}
+
 
 int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction** wf_ptr, stdl_basis** bs_ptr) {
     assert(lx != NULL && wf_ptr != NULL && bs_ptr != NULL);
+
+    stdl_log_msg(0, "Extract wavefunction and basis set from MOLDEN >");
 
     char* title = NULL;
     int err;
@@ -388,19 +559,21 @@ int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction** wf_ptr, stdl_
     err = stdl_molden_parser_skip_section(lx);
     STDL_ERROR_CODE_HANDLE(err, return err);
 
-    size_t natm;
-    double* atm = NULL;
+    size_t natm, nao = 0, nmo, nocc;
+    double* atm = NULL, *e = NULL, *C = NULL;
     stdl_basis_data* dt = NULL;
 
     int all_read = 0;
     while (lx->current_tk_type != STDL_TK_EOF && err == STDL_ERR_OK) {
         err = stdl_molden_parser_read_section_title(lx, &title);
-        STDL_ERROR_CODE_HANDLE(err, free(title); goto _end);
+        STDL_ERROR_CODE_HANDLE(err, goto _end);
 
         if(strcmp(title, "Atoms") == 0) {
             err = stdl_molden_parser_read_atoms_section(lx, &natm, &atm);
         } else if(strcmp(title, "GTO") == 0) {
-            err = stdl_molden_parser_read_gto_section(lx, natm, &dt);
+            err = stdl_molden_parser_read_gto_section(lx, natm, &dt) || stdl_basis_data_count_nao(dt, &nao);
+        } else if(strcmp(title, "MO") == 0) {
+            err = stdl_molden_parser_read_mo_section(lx, nao, &nmo, &nocc, &e, &C);
         } else {
             STDL_DEBUG("Skip section [%s]", title);
             err = stdl_molden_parser_skip_section(lx);
@@ -409,23 +582,62 @@ int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction** wf_ptr, stdl_
         free(title);
     }
 
-    all_read = atm != NULL && dt != NULL;
-
+    all_read = atm != NULL && dt != NULL && C != NULL && e != NULL;
     STDL_ERROR_HANDLE_AND_REPORT(!all_read, err = STDL_ERR_UTIL_MOLDEN; goto _end, "MOLDEN file was missing certain sections");
 
+    stdl_log_msg(0, "-");
+
+    // create wavefunction
+    stdl_wavefunction_new(natm, nocc, nao, nmo, wf_ptr);
+
+    memcpy((*wf_ptr)->e, e, nmo * sizeof(double ));
+    memcpy((*wf_ptr)->C, C, nao * nmo * sizeof(double ));
+
+    stdl_log_msg(0, "-");
+
+    // create basis
     err = stdl_basis_data_to_basis(dt, natm, atm, bs_ptr);
     STDL_ERROR_CODE_HANDLE(err, goto _end);
 
     stdl_basis_data_delete(dt);
+    dt = NULL;
 
-    _end:
-    if(!all_read) {
-        STDL_FREE_ALL(atm);
-        if(dt != NULL)
-            stdl_basis_data_delete(dt);
+    stdl_log_msg(0, "-");
+
+    // map each AO to its atom
+    int si, center, shift = 0, nprim = 0;
+    for (int ibas = 0; ibas < (*bs_ptr)->nbas; ++ibas) {
+        center = (*bs_ptr)->bas[ibas * 8 + 0];
+        nprim += (*bs_ptr)->bas[ibas * 8 + 2];
+
+        if((*bs_ptr)->use_spherical)
+            si = CINTcgto_spheric(ibas, (*bs_ptr)->bas);
+        else
+            si = CINTcgtos_cart(ibas, (*bs_ptr)->bas);
+
+        for(int j = 0; j < si; j++) {
+            (*wf_ptr)->aotoatm[shift + j] = center;
+        }
+
+        shift += si;
     }
 
-    free(atm); // TODO: basis set
+    stdl_log_msg(0, "-");
+
+    // TODO: reorder AOs
+
+    // create the S matrix
+    err = stdl_basis_dsp_ovlp((*bs_ptr), (*wf_ptr)->S);
+    STDL_ERROR_CODE_HANDLE(err, goto _end);
+
+    stdl_log_msg(0, "< done\n");
+    stdl_log_msg(0, "Got %d atoms, %d AOs (%d primitives in %d basis functions), and %d MOs\n", natm, nao, nprim, (*bs_ptr)->nbas, nmo);
+
+    _end:
+    if(dt != NULL)
+        stdl_basis_data_delete(dt);
+
+    STDL_FREE_ALL(C, e, atm);
 
     return err;
 }
