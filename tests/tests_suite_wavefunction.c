@@ -144,6 +144,30 @@ void test_molden_cart() {
     ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
 }
 
+void test_molden_sph() {
+    char* molden_path = "../tests/test_files/water_631gdf_sph.molden";
+
+    FILE* f = fopen(molden_path, "r");
+    TEST_ASSERT_NOT_NULL(f);
+
+    stdl_lexer* lx = NULL;
+    ASSERT_STDL_OK(stdl_lexer_new(f, &lx));
+
+    stdl_wavefunction* wf = NULL;
+    stdl_basis* bs = NULL;
+
+    ASSERT_STDL_OK(stdl_molden_parser_extract(lx, &wf, &bs));
+
+    fclose(f);
+    ASSERT_STDL_OK(stdl_lexer_delete(lx));
+
+    ASSERT_STDL_OK(stdl_basis_delete(bs));
+
+    compute_population_and_check(wf, 0, 1e-4); /* LCAO coefficients are not very precise in this MOLDEN */
+
+    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
+}
+
 void test_sqrtS_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;

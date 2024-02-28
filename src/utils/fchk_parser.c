@@ -460,7 +460,7 @@ int stdl_basis_data_to_basis(stdl_basis_data *dt, size_t natm, double *atm, stdl
         if(dt->bas_types[i] < -1) {
             STDL_ERROR_HANDLE_AND_REPORT(fct_type == 1, return STDL_ERR_UTIL_FCHK, "mixing cartesian and spherical basis functions is not supported");
             fct_type = -1;
-        } else if(dt->bas_types[i] > 0) {
+        } else if(dt->bas_types[i] > 1) {
             STDL_ERROR_HANDLE_AND_REPORT(fct_type == -1, return STDL_ERR_UTIL_FCHK, "mixing cartesian and spherical basis functions is not supported");
             fct_type = 1;
         }
@@ -470,7 +470,7 @@ int stdl_basis_data_to_basis(stdl_basis_data *dt, size_t natm, double *atm, stdl
         fct_type = 1;
 
     size_t env_size = PTR_ENV_START + natm * 3 /* coordinates */ + 2 * dt->nprim /* exp + contractions */ + extra_coefs /* sp functions */;
-    STDL_DEBUG("%d atoms and %d basis functions (after sp→s,p) = %ld bytes of env", natm, nbas, env_size);
+    STDL_DEBUG("Creating basis for %d atoms and a total of %d basis functions = %ld bytes of env", natm, nbas, env_size);
 
     int err = stdl_basis_new((int) natm, nbas, env_size, fct_type == -1, bs_ptr);
     STDL_ERROR_CODE_HANDLE(err, return err);

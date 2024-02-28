@@ -224,6 +224,8 @@ int _basis_info_new(size_t iatm, char* btype, size_t nprim, struct _basis_info_*
         angmom = 2;
     } else if(strcmp(btype, "f") == 0) {
         angmom = 3;
+    } else if(strcmp(btype, "g") == 0) {
+        angmom = 4;
     }
 
     STDL_ERROR_HANDLE_AND_REPORT(angmom == -42, return STDL_ERR_UTIL_MOLDEN, "Basis function of type `%s` is not handled yet in MOLDEN", btype);
@@ -241,7 +243,7 @@ int _basis_info_new(size_t iatm, char* btype, size_t nprim, struct _basis_info_*
     return STDL_ERR_OK;
 }
 
-int stdl_molden_parser_read_gto_section(stdl_lexer* lx, size_t natm, stdl_basis_data** dt_ptr) {
+int stdl_molden_parser_read_gto_section(stdl_lexer *lx, size_t natm, int use_spherical, stdl_basis_data **dt_ptr) {
     assert(lx != NULL && natm > 0 && dt_ptr != NULL);
 
     STDL_DEBUG("Read [GTO] section");
@@ -348,7 +350,7 @@ int stdl_molden_parser_read_gto_section(stdl_lexer* lx, size_t natm, stdl_basis_
     struct _basis_info_* prev;
     while (current != NULL) {
 
-        (*dt_ptr)->bas_types[ibas] = current->btype;
+        (*dt_ptr)->bas_types[ibas] = ((use_spherical && current->btype > 1) ? -1 : 1) * current->btype;
         (*dt_ptr)->prims_per_bas[ibas] = (long) current->nprim;
         (*dt_ptr)->bastoatm[ibas] = (long) current->iatm;
 
@@ -429,76 +431,56 @@ int stdl_molden_parser_read_mo_section(stdl_lexer *lx, size_t nao, size_t *nmo, 
         err = _mo_info_new(nao, &inf);
         STDL_ERROR_CODE_HANDLE(err, _mo_info_delete(first); return err);
 
-        // Sym=occ
-        char* tmp;
-        err = stdl_parser_get_literal(lx, isalpha, &tmp);
-        STDL_ERROR_CODE_HANDLE(err, free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return err);
-        STDL_LEXER_ERROR_HAR(lx, strcmp("Sym", tmp) != 0,  free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return STDL_ERR_UTIL_MOLDEN, "expected Sym");
-        free(tmp);
-
-        // Ene=occ
-        err = stdl_lexer_skip(lx, _pred_notnl)
-           || stdl_lexer_eat(lx, STDL_TK_NL)
-           || stdl_lexer_skip(lx, isblank)
-           || stdl_parser_get_literal(lx, isalpha, &tmp);
-        STDL_ERROR_CODE_HANDLE(err, free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return err);
-        STDL_LEXER_ERROR_HAR(lx, strcmp("Ene", tmp) != 0,  free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return STDL_ERR_UTIL_MOLDEN, "expected Ene");
-        free(tmp);
-
-        err = stdl_lexer_eat(lx, STDL_TK_EQ)
-                || stdl_lexer_skip(lx, isblank)
-                || stdl_parser_get_number(lx, &(inf->e));
-        STDL_ERROR_CODE_HANDLE(err, free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return err);
-
-        // Spin=occ
-        err = stdl_lexer_skip(lx, _pred_notnl)
-              || stdl_lexer_eat(lx, STDL_TK_NL)
-              || stdl_lexer_skip(lx, isblank)
-              || stdl_parser_get_literal(lx, isalpha, &tmp);
-        STDL_ERROR_CODE_HANDLE(err, free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return err);
-        STDL_LEXER_ERROR_HAR(lx, strcmp("Spin", tmp) != 0,  free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return STDL_ERR_UTIL_MOLDEN, "expected Spin");
-        free(tmp);
-
-        // Occ=occ
-        err = stdl_lexer_skip(lx, _pred_notnl)
-              || stdl_lexer_eat(lx, STDL_TK_NL)
-              || stdl_lexer_skip(lx, isblank)
-              || stdl_parser_get_literal(lx, isalpha, &tmp);
-        STDL_ERROR_CODE_HANDLE(err, free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return err);
-        STDL_LEXER_ERROR_HAR(lx, strcmp("Occup", tmp) != 0,  free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return STDL_ERR_UTIL_MOLDEN, "expected Occup");
-        free(tmp);
-
+        char* keyword;
         double occ;
-        err = stdl_lexer_eat(lx, STDL_TK_EQ)
-              || stdl_lexer_skip(lx, isblank)
-              || stdl_parser_get_number(lx, &occ);
-        STDL_ERROR_CODE_HANDLE(err, free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return err);
 
-        if(occ > .01)
-            *nocc += 1;
+        while (lx->current_tk_type == STDL_TK_ALPHA) {
+            // keyword
+            err = stdl_parser_get_literal(lx, isalpha, &keyword);
+            STDL_ERROR_CODE_HANDLE(err, free(keyword); _mo_info_delete(inf); _mo_info_delete(first); return err);
 
-        // skip to coefficients (finally!)
-        err = stdl_lexer_skip(lx, isblank)
-              || stdl_lexer_eat(lx, STDL_TK_NL)
-              || stdl_lexer_skip(lx, isblank);
-        STDL_ERROR_CODE_HANDLE(err, free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return err);
+            if(strcmp(keyword, "Occ") == 0 || strcmp(keyword, "Occup") == 0) {
+                err = stdl_lexer_eat(lx, STDL_TK_EQ)
+                      || stdl_lexer_skip(lx, isblank)
+                      || stdl_parser_get_number(lx, &occ);
+                STDL_ERROR_CODE_HANDLE(err, free(keyword); _mo_info_delete(inf); _mo_info_delete(first); return err);
+
+                if(occ > .01)
+                    *nocc += 1;
+
+            } else if(strcmp(keyword, "Ene") == 0) {
+                err = stdl_lexer_eat(lx, STDL_TK_EQ)
+                      || stdl_lexer_skip(lx, isblank)
+                      || stdl_parser_get_number(lx, &(inf->e));
+                STDL_ERROR_CODE_HANDLE(err, free(keyword); _mo_info_delete(inf); _mo_info_delete(first); return err);
+            } else { // skip keyword entirely
+                err = stdl_lexer_skip(lx, _pred_notnl);
+                STDL_ERROR_CODE_HANDLE(err, free(keyword); _mo_info_delete(inf); _mo_info_delete(first); return err);
+            }
+
+            // skip to next
+            err = stdl_lexer_skip(lx, isblank)
+                  || stdl_lexer_eat(lx, STDL_TK_NL)
+                  || stdl_lexer_skip(lx, isblank);
+            STDL_ERROR_CODE_HANDLE(err, free(keyword); _mo_info_delete(inf); _mo_info_delete(first); return err);
+        }
 
         size_t icoef = 0;
         while(lx->current_tk_type == STDL_TK_DIGIT) {
             // read coef
             long n;
             err = stdl_parser_get_integer(lx, &n);
-            STDL_ERROR_CODE_HANDLE(err, free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return err);
+            STDL_ERROR_CODE_HANDLE(err, free(keyword); _mo_info_delete(inf); _mo_info_delete(first); return err);
 
             err = stdl_lexer_skip(lx, isblank)
                   || stdl_parser_get_number(lx, inf->c + n - 1 /* index in 1-based */);
-            STDL_ERROR_CODE_HANDLE(err, free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return err);
+            STDL_ERROR_CODE_HANDLE(err, free(keyword); _mo_info_delete(inf); _mo_info_delete(first); return err);
 
             // skip to next coef
             err = stdl_lexer_skip(lx, isblank)
                   || stdl_lexer_eat(lx, STDL_TK_NL)
                   || stdl_lexer_skip(lx, isblank);
-            STDL_ERROR_CODE_HANDLE(err, free(tmp); _mo_info_delete(inf); _mo_info_delete(first); return err);
+            STDL_ERROR_CODE_HANDLE(err, free(keyword); _mo_info_delete(inf); _mo_info_delete(first); return err);
 
             icoef++;
         }
@@ -541,6 +523,13 @@ int stdl_molden_parser_read_mo_section(stdl_lexer *lx, size_t nao, size_t *nmo, 
     return STDL_ERR_OK;
 }
 
+void _use_spherical(stdl_basis_data* data) {
+    for (size_t ibas = 0; ibas < data->nbas; ++ibas) {
+        if(data->bas_types[ibas] > 1)
+            data->bas_types[ibas] = -(data->bas_types[ibas]);
+    }
+}
+
 
 int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction** wf_ptr, stdl_basis** bs_ptr) {
     assert(lx != NULL && wf_ptr != NULL && bs_ptr != NULL);
@@ -563,19 +552,34 @@ int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction** wf_ptr, stdl_
     double* atm = NULL, *e = NULL, *C = NULL;
     stdl_basis_data* dt = NULL;
 
-    int all_read = 0;
+    int all_read, use_spherical = 0;
     while (lx->current_tk_type != STDL_TK_EOF && err == STDL_ERR_OK) {
         err = stdl_molden_parser_read_section_title(lx, &title);
         STDL_ERROR_CODE_HANDLE(err, goto _end);
 
+        STDL_DEBUG("Got section [%s]", title);
+
         if(strcmp(title, "Atoms") == 0) {
             err = stdl_molden_parser_read_atoms_section(lx, &natm, &atm);
         } else if(strcmp(title, "GTO") == 0) {
-            err = stdl_molden_parser_read_gto_section(lx, natm, &dt) || stdl_basis_data_count_nao(dt, &nao);
+            err = stdl_molden_parser_read_gto_section(lx, natm, use_spherical, &dt) || stdl_basis_data_count_nao(dt, &nao);
         } else if(strcmp(title, "MO") == 0) {
             err = stdl_molden_parser_read_mo_section(lx, nao, &nmo, &nocc, &e, &C);
+        } else if(strcmp(title, "5D") == 0 || strcmp(title, "5D7F") == 0) {
+            use_spherical = 1;
+            if(dt == NULL) {
+                STDL_DEBUG("requesting spherical basis functions");
+            } else {
+                STDL_DEBUG("switching to spherical basis functions");
+                _use_spherical(dt);
+            }
+
+            err = stdl_molden_parser_skip_section(lx);
+            STDL_ERROR_CODE_HANDLE(err, goto _end);
+        } else if(strcmp(title, "5D10F") == 0 || strcmp(title, "7F") == 0) {
+            STDL_ERROR_HANDLE_AND_REPORT(1, goto _end, "Mixing of basis of cartesian and spherical basis functions is not supported");
         } else {
-            STDL_DEBUG("Skip section [%s]", title);
+            STDL_DEBUG("Skipped");
             err = stdl_molden_parser_skip_section(lx);
         }
 
