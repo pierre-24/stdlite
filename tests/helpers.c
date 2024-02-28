@@ -1,8 +1,10 @@
 #include <stdlite/utils/fchk_parser.h>
+#include <stdlite/utils/molden_parser.h>
+#include <stdlite/utils/matrix.h>
+
 #include <string.h>
 
 #include "tests_suite.h"
-#include <stdlite/utils/matrix.h>
 
 
 void read_fchk(char* fchk_path, stdl_wavefunction** wf, stdl_basis** bs) {
@@ -14,6 +16,21 @@ void read_fchk(char* fchk_path, stdl_wavefunction** wf, stdl_basis** bs) {
     ASSERT_STDL_OK(stdl_fchk_parser_skip_intro(lx));
 
     ASSERT_STDL_OK(stdl_fchk_parser_extract(lx, wf, bs));
+
+    ASSERT_STDL_OK(stdl_lexer_delete(lx));
+
+    fclose(f);
+}
+
+
+void read_molden(char* molden_path, stdl_wavefunction** wf, stdl_basis** bs) {
+    FILE* f = fopen(molden_path, "r");
+    TEST_ASSERT_NOT_NULL(f);
+
+    stdl_lexer* lx = NULL;
+    ASSERT_STDL_OK(stdl_lexer_new(f, &lx));
+
+    ASSERT_STDL_OK(stdl_molden_parser_extract(lx, wf, bs));
 
     ASSERT_STDL_OK(stdl_lexer_delete(lx));
 

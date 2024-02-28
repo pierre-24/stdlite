@@ -133,7 +133,7 @@ void test_property_polarizability_TD_ok() {
 void test_property_polarizability_TD_SOS_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
-    read_fchk("../tests/test_files/water_631gdf.fchk", &wf, &bs);
+    read_molden("../tests/test_files/water_631gdf_sph.molden", &wf, &bs);
 
     stdl_context* ctx = NULL;
     ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 25. / 27.212, 1e-4, 1.0, &ctx));
