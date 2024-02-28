@@ -18,7 +18,7 @@ void test_context_select_MO_ok() {
     read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 10. / 27.212, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 10. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
 
     TEST_ASSERT_EQUAL_INT(5, ctx->nmo);
     TEST_ASSERT_EQUAL_INT(3, ctx->nocc);
@@ -60,7 +60,7 @@ void test_context_select_MO_631gdf_ok() {
     read_fchk("../tests/test_files/water_631gdf.fchk", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
 
     TEST_ASSERT_EQUAL_INT(9, ctx->nmo);
     TEST_ASSERT_EQUAL_INT(4, ctx->nocc);
@@ -102,7 +102,7 @@ void test_dipole() {
     read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
 
     double* dipoles_sp = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_sp);
@@ -182,7 +182,7 @@ void test_context_select_csfs_ok() {
     read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
 
     TEST_ASSERT_EQUAL_INT(ctx->nmo,7);
     TEST_ASSERT_EQUAL_INT(ctx->nocc, 4);
@@ -214,7 +214,7 @@ void test_context_select_csfs_direct_ok() {
     read_fchk("../tests/test_files/water_631g.fchk", &wf1, &bs1);
 
     stdl_context* ctx1 = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf1, bs1, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx1));
+    ASSERT_STDL_OK(stdl_context_new(wf1, bs1, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx1));
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx1, 1));
 
     stdl_wavefunction * wf2 = NULL;
@@ -222,7 +222,7 @@ void test_context_select_csfs_direct_ok() {
     read_fchk("../tests/test_files/water_631g.fchk", &wf2, &bs2);
 
     stdl_context* ctx2 = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf2, bs2, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx2));
+    ASSERT_STDL_OK(stdl_context_new(wf2, bs2, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx2));
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole_direct(ctx2, 1));
 
     // check that both matrix are identical

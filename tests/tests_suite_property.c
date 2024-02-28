@@ -30,7 +30,7 @@ void test_property_print_excitations_ok() {
     read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 25. / 27.212, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 25. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
 
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
 
@@ -89,7 +89,7 @@ void test_property_polarizability_TD_ok() {
     read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
 
     // compute dipole integrals and convert to MO
@@ -136,7 +136,7 @@ void test_property_polarizability_TD_SOS_ok() {
     read_molden("../tests/test_files/water_631gdf_sph.molden", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 25. / 27.212, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 25. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
 
     // copy A&B for latter
@@ -221,7 +221,7 @@ void test_property_first_hyperpolarizability_TD_ok() {
     read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
 
     // compute dipole integrals and convert to MO
@@ -289,7 +289,7 @@ void test_property_polarizability_TDA_ok() {
     read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
 
     // compute dipole integrals and convert to MO
@@ -336,7 +336,7 @@ void test_property_polarizability_TDA_SOS_ok() {
     read_fchk("../tests/test_files/water_631gdf.fchk", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 25. / 27.212, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 25. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
 
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
 

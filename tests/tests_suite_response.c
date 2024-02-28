@@ -46,7 +46,7 @@ void test_response_TDA_ok() {
     read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
 
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
 
@@ -131,7 +131,7 @@ void test_response_TD_ok() {
     read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / 27.212, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
 
     TEST_ASSERT_EQUAL_INT(ctx->nmo,7);
     TEST_ASSERT_EQUAL_INT(ctx->nocc, 4);

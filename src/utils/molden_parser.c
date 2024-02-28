@@ -458,6 +458,8 @@ int stdl_molden_parser_read_mo_section(stdl_lexer *lx, size_t nao, size_t *nmo, 
                 STDL_ERROR_CODE_HANDLE(err, free(keyword); _mo_info_delete(inf); _mo_info_delete(first); return err);
             }
 
+            free(keyword);
+
             // skip to next
             err = stdl_lexer_skip(lx, isblank)
                   || stdl_lexer_eat(lx, STDL_TK_NL)
@@ -594,6 +596,7 @@ int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction** wf_ptr, stdl_
     // create wavefunction
     stdl_wavefunction_new(natm, nocc, nao, nmo, wf_ptr);
 
+    memcpy((*wf_ptr)->atm, atm, 4 * natm * sizeof(double ));
     memcpy((*wf_ptr)->e, e, nmo * sizeof(double ));
     memcpy((*wf_ptr)->C, C, nao * nmo * sizeof(double ));
 

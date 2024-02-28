@@ -134,12 +134,12 @@ int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float 
     (*ctx)->B = NULL;
 
     // select MO to include
-    STDL_DEBUG("Select MO within %f Eh (%.3f eV)", ethr, ethr * 27.212);
+    STDL_DEBUG("Select MO within %f Eh (%.3f eV)", ethr, ethr * STDL_CONST_AU_TO_EV);
 
     size_t ohomo = (int) wf->nocc - 1, omin = 0, omax = 0;
     double ehomo = wf->e[ohomo], elumo = wf->e[ohomo + 1], ewin = 2 * (1 + .8 * ax)  * ethr, emin = elumo -ewin, emax = ehomo+ ewin;
 
-    STDL_DEBUG("Resulting MO cutoff: %f Eh (%.3f eV) -- %f Eh (%.3f eV)", emin, emin * 27.212, emax, emax * 27.212);
+    STDL_DEBUG("Resulting MO cutoff: %f Eh (%.3f eV) -- %f Eh (%.3f eV)", emin, emin * STDL_CONST_AU_TO_EV, emax, emax * STDL_CONST_AU_TO_EV);
 
     for(size_t i=0; i < wf->nmo; i++) {
         if(wf->e[i] >= emin && omin == 0)

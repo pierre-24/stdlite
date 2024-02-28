@@ -731,9 +731,6 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
     // at that point, we should have read everything
     // copy remaining stuffs
     memcpy((*wf_ptr)->atm, atm, 4 * natm * sizeof(double));
-    free(atm);
-    atm = NULL;
-
     stdl_log_msg(0, "-");
 
     // create the basis set
