@@ -592,20 +592,6 @@ int stdl_basis_data_count_nao(stdl_basis_data* dt, size_t* total) {
     return STDL_ERR_OK;
 }
 
-// transpose the LCAO coefficients so that they match libcint
-int* TRANSPOSE_CART[] = {
-        /* s */ (int[]) {0,},
-        /* p */ (int[]) {0, 1, 2},
-        /* d */ (int[]) {0, 3, 5, 1, 2, 4},
-        /* f */ (int[]) {0, 6, 9, 3, 1, 2, 5, 8, 7, 4},
-};
-
-int* TRANSPOSE_SPH[] = {
-        /* s */ (int[]) {0,},
-        /* p */ (int[]) {0, 1, 2},
-        /* d */ (int[]) {2, 3, 1, 4, 0},
-        /* f */ (int[]) {3, 4, 2, 5, 1, 6, 0},
-};
 
 
 int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr) {
@@ -781,11 +767,11 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
     stdl_log_msg(0, "-");
 
     // fix AO ordering
-    int** transpose = TRANSPOSE_CART;
+    int** transpose = STDL_G16_TRANSPOSE_CART;
     if((*bs_ptr)->use_spherical)
-        transpose = TRANSPOSE_SPH;
+        transpose = STDL_G16_TRANSPOSE_SPH;
 
-    stdl_basis_reorder_C(nmo, nao, (*wf_ptr)->C, *bs_ptr, 3, transpose);
+    stdl_basis_reorder_C(nmo, nao, (*wf_ptr)->C, *bs_ptr, 4, transpose);
 
     stdl_log_msg(0, "-");
 

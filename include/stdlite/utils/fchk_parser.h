@@ -145,6 +145,27 @@ int stdl_fchk_parser_skip_section(stdl_lexer* lx, char type, int is_scalar);
 int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr);
 
 
+/// Transpose the LCAO coefficients from Gaussian 16 so that they match `libcint`, cartesian functions.
+/// @ingroup fchk_parser
+static int* STDL_G16_TRANSPOSE_CART[] = {
+        /* s */ (int[]) {0,},
+        /* p */ (int[]) {0, 1, 2},
+        /* d */ (int[]) {0, 3, 5, 1, 2, 4},
+        /* f */ (int[]) {0, 6, 9, 3, 1, 2, 5, 8, 7, 4},
+        /* g */ (int[]) {0, 8, 14, 1, 2, 7, 9, 12, 13, 3, 5, 10, 4, 6, 11},
+};
+
+/// Transpose the LCAO coefficients from Gaussian 16 so that they match `libcint`, spherical functions.
+/// @ingroup fchk_parser
+static int* STDL_G16_TRANSPOSE_SPH[] = {
+        /* s */ (int[]) {0,},
+        /* p */ (int[]) {0, 1, 2},
+        /* d */ (int[]) {2, 3, 1, 4, 0},
+        /* f */ (int[]) {3, 4, 2, 5, 1, 6, 0},
+        /* g */ (int[]) {4, 5, 3, 6, 2, 7, 1, 8, 0},
+};
+
+
 /// Structure that holds basis set data in a format that resemble the one used by Gaussian in its FCHK.
 /// @ingroup fchk_parser
 struct stdl_basis_data_ {

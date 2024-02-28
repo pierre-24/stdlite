@@ -135,6 +135,8 @@ groups:
           ```c
           #include <stdlite/utils/molden_parser.h>
           ```
+          
+          --8<-- "docs/includes/molden_parser.md"
       - name: permutations
         title: Permutations
         description: |

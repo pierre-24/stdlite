@@ -8,6 +8,10 @@
 
 #include "tests_suite.h"
 
+void setUp(void) {
+    stdl_set_debug_level(-1);
+}
+
 // check that the data are correct by computing the Mulliken population.
 // It should sum up to the number of electrons (i.e., 2 * wf->nocc), within `prec`.
 void compute_population_and_check(stdl_wavefunction *wf, int sym, double prec) {
@@ -116,8 +120,8 @@ void test_content_cart_5d7f_ok() {
     ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
 }
 
-void test_molden() {
-    char* molden_path = "../tests/test_files/water_631g.molden";
+void test_molden_cart() {
+    char* molden_path = "../tests/test_files/water_631gdf.molden";
 
     FILE* f = fopen(molden_path, "r");
     TEST_ASSERT_NOT_NULL(f);

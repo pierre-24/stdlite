@@ -624,7 +624,14 @@ int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction** wf_ptr, stdl_
 
     stdl_log_msg(0, "-");
 
-    // TODO: reorder AOs
+    // fix AO ordering (use the one of Gaussian)
+    int** transpose = STDL_G16_TRANSPOSE_CART;
+    if((*bs_ptr)->use_spherical)
+        transpose = STDL_G16_TRANSPOSE_SPH;
+
+    stdl_basis_reorder_C(nmo, nao, (*wf_ptr)->C, *bs_ptr, 4, transpose);
+
+    stdl_log_msg(0, "-");
 
     // create the S matrix
     err = stdl_basis_dsp_ovlp((*bs_ptr), (*wf_ptr)->S);
