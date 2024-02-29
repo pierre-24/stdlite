@@ -107,6 +107,26 @@ void _compute_renormalization(stdl_basis* bs, double* renorm, double* buff) {
         if(bs->use_spherical || angmom < 2) {
             for (int mu = 0; mu < si; ++mu)
                 renorm[ioffset + mu] = 1.;
+        } else if (angmom == 2) { // 6d
+            double vxx = sqrt(1.25 / M_PI), vxy = sqrt(3.75 / M_PI);
+            renorm[ioffset + 0] = vxx;
+            renorm[ioffset + 1] = vxy;
+            renorm[ioffset + 2] = vxy;
+            renorm[ioffset + 3] = vxx;
+            renorm[ioffset + 4] = vxy;
+            renorm[ioffset + 5] = vxx;
+        } else if (angmom == 3) { // 10f
+            double vxxx = sqrt(1.75 / M_PI), vxxy = sqrt(8.75 / M_PI), vxyz = sqrt(26.25 / M_PI);
+            renorm[ioffset + 0] = vxxx;
+            renorm[ioffset + 1] = vxxy;
+            renorm[ioffset + 2] = vxxy;
+            renorm[ioffset + 3] = vxxy;
+            renorm[ioffset + 4] = vxyz;
+            renorm[ioffset + 5] = vxxy;
+            renorm[ioffset + 6] = vxxx;
+            renorm[ioffset + 7] = vxxy;
+            renorm[ioffset + 8] = vxxy;
+            renorm[ioffset + 9] = vxxx;
         } else {
             int1e_ovlp_cart(buff, NULL, (int[]) {ibas, ibas}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
             for (int mu = 0; mu < si; ++mu)
