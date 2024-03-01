@@ -205,16 +205,10 @@ int stdl_property_e2e_transition_dipoles(stdl_context* ctx, size_t nexci, double
     assert(ctx != NULL && nexci > 0 && dips_MO != NULL && X != NULL && e2etdips != NULL);
     size_t nvirt = ctx->nmo - ctx->nocc;
 
-    for (int cpt = 0; cpt < 3; ++cpt) {
-        for (size_t iexci = 0; iexci < nexci; ++iexci) {
-            for (size_t jexci = 0; jexci < nexci; ++jexci) {
-                e2etdips[cpt * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(iexci, jexci)] = .0f;
-            }
-        }
-    }
-
     for (size_t iexci = 0; iexci < nexci; ++iexci) {
         for (size_t jexci = iexci; jexci < nexci; ++jexci) {
+            float a_[3] = {0}, b_[3] = {0};
+
             for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
                 float xj = X[jexci * ctx->ncsfs + lia];
                 float yj = .0f;
@@ -232,19 +226,19 @@ int stdl_property_e2e_transition_dipoles(stdl_context* ctx, size_t nexci, double
                     size_t j = ctx->csfs[ljb] / nvirt, b = ctx->csfs[ljb] % nvirt;
 
                     if(b == a) { // jb == ja
-                        for (int cpt = 0; cpt < 3; ++cpt) {
-                            float d = (float) dips_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)];
-                            e2etdips[cpt * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(iexci, jexci)] += .5f * d * (xj * xi + yj * yi);
-                        }
+                        for (int cpt = 0; cpt < 3; ++cpt)
+                            a_[cpt] += (float) dips_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * (xj * xi + yj * yi);
                     }
 
                     if(j == i) {// jb == ib
-                        for (int cpt = 0; cpt < 3; ++cpt) {
-                            float d = (float) dips_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)];
-                            e2etdips[cpt * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(iexci, jexci)] -= .5f * d * (xj * xi + yj * yi);
-                        }
+                        for (int cpt = 0; cpt < 3; ++cpt)
+                            b_[cpt] += (float) dips_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)] * (xj * xi + yj * yi);
                     }
                 }
+            }
+
+            for (int cpt = 0; cpt < 3; ++cpt) {
+                e2etdips[cpt * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(iexci, jexci)] = .5f * (a_[cpt] - b_[cpt]);
             }
         }
     }
