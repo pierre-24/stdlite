@@ -519,6 +519,11 @@ void test_property_e2e_transition_dipoles_ok() {
     stdl_property_e2e_transition_dipoles(ctx, nrequested, dipoles_sp_MO, Xtd, Ytd, e2etdips);
 
     // checked against stda
+    printf("%f %f %f\n",
+           *(e2etdips + 0 * STDL_MATRIX_SP_SIZE(nrequested) + STDL_MATRIX_SP_IDX(0, 1)),
+           *(e2etdips + 1 * STDL_MATRIX_SP_SIZE(nrequested) + STDL_MATRIX_SP_IDX(0, 2)),
+           *(e2etdips + 2 * STDL_MATRIX_SP_SIZE(nrequested) + STDL_MATRIX_SP_IDX(0, 0))
+           );
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 9.73e-2f, *(e2etdips + 0 * STDL_MATRIX_SP_SIZE(nrequested) + STDL_MATRIX_SP_IDX(0, 1)));
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 0.5292f, *(e2etdips + 1 * STDL_MATRIX_SP_SIZE(nrequested) + STDL_MATRIX_SP_IDX(0, 2)));
     TEST_ASSERT_FLOAT_WITHIN(1e-4, -0.4857f, *(e2etdips + 2 * STDL_MATRIX_SP_SIZE(nrequested) + STDL_MATRIX_SP_IDX(0, 0)));
