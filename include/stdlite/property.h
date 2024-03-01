@@ -54,7 +54,7 @@ int stdl_property_first_hyperpolarizability(stdl_context* ctx, double* dips_MO, 
  * @param dips_MO `float[3,STDL_MATRIX_SP_SIZE(ctx->nmo)]`, the dipole moment matrix, **in MO basis**.
  * @param X `float[nexci,ncsfs]` amplitude vector $\mathbf x$
  * @param Y `float[nexci,ncsfs]` amplitude vector $\mathbf y$, might be `NULL` if TDA.
- * @param e2etdips `float[3,STDL_MATRIX_SP_SIZE(nexci)]` the values of the different components of the transition dipoles.
+ * @param e2etdips `float[3,nexci,nexci]` the values of the different components of the transition dipoles.
  * @return error code
  * @ingroup property
  */

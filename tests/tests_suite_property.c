@@ -482,6 +482,14 @@ void test_property_polarizability_TDA_SOS_ok() {
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
 
+float oscillator_strength(size_t i, size_t j, size_t nexci, float* e, float * e2etdips) {
+    float x = .0f;
+    for (int cpt = 0; cpt < 3; ++cpt) {
+        x += powf(e2etdips[cpt * nexci * nexci + i * nexci + j], 2);
+    }
+
+    return 2.f/3 * (e[j] - e[i]) * x;
+}
 
 void test_property_e2e_transition_dipoles_ok() {
     stdl_wavefunction * wf = NULL;
@@ -499,8 +507,6 @@ void test_property_e2e_transition_dipoles_ok() {
 
     make_dipoles_MO(wf, bs, ctx, dipoles_sp_MO);
 
-    stdl_matrix_dsp_print(ctx->nmo, dipoles_sp_MO, "xlint");
-
     // request all excitations
     size_t nrequested = 4;
 
@@ -515,24 +521,17 @@ void test_property_e2e_transition_dipoles_ok() {
 
     ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, etd, Xtd, Ytd));
 
-    stdl_matrix_sge_print(nrequested, 1, etd, "etd");
-    stdl_matrix_sge_print(nrequested, ctx->ncsfs, Xtd, "X");
-    stdl_matrix_sge_print(nrequested, ctx->ncsfs, Ytd, "Y");
-
-    float* e2etdips = malloc(3 * STDL_MATRIX_SP_SIZE(nrequested) * sizeof(float ));
+    float* e2etdips = malloc(3 * nrequested * nrequested * sizeof(float ));
     TEST_ASSERT_NOT_NULL(e2etdips);
 
     stdl_property_e2e_transition_dipoles(ctx, nrequested, dipoles_sp_MO, Xtd, Ytd, e2etdips);
 
+    stdl_matrix_sge_print(nrequested, nrequested, e2etdips, "xl");
+
     // checked against stda
-    printf("%f %f %f\n",
-           *(e2etdips + 0 * STDL_MATRIX_SP_SIZE(nrequested) + STDL_MATRIX_SP_IDX(0, 1)),
-           *(e2etdips + 1 * STDL_MATRIX_SP_SIZE(nrequested) + STDL_MATRIX_SP_IDX(0, 2)),
-           *(e2etdips + 2 * STDL_MATRIX_SP_SIZE(nrequested) + STDL_MATRIX_SP_IDX(0, 0))
-           );
-    TEST_ASSERT_FLOAT_WITHIN(1e-4, 9.73e-2f, *(e2etdips + 0 * STDL_MATRIX_SP_SIZE(nrequested) + STDL_MATRIX_SP_IDX(0, 1)));
-    TEST_ASSERT_FLOAT_WITHIN(1e-4, 0.5292f, *(e2etdips + 1 * STDL_MATRIX_SP_SIZE(nrequested) + STDL_MATRIX_SP_IDX(0, 2)));
-    TEST_ASSERT_FLOAT_WITHIN(1e-4, -0.4857f, *(e2etdips + 2 * STDL_MATRIX_SP_SIZE(nrequested) + STDL_MATRIX_SP_IDX(0, 0)));
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, .0005f, oscillator_strength(0, 1, nrequested, etd, e2etdips));
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, 0.0235f, oscillator_strength(0, 2, nrequested, etd, e2etdips));
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, .0f, oscillator_strength(0, 3, nrequested, etd, e2etdips));
 
     STDL_FREE_ALL(dipoles_sp_MO, etd, Xtd, Ytd, e2etdips);
 
