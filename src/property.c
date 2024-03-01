@@ -206,7 +206,7 @@ int stdl_property_e2e_transition_dipoles(stdl_context* ctx, size_t nexci, double
     size_t nvirt = ctx->nmo - ctx->nocc;
 
     for (size_t iexci = 0; iexci < nexci; ++iexci) {
-        for (size_t jexci = iexci; jexci < nexci; ++jexci) {
+        for (size_t jexci = 0; jexci < nexci; ++jexci) {
             float a_[3] = {0}, b_[3] = {0};
 
             for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
@@ -238,7 +238,7 @@ int stdl_property_e2e_transition_dipoles(stdl_context* ctx, size_t nexci, double
             }
 
             for (int cpt = 0; cpt < 3; ++cpt) {
-                e2etdips[cpt * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(iexci, jexci)] = .5f * (a_[cpt] - b_[cpt]);
+                e2etdips[cpt * nexci * nexci + iexci * nexci + jexci] = .5f * (a_[cpt] - b_[cpt]);
             }
         }
     }
