@@ -499,6 +499,8 @@ void test_property_e2e_transition_dipoles_ok() {
 
     make_dipoles_MO(wf, bs, ctx, dipoles_sp_MO);
 
+    stdl_matrix_dsp_print(ctx->nmo, dipoles_sp_MO, "xlint");
+
     // request all excitations
     size_t nrequested = 4;
 
@@ -512,6 +514,10 @@ void test_property_e2e_transition_dipoles_ok() {
     TEST_ASSERT_NOT_NULL(Ytd);
 
     ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, etd, Xtd, Ytd));
+
+    stdl_matrix_sge_print(nrequested, 1, etd, "etd");
+    stdl_matrix_sge_print(nrequested, ctx->ncsfs, Xtd, "X");
+    stdl_matrix_sge_print(nrequested, ctx->ncsfs, Ytd, "Y");
 
     float* e2etdips = malloc(3 * STDL_MATRIX_SP_SIZE(nrequested) * sizeof(float ));
     TEST_ASSERT_NOT_NULL(e2etdips);
