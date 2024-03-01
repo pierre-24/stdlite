@@ -12,7 +12,7 @@
 #endif
 
 /**
- * Solve the Casida equation to get excitation energies and amplitudes ($\mathbf x^\omega$), within the Tamm-Dancoff approximation.
+ * Solve the Casida equation to get excitation energies and amplitudes ($\mathbf x^m$), within the Tamm-Dancoff approximation.
  * Only returns the first `nexci` first excitation energies. Works well if `nexci << ncsfs`.
  * The precision on the eigenvalues is given by `STDL_RESPONSE_EIGV_ABSTOL`.
  *
@@ -20,15 +20,15 @@
  *
  * @param ctx a valid context, with `ctx->ncsfs > 0`.
  * @param nexci number of excitations requested. Must be `0 < nexci <= ctx->ncsfs`.
- * @param[out] e `float[nexci]` excitation energies (eigenvalues).
- * @param[out] X `float[nexci,ncsfs]` amplitudes, $\mathbf x^\omega$, for each excitation (eigenvectors).
+ * @param[out] e `float[nexci]` excitation energies $\omega_m$ (eigenvalues).
+ * @param[out] X `float[nexci,ncsfs]` amplitudes, $\mathbf x^m$, for each excitation $\ket{m}$ (eigenvectors).
  * @return error code
  * @ingroup response
  */
 int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X);
 
 /**
- * Solve the Casida equation to get excitation energies and their corresponding amplitude vectors ($\mathbf x^\omega$, $\mathbf y^\omega$).
+ * Solve the Casida equation to get excitation energies and their corresponding amplitude vectors ($\mathbf x^m$, $\mathbf y^m$).
  * Only returns the first `nexci` first excitation energies. Works well if `nexci << ncsfs`.
  * The precision on the eigenvalues is given by `STDL_RESPONSE_EIGV_ABSTOL`.
  *
@@ -37,8 +37,8 @@ int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
  * @param ctx a valid context, with `ctx->ncsfs > 0 && ctx->B != NULL`.
  * @param nexci number of excitations requested. Must be `0 < nexci <= ctx->ncsfs`.
  * @param[out] e `float[nexci]` excitation energies (eigenvalues).
- * @param[out] X `float[nexci,ncsfs]` response vector $\mathbf x^\omega$ for each excitation.
- * @param[out] Y `float[nexci,ncsfs]` response vector $\mathbf y^\omega$ for each excitation.
+ * @param[out] X `float[nexci,ncsfs]` response vector $\mathbf x^m$ for each excitation $\ket{m}$.
+ * @param[out] Y `float[nexci,ncsfs]` response vector $\mathbf y^m$ for each excitation $\ket{m}$.
  * @return error code
  * @ingroup response
  */

@@ -481,3 +481,47 @@ void test_property_polarizability_TDA_SOS_ok() {
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
+
+
+void test_property_e2e_transition_dipoles_ok() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
+
+    stdl_context* ctx = NULL;
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 20. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
+
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
+
+    // compute dipole integrals and convert to MO
+    double* dipoles_sp_MO = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipoles_sp_MO);
+
+    make_dipoles_MO(wf, bs, ctx, dipoles_sp_MO);
+
+    // request all excitations
+    size_t nrequested = 4;
+
+    float* etd = malloc(ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(etd);
+
+    float* Xtd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(Xtd);
+
+    float* Ytd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(Ytd);
+
+    ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, etd, Xtd, Ytd));
+
+    float* e2etdips = malloc(3 * STDL_MATRIX_SP_SIZE(nrequested) * sizeof(float ));
+    stdl_property_e2e_transition_dipoles(ctx, nrequested, dipoles_sp_MO, Xtd, Ytd, e2etdips);
+
+    // checked against stda
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, 9.73e-2f, *(e2etdips + 0 * STDL_MATRIX_SP_SIZE(nrequested) + STDL_MATRIX_SP_IDX(0, 1)));
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, 0.5292f, *(e2etdips + 1 * STDL_MATRIX_SP_SIZE(nrequested) + STDL_MATRIX_SP_IDX(0, 2)));
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, -0.4857f, *(e2etdips + 2 * STDL_MATRIX_SP_SIZE(nrequested) + STDL_MATRIX_SP_IDX(0, 0)));
+
+    STDL_FREE_ALL(dipoles_sp_MO, etd, Xtd, Ytd, e2etdips);
+
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
+}

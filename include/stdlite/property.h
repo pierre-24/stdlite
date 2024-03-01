@@ -9,8 +9,8 @@
  * @param ctx a valid context, with `ctx->ncsfs > 0`.
  * @param nexci number of excitations computed
  * @param dips_MO `float[3,STDL_MATRIX_SP_SIZE(ctx->nmo)]`, the dipole moment matrix, **in MO basis**.
- * @param X `float[nexci,ncsfs]` linear response vector
- * @param Y `float[nexci,ncsfs]` linear response vector, might be `NULL` if TDA.
+ * @param X `float[nexci,ncsfs]` amplitude vector $\mathbf x$
+ * @param Y `float[nexci,ncsfs]` amplitude vector $\mathbf y$, might be `NULL` if TDA.
  * @param[out] tdips `float[3,nexci]` the transition tdips
  * @return error code
  * @ingroup property
@@ -45,5 +45,19 @@ int stdl_property_polarizability(stdl_context* ctx, double* dips_MO, float* X, f
  * @ingroup property
  */
 int stdl_property_first_hyperpolarizability(stdl_context* ctx, double* dips_MO, float *Xs[3], float *Ys[3], float* beta);
+
+/**
+ * Evaluate the transition dipole/fluctuation operator between two excited states, $\braket{u|\hat\mu_\zeta - \delta_{uv}\,\braket{0|\hat\mu_\zeta|0}|v}$.
+ *
+ * @param ctx a valid context, with `ctx->ncsfs > 0`.
+ * @param nexci number of excitations computed
+ * @param dips_MO `float[3,STDL_MATRIX_SP_SIZE(ctx->nmo)]`, the dipole moment matrix, **in MO basis**.
+ * @param X `float[nexci,ncsfs]` amplitude vector $\mathbf x$
+ * @param Y `float[nexci,ncsfs]` amplitude vector $\mathbf y$, might be `NULL` if TDA.
+ * @param e2etdips `float[3,STDL_MATRIX_SP_SIZE(nexci)]` the values of the different components of the transition dipoles.
+ * @return error code
+ * @ingroup property
+ */
+int stdl_property_e2e_transition_dipoles(stdl_context* ctx, size_t nexci, double* dips_MO, float * X, float * Y, float* e2etdips);
 
 #endif //STDLITE_PROPERTY_H

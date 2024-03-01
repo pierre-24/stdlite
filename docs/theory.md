@@ -82,7 +82,7 @@ Using a Fourier series of $\hat V$, one can obtain a TD version of the linear re
 
 !!! note
 
-    In the following, $p$, $q$, $r$, $s$,... refer to molecular orbitals (MOs), $i$, $j$, $k$, $l$,... to occupied, $a$, $b$, $c$, $d$,... to unoccupied ones, $\mu$, $\nu$, $\xi$... to atomic orbitals (AOs) and $\zeta$, $\sigma$, $\tau$, $\upsilon$, ... to cartesian direction. 
+    In the following, $p$, $q$, $r$, $s$,... refer to molecular orbitals (MOs), $i$, $j$, $k$, $l$,... to occupied, $a$, $b$, $c$, $d$,... to unoccupied ones, $\ket{m}$, $\ket{n}$,... to electronic excited states, $\mu$, $\nu$, $\xi$... to atomic orbitals (AOs) and $\zeta$, $\sigma$, $\tau$, $\upsilon$, ... to cartesian direction. 
     All quantities are in [atomic units](https://en.wikipedia.org/wiki/Atomic_units), unless otherwise mentioned.
 
 
@@ -132,52 +132,54 @@ The [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) 
 
 ### Excitations
 
-It is also customary to consider the case when $\eta = 0$, which lead to the following pseudo-hermitian problem:
+Since the pole of the response function corresponds to the electronic excited states, it is also customary to consider the case when $\eta = 0$, which lead to the following pseudo-hermitian problem:
 
 $$\tag{4}\begin{pmatrix}
 \mathbf A & \mathbf B \\
 \mathbf B & \mathbf A
 \end{pmatrix}\,\begin{pmatrix}
-\mathbf x^\omega\\ \mathbf y^\omega
-\end{pmatrix}=\omega\begin{pmatrix}
+\mathbf x^m\\ \mathbf y^m
+\end{pmatrix}=\omega_m\begin{pmatrix}
 \mathbf 1 & \mathbf 0\\
 \mathbf 0 & -\mathbf 1
 \end{pmatrix}\,\begin{pmatrix}
-\mathbf x^\omega\\ \mathbf y^\omega
+\mathbf x^m\\ \mathbf y^m
 \end{pmatrix}$$
 
 which is generally referred to as the Casida equation. 
-In this case, each $\omega$ (eigenvalue) is associated to one $\mathbf x^\omega$ and one $\mathbf y^\omega$ ("eigenfunction"), might be seen as amplitude vectors associated to excitation and de-excitation, respectively. 
+In this case, each $\omega_m$ (eigenvalue, corresponding to the transition energy bewteen $\ket{0}$ and $\ket{m}$) is associated to one $\mathbf x^m$ and one $\mathbf y^m$ ("eigenfunction"), might be seen as amplitude vectors associated to excitation and de-excitation, respectively. 
 Solving this problem is done using two approaches.
 
-On the one hand, Eq. (4) can be rewritten in an true eigenvalue problem, namely:
+On the one hand, Eq. (4) can be rewritten in a true eigenvalue problem, namely:
 
-$$(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}+\mathbf{B})\,(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,\mathbf{z}^\omega = \omega^2\,\mathbf{z}^\omega, \text{ with } \mathbf{z}^\omega = (\mathbf{A}-\mathbf{B})^{-\frac{1}{2}} (\mathbf x^\omega + \mathbf y^\omega).$$
+$$(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}+\mathbf{B})\,(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,\mathbf{z}^m = \omega^2\,\mathbf{z}^m, \text{ with } \mathbf{z}^m = (\mathbf{A}-\mathbf{B})^{-\frac{1}{2}} (\mathbf x^m + \mathbf y^m).$$
 
 ??? note "Detailed solution"
 
-    In this case, after $\mathbf z^\omega$ have been obtained, one extract using the following procedure. First, from previous expression, one can obtain:
+    In this case, after $\mathbf z^m$ have been obtained, one extract using the following procedure. First, from previous expression, one can obtain:
     
-    $$ \mathbf u^\omega = \mathbf x^\omega + \mathbf y^\omega = \frac{1}{\sqrt\omega}\,(\mathbf A-\mathbf B)^\frac{1}{2}\,\mathbf z^\omega.$$
+    $$ \mathbf u^m = \mathbf x^m + \mathbf y^m = \frac{1}{\sqrt\omega}\,(\mathbf A-\mathbf B)^\frac{1}{2}\,\mathbf z^m.$$
     
-    Now, since $(\mathbf A + \mathbf B)\,(\mathbf x^\omega+\mathbf y^\omega) = \omega\,(\mathbf x^\omega-\mathbf y^\omega)$ [obtained from Eq. (4)], one has:
+    Now, since $(\mathbf A + \mathbf B)\,(\mathbf x^m+\mathbf y^m) = \omega\,(\mathbf x^m-\mathbf y^m)$ [obtained from Eq. (4)], one has:
     
-    $$\mathbf v^\omega = \mathbf x^\omega-\mathbf y^\omega = \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,(\mathbf x^\omega+\mathbf y^\omega)  = \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,\mathbf u^\omega,$$
+    $$\mathbf v^m = \mathbf x^m-\mathbf y^m = \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,(\mathbf x^m+\mathbf y^m)  = \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,\mathbf u^m,$$
     
-    and therefore the response vector are obtained: $\mathbf x^\omega = \frac{1}{2}(\mathbf u^\omega + \mathbf v^\omega)$ and $\mathbf y^\omega = \frac{1}{2}(\mathbf u^\omega - \mathbf v^\omega)$.
+    and therefore the response vector are obtained: $\mathbf x^m = \frac{1}{2}(\mathbf u^m + \mathbf v^m)$ and $\mathbf y^m = \frac{1}{2}(\mathbf u^m - \mathbf v^m)$.
 
-On the other hand, the [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) ($\mathbf B = \mathbf 0$ and thus $\mathbf y^\omega = 0$) simply leads to:
+On the other hand, the [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) ($\mathbf B = \mathbf 0$ and thus $\mathbf y^m = 0$) simply leads to:
 
-$$\mathbf A\,\mathbf x^\omega = \omega\,\mathbf x^\omega.$$
+$$\mathbf A\,\mathbf x^m = \omega_m\,\mathbf x^m.$$
+
+In this case, $\ket{m} = \sum_{ia}\,x^m_{ia}\,\ket{\Psi_i^a}$, where $\ket{\Psi_i^a}$ is a **configuration state function**, *i.e.*, a singly-excited determinant where an electron has been moved from $i$ to $a$.
 
 In both cases, these amplitude vectors are linked to their linear response counterparts through the following spectral representation:
 
 $$\begin{aligned}
-x_{ai,\zeta}(\omega) &= \sum_{\wp} \eta_{ia,\zeta}\,(x^{\omega_\wp}_{ia} + y^{\omega_\wp}_{ia})\,\left[\frac{x_{ia}^{\omega_\wp}}{\omega-\omega_\wp}-\frac{y_{ia}^{\omega_\wp}}{\omega+\omega_\wp}\right],\\
-y_{ai,\zeta}(\omega) &= \sum_{\wp} \eta_{ia,\zeta}\,(x^{\omega_\wp}_{ia} + y^{\omega_\wp}_{ia})\,\left[\frac{y_{ia}^{\omega_\wp}}{\omega-\omega_\wp}-\frac{x_{ia}^{\omega_\wp}}{\omega+\omega_\wp}\right],
+x_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,\left[\frac{x_{ia}^{m}}{\omega-\omega_m}-\frac{y_{ia}^{m}}{\omega+\omega_m}\right],\\
+y_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,\left[\frac{y_{ia}^{m}}{\omega-\omega_m}-\frac{x_{ia}^{m}}{\omega+\omega_m}\right],
 \end{aligned}$$
 
-where these expression involves a summation over all $\{\omega_\wp\}$ excited states (and one can set $\mathbf y^\omega = 0$ to get the TDA version).
+where these expression involves a summation over the manifold $\{\ket{m}\}$ of excited states (and one can set $\mathbf y^m = 0$ to get the TDA version).
 These representations lead to simplification when taking residue of response functions.
 
 ## The simplified approaches to TD-DFT
@@ -208,10 +210,10 @@ Then, using those approximated $\mathbf A'$ and $\mathbf B'$ matrices, the linea
 The truncation of the CI space is done in three steps:
 
 1. An active MO space is defined by $\varepsilon_p \in [\varepsilon_{LUMO}-E_{w}, \varepsilon_{HOMO}+E_{w}]$, with $E_w = 2\,(1+0.8a_x)\,E_{thr}$.
-2. From this active space, primary $\Psi_i^a$ configuration state functions (P-CSFs) are selected, for which $A_{ia,ia} < E_{thr}$.
-3. Then, from CSFs $\Psi_j^b$ for which $A_{jb,jb} > E_{thr}$, a set of secondary CSFs (S-CSFs), for which $E^{(2)}_{jb} > E^{(2)}_{thr}$ is build (typically, $E^{(2)}_{thr} = 10^{-4}$). Other CSFs are discarded.
+2. From this active space, primary $\ket{\Psi_i^a}$ configuration state functions (P-CSFs) are selected, for which $A_{ia,ia} < E_{thr}$.
+3. Then, from CSFs $\ket{\Psi_j^b}$ for which $A_{jb,jb} > E_{thr}$, a set of secondary CSFs (S-CSFs), for which $E^{(2)}_{jb} > E^{(2)}_{thr}$ is build (typically, $E^{(2)}_{thr} = 10^{-4}$). Other CSFs are discarded.
 
-The selection of S-CSFs is based on a perturbative approach, where $E^{(2)}_{jb}$ measure the cumulative perturbative contributions of a given S-CSF $\Psi_j^b$ to all the P-CSFs $\Psi_i^a$:
+The selection of S-CSFs is based on a perturbative approach, where $E^{(2)}_{jb}$ measure the cumulative perturbative contributions of a given S-CSF $\ket{\Psi_j^b}$ to all the P-CSFs $\ket{\Psi_i^a}$:
 
 $$E^{(2)}_{jb} = \sum_{ia}^{\text{P-CSFs}} \frac{|A_{ia,jb}|^2}{A_{jb,jb}-A_{ia,ia}}.$$
 
@@ -337,14 +339,14 @@ Things that can be obtained thanks to the amplitude/linear response vectors.
 
     For example, the linear response function might be extended in the following spectral representation:
 
-    $$\braket{\braket{\hat A; \hat B}}_{\omega_B} = \sum_\wp \frac{\braket{0|\hat A|\wp}\braket{\wp|\hat B|0}}{\omega_B-\omega_\wp} + \frac{\braket{0|\hat B|\wp}\braket{\wp|\hat A|0}}{\omega_A+\omega_\wp},$$
+    $$\braket{\braket{\hat A; \hat B}}_{\omega_B} = \sum_{\ket{m}} \frac{\braket{0|\hat A|m}\braket{m|\hat B|0}}{\omega_B-\omega_m} + \frac{\braket{0|\hat B|m}\braket{m|\hat A|0}}{\omega_A+\omega_m},$$
 
     and a corresponding single residue might be:
 
-    $$\lim_{\omega_B\to\omega_\wp} (\omega_B-\omega_\wp)\,\braket{\braket{\hat A; \hat B}}_{\omega_B} = \braket{0|\hat A|\wp}\braket{\wp|\hat B|0},$$
+    $$\lim_{\omega_B\to\omega_m} (\omega_B-\omega_m)\,\braket{\braket{\hat A; \hat B}}_{\omega_B} = \braket{0|\hat A|m}\braket{m|\hat B|0},$$
 
-    which provides access to trasition matrix elements $\braket{0|\hat A|\wp}$ between the ground state and an excited state $\wp$. 
-    In practice, such residues are thus evaluated thanks to amplitude vectors.
+    which provides access to trasition matrix elements $\braket{0|\hat A|m}$ between the ground state $\ket{0}$ and an excited state $\ket{m}$. 
+    In practice, such residues are thus evaluated thanks to amplitude vectors through the spectral representation of linear responses.
 
 ### Polarizability
 
@@ -356,16 +358,16 @@ $$\alpha_{\zeta\sigma}(-\omega;\omega) = -\braket{\braket{\hat\mu_\zeta;\hat\mu_
 
 From the single residue of the electric polarizability, 
 
-$$\lim_{\omega\to\omega_\wp} (\omega-\omega_\wp)\,\braket{\braket{\mu_\zeta;\mu_\sigma}}_\omega =  \braket{0|\hat\mu_\zeta|\wp}\,\braket{\wp|\hat\mu_\sigma|0},$$
+$$\lim_{\omega\to\omega_m} (\omega-\omega_m)\,\braket{\braket{\mu_\zeta;\mu_\sigma}}_\omega =  \braket{0|\hat\mu_\zeta|m}\,\braket{m|\hat\mu_\sigma|0},$$
 
-the transition dipole moment elements (in the dipole length formalism) for excitation $\wp$, associated with energy $\omega$ are given by:
+the transition dipole moment elements (in the dipole length formalism) between ground $\ket{0}$ and excited state $\ket{m}$, associated with energy $\omega_{m}$ are given by:
 
-$$\mu_{0\wp,\zeta} = \braket{0|\hat\mu_\zeta|\wp} =  \sqrt{2}\,\sum_{ia}^{CSF} \vec\mu_{ia,\zeta}\,(x^\omega_{ia}+y^\omega_{ia}),$$
+$$\mu_{0m,\zeta} = \braket{0|\hat\mu_\zeta|m} =  \sqrt{2}\,\sum_{ia}^{CSF} \vec\mu_{ia,\zeta}\,(x^m_{ia}+y^m_{ia}),$$
 
 where $\zeta$ is a cartesian direction and the $\sqrt 2$ factor is required for singlet excitations (it is 0 for triplet).
 The associated [oscillator strength](https://en.wikipedia.org/wiki/Oscillator_strength) is defined by:
 
-$$f_{0\wp} = \frac{2}{3}\,\omega\,|\vec\mu_{0\wp}|^2.$$
+$$f_{0m} = \frac{2}{3}\,\omega_m\,|\vec\mu_{0m}|^2.$$
 
 ### First hyperpolarizability
 
@@ -373,14 +375,35 @@ By neglecting the response of the XC kernel and the Hartree XC kernel, the eleme
 
 $$\beta_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) = -\braket{\braket{\hat\mu_\zeta;\hat\mu_\sigma,\hat\mu_\tau}}_{\omega_1,\omega_2} = \mathcal A_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) - \mathcal B_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2),$$
 
-with $\omega_\varsigma = \omega_1 + \omega_2$, and:
+with $\omega_\varsigma = -\omega_1 - \omega_2$, and:
 
 $$\begin{aligned}
 \mathcal A_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) &= \sum_{\mathcal P} \sum_{ia,ja} x_{ia,\zeta}(-\omega_\varsigma)\,[-\mu_{ij,\sigma}]\,y_{ja,\tau}(\omega_2), \\
 \mathcal B_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) &= \sum_{\mathcal P} \sum_{ia,ib} x_{ia,\zeta}(-\omega_\varsigma)\,[-\mu_{ab,\sigma}]\,y_{ib,\tau}(\omega_2),
 \end{aligned}$$
 
-where $\sum_{\mathcal P}$ is the sum over the sequence of permutations of $\{(\zeta,-\omega_\varsigma), (\sigma, \omega_1), (\tau,\omega_2)\}$.
+where $\sum_{\mathcal P}$ is the sum over the sequence of permutations of the pairs of components and energies, $\{(\zeta,-\omega_\varsigma), (\sigma, \omega_1), (\tau,\omega_2)\}$.
+
+### Excited to excited transition dipole moment (and oscillator strength)
+
+From the double residue of the electric first hyperpolarizability,
+
+$$\begin{aligned}
+\lim_{\omega_1\to-\omega_m,\omega_2\to\omega_n} &(\omega_1+\omega_m)\,(\omega_2-\omega_n)\,\braket{\braket{\hat\mu_\zeta;\hat\mu_\sigma,\hat\mu_\tau}}_{\omega_1,\omega_2}\\
+&=  \braket{0|\hat\mu_\zeta|m}\,\braket{m|\hat\mu_\sigma - \delta_{mn}\,\braket{0|\hat\mu_\sigma|0}|n}\,\braket{n|\hat\mu_\tau|0} ,
+\end{aligned}$$
+
+one extract the (unrelaxed) singlet-to-singlet transition dipole moment from $\ket{m}$ to $\ket{n}$:
+
+$$\begin{aligned}
+&\braket{m|\hat\mu_\zeta - \delta_{mn}\,\braket{0|\hat\mu_\zeta|0}|n}\\
+&\hspace{2em}= \frac{1}{2}\left\{ \sum_{ia,ja} \mu_{ij,\zeta}\,[x^n_{ia}\,x^m_{ja} + y^n_{ia}\,y^m_{ja}] - \sum_{ia,ib} \mu_{ab,\zeta}\,[x^n_{ia}\,x^m_{ib} + y^n_{ia}\,y^m_{ib}] \right\},
+\end{aligned}$$
+
+which is equal to the fluctuation operator if $m = n$.
+The corresponding oscillator strength is given by:
+
+$$f_{mn} = \frac{2}{3}\,(\omega_n-\omega_m)\,(\vec\mu_{mn}\cdot\vec\mu_{nm}).$$
 
 ## Sources and references
 
