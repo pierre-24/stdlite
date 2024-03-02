@@ -6,12 +6,12 @@
 \usepackage{braket}
 
 \title{Excited-to-excited transition dipoles}
-\author{Pierre}
+\author{Pierre Beaujean}
 
 \begin{document}
 \maketitle
 
-By neglecting the response of the XC kernel and the Hartree XC kernel, the element of the first hyperpolarizability tensor in the sTD-DFT framework are:
+By neglecting the response of the XC kernel and the Hartree XC kernel, the element of the first hyperpolarizability tensor in the sTD-DFT framework are: \cite{deWergifosse2018NLObeta}
 \begin{equation}
 \beta_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) = -\braket{\braket{\hat\mu_\zeta;\hat\mu_\sigma,\hat\mu_\tau}}_{\omega_1,\omega_2} = \mathcal A_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) - \mathcal B_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2), \label{eq:beta}
 \end{equation}
@@ -30,7 +30,7 @@ where $\sum_{\mathcal P}$ is the sum over the sequence of permutations of the pa
 \end{align*}
 and the same goes for $\mathcal B$.
 
-The spectra representation of linear response vectors $\mathbf x_\zeta(\omega)$ and $\mathbf y_\zeta(\omega)$ is given by:\begin{align*}
+The spectra representation of linear response vectors $\mathbf x_\zeta(\omega)$ and $\mathbf y_\zeta(\omega)$ is given by: \cite{dewergifosseNonlinearresponsePropertiesSimplified2019}\begin{align*}
 	x_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \mu_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,\left[\frac{x_{ia}^{m}}{\omega-\omega_m}-\frac{y_{ia}^{m}}{\omega+\omega_m}\right],\\
 	y_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \mu_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,\left[\frac{y_{ia}^{m}}{\omega-\omega_m}-\frac{x_{ia}^{m}}{\omega+\omega_m}\right],
 \end{align*}
@@ -42,7 +42,7 @@ Thus, the ``residue'' of the linear response vectors are:\begin{align*}
 	&\lim_{\omega_2\to\omega_n}\,(\omega_2-\omega_n)\,y_{ia,\zeta}(\omega_2) =  \mu_{ia,\zeta}\,(x^{n}_{ia} + y^{n}_{ia})\,(y_{ia}^n).
 \end{align*}
 
-Now, the double residue of the quadratic response function is:\begin{align}
+Following Ref.~\cite{dewergifosseNonlinearresponsePropertiesSimplified2019}, the double residue of the quadratic response function is:\begin{align}
 		\lim_{\omega_1\to-\omega_m}\,&\lim_{\omega_2\to\omega_n}\,	(\omega_1+\omega_m)\,(\omega_2-\omega_n) \braket{\braket{\hat\mu_\zeta;\hat\mu_\sigma,\hat\mu_\tau}}_{\omega_1,\omega_2}\nonumber\\
 		&= \braket{0|\hat\mu_\zeta|m}\,\braket{m|\hat\mu_\sigma - \delta_{mn}\,\braket{0|\hat\mu_\sigma|0}|n}\,\braket{n|\hat\mu_\tau|0} \label{eq:res1} \\
 		&= 	\lim_{\omega_1\to-\omega_m}\,\lim_{\omega_2\to\omega_n}\,	(\omega_1+\omega_m)\,(\omega_2-\omega_n)\,[\mathcal B_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) - \mathcal A_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2)] \label{eq:res2}.
@@ -69,8 +69,11 @@ and, from Eq.~\eqref{eq:B},
 Since,\begin{equation*}
 	\braket{0|\hat\mu_\zeta|m} =  \sqrt{2}\,\sum_{ia} \vec\mu_{ia,\zeta}\,(x^m_{ia}+y^m_{ia}),
 \end{equation*}
-equating Eqs.~\eqref{eq:res1} and \eqref{eq:res2} results in:\begin{equation}
+equating Eqs.~\eqref{eq:res1} and \eqref{eq:res2} results in: \cite{dewergifosseNonlinearresponsePropertiesSimplified2019,dewergifossePerspectiveSimplifiedQuantum2021}\begin{equation}
 	\braket{m|\hat\mu_\zeta- \delta_{mn}\,\braket{0|\hat\mu_\zeta|0}|n} = \frac{1}{2}\left\{ \sum_{ia,ib} \mu_{ab,\zeta}\,[x^n_{ia}\,x^m_{ib} + y^m_{ia}\,y^n_{ib}]  - \sum_{ia,ja} \mu_{ij,\zeta}\,[x^n_{ia}\,x^m_{ja} + y^m_{ia}\,y^n_{ja}] \right\}.
 \end{equation}
 	
+\bibliography{biblio}
+\bibliographystyle{unsrt}	
+
 \end{document}
