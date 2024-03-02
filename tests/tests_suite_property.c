@@ -3,6 +3,8 @@
 #include <stdlite/helpers.h>
 #include <stdlite/property.h>
 #include <stdlite/utils/experimental_quantity.h>
+#include <stdlite/utils/permutations.h>
+
 #include <string.h>
 
 #include "tests_suite.h"
@@ -485,7 +487,7 @@ void test_property_polarizability_TDA_SOS_ok() {
 float oscillator_strength(size_t i, size_t j, size_t nexci, float* e, float * e2etdips) {
     float x = .0f;
     for (int cpt = 0; cpt < 3; ++cpt) {
-        x += powf(e2etdips[cpt * nexci * nexci + i * nexci + j], 2);
+        x += powf(e2etdips[cpt * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(i, j)], 2);
     }
 
     return 2.f/3 * (e[j] - e[i]) * x;
@@ -521,7 +523,7 @@ void test_property_e2e_transition_dipoles_ok() {
 
     ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, etd, Xtd, Ytd));
 
-    float* e2etdips = malloc(3 * nrequested * nrequested * sizeof(float ));
+    float* e2etdips = malloc(3 * STDL_MATRIX_SP_SIZE(nrequested) * sizeof(float ));
     TEST_ASSERT_NOT_NULL(e2etdips);
 
     stdl_property_e2e_transition_dipoles(ctx, nrequested, dipoles_sp_MO, Xtd, Ytd, e2etdips);
@@ -535,7 +537,6 @@ void test_property_e2e_transition_dipoles_ok() {
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
-
 
 void test_property_first_hyperpolarizability_TD_SOS_ok() {
     stdl_wavefunction * wf = NULL;
@@ -578,7 +579,7 @@ void test_property_first_hyperpolarizability_TD_SOS_ok() {
     stdl_property_transition_dipoles(ctx, ctx->ncsfs, dipoles_mat, Xamptd, Yamptd, t0mdipstd);
 
     // get m→n transition dipoles
-    float* tmndipstd = malloc(3 * ctx->ncsfs * ctx->ncsfs * sizeof(float ));
+    float* tmndipstd = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float ));
     TEST_ASSERT_NOT_NULL(tmndipstd);
 
     stdl_property_e2e_transition_dipoles(ctx, ctx->ncsfs , dipoles_mat, Xamptd, Yamptd, tmndipstd);
@@ -597,7 +598,7 @@ void test_property_first_hyperpolarizability_TD_SOS_ok() {
 
     // solve linear response
     size_t nw = 3;
-    float w[] = {0, 4.282270E-2f, 4.282270E-2f * -2};
+    float w[] = {0, 4.282270E-2f * 2, 4.282270E-2f * -4};
 
     float* Xtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Xtd);
@@ -608,31 +609,55 @@ void test_property_first_hyperpolarizability_TD_SOS_ok() {
     ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, egrad, Xtd, Ytd));
 
     // compute hyperpolarizabilities
-    float beta[3][3][3], beta_zzz;
+    float beta[3][3][3], beta_component;
+    int to_permute[6];
 
-    for (size_t iw = 0; iw < 2; ++iw) {
-        if(iw == 0)
-            stdl_property_first_hyperpolarizability(ctx, dipoles_mat, (float*[]) {Xtd, Xtd, Xtd}, (float*[]) {Ytd, Ytd, Ytd}, beta);
-        else
-            stdl_property_first_hyperpolarizability(
-                    ctx,
-                    dipoles_mat,
-                    (float*[]) {Xtd + 2 * 3 * ctx->ncsfs, Xtd + 1 * 3 * ctx->ncsfs, Xtd + 1 * 3 * ctx->ncsfs},
-                    (float*[]) {Ytd + 2 * 3 * ctx->ncsfs, Ytd + 1 * 3 * ctx->ncsfs, Ytd + 1 * 3 * ctx->ncsfs},
-                    beta);
+    to_permute[1] = to_permute[3] =  to_permute[5] = 2; // zzz
 
-        stdl_matrix_sge_print(9, 3, beta, "beta");
-
-        // compare with SOS
-        beta_zzz = 0;
-        for (size_t iexci = 0; iexci < ctx->ncsfs; ++iexci) {
-            for (size_t jexci = 0; jexci < ctx->ncsfs; ++jexci) {
-                beta_zzz += t0mdipstd[2 * ctx->ncsfs +  iexci] * tmndipstd[2 * ctx->ncsfs * ctx->ncsfs + iexci * ctx->ncsfs + jexci] * t0mdipstd[2 * ctx->ncsfs +  jexci] / (etd[iexci] * etd[jexci]);
-            }
+    for (size_t i = 0; i < 2; ++i) {
+        if(i == 0) {
+            to_permute[0] = to_permute[2] = to_permute[4] = 0; // static
+        } else {
+            to_permute[0] = 2; // -2w
+            to_permute[2] = to_permute[4] = 1; // w
         }
 
-        printf("beta_zzz = %f\n", 6 * beta_zzz);
-        TEST_ASSERT_FLOAT_WITHIN(1e-2, beta[2][2][2], 6 * beta_zzz);
+        ASSERT_STDL_OK(stdl_property_first_hyperpolarizability(
+                ctx,
+                dipoles_mat,
+                (float *[]) {Xtd + to_permute[0] * 3 * ctx->ncsfs, Xtd + to_permute[2] * 3 * ctx->ncsfs, Xtd + to_permute[4] * 3 * ctx->ncsfs},
+                (float *[]) {Ytd + to_permute[0] * 3 * ctx->ncsfs, Ytd + to_permute[2] * 3 * ctx->ncsfs, Ytd + to_permute[4] * 3 * ctx->ncsfs},
+                beta
+        ));
+
+        // stdl_matrix_sge_print(9, 3, beta, "beta");
+
+        // compare with SOS
+        beta_component = 0;
+        stdl_permutations* perms = NULL;
+        stdl_permutations_new(to_permute, 3, 2 * sizeof(int ), &perms);
+        stdl_permutations_remove_duplicates(perms, 3, 2 * sizeof(int));
+
+        stdl_permutations* current = perms;
+        size_t nperms = 0;
+        while (current != NULL) {
+            int* r = (int*) current->perm;
+            int zeta = r[1], sigma = r[3], tau = r[5], iw = r[0], kw = r[4];
+
+            for (size_t m = 0; m < ctx->ncsfs; ++m) {
+                for (size_t n = 0; n < ctx->ncsfs; ++n) {
+                    beta_component += t0mdipstd[zeta * ctx->ncsfs + m] * tmndipstd[sigma * STDL_MATRIX_SP_SIZE(ctx->ncsfs) + STDL_MATRIX_SP_IDX(m, n)] * t0mdipstd[tau * ctx->ncsfs + n] / ((etd[m] + w[iw]) * (etd[n] - w[kw]));
+                }
+            }
+
+            nperms++;
+            current = current->next;
+        }
+
+        // printf("beta_component = %f\n", 6 / (float) nperms * beta_component);
+        TEST_ASSERT_FLOAT_WITHIN(1e-1, beta[to_permute[1]][to_permute[3]][to_permute[5]], 6 / (float) nperms * beta_component);
+
+        stdl_permutations_delete(perms);
     }
 
     STDL_FREE_ALL(etd, Xamptd, Yamptd, dipoles_mat, t0mdipstd, tmndipstd, egrad, Xtd, Ytd);

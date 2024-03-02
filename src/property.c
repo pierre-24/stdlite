@@ -205,40 +205,40 @@ int stdl_property_e2e_transition_dipoles(stdl_context* ctx, size_t nexci, double
     assert(ctx != NULL && nexci > 0 && dips_MO != NULL && X != NULL && e2etdips != NULL);
     size_t nvirt = ctx->nmo - ctx->nocc;
 
-    for (size_t iexci = 0; iexci < nexci; ++iexci) {
-        for (size_t jexci = 0; jexci < nexci; ++jexci) {
+    for (size_t m = 0; m < nexci; ++m) {
+        for (size_t n = 0; n <= m; ++n) {
             float a_[3] = {0}, b_[3] = {0};
 
             for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
-                float xj = X[jexci * ctx->ncsfs + lia];
-                float yj = .0f;
+                float xn_ia = X[n * ctx->ncsfs + lia];
+                float ym_ia = .0f;
                 if(Y != NULL)
-                    yj = Y[jexci * ctx->ncsfs + lia];
+                    ym_ia = Y[m * ctx->ncsfs + lia];
 
                 size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt;
 
                 for (size_t ljb = 0; ljb < ctx->ncsfs; ++ljb) {
-                    float xi = X[iexci * ctx->ncsfs + ljb];
-                    float yi = .0f;
+                    float xm_jb = X[m * ctx->ncsfs + ljb];
+                    float yn_jb = .0f;
                     if(Y != NULL)
-                        yi = Y[iexci * ctx->ncsfs + ljb];
+                        yn_jb = Y[n * ctx->ncsfs + ljb];
 
                     size_t j = ctx->csfs[ljb] / nvirt, b = ctx->csfs[ljb] % nvirt;
 
                     if(b == a) { // jb == ja
                         for (int cpt = 0; cpt < 3; ++cpt)
-                            a_[cpt] += (float) dips_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * (xj * xi + yj * yi);
+                            a_[cpt] += (float) dips_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * (xn_ia * xm_jb + ym_ia * yn_jb);
                     }
 
                     if(j == i) {// jb == ib
                         for (int cpt = 0; cpt < 3; ++cpt)
-                            b_[cpt] += (float) dips_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)] * (xj * xi + yj * yi);
+                            b_[cpt] += (float) dips_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)] * (xn_ia * xm_jb + ym_ia * yn_jb);
                     }
                 }
             }
 
             for (int cpt = 0; cpt < 3; ++cpt) {
-                e2etdips[cpt * nexci * nexci + iexci * nexci + jexci] = .5f * (a_[cpt] - b_[cpt]);
+                e2etdips[cpt * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(m, n)] = .5f * (b_[cpt] - a_[cpt]);
             }
         }
     }

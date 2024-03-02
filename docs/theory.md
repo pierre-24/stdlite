@@ -378,11 +378,11 @@ $$\beta_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) = -\braket{\braket
 with $\omega_\varsigma = -\omega_1 - \omega_2$, and:
 
 $$\begin{aligned}
-\mathcal A_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) &= \sum_{\mathcal P} \sum_{ia,ja} x_{ia,\zeta}(-\omega_\varsigma)\,[-\mu_{ij,\sigma}]\,y_{ja,\tau}(\omega_2), \\
-\mathcal B_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) &= \sum_{\mathcal P} \sum_{ia,ib} x_{ia,\zeta}(-\omega_\varsigma)\,[-\mu_{ab,\sigma}]\,y_{ib,\tau}(\omega_2),
+\mathcal A_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) &= \sum_{\mathcal P} \sum_{ia,ja} x_{ia,\zeta}(\omega_\varsigma)\,[-\mu_{ij,\sigma}]\,y_{ja,\tau}(\omega_2), \\
+\mathcal B_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) &= \sum_{\mathcal P} \sum_{ia,ib} x_{ia,\zeta}(\omega_\varsigma)\,[-\mu_{ab,\sigma}]\,y_{ib,\tau}(\omega_2),
 \end{aligned}$$
 
-where $\sum_{\mathcal P}$ is the sum over the sequence of permutations of the pairs of components and energies, $\{(\zeta,-\omega_\varsigma), (\sigma, \omega_1), (\tau,\omega_2)\}$.
+where $\sum_{\mathcal P}$ is the sum over the sequence of permutations of the pairs of components and energies, $\{(\zeta,\omega_\varsigma), (\sigma, \omega_1), (\tau,\omega_2)\}$.
 
 ### Excited to excited transition dipole moment (and oscillator strength)
 
@@ -390,14 +390,14 @@ From the double residue of the electric first hyperpolarizability,
 
 $$\begin{aligned}
 \lim_{\omega_1\to-\omega_m,\omega_2\to\omega_n} &(\omega_1+\omega_m)\,(\omega_2-\omega_n)\,\braket{\braket{\hat\mu_\zeta;\hat\mu_\sigma,\hat\mu_\tau}}_{\omega_1,\omega_2}\\
-&=  \braket{0|\hat\mu_\zeta|m}\,\braket{m|\hat\mu_\sigma - \delta_{mn}\,\braket{0|\hat\mu_\sigma|0}|n}\,\braket{n|\hat\mu_\tau|0} ,
+&=  \braket{0|\hat\mu_\zeta|m}\,\braket{m|\hat\mu_\sigma - \delta_{mn}\,\braket{0|\hat\mu_\sigma|0}|n}\,\braket{n|\hat\mu_\tau|0},
 \end{aligned}$$
 
 one extract the (unrelaxed) singlet-to-singlet transition dipole moment from $\ket{m}$ to $\ket{n}$:
 
 $$\begin{aligned}
 &\braket{m|\hat\mu_\zeta - \delta_{mn}\,\braket{0|\hat\mu_\zeta|0}|n}\\
-&\hspace{2em}= \frac{1}{2}\left\{ \sum_{ia,ja} \mu_{ij,\zeta}\,[x^n_{ia}\,x^m_{ja} + y^n_{ia}\,y^m_{ja}] - \sum_{ia,ib} \mu_{ab,\zeta}\,[x^n_{ia}\,x^m_{ib} + y^n_{ia}\,y^m_{ib}] \right\},
+&\hspace{2em}= \frac{1}{2}\left\{ \sum_{ia,ib} \mu_{ab,\zeta}\,[x^n_{ia}\,x^m_{ib} + y^m_{ia}\,y^n_{ib}]  - \sum_{ia,ja} \mu_{ij,\zeta}\,[x^n_{ia}\,x^m_{ja} + y^m_{ia}\,y^n_{ja}] \right\}.
 \end{aligned}$$
 
 which is equal to the fluctuation operator if $m = n$.
