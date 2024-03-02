@@ -386,14 +386,14 @@ where $\sum_{\mathcal P}$ is the sum over the sequence of permutations of the pa
 
 ### Excited to excited transition dipole moment (and oscillator strength)
 
-From the double residue of the electric first hyperpolarizability,
+From the double residue of the electric first hyperpolarizability:
 
 $$\begin{aligned}
 \lim_{\omega_1\to-\omega_m,\omega_2\to\omega_n} &(\omega_1+\omega_m)\,(\omega_2-\omega_n)\,\braket{\braket{\hat\mu_\zeta;\hat\mu_\sigma,\hat\mu_\tau}}_{\omega_1,\omega_2}\\
 &=  \braket{0|\hat\mu_\zeta|m}\,\braket{m|\hat\mu_\sigma - \delta_{mn}\,\braket{0|\hat\mu_\sigma|0}|n}\,\braket{n|\hat\mu_\tau|0},
 \end{aligned}$$
 
-one extract the (unrelaxed) singlet-to-singlet transition dipole moment from $\ket{m}$ to $\ket{n}$:
+one extract the (unrelaxed) singlet-to-singlet transition dipole moment from $\ket{m}$ to $\ket{n}$ (see [there](https://github.com/pierre-24/stdlite/blob/master/docs/assets/esa.pdf)):
 
 $$\begin{aligned}
 &\braket{m|\hat\mu_\zeta - \delta_{mn}\,\braket{0|\hat\mu_\zeta|0}|n}\\
