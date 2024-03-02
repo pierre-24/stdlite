@@ -663,3 +663,120 @@ void test_property_first_hyperpolarizability_TD_SOS_ok() {
     STDL_FREE_ALL(etd, Xamptd, Yamptd, dipoles_mat, t0mdipstd, tmndipstd, egrad, Xtd, Ytd);
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
+
+void test_property_first_hyperpolarizability_TDA_SOS_ok() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_fchk("../tests/test_files/water_631gdf_sph.fchk", &wf, &bs);
+
+    stdl_context* ctx = NULL;
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 20. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
+
+    // copy A for latter
+    float* Ap = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+    TEST_ASSERT_NOT_NULL(Ap);
+    memcpy(Ap, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+
+    // fetch excitations
+    float* etda = malloc(ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(etda);
+
+    float* Xamptda = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(Xamptda);
+
+    ASSERT_STDL_OK(stdl_response_TDA_casida(ctx, ctx->ncsfs, etda, Xamptda));
+
+    // compute dipole integrals and convert to MO
+    double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipoles_mat);
+
+    make_dipoles_MO(wf, bs, ctx, dipoles_mat);
+
+    // get 0→m transition dipoles
+    float* t0mdipstda = malloc(ctx->ncsfs * 3 * sizeof(float ));
+    stdl_property_transition_dipoles(ctx, ctx->ncsfs, dipoles_mat, Xamptda, NULL, t0mdipstda);
+
+    // get m→n transition dipoles
+    float* tmndipstda = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(tmndipstda);
+
+    stdl_property_e2e_transition_dipoles(ctx, ctx->ncsfs , dipoles_mat, Xamptda, NULL, tmndipstda);
+
+    // build egrad
+    float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(egrad);
+
+    stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
+
+    // replace A
+    free(ctx->A);
+    ctx->A = Ap;
+
+    // solve linear response
+    size_t nw = 3;
+    float w[] = {0, 4.282270E-2f * 2, 4.282270E-2f * -4};
+
+    float* Xtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(Xtda);
+
+    float* Ytda = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(Ytda);
+
+    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, egrad, Xtda, Ytda));
+
+    // compute hyperpolarizabilities
+    float beta[3][3][3], beta_component;
+    int to_permute[6];
+
+    to_permute[1] = to_permute[3] =  to_permute[5] = 2; // zzz
+
+    for (size_t i = 0; i < 2; ++i) {
+        if(i == 0) {
+            to_permute[0] = to_permute[2] = to_permute[4] = 0; // static
+        } else {
+            to_permute[0] = 2; // -2w
+            to_permute[2] = to_permute[4] = 1; // w
+        }
+
+        ASSERT_STDL_OK(stdl_property_first_hyperpolarizability(
+                ctx,
+                dipoles_mat,
+                (float *[]) {Xtda + to_permute[0] * 3 * ctx->ncsfs, Xtda + to_permute[2] * 3 * ctx->ncsfs, Xtda + to_permute[4] * 3 * ctx->ncsfs},
+                (float *[]) {Ytda + to_permute[0] * 3 * ctx->ncsfs, Ytda + to_permute[2] * 3 * ctx->ncsfs, Ytda + to_permute[4] * 3 * ctx->ncsfs},
+                beta
+        ));
+
+        // stdl_matrix_sge_print(9, 3, beta, "beta");
+
+        // compare with SOS
+        beta_component = 0;
+        stdl_permutations* perms = NULL;
+        stdl_permutations_new(to_permute, 3, 2 * sizeof(int ), &perms);
+        stdl_permutations_remove_duplicates(perms, 3, 2 * sizeof(int));
+
+        stdl_permutations* current = perms;
+        size_t nperms = 0;
+        while (current != NULL) {
+            int* r = (int*) current->perm;
+            int zeta = r[1], sigma = r[3], tau = r[5], iw = r[0], kw = r[4];
+
+            for (size_t m = 0; m < ctx->ncsfs; ++m) {
+                for (size_t n = 0; n < ctx->ncsfs; ++n) {
+                    beta_component += t0mdipstda[zeta * ctx->ncsfs + m] * tmndipstda[sigma * STDL_MATRIX_SP_SIZE(ctx->ncsfs) + STDL_MATRIX_SP_IDX(m, n)] * t0mdipstda[tau * ctx->ncsfs + n] / ((etda[m] + w[iw]) * (etda[n] - w[kw]));
+                }
+            }
+
+            nperms++;
+            current = current->next;
+        }
+
+        // printf("beta_component = %f\n", 6 / (float) nperms * beta_component);
+        TEST_ASSERT_FLOAT_WITHIN(1e-1, beta[to_permute[1]][to_permute[3]][to_permute[5]], 6 / (float) nperms * beta_component);
+
+        stdl_permutations_delete(perms);
+    }
+
+    STDL_FREE_ALL(etda, Xamptda, dipoles_mat, t0mdipstda, tmndipstda, egrad, Xtda, Ytda);
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
+}
