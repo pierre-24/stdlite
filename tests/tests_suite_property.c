@@ -526,8 +526,6 @@ void test_property_e2e_transition_dipoles_ok() {
 
     stdl_property_e2e_transition_dipoles(ctx, nrequested, dipoles_sp_MO, Xtd, Ytd, e2etdips);
 
-    stdl_matrix_sge_print(nrequested, nrequested, e2etdips, "xl");
-
     // checked against stda
     TEST_ASSERT_FLOAT_WITHIN(1e-4, .0005f, oscillator_strength(0, 1, nrequested, etd, e2etdips));
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 0.0235f, oscillator_strength(0, 2, nrequested, etd, e2etdips));
@@ -535,5 +533,108 @@ void test_property_e2e_transition_dipoles_ok() {
 
     STDL_FREE_ALL(dipoles_sp_MO, etd, Xtd, Ytd, e2etdips);
 
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
+}
+
+
+void test_property_first_hyperpolarizability_TD_SOS_ok() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
+
+    stdl_context* ctx = NULL;
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 20. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
+
+    // copy A&B for latter
+    float* Ap = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+    TEST_ASSERT_NOT_NULL(Ap);
+    memcpy(Ap, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+
+    float* Bp = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+    TEST_ASSERT_NOT_NULL(Bp);
+    memcpy(Bp, ctx->B, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+
+    // fetch excitations
+    float* etd = malloc(ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(etd);
+
+    float* Xamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(Xamptd);
+
+    float* Yamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(Yamptd);
+
+    ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, etd, Xamptd, Yamptd));
+
+    // compute dipole integrals and convert to MO
+    double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipoles_mat);
+
+    make_dipoles_MO(wf, bs, ctx, dipoles_mat);
+
+    // get 0→m transition dipoles
+    float* t0mdipstd = malloc(ctx->ncsfs * 3 * sizeof(float ));
+    stdl_property_transition_dipoles(ctx, ctx->ncsfs, dipoles_mat, Xamptd, Yamptd, t0mdipstd);
+
+    // get m→n transition dipoles
+    float* tmndipstd = malloc(3 * ctx->ncsfs * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(tmndipstd);
+
+    stdl_property_e2e_transition_dipoles(ctx, ctx->ncsfs , dipoles_mat, Xamptd, Yamptd, tmndipstd);
+
+    // build egrad
+    float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(egrad);
+
+    stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
+
+    // replace A&B
+    free(ctx->A);
+    ctx->A = Ap;
+    free(ctx->B);
+    ctx->B = Bp;
+
+    // solve linear response
+    size_t nw = 3;
+    float w[] = {0, 4.282270E-2f, 4.282270E-2f * -2};
+
+    float* Xtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(Xtd);
+
+    float* Ytd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(Ytd);
+
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, egrad, Xtd, Ytd));
+
+    // compute hyperpolarizabilities
+    float beta[3][3][3], beta_zzz;
+
+    for (size_t iw = 0; iw < 2; ++iw) {
+        if(iw == 0)
+            stdl_property_first_hyperpolarizability(ctx, dipoles_mat, (float*[]) {Xtd, Xtd, Xtd}, (float*[]) {Ytd, Ytd, Ytd}, beta);
+        else
+            stdl_property_first_hyperpolarizability(
+                    ctx,
+                    dipoles_mat,
+                    (float*[]) {Xtd + 2 * 3 * ctx->ncsfs, Xtd + 1 * 3 * ctx->ncsfs, Xtd + 1 * 3 * ctx->ncsfs},
+                    (float*[]) {Ytd + 2 * 3 * ctx->ncsfs, Ytd + 1 * 3 * ctx->ncsfs, Ytd + 1 * 3 * ctx->ncsfs},
+                    beta);
+
+        stdl_matrix_sge_print(9, 3, beta, "beta");
+
+        // compare with SOS
+        beta_zzz = 0;
+        for (size_t iexci = 0; iexci < ctx->ncsfs; ++iexci) {
+            for (size_t jexci = 0; jexci < ctx->ncsfs; ++jexci) {
+                beta_zzz += t0mdipstd[2 * ctx->ncsfs +  iexci] * tmndipstd[2 * ctx->ncsfs * ctx->ncsfs + iexci * ctx->ncsfs + jexci] * t0mdipstd[2 * ctx->ncsfs +  jexci] / (etd[iexci] * etd[jexci]);
+            }
+        }
+
+        printf("beta_zzz = %f\n", 6 * beta_zzz);
+        TEST_ASSERT_FLOAT_WITHIN(1e-2, beta[2][2][2], 6 * beta_zzz);
+    }
+
+    STDL_FREE_ALL(etd, Xamptd, Yamptd, dipoles_mat, t0mdipstd, tmndipstd, egrad, Xtd, Ytd);
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
