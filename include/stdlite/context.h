@@ -122,4 +122,25 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B);
 int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B);
 
 
+/**
+ * Dump a context in a H5 file
+ *
+ * @param ctx a valid context
+ * @param path path to which the context should be dumped
+ * @return error code
+ * @ingroup context
+ */
+int stdl_context_dump_h5(stdl_context* ctx, char* path);
+
+/**
+ * Load a context from a H5 file
+ *
+ * @param path path of the file from which the context should be loaded
+ * @param[out] ctx resulting context
+ * @return error code
+ * @ingroup context
+ */
+int stdl_context_load_h5(char* path, stdl_context** ctx);
+
+
 #endif //STDLITE_CONTEXT_H

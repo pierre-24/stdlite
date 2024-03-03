@@ -5,6 +5,7 @@
 #include <stdlite/context.h>
 #include <stdlite/helpers.h>
 #include <cblas.h>
+#include <unistd.h>
 
 #include "tests_suite.h"
 
@@ -235,4 +236,29 @@ void test_context_select_csfs_direct_ok() {
 
     ASSERT_STDL_OK(stdl_context_delete(ctx1));
     ASSERT_STDL_OK(stdl_context_delete(ctx2));
+}
+
+
+void test_context_dump_load_h5_ok() {
+    stdl_wavefunction * wf1 = NULL;
+    stdl_basis * bs1 = NULL;
+    read_fchk("../tests/test_files/water_631g.fchk", &wf1, &bs1);
+
+    stdl_context* ctx1 = NULL;
+    ASSERT_STDL_OK(stdl_context_new(wf1, bs1, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx1));
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx1, 1));
+
+    // dump & load
+    char tmp_path[512];
+    sprintf(tmp_path, "%s/tmp.h5", "."); // P_tmpdir);
+
+    ASSERT_STDL_OK(stdl_context_dump_h5(ctx1, tmp_path));
+
+    stdl_context* ctx2 = NULL;
+    ASSERT_STDL_OK(stdl_context_load_h5(tmp_path, &ctx2));
+
+    unlink(tmp_path);
+
+    ASSERT_STDL_OK(stdl_context_delete(ctx1));
+    // ASSERT_STDL_OK(stdl_context_delete(ctx2));
 }

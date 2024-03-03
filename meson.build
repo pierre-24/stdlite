@@ -27,6 +27,9 @@ if la_backend == 'openblas' or la_backend == 'default'
   project_dep += cc.find_library('lapacke', required : true)
 endif
 
+hdf5_dep = cc.find_library('hdf5', required: true)
+project_dep += hdf5_dep
+
 # fetch sources and includes
 srcs = []
 subdir('src')

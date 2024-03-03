@@ -30,11 +30,15 @@ enum stdl_error_code_ {
     /// `malloc()` failure
     STDL_ERR_MALLOC = 1,
 
-    /// Read error
-    STDL_ERR_READ = 2,
+    /// Open error
+    STDL_ERR_OPEN = 2,
 
-    STDL_UNUSED3 = 3,
-    STDL_UNUSED4 = 4,
+    /// Read error
+    STDL_ERR_READ = 3,
+
+    /// Write error
+    STDL_ERR_WRITE = 4,
+
     STDL_UNUSED5 = 5,
     STDL_UNUSED6 = 6,
     STDL_UNUSED7 = 7,

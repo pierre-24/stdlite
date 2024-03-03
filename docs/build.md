@@ -5,7 +5,8 @@ title: Build & install
 To build `stdlite` from its sources, you need:
 
 1. The [Meson build system](https://github.com/mesonbuild/meson), with a backend (generally [ninja](https://github.com/ninja-build/ninja)).
-2. A linear algebra backend. Currently, only [openblas](https://www.openblas.net/) is supported.
+2. A linear algebra backend. Currently, only [openblas](https://www.openblas.net/)+lapack are supported.
+3. The [HDF5 library](https://github.com/HDFGroup/hdf5) (and its headers), which is most probably available in your favorite distribution package manager.
 
 
 !!! note

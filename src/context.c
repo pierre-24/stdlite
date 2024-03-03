@@ -1,8 +1,8 @@
 #include <assert.h>
 #include <string.h>
 #include <math.h>
-#include <stdio.h>
 #include <cblas.h>
+#include <hdf5.h>
 
 #include "stdlite/context.h"
 #include "stdlite/logging.h"
@@ -766,6 +766,28 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
 
 
     STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices);
+
+    return STDL_ERR_OK;
+}
+
+int stdl_context_dump_h5(stdl_context* ctx, char* path) {
+    assert(ctx != NULL && path != NULL);
+
+    hid_t  file_id, group_id;
+    herr_t status;
+
+    file_id = H5Fcreate(path, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    STDL_ERROR_HANDLE_AND_REPORT(file_id == H5I_INVALID_HID, return STDL_ERR_OPEN, "cannot open %s", path);
+
+    // close the file
+    status = H5Fclose(file_id);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_OPEN, "cannot close %s", path);
+
+    return STDL_ERR_OK;
+}
+
+int stdl_context_load_h5(char* path, stdl_context** ctx) {
+    assert(ctx != NULL && path != NULL);
 
     return STDL_ERR_OK;
 }
