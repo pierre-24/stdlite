@@ -22,8 +22,8 @@ int stdl_basis_new(int natm, int nbas, size_t env_size, int use_spherical, stdl_
     (*bs_ptr)->atm = (*bs_ptr)->bas = NULL;
     (*bs_ptr)->env = NULL;
 
-    (*bs_ptr)->atm = malloc(6 * natm * sizeof(int));
-    (*bs_ptr)->bas = malloc(8 * nbas * sizeof(int));
+    (*bs_ptr)->atm = calloc(6 * natm, sizeof(int));
+    (*bs_ptr)->bas = calloc(8 * nbas, sizeof(int));
     STDL_ERROR_HANDLE_AND_REPORT((*bs_ptr)->atm == NULL || (*bs_ptr)->bas == NULL, stdl_basis_delete(*bs_ptr); return STDL_ERR_MALLOC, "malloc");
 
     (*bs_ptr)->env = malloc(env_size * sizeof(double));
