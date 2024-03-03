@@ -48,8 +48,11 @@ struct stdl_basis_ {
      */
     int* bas;
 
+    // size of ´env´, in byte. Must be larger than `3*natm + PTR_ENV_START`
+    size_t env_size;
+
     /**
-     * `double[natm*3+??]`, array which stores the coordinates, GTO exponents, and contraction coefficients.
+     * `double[env_size]`, array which stores the coordinates, GTO exponents, and contraction coefficients.
      * In practice, the `natm*3` coordinates are stored first.
      * Then for each basis function, the `nprim` exponents followed by the `nprim*ncont` coefficients are stored.
      * For simplicity, each primitive should be normalized.

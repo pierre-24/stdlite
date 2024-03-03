@@ -27,8 +27,12 @@ if la_backend == 'openblas' or la_backend == 'default'
   project_dep += cc.find_library('lapacke', required : true)
 endif
 
-hdf5_dep = cc.find_library('hdf5', required: true)
-project_dep += hdf5_dep
+h5noserial = cc.find_library('hdf5')
+if not h5noserial.found()
+  project_dep += [cc.find_library('hdf5_serial', required: true), cc.find_library('hdf5_serial_hl', required: true)]
+else
+  project_dep += [cc.find_library('hdf5', required: true), cc.find_library('hdf5_hl', required: true)]
+endif
 
 # fetch sources and includes
 srcs = []

@@ -7,7 +7,7 @@
 
 
 int stdl_basis_new(int natm, int nbas, size_t env_size, int use_spherical, stdl_basis **bs_ptr) {
-    assert(bs_ptr != NULL && natm > 0 && nbas > 0 && env_size > (3 * (size_t) natm + 20));
+    assert(bs_ptr != NULL && natm > 0 && nbas > 0 && env_size > (3 * (size_t) natm + PTR_ENV_START));
 
     *bs_ptr = malloc(sizeof(stdl_basis));
     STDL_ERROR_HANDLE_AND_REPORT(*bs_ptr == NULL, return STDL_ERR_MALLOC, "malloc");
@@ -17,6 +17,7 @@ int stdl_basis_new(int natm, int nbas, size_t env_size, int use_spherical, stdl_
     (*bs_ptr)->natm = natm;
     (*bs_ptr)->nbas = nbas;
     (*bs_ptr)->use_spherical = use_spherical;
+    (*bs_ptr)->env_size = env_size;
 
     (*bs_ptr)->atm = (*bs_ptr)->bas = NULL;
     (*bs_ptr)->env = NULL;
@@ -29,7 +30,7 @@ int stdl_basis_new(int natm, int nbas, size_t env_size, int use_spherical, stdl_
     STDL_ERROR_HANDLE_AND_REPORT((*bs_ptr)->env == NULL, stdl_basis_delete(*bs_ptr); return STDL_ERR_MALLOC, "malloc");
 
     // fill the first 20 elements of env with zeroes
-    for (int i = 0; i < 20; ++i) {
+    for (int i = 0; i < PTR_ENV_START; ++i) {
         (*bs_ptr)->env[i] = .0;
     }
 

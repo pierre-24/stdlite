@@ -257,7 +257,7 @@ void test_context_dump_load_h5_ok() {
     stdl_context* ctx2 = NULL;
     ASSERT_STDL_OK(stdl_context_load_h5(tmp_path, &ctx2));
 
-    unlink(tmp_path);
+    // unlink(tmp_path);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx1));
     // ASSERT_STDL_OK(stdl_context_delete(ctx2));

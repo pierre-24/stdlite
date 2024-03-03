@@ -3,6 +3,7 @@
 #include <math.h>
 #include <cblas.h>
 #include <hdf5.h>
+#include <hdf5_hl.h>
 
 #include "stdlite/context.h"
 #include "stdlite/logging.h"
@@ -773,15 +774,75 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
 int stdl_context_dump_h5(stdl_context* ctx, char* path) {
     assert(ctx != NULL && path != NULL);
 
-    hid_t  file_id, group_id;
+    hid_t file_id, wf_group_id, bs_group_id;
     herr_t status;
 
     file_id = H5Fcreate(path, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     STDL_ERROR_HANDLE_AND_REPORT(file_id == H5I_INVALID_HID, return STDL_ERR_OPEN, "cannot open %s", path);
 
+    // TODO attributes
+
+    // 1. Wavefunction
+    stdl_wavefunction* wf = ctx->original_wf;
+    wf_group_id = H5Gcreate(file_id, "/wavefunction", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    STDL_ERROR_HANDLE_AND_REPORT(wf_group_id == H5I_INVALID_HID, return STDL_ERR_WRITE, "cannot create group");
+
+    // info
+    status = H5LTmake_dataset(wf_group_id, "info", 1, (hsize_t[]) {4}, H5T_NATIVE_ULONG, (size_t[]) {wf->natm, wf->nao, wf->nmo, wf->nocc});
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", wf_group_id);
+
+    // atm
+    status = H5LTmake_dataset(wf_group_id, "atm", 2, (hsize_t[]) {wf->natm, 4}, H5T_NATIVE_DOUBLE, wf->atm);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", wf_group_id);
+
+    // ao2atm
+    status = H5LTmake_dataset(wf_group_id, "aotoatm", 1, (hsize_t[]) {wf->nao}, H5T_NATIVE_ULONG, wf->aotoatm);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", wf_group_id);
+
+    // S
+    status = H5LTmake_dataset(wf_group_id, "S", 1, (hsize_t[]) {STDL_MATRIX_SP_SIZE(wf->nao)}, H5T_NATIVE_DOUBLE, wf->S);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", wf_group_id);
+
+    // C
+    status = H5LTmake_dataset(wf_group_id, "C", 2, (hsize_t[]) {wf->nao, wf->nmo}, H5T_NATIVE_DOUBLE, wf->C);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", wf_group_id);
+
+    // e
+    status = H5LTmake_dataset(wf_group_id, "e", 1, (hsize_t[]) {wf->nmo}, H5T_NATIVE_DOUBLE, wf->e);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", wf_group_id);
+
+    // ... and close
+    status = H5Gclose(wf_group_id);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d", wf_group_id);
+
+    // 2. Basis set
+    stdl_basis* bs = ctx->bs;
+    bs_group_id = H5Gcreate(file_id, "/basis", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    STDL_ERROR_HANDLE_AND_REPORT(bs_group_id == H5I_INVALID_HID, return STDL_ERR_WRITE, "cannot create group");
+
+    // info
+    status = H5LTmake_dataset(bs_group_id, "info", 1, (hsize_t[]) {4}, H5T_NATIVE_ULONG, (size_t[]) {bs->natm, bs->nbas, (size_t) bs->use_spherical, bs->env_size});
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", bs_group_id);
+
+    // atm
+    status = H5LTmake_dataset(bs_group_id, "atm", 2, (hsize_t[]) {bs->natm, 6}, H5T_NATIVE_INT, bs->atm);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", bs_group_id);
+
+    // bas
+    status = H5LTmake_dataset(bs_group_id, "bas", 2, (hsize_t[]) {bs->nbas, 8}, H5T_NATIVE_INT, bs->bas);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", bs_group_id);
+
+    // env
+    status = H5LTmake_dataset(bs_group_id, "env", 1, (hsize_t[]) {bs->env_size}, H5T_NATIVE_DOUBLE, bs->env);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", bs_group_id);
+
+    // ... and close
+    status = H5Gclose(bs_group_id);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d", bs_group_id);
+
     // close the file
     status = H5Fclose(file_id);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_OPEN, "cannot close %s", path);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close %s", path);
 
     return STDL_ERR_OK;
 }
