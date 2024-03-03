@@ -21,7 +21,7 @@ jobs:
           version: latest
       - name: Install other dependencies
         run: |
-          sudo apt-get install libopenblas-dev liblapack-dev liblapacke-dev
+          sudo apt-get install libopenblas-dev liblapack-dev liblapacke-dev libhdf5-dev
           sudo apt-get install meson ninja-build valgrind
       - name: Configure (with Meson)
         run: >-
