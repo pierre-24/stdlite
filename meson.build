@@ -30,6 +30,7 @@ endif
 h5noserial = cc.find_library('hdf5', required: false)
 if not h5noserial.found()
   project_dep += [cc.find_library('hdf5_serial', required: true), cc.find_library('hdf5_serial_hl', required: true)]
+  build_args += ['-DUSE_HDF5_SERIAL']
 else
   project_dep += [cc.find_library('hdf5', required: true), cc.find_library('hdf5_hl', required: true)]
 endif

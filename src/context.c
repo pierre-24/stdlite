@@ -2,8 +2,14 @@
 #include <string.h>
 #include <math.h>
 #include <cblas.h>
+
+#ifdef USE_HDF5_SERIAL
+#include <hdf5/serial/hdf5.h>
+#include <hdf5/serial/hdf5_hl.h>
+# else
 #include <hdf5.h>
 #include <hdf5_hl.h>
+#endif
 
 #include "stdlite/context.h"
 #include "stdlite/logging.h"
