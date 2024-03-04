@@ -190,7 +190,7 @@ void test_context_select_csfs_ok() {
 
     TEST_ASSERT_EQUAL_INT(0, ctx->ncsfs);
 
-    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
 
     TEST_ASSERT_EQUAL_INT(10, ctx->ncsfs);
     TEST_ASSERT_NULL(ctx->B);
