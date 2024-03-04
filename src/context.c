@@ -164,16 +164,15 @@ int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float 
     (*ctx)->nocc = ohomo - omin + 1;
     size_t nvirt = omax - ohomo;
 
-    (*ctx)->e = malloc((*ctx)->nmo * sizeof(double));
     (*ctx)->C = malloc((*ctx)->nmo * wf->nao * sizeof(double));
 
-    STDL_ERROR_HANDLE_AND_REPORT((*ctx)->e == NULL || (*ctx)->C == NULL, stdl_context_delete(*ctx); return STDL_ERR_MALLOC, "malloc");
+    STDL_ERROR_HANDLE_AND_REPORT((*ctx)->C == NULL, stdl_context_delete(*ctx); return STDL_ERR_MALLOC, "malloc");
 
-    (*ctx)->C_orig = wf->C + omin * wf->nao;
+    (*ctx)->C_ptr = wf->C + omin * wf->nao;
+    (*ctx)->e_ptr = wf->e + omin;
 
-    // copy coefficients and energies
+    // copy coefficients
     for(size_t i=0; i < (*ctx)->nmo; i++) {
-        (*ctx)->e[i] = wf->e[omin + i];
         memcpy(&((*ctx)->C[i * wf->nao]), &(wf->C[(i + omin) * wf->nao]), wf->nao * sizeof(double));
     }
 
@@ -202,7 +201,7 @@ int stdl_context_delete(stdl_context* ctx) {
     if(ctx->bs != NULL)
         stdl_basis_delete(ctx->bs);
 
-    STDL_FREE_ALL(ctx->e, ctx->C, ctx->csfs, ctx->ecsfs, ctx->A, ctx->B, ctx);
+    STDL_FREE_ALL(ctx->C, ctx->csfs, ctx->ecsfs, ctx->A, ctx->B, ctx);
 
     return STDL_ERR_OK;
 }
@@ -384,7 +383,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
                 iiaa += ijBB_J[kii * natm + B_] * qAab[kaa * natm + B_];
             }
 
-            A_diag[kia] = (float) (ctx->e[ctx->nocc + a] - ctx->e[i]) + 2 * iaia - iiaa;
+            A_diag[kia] = (float) (ctx->e_ptr[ctx->nocc + a] - ctx->e_ptr[i]) + 2 * iaia - iiaa;
 
             if(A_diag[kia] <= ctx->ethr) {
                 csfs_ensemble[kia] = 1;
@@ -525,7 +524,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
                 ctx->A[STDL_MATRIX_SP_IDX(lia, ljb)] = 2 * iajb - ijab;
 
                 if(kia == kjb) // diagonal element
-                    ctx->A[STDL_MATRIX_SP_IDX(lia, ljb)] += (float) (ctx->e[ctx->nocc + a] - ctx->e[i]);
+                    ctx->A[STDL_MATRIX_SP_IDX(lia, ljb)] += (float) (ctx->e_ptr[ctx->nocc + a] - ctx->e_ptr[i]);
 
                 if(compute_B)
                     ctx->B[STDL_MATRIX_SP_IDX(lia, ljb)] = 2 * iajb - ctx->ax * ibaj;
@@ -631,7 +630,7 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
             float iaia = _pqrs_monopole_wrk(ctx, i, ctx->nocc + a, i, ctx->nocc + a, AABB_K, wrk);
             float iiaa = _pqrs_monopole_wrk(ctx, i, i, ctx->nocc + a, ctx->nocc + a, AABB_J, wrk);
 
-            A_diag[kia] = (float) (ctx->e[ctx->nocc + a] - ctx->e[i]) + 2 * iaia - iiaa;
+            A_diag[kia] = (float) (ctx->e_ptr[ctx->nocc + a] - ctx->e_ptr[i]) + 2 * iaia - iiaa;
 
             if(A_diag[kia] <= ctx->ethr) {
                 csfs_ensemble[kia] = 1;
@@ -758,7 +757,7 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
                 ctx->A[STDL_MATRIX_SP_IDX(lia, ljb)] = 2 * iajb - ijab;
 
                 if(kia == kjb) // diagonal element
-                    ctx->A[STDL_MATRIX_SP_IDX(lia, ljb)] += (float) (ctx->e[ctx->nocc + a] - ctx->e[i]);
+                    ctx->A[STDL_MATRIX_SP_IDX(lia, ljb)] += (float) (ctx->e_ptr[ctx->nocc + a] - ctx->e_ptr[i]);
 
                 if(compute_B)
                     ctx->B[STDL_MATRIX_SP_IDX(lia, ljb)] = 2 * iajb - ctx->ax * ibaj;
@@ -780,13 +779,13 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
 int stdl_context_dump_h5(stdl_context* ctx, char* path) {
     assert(ctx != NULL && path != NULL);
 
-    hid_t file_id, wf_group_id, bs_group_id;
+    stdl_log_msg(0, "Saving context in `%s` >", path);
+
+    hid_t file_id, wf_group_id, bs_group_id, ctx_group_id;
     herr_t status;
 
     file_id = H5Fcreate(path, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     STDL_ERROR_HANDLE_AND_REPORT(file_id == H5I_INVALID_HID, return STDL_ERR_OPEN, "cannot open %s", path);
-
-    // TODO attributes
 
     // 1. Wavefunction
     stdl_wavefunction* wf = ctx->original_wf;
@@ -821,6 +820,8 @@ int stdl_context_dump_h5(stdl_context* ctx, char* path) {
     status = H5Gclose(wf_group_id);
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d", wf_group_id);
 
+    stdl_log_msg(0, "-");
+
     // 2. Basis set
     stdl_basis* bs = ctx->bs;
     bs_group_id = H5Gcreate(file_id, "/basis", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -846,9 +847,56 @@ int stdl_context_dump_h5(stdl_context* ctx, char* path) {
     status = H5Gclose(bs_group_id);
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d", bs_group_id);
 
-    // close the file
+    stdl_log_msg(0, "-");
+
+    // 3. Context
+    ctx_group_id = H5Gcreate(file_id, "/context", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    STDL_ERROR_HANDLE_AND_REPORT(ctx_group_id == H5I_INVALID_HID, return STDL_ERR_WRITE, "cannot create group");
+
+    // info
+    status = H5LTmake_dataset(ctx_group_id, "info", 1, (hsize_t[]) {6}, H5T_NATIVE_ULONG, (size_t[]) {ctx->e_ptr - wf->e, ctx->C_ptr - wf->C, ctx->nmo, ctx->nocc, ctx->ncsfs, ctx->B == NULL});
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", ctx_group_id);
+
+    // parameters for the selection of MOs/CSFs
+    status = H5LTmake_dataset(ctx_group_id, "parameters", 1, (hsize_t[]) {5}, H5T_NATIVE_DOUBLE, (double []) {ctx->gammaJ, ctx->gammaK, ctx->ethr, ctx->e2thr, ctx->ax});
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", ctx_group_id);
+
+    // (orthogonal) C
+    status = H5LTmake_dataset(ctx_group_id, "C", 2, (hsize_t[]) {wf->nao, ctx->nmo}, H5T_NATIVE_DOUBLE, ctx->C);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", ctx_group_id);
+
+    if(ctx->ncsfs > 0) {
+        status = H5LTmake_dataset(ctx_group_id, "csfs", 1, (hsize_t[]) {ctx->ncsfs}, H5T_NATIVE_ULONG, ctx->csfs);
+        STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", ctx_group_id);
+
+        status = H5LTmake_dataset(ctx_group_id, "A", 1, (hsize_t[]) {STDL_MATRIX_SP_SIZE(ctx->ncsfs)}, H5T_NATIVE_FLOAT, ctx->A);
+        STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", ctx_group_id);
+
+        if(ctx->B != NULL) {
+            status = H5LTmake_dataset(ctx_group_id, "B", 1, (hsize_t[]) {STDL_MATRIX_SP_SIZE(ctx->ncsfs)}, H5T_NATIVE_FLOAT, ctx->B);
+            STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", ctx_group_id);
+        }
+    }
+
+    // ... and close
+    status = H5Gclose(ctx_group_id);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d", ctx_group_id);
+
+    stdl_log_msg(0, "-");
+
+    // set some attributes
+    H5LTset_attribute_string(file_id, "wavefunction", "type", "stdl_wavefunction");
+    H5LTset_attribute_uint(file_id, "wavefunction", "version", (unsigned int[]) {1, 0}, 2);
+    H5LTset_attribute_string(file_id, "basis", "type", "stdl_basis");
+    H5LTset_attribute_uint(file_id, "basis", "version", (unsigned int[]) {1, 0}, 2);
+    H5LTset_attribute_string(file_id, "context", "type", "stdl_context");
+    H5LTset_attribute_uint(file_id, "context", "version", (unsigned int[]) {1, 0}, 2);
+
+    // and finally close the file
     status = H5Fclose(file_id);
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close %s", path);
+
+    stdl_log_msg(0, "< done\n");
 
     return STDL_ERR_OK;
 }

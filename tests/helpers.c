@@ -48,7 +48,7 @@ void make_dipoles_MO(stdl_wavefunction* wf, stdl_basis* bs, stdl_context* ctx, d
         ASSERT_STDL_OK(stdl_wavefunction_dsp_ao_to_dsp_mo(
                 wf->nao,
                 ctx->nmo,
-                ctx->C_orig,
+                ctx->C_ptr,
                 dipoles_sp_AO + cpt * STDL_MATRIX_SP_SIZE(wf->nao),
                 dipoles_sp_MO + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo))
         );

@@ -116,7 +116,7 @@ void test_dipole() {
     for (size_t p = 0; p < ctx->nocc; ++p) {
         for (size_t mu = 0; mu < wf->nao; ++mu) {
             for (size_t nu = 0; nu < wf->nao; ++nu) {
-                dipz1 += 2 * ctx->C_orig[p * wf->nao + mu] * ctx->C_orig[p * wf->nao + nu] * dipoles_sp[2 * STDL_MATRIX_SP_SIZE(wf->nao) + STDL_MATRIX_SP_IDX(mu, nu)];
+                dipz1 += 2 * ctx->C_ptr[p * wf->nao + mu] * ctx->C_ptr[p * wf->nao + nu] * dipoles_sp[2 * STDL_MATRIX_SP_SIZE(wf->nao) + STDL_MATRIX_SP_IDX(mu, nu)];
             }
         }
     }
@@ -132,7 +132,7 @@ void test_dipole() {
     double* P = malloc(STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double ));
     TEST_ASSERT_NOT_NULL(P);
 
-    ASSERT_STDL_OK(stdl_wavefunction_compute_density_dsp(ctx->nocc, ctx->nmo, wf->nao, ctx->C_orig, P));
+    ASSERT_STDL_OK(stdl_wavefunction_compute_density_dsp(ctx->nocc, ctx->nmo, wf->nao, ctx->C_ptr, P));
 
     double* Pge = malloc(wf->nao * wf->nao * sizeof(double ));
     TEST_ASSERT_NOT_NULL(Pge);
@@ -162,7 +162,7 @@ void test_dipole() {
     TEST_ASSERT_NOT_NULL(dipole_z_mo);
 
     // only use occupied MOs!
-    ASSERT_STDL_OK(stdl_wavefunction_dsp_ao_to_dsp_mo(wf->nao, ctx->nocc, ctx->C_orig, dipoles_sp + 2 * STDL_MATRIX_SP_SIZE(wf->nao), dipole_z_mo));
+    ASSERT_STDL_OK(stdl_wavefunction_dsp_ao_to_dsp_mo(wf->nao, ctx->nocc, ctx->C_ptr, dipoles_sp + 2 * STDL_MATRIX_SP_SIZE(wf->nao), dipole_z_mo));
 
     double dipz3 = .0;
     for (size_t p = 0; p < ctx->nocc; ++p) {

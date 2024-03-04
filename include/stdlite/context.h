@@ -37,14 +37,14 @@ struct stdlite_context_ {
     /// Number of occupied MO considered in the calculation, with `nocc < nmo && nocc + nvirt == nmo`
     size_t nocc;
 
-    /// `double[nmo]` Energy of MOs
-    double* e;
+    /// pointer to the energies for the selected MOs
+    double* e_ptr;
 
-    /// `double[nmo*original_wf->nao]` orthogonal MO coefficients for the selected MO.
+    /// pointer to the (non orthogonal) MO coefficient for the selected MO
+    double* C_ptr;
+
+    /// `double[nmo*original_wf->nao]` **orthogonal** MO coefficients for the selected MO.
     double* C;
-
-    /// `double[nmo*original_wf->nao]` non orthogonal MO coefficient for the selected MO
-    double* C_orig;
 
     /// number of CSFs selected by a given scheme (monopole, ...). Zero as long as no CSFs has been selected.
     size_t ncsfs;
