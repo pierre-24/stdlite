@@ -196,11 +196,8 @@ void test_context_select_csfs_ok() {
     TEST_ASSERT_NULL(ctx->B);
 
     // check that energies are in increasing order
-    for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
-        TEST_ASSERT_EQUAL_FLOAT(ctx->A[STDL_MATRIX_SP_IDX(kia, kia)], ctx->ecsfs[kia]);
-
-        if(kia > 0)
-            TEST_ASSERT_TRUE(ctx->ecsfs[kia-1] <= ctx->ecsfs[kia]);
+    for (size_t kia = 1; kia < ctx->ncsfs; ++kia) {
+        TEST_ASSERT_TRUE(ctx->A[STDL_MATRIX_SP_IDX(kia - 1, kia - 1)] <= ctx->A[STDL_MATRIX_SP_IDX(kia, kia)]);
     }
 
     // stdl_matrix_ssp_print(ctx->ncsfs, ctx->A, "A");
@@ -250,15 +247,38 @@ void test_context_dump_load_h5_ok() {
 
     // dump & load
     char tmp_path[512];
-    sprintf(tmp_path, "%s/tmp.h5", "."); // P_tmpdir);
+    sprintf(tmp_path, "%s/tmp.h5", P_tmpdir);
 
     ASSERT_STDL_OK(stdl_context_dump_h5(ctx1, tmp_path));
 
     stdl_context* ctx2 = NULL;
     ASSERT_STDL_OK(stdl_context_load_h5(tmp_path, &ctx2));
+    unlink(tmp_path);
 
-    // unlink(tmp_path);
+    // test a few equalities
+    TEST_ASSERT_EQUAL(ctx1->original_wf->nao, ctx2->original_wf->nao);
+    TEST_ASSERT_EQUAL(ctx1->original_wf->nmo, ctx2->original_wf->nmo);
+
+    TEST_ASSERT_DOUBLE_ARRAY_WITHIN(1e-12, ctx1->original_wf->C, ctx2->original_wf->C, ctx1->original_wf->nmo * ctx1->original_wf->nao);
+    TEST_ASSERT_DOUBLE_ARRAY_WITHIN(1e-12, ctx1->original_wf->e, ctx2->original_wf->e, ctx1->original_wf->nao);
+    TEST_ASSERT_DOUBLE_ARRAY_WITHIN(1e-12, ctx1->original_wf->S, ctx2->original_wf->S, STDL_MATRIX_SP_SIZE(ctx1->original_wf->nao));
+
+    TEST_ASSERT_EQUAL(ctx1->bs->natm, ctx2->bs->natm);
+    TEST_ASSERT_EQUAL(ctx1->bs->nbas, ctx2->bs->nbas);
+    TEST_ASSERT_EQUAL(ctx1->bs->env_size, ctx2->bs->env_size);
+    TEST_ASSERT_EQUAL_INT_ARRAY(ctx1->bs->atm, ctx2->bs->atm, 6 * ctx1->bs->natm);
+    TEST_ASSERT_EQUAL_INT_ARRAY(ctx1->bs->bas, ctx2->bs->bas, 8 * ctx1->bs->nbas);
+    TEST_ASSERT_DOUBLE_ARRAY_WITHIN(1e-12, ctx1->bs->env, ctx2->bs->env, ctx1->bs->env_size);
+
+    TEST_ASSERT_EQUAL(ctx1->nmo, ctx2->nmo);
+    TEST_ASSERT_EQUAL(ctx1->nocc, ctx2->nocc);
+    TEST_ASSERT_EQUAL(ctx1->ncsfs, ctx2->ncsfs);
+
+    TEST_ASSERT_EQUAL_INT_ARRAY(ctx1->csfs, ctx2->csfs, ctx1->ncsfs);
+    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, ctx1->A, ctx2->A, STDL_MATRIX_SP_SIZE(ctx1->ncsfs));
+    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, ctx1->B, ctx2->B, STDL_MATRIX_SP_SIZE(ctx1->ncsfs));
+    TEST_ASSERT_DOUBLE_ARRAY_WITHIN(1e-12, ctx1->C, ctx2->C, ctx1->nmo * ctx1->original_wf->nao);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx1));
-    // ASSERT_STDL_OK(stdl_context_delete(ctx2));
+    ASSERT_STDL_OK(stdl_context_delete(ctx2));
 }

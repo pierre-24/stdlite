@@ -54,9 +54,6 @@ struct stdlite_context_ {
     /// `NULL` as long as no CSFs has been selected.
     size_t* csfs;
 
-    /// `float[ncsfs]`, the energy of each CSF. `NULL` as long as no CSFs has been selected.
-    float* ecsfs;
-
     /// `float[STDL_MATRIX_SP_SIZE(ncfs)]`, part of the electronic Hessian matrix. `NULL` as long as no CSFs has been selected.
     float* A;
 
@@ -75,11 +72,11 @@ typedef struct stdlite_context_ stdl_context;
  * @param ethr energy threshold for primary CSFs, must be >0
  * @param e2thr energy threshold for secondary CSFs (selected pertubatively), must be >0
  * @param ax amount of HF exchange
- * @param[out] ctx The context to be created.
+ * @param[out] ctx_ptr The context to be created.
  * @return error code
  * @ingroup context
  */
-int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float gammaK, float ethr, float e2thr, float ax, stdl_context **ctx);
+int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float gammaK, float ethr, float e2thr, float ax, stdl_context **ctx_ptr);
 
 /**
  * Delete a context. Also delete the `stdl_wavefunction` and `stdl_basis` that it contains.
@@ -136,11 +133,11 @@ int stdl_context_dump_h5(stdl_context* ctx, char* path);
  * Load a context from a H5 file
  *
  * @param path path of the file from which the context should be loaded
- * @param[out] ctx resulting context
+ * @param[out] ctx_ptr resulting context
  * @return error code
  * @ingroup context
  */
-int stdl_context_load_h5(char* path, stdl_context** ctx);
+int stdl_context_load_h5(char* path, stdl_context** ctx_ptr);
 
 
 #endif //STDLITE_CONTEXT_H

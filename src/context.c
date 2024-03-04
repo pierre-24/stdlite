@@ -115,30 +115,45 @@ float eta[] = {
         0.223701390f,
 };
 
-int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float gammaK, float ethr, float e2thr, float ax,
-                 stdl_context **ctx) {
-    assert(ctx != NULL && wf != NULL && bs != NULL && gammaJ > 0 && gammaK > 0 && ethr > 0 && e2thr > 0 && ax >= 0 && ax <= 1);
+
+// Just create a context, nothing else. In particular, `ctx_ptr->C` is `NULL`.
+int _context_new_noselect(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float gammaK, float ethr, float e2thr, float ax, stdl_context **ctx_ptr) {
+    assert(ctx_ptr != NULL && wf != NULL && bs != NULL && gammaJ > 0 && gammaK > 0 && ethr > 0 && e2thr > 0 && ax >= 0 && ax <= 1);
+
+    *ctx_ptr = malloc(sizeof(stdl_context));
+    STDL_ERROR_HANDLE_AND_REPORT(*ctx_ptr == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    STDL_DEBUG("create context %p", *ctx_ptr);
+
+    (*ctx_ptr)->original_wf = wf;
+    (*ctx_ptr)->bs = bs;
+    (*ctx_ptr)->gammaJ = gammaJ;
+    (*ctx_ptr)->gammaK = gammaK;
+    (*ctx_ptr)->ethr = ethr;
+    (*ctx_ptr)->e2thr = e2thr;
+    (*ctx_ptr)->ax = ax;
+
+    (*ctx_ptr)->nmo = wf->nmo;
+    (*ctx_ptr)->nocc = wf->nocc;
+    (*ctx_ptr)->C_ptr = wf->C;
+    (*ctx_ptr)->e_ptr = wf->e;
+    (*ctx_ptr)->C = NULL;
+
+    (*ctx_ptr)->ncsfs = 0;
+    (*ctx_ptr)->csfs = NULL;
+    (*ctx_ptr)->A = NULL;
+    (*ctx_ptr)->B = NULL;
+
+    return STDL_ERR_OK;
+}
+
+int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float gammaK, float ethr, float e2thr, float ax, stdl_context **ctx_ptr) {
+    assert(ctx_ptr != NULL && wf != NULL && bs != NULL && gammaJ > 0 && gammaK > 0 && ethr > 0 && e2thr > 0 && ax >= 0 && ax <= 1);
 
     stdl_log_msg(0, "Create new context and select MO >", gammaJ, gammaK);
 
-    *ctx = malloc(sizeof(stdl_context));
-    STDL_ERROR_HANDLE_AND_REPORT(*ctx == NULL, return STDL_ERR_MALLOC, "malloc");
-
-    STDL_DEBUG("create context %p", *ctx);
-
-    (*ctx)->original_wf = wf;
-    (*ctx)->bs = bs;
-    (*ctx)->gammaJ = gammaJ;
-    (*ctx)->gammaK = gammaK;
-    (*ctx)->ethr = ethr;
-    (*ctx)->e2thr = e2thr;
-    (*ctx)->ax = ax;
-
-    (*ctx)->ncsfs = 0;
-    (*ctx)->csfs = NULL;
-    (*ctx)->ecsfs = NULL;
-    (*ctx)->A = NULL;
-    (*ctx)->B = NULL;
+    int err = _context_new_noselect(wf, bs, gammaJ, gammaK, ethr, e2thr, ax, ctx_ptr);
+    STDL_ERROR_CODE_HANDLE(err, return err);
 
     // select MO to include
     STDL_DEBUG("Select MO within %f Eh (%.3f eV)", ethr, ethr * STDL_CONST_AU_TO_EV);
@@ -160,32 +175,30 @@ int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float 
 
     stdl_log_msg(0, "-");
 
-    (*ctx)->nmo = omax - omin + 1;
-    (*ctx)->nocc = ohomo - omin + 1;
+    (*ctx_ptr)->nmo = omax - omin + 1;
+    (*ctx_ptr)->nocc = ohomo - omin + 1;
     size_t nvirt = omax - ohomo;
+    (*ctx_ptr)->C_ptr = wf->C + omin * wf->nao;
+    (*ctx_ptr)->e_ptr = wf->e + omin;
 
-    (*ctx)->C = malloc((*ctx)->nmo * wf->nao * sizeof(double));
-
-    STDL_ERROR_HANDLE_AND_REPORT((*ctx)->C == NULL, stdl_context_delete(*ctx); return STDL_ERR_MALLOC, "malloc");
-
-    (*ctx)->C_ptr = wf->C + omin * wf->nao;
-    (*ctx)->e_ptr = wf->e + omin;
+    (*ctx_ptr)->C = malloc((*ctx_ptr)->nmo * wf->nao * sizeof(double));
+    STDL_ERROR_HANDLE_AND_REPORT((*ctx_ptr)->C == NULL, stdl_context_delete(*ctx_ptr); return STDL_ERR_MALLOC, "malloc");
 
     // copy coefficients
-    for(size_t i=0; i < (*ctx)->nmo; i++) {
-        memcpy(&((*ctx)->C[i * wf->nao]), &(wf->C[(i + omin) * wf->nao]), wf->nao * sizeof(double));
+    for(size_t i=0; i < (*ctx_ptr)->nmo; i++) {
+        memcpy(&((*ctx_ptr)->C[i * wf->nao]), &(wf->C[(i + omin) * wf->nao]), wf->nao * sizeof(double));
     }
 
     stdl_log_msg(0, "-");
 
     STDL_DEBUG("Orthogonalize MOs");
 
-    int error = stdl_wavefunction_orthogonalize_C_dge((*ctx)->nmo, wf->nao, wf->S, (*ctx)->C);
-    STDL_ERROR_CODE_HANDLE(error, stdl_context_delete(*ctx); return error);
+    int error = stdl_wavefunction_orthogonalize_C_dge((*ctx_ptr)->nmo, wf->nao, wf->S, (*ctx_ptr)->C);
+    STDL_ERROR_CODE_HANDLE(error, stdl_context_delete(*ctx_ptr); return error);
 
     stdl_log_msg(0, "< done\n");
 
-    stdl_log_msg(0, "Resulting partition: [%d\\%d|%d/%d] (active space of %d MOs, %.2f%% of total)\n", omin, (*ctx)->nocc, nvirt, wf->nmo - omax - 1, (*ctx)->nmo, (double) (*ctx)->nmo / (double) wf->nmo * 100);
+    stdl_log_msg(0, "Resulting partition: [%d\\%d|%d/%d] (active space of %d MOs, %.2f%% of total)\n", omin, (*ctx_ptr)->nocc, nvirt, wf->nmo - omax - 1, (*ctx_ptr)->nmo, (double) (*ctx_ptr)->nmo / (double) wf->nmo * 100);
 
     return STDL_ERR_OK;
 }
@@ -201,7 +214,7 @@ int stdl_context_delete(stdl_context* ctx) {
     if(ctx->bs != NULL)
         stdl_basis_delete(ctx->bs);
 
-    STDL_FREE_ALL(ctx->C, ctx->csfs, ctx->ecsfs, ctx->A, ctx->B, ctx);
+    STDL_FREE_ALL(ctx->C, ctx->csfs, ctx->A, ctx->B, ctx);
 
     return STDL_ERR_OK;
 }
@@ -479,10 +492,10 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
         /*
          * 4) Store selected CSFs (in increasing energy order), and create A', B' matrices
          */
-        ctx->ecsfs = malloc((ctx->ncsfs) * sizeof(float ));
+        float* ecsfs = malloc((ctx->ncsfs) * sizeof(float ));
         ctx->csfs = malloc((ctx->ncsfs) * sizeof(size_t));
         ctx->A = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-        STDL_ERROR_HANDLE_AND_REPORT(ctx->ecsfs == NULL || ctx->csfs == NULL || ctx->A == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices); return STDL_ERR_MALLOC, "malloc");
+        STDL_ERROR_HANDLE_AND_REPORT(ecsfs == NULL || ctx->csfs == NULL || ctx->A == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices); return STDL_ERR_MALLOC, "malloc");
 
         if(compute_B) {
             ctx->B = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
@@ -495,7 +508,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
             size_t kia = csfs_sorted_indices[kia_]; // corresponding index
             if(csfs_ensemble[kia] > 0) {
                 ctx->csfs[lia] = kia;
-                ctx->ecsfs[lia] = A_diag[kia];
+                ecsfs[lia] = A_diag[kia];
                 lia++;
             }
         }
@@ -530,6 +543,8 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
                     ctx->B[STDL_MATRIX_SP_IDX(lia, ljb)] = 2 * iajb - ctx->ax * ibaj;
             }
         }
+
+        STDL_FREE_IF_USED(ecsfs);
     } else {
         STDL_WARN("no CSFs selected. `E_thr` should be at least %f Eh!", A_diag[csfs_sorted_indices[0]]);
     }
@@ -720,10 +735,10 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
         /*
          * 4) Store selected CSFs (in increasing energy order), and create A', B' matrices
          */
-        ctx->ecsfs = malloc((ctx->ncsfs) * sizeof(float ));
+        float* ecsfs = malloc((ctx->ncsfs) * sizeof(float ));
         ctx->csfs = malloc((ctx->ncsfs) * sizeof(size_t));
         ctx->A = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-        STDL_ERROR_HANDLE_AND_REPORT(ctx->ecsfs == NULL || ctx->csfs == NULL || ctx->A == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices); return STDL_ERR_MALLOC, "malloc");
+        STDL_ERROR_HANDLE_AND_REPORT(ecsfs == NULL || ctx->csfs == NULL || ctx->A == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices); return STDL_ERR_MALLOC, "malloc");
 
         if(compute_B) {
             ctx->B = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
@@ -736,7 +751,7 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
             size_t kia = csfs_sorted_indices[kia_]; // corresponding index
             if(csfs_ensemble[kia] > 0) {
                 ctx->csfs[lia] = kia;
-                ctx->ecsfs[lia] = A_diag[kia];
+                ecsfs[lia] = A_diag[kia];
                 lia++;
             }
         }
@@ -763,6 +778,8 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
                     ctx->B[STDL_MATRIX_SP_IDX(lia, ljb)] = 2 * iajb - ctx->ax * ibaj;
             }
         }
+
+        STDL_FREE_IF_USED(ecsfs);
     } else {
         STDL_WARN("no CSFs selected. `E_thr` should be at least %f Eh!", A_diag[csfs_sorted_indices[0]]);
     }
@@ -793,7 +810,7 @@ int stdl_context_dump_h5(stdl_context* ctx, char* path) {
     STDL_ERROR_HANDLE_AND_REPORT(wf_group_id == H5I_INVALID_HID, return STDL_ERR_WRITE, "cannot create group");
 
     // info
-    status = H5LTmake_dataset(wf_group_id, "info", 1, (hsize_t[]) {4}, H5T_NATIVE_ULONG, (size_t[]) {wf->natm, wf->nao, wf->nmo, wf->nocc});
+    status = H5LTmake_dataset(wf_group_id, "info", 1, (hsize_t[]) {4}, H5T_NATIVE_ULONG, (size_t[]) {wf->natm, wf->nocc, wf->nao, wf->nmo});
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", wf_group_id);
 
     // atm
@@ -828,7 +845,7 @@ int stdl_context_dump_h5(stdl_context* ctx, char* path) {
     STDL_ERROR_HANDLE_AND_REPORT(bs_group_id == H5I_INVALID_HID, return STDL_ERR_WRITE, "cannot create group");
 
     // info
-    status = H5LTmake_dataset(bs_group_id, "info", 1, (hsize_t[]) {4}, H5T_NATIVE_ULONG, (size_t[]) {bs->natm, bs->nbas, (size_t) bs->use_spherical, bs->env_size});
+    status = H5LTmake_dataset(bs_group_id, "info", 1, (hsize_t[]) {4}, H5T_NATIVE_ULONG, (size_t[]) {(size_t) bs->natm, (size_t) bs->nbas, bs->env_size,  (size_t) bs->use_spherical != 0});
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", bs_group_id);
 
     // atm
@@ -854,7 +871,7 @@ int stdl_context_dump_h5(stdl_context* ctx, char* path) {
     STDL_ERROR_HANDLE_AND_REPORT(ctx_group_id == H5I_INVALID_HID, return STDL_ERR_WRITE, "cannot create group");
 
     // info
-    status = H5LTmake_dataset(ctx_group_id, "info", 1, (hsize_t[]) {6}, H5T_NATIVE_ULONG, (size_t[]) {ctx->e_ptr - wf->e, ctx->C_ptr - wf->C, ctx->nmo, ctx->nocc, ctx->ncsfs, ctx->B == NULL});
+    status = H5LTmake_dataset(ctx_group_id, "info", 1, (hsize_t[]) {6}, H5T_NATIVE_ULONG, (size_t[]) {ctx->e_ptr - wf->e, ctx->C_ptr - wf->C, ctx->nmo, ctx->nocc, ctx->ncsfs, ctx->B != NULL});
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", ctx_group_id);
 
     // parameters for the selection of MOs/CSFs
@@ -862,7 +879,7 @@ int stdl_context_dump_h5(stdl_context* ctx, char* path) {
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", ctx_group_id);
 
     // (orthogonal) C
-    status = H5LTmake_dataset(ctx_group_id, "C", 2, (hsize_t[]) {wf->nao, ctx->nmo}, H5T_NATIVE_DOUBLE, ctx->C);
+    status = H5LTmake_dataset(ctx_group_id, "C", 2, (hsize_t[]) {ctx->nmo, wf->nao}, H5T_NATIVE_DOUBLE, ctx->C);
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", ctx_group_id);
 
     if(ctx->ncsfs > 0) {
@@ -884,13 +901,24 @@ int stdl_context_dump_h5(stdl_context* ctx, char* path) {
 
     stdl_log_msg(0, "-");
 
-    // set some attributes
-    H5LTset_attribute_string(file_id, "wavefunction", "type", "stdl_wavefunction");
-    H5LTset_attribute_uint(file_id, "wavefunction", "version", (unsigned int[]) {1, 0}, 2);
-    H5LTset_attribute_string(file_id, "basis", "type", "stdl_basis");
-    H5LTset_attribute_uint(file_id, "basis", "version", (unsigned int[]) {1, 0}, 2);
-    H5LTset_attribute_string(file_id, "context", "type", "stdl_context");
-    H5LTset_attribute_uint(file_id, "context", "version", (unsigned int[]) {1, 0}, 2);
+    // 4. set some attributes
+    status = H5LTset_attribute_string(file_id, "wavefunction", "type", "stdl_wavefunction");
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot write attribute");
+
+    status = H5LTset_attribute_uint(file_id, "wavefunction", "version", (unsigned int[]) {1, 0}, 2);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot write attribute");
+
+    status = H5LTset_attribute_string(file_id, "basis", "type", "stdl_basis");
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot write attribute");
+
+    status = H5LTset_attribute_uint(file_id, "basis", "version", (unsigned int[]) {1, 0}, 2);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot write attribute");
+
+    status = H5LTset_attribute_string(file_id, "context", "type", "stdl_context");
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot write attribute");
+
+    status = H5LTset_attribute_uint(file_id, "context", "version", (unsigned int[]) {1, 0}, 2);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot write attribute");
 
     // and finally close the file
     status = H5Fclose(file_id);
@@ -901,8 +929,200 @@ int stdl_context_dump_h5(stdl_context* ctx, char* path) {
     return STDL_ERR_OK;
 }
 
-int stdl_context_load_h5(char* path, stdl_context** ctx) {
-    assert(ctx != NULL && path != NULL);
+int stdl_context_load_h5(char* path, stdl_context** ctx_ptr) {
+    assert(ctx_ptr != NULL && path != NULL);
 
-    return STDL_ERR_OK;
+    stdl_log_msg(0, "Reading context from `%s` >", path);
+
+    hid_t file_id, wf_group_id, bs_group_id, ctx_group_id;
+    herr_t status;
+    int err = STDL_ERR_OK;
+
+    *ctx_ptr = NULL;
+    stdl_wavefunction* wf = NULL;
+    stdl_basis* bs = NULL;
+
+    char strbuff[128];
+    int version[2] = {0};
+    size_t ulongbuff[32];
+    float floatbuff[32];
+
+    // open file
+    file_id = H5Fopen(path, H5F_ACC_RDONLY, H5P_DEFAULT);
+    STDL_ERROR_HANDLE_AND_REPORT(file_id == H5I_INVALID_HID, return STDL_ERR_OPEN, "cannot open %s", path);
+
+    // check attributes
+    status = H5LTget_attribute_string(file_id, "wavefunction", "type", strbuff);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0 || strcmp(strbuff, "stdl_wavefunction") != 0, err = STDL_ERR_READ; goto _end, "missing or incorrect attribute for `wavefunction`");
+
+    status = H5LTget_attribute_int(file_id, "wavefunction", "version", version);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0 || version[0] != 1 || version[1] != 0, err = STDL_ERR_READ; goto _end, "missing or incorrect attribute for `wavefunction`");
+
+    status = H5LTget_attribute_string(file_id, "basis", "type", strbuff);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0 || strcmp(strbuff, "stdl_basis") != 0, err = STDL_ERR_READ; goto _end, "missing or incorrect attribute for `basis`");
+
+    status = H5LTget_attribute_int(file_id, "basis", "version", version);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0 || version[0] != 1 || version[1] != 0, err = STDL_ERR_READ; goto _end, "missing or incorrect attribute for `basis`");
+
+    status = H5LTget_attribute_string(file_id, "context", "type", strbuff);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0 || strcmp(strbuff, "stdl_context") != 0, err = STDL_ERR_READ; goto _end, "missing or incorrect attribute for `context`");
+
+    status = H5LTget_attribute_int(file_id, "context", "version", version);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0 || version[0] != 1 || version[1] != 0, err = STDL_ERR_READ; goto _end, "missing or incorrect  for `context`");
+
+    stdl_log_msg(0, "-");
+
+    // 1. Wavefunction
+    wf_group_id = H5Gopen1(file_id, "wavefunction");
+    STDL_ERROR_HANDLE_AND_REPORT(wf_group_id == H5I_INVALID_HID, err = STDL_ERR_READ; goto _end, "unable to open group");
+
+    status = H5LTread_dataset(wf_group_id, "info", H5T_NATIVE_ULONG, ulongbuff);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
+
+    err = stdl_wavefunction_new(ulongbuff[0], ulongbuff[1], ulongbuff[2], ulongbuff[3], &wf);
+    STDL_ERROR_CODE_HANDLE(err, goto _end);
+
+    status = H5LTread_dataset(wf_group_id, "atm", H5T_NATIVE_DOUBLE, wf->atm);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
+
+    status = H5LTread_dataset(wf_group_id, "aotoatm", H5T_NATIVE_ULLONG, wf->aotoatm);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
+
+    status = H5LTread_dataset(wf_group_id, "S", H5T_NATIVE_DOUBLE, wf->S);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
+
+    status = H5LTread_dataset(wf_group_id, "C", H5T_NATIVE_DOUBLE, wf->C);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
+
+    status = H5LTread_dataset(wf_group_id, "e", H5T_NATIVE_DOUBLE, wf->e);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
+
+    status = H5Gclose(wf_group_id);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d", wf_group_id);
+
+    stdl_log_msg(0, "-");
+
+    // 2. Basis set
+    bs_group_id = H5Gopen1(file_id, "basis");
+    STDL_ERROR_HANDLE_AND_REPORT(bs_group_id == H5I_INVALID_HID, err = STDL_ERR_READ; goto _end, "unable to open group");
+
+    status = H5LTread_dataset(bs_group_id, "info", H5T_NATIVE_ULONG, ulongbuff);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
+
+    STDL_ERROR_HANDLE_AND_REPORT(ulongbuff[0] != wf->natm, goto _end, "conflict between basis set and wavefunction on `natm`");
+
+    err = stdl_basis_new((int) ulongbuff[0], (int) ulongbuff[1], ulongbuff[2], ulongbuff[3] != 0, &bs);
+    STDL_ERROR_CODE_HANDLE(err, goto _end);
+
+    status = H5LTread_dataset(bs_group_id, "atm", H5T_NATIVE_INT, bs->atm);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
+
+    status = H5LTread_dataset(bs_group_id, "bas", H5T_NATIVE_INT, bs->bas);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
+
+    status = H5LTread_dataset(bs_group_id, "env", H5T_NATIVE_DOUBLE, bs->env);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
+
+    status = H5Gclose(bs_group_id);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d",bs_group_id);
+
+    stdl_log_msg(0, "-");
+
+    // context
+    ctx_group_id = H5Gopen1(file_id, "context");
+    STDL_ERROR_HANDLE_AND_REPORT(bs_group_id == H5I_INVALID_HID, err = STDL_ERR_READ; goto _end, "unable to open group");
+
+    status = H5LTread_dataset(ctx_group_id, "parameters", H5T_NATIVE_FLOAT, floatbuff);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
+
+    err = _context_new_noselect(wf, bs, floatbuff[0], floatbuff[1], floatbuff[2], floatbuff[3], floatbuff[4], ctx_ptr);
+    STDL_ERROR_CODE_HANDLE(err, goto _end);
+
+    status = H5LTread_dataset(ctx_group_id, "info", H5T_NATIVE_ULONG, ulongbuff);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
+
+    STDL_ERROR_HANDLE_AND_REPORT(ulongbuff[2] > wf->nmo, goto _end, "conflict between context and wavefunction on `nmo`");
+    STDL_ERROR_HANDLE_AND_REPORT(ulongbuff[3] + ulongbuff[0] != wf->nocc, goto _end, "conflict between context and wavefunction on `nocc`");
+
+    (*ctx_ptr)->e_ptr = wf->e + ulongbuff[0];
+    (*ctx_ptr)->C_ptr = wf->C + ulongbuff[1];
+    (*ctx_ptr)->nmo = ulongbuff[2];
+    (*ctx_ptr)->nocc = ulongbuff[3];
+    (*ctx_ptr)->ncsfs = ulongbuff[4];
+
+    (*ctx_ptr)->C = malloc((*ctx_ptr)->nmo * wf->nao * sizeof(double));
+    STDL_ERROR_HANDLE_AND_REPORT((*ctx_ptr)->C == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
+
+    status = H5LTread_dataset(ctx_group_id, "C", H5T_NATIVE_DOUBLE, (*ctx_ptr)->C);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
+
+    if((*ctx_ptr)->ncsfs > 0) {
+        (*ctx_ptr)->csfs = malloc((*ctx_ptr)->ncsfs * sizeof(size_t));
+        (*ctx_ptr)->A = malloc(STDL_MATRIX_SP_SIZE((*ctx_ptr)->ncsfs) * sizeof(float));
+
+        STDL_ERROR_HANDLE_AND_REPORT((*ctx_ptr)->csfs == NULL || (*ctx_ptr)->A == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
+
+        status = H5LTread_dataset(ctx_group_id, "csfs", H5T_NATIVE_ULLONG, (*ctx_ptr)->csfs);
+        STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
+
+        status = H5LTread_dataset(ctx_group_id, "A", H5T_NATIVE_FLOAT, (*ctx_ptr)->A);
+        STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
+
+        if(ulongbuff[5] != 0) {
+            (*ctx_ptr)->B = malloc(STDL_MATRIX_SP_SIZE((*ctx_ptr)->ncsfs) * sizeof(float));
+
+            STDL_ERROR_HANDLE_AND_REPORT((*ctx_ptr)->B == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
+
+            status = H5LTread_dataset(ctx_group_id, "B", H5T_NATIVE_FLOAT, (*ctx_ptr)->B);
+            STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
+        }
+    }
+
+    status = H5Gclose(ctx_group_id);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d",bs_group_id);
+
+    stdl_log_msg(0, "< done\n");
+
+    size_t nprim = 0;
+    int si, center, shift = 0;
+    for (int ibas = 0; ibas < bs->nbas; ++ibas) {
+        center = bs->bas[ibas * 8 + 0];
+        nprim += bs->bas[ibas * 8 + 2];
+
+        if(bs->use_spherical)
+            si = CINTcgto_spheric(ibas, bs->bas);
+        else
+            si = CINTcgtos_cart(ibas, bs->bas);
+
+        for(int j = 0; j < si; j++) {
+            wf->aotoatm[shift + j] = center;
+        }
+
+        shift += si;
+    }
+
+    stdl_log_msg(0, "Got %d atoms, %d AOs (%d primitives in %d basis functions), and %d MOs\n", wf->natm, wf->nao, nprim, bs->nbas, wf->nmo);
+    stdl_log_msg(0, "Will continue with an active space of %d MOs (%.2f%% of total)\n", (*ctx_ptr)->nmo, (double) (*ctx_ptr)->nmo / (double) wf->nmo * 100);
+
+    if((*ctx_ptr)->ncsfs > 0) {
+        size_t nexci_ia = (*ctx_ptr)->nocc * ((*ctx_ptr)->nmo - (*ctx_ptr)->nocc);
+        stdl_log_msg(0, "Will continue with %ld CSFs (%.2f%% of total, %ld CSFs)\n", (*ctx_ptr)->ncsfs, (float) (*ctx_ptr)->ncsfs / (float) nexci_ia * 100, nexci_ia);
+    }
+
+    _end:
+    if(err != STDL_ERR_OK ) {
+        if(*ctx_ptr != NULL)
+            stdl_context_delete(*ctx_ptr);
+        else {
+            if(wf != NULL)
+                stdl_wavefunction_delete(wf);
+            if(bs != NULL)
+                stdl_basis_delete(bs);
+        }
+    }
+
+    status = H5Fclose(file_id);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ, "cannot close %s", path);
+
+    return err;
 }
