@@ -15,14 +15,14 @@
 int parse_arguments(int argc, char* argv[]) {
     char* self = argv[0];
     struct arg_lit* arg_help;
-    struct arg_file* arg_input_wf;
+    struct arg_file* arg_input;
     struct arg_end* arg_end_;
 
     int exit_code = EXIT_SUCCESS;
 
     void* args_table[] = {
             arg_help = arg_litn("h", "help", 0, 1, "display this help and exit"),
-            arg_input_wf = arg_file1(NULL, NULL, "<input>", "input file (YAML format)"),
+            arg_input = arg_file1(NULL, NULL, "<input>", "input file (TOML format)"),
             arg_end_ = arg_end(20)
     };
 

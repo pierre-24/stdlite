@@ -1,0 +1,34 @@
+title = "test calculation"
+
+[context]
+source = "water_sto3g.fchk"
+source_type = "FCHK"
+
+output = "context.h5"
+
+gammaJ = 2.0
+gammaK = 4.0
+ethr = '12eV'
+
+method = "monopole"
+# flavor = "tda"
+
+[responses]
+
+output = "responses.h5"
+
+linear = [
+    {op = 'mu', w = '512nm'}, # polarizability
+]
+
+quadratic = [
+    {opA = 'mu', wA = '1064nm', opB = 'mu', wB = '1064nm'}  # SHG first hyperpolarizability
+]
+
+amplitude = -1  # all amplitudes
+
+[analyses]
+
+# esa = true
+# sos_linear = true
+# sos_quadratic = true
