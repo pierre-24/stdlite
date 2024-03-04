@@ -72,22 +72,22 @@ void test_response_TDA_ok() {
     float* Xamptda = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float ));
     ASSERT_STDL_OK(stdl_response_TDA_casida(ctx, ctx->ncsfs, etda, Xamptda));
 
-    for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
-        // in this case, the eigenvalues are more or less the diagonal elements of A.
-        TEST_ASSERT_FLOAT_WITHIN(1e-2, ctx->ecsfs[kia], etda[kia]);
+    // replace A, which has now been severely damaged.
+    free(ctx->A);
+    ctx->A = Ap;
+
+    for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
+        // The eigenvalues are more or less the diagonal elements of A.
+        TEST_ASSERT_FLOAT_WITHIN(1e-2, ctx->A[STDL_MATRIX_SP_IDX(lia, lia)], etda[lia]);
 
         // check that X^2 is normed
         float sum = .0f;
         for (size_t kjb = 0; kjb < ctx->ncsfs; kjb++) {
-            sum += powf(Xamptda[kia * ctx->ncsfs + kjb], 2);
+            sum += powf(Xamptda[lia * ctx->ncsfs + kjb], 2);
         }
 
         TEST_ASSERT_FLOAT_WITHIN(1e-4, 1.0f, sum);
     }
-
-    // replace A, which has now been severely damaged.
-    free(ctx->A);
-    ctx->A = Ap;
 
     // solve linear response
     size_t nw = 3;
@@ -160,14 +160,20 @@ void test_response_TD_ok() {
 
     ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, etd, Xamptd, Yamptd));
 
-    for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
-        // in this case, the eigenvalues are more or less the diagonal elements of A.
-        TEST_ASSERT_FLOAT_WITHIN(1e-2, ctx->ecsfs[kia], etd[kia]);
+    // replace A&B
+    free(ctx->A);
+    ctx->A = Ap;
+    free(ctx->B);
+    ctx->B = Bp;
+
+    for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
+        // The eigenvalues are more or less the diagonal elements of A.
+        TEST_ASSERT_FLOAT_WITHIN(1e-2, ctx->A[STDL_MATRIX_SP_IDX(lia, lia)], etd[lia]);
 
         // check that X^2-Y^2 is normed
         float sum = .0f;
         for (size_t kjb = 0; kjb < ctx->ncsfs; kjb++) {
-            sum += powf(Xamptd[kia * ctx->ncsfs + kjb], 2) - powf(Yamptd[kia * ctx->ncsfs + kjb], 2);
+            sum += powf(Xamptd[lia * ctx->ncsfs + kjb], 2) - powf(Yamptd[lia * ctx->ncsfs + kjb], 2);
         }
 
         TEST_ASSERT_FLOAT_WITHIN(1e-4, 1.0f, sum);
@@ -184,12 +190,6 @@ void test_response_TD_ok() {
     TEST_ASSERT_NOT_NULL(egrad);
 
     stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
-
-    // replace A&B
-    free(ctx->A);
-    ctx->A = Ap;
-    free(ctx->B);
-    ctx->B = Bp;
 
     // solve linear response
     size_t nw = 3;

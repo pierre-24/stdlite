@@ -190,14 +190,16 @@ void test_context_select_csfs_ok() {
 
     TEST_ASSERT_EQUAL_INT(0, ctx->ncsfs);
 
-    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
 
     TEST_ASSERT_EQUAL_INT(10, ctx->ncsfs);
     TEST_ASSERT_NULL(ctx->B);
 
+    stdl_matrix_ssp_print(ctx->ncsfs, ctx->A, "A");
+
     // check that energies are in increasing order
-    for (size_t kia = 1; kia < ctx->ncsfs; ++kia) {
-        TEST_ASSERT_TRUE(ctx->A[STDL_MATRIX_SP_IDX(kia - 1, kia - 1)] <= ctx->A[STDL_MATRIX_SP_IDX(kia, kia)]);
+    for (size_t lia = 1; lia < ctx->ncsfs; ++lia) {
+        TEST_ASSERT_TRUE(ctx->A[STDL_MATRIX_SP_IDX(lia - 1, lia - 1)] <= ctx->A[STDL_MATRIX_SP_IDX(lia, lia)]);
     }
 
     // stdl_matrix_ssp_print(ctx->ncsfs, ctx->A, "A");
