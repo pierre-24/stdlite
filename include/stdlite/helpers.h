@@ -1,7 +1,6 @@
 #ifndef STDLITE_HELPERS_H
 #define STDLITE_HELPERS_H
 
-
 #include <math.h>
 
 /**

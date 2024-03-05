@@ -3,6 +3,9 @@
 
 #include "user_input.h"
 
-#define STDL_APP_ARG_DOC "Run a sTDA/sTD-DFT calculation.\n\n"
+#ifndef APP_NAME
+#define APP_NAME "stdlite_app"
+#define APP_VERSION "unknown"
+#endif
 
 #endif //STDLITE_APP_H

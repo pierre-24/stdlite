@@ -4,6 +4,8 @@
 #include <toml.h>
 #include <stdlite/logging.h>
 
+#define STDL_APP_ARG_DOC "Run a sTDA/sTD-DFT calculation.\n\n"
+
 /**
  * Type of input for wavefunction & basis set
  * @ingroup user_input
@@ -108,5 +110,17 @@ int stdl_user_input_fill_from_toml(stdl_user_input* inp, char* path);
  * @ingroup user_input
  */
 int stdl_user_input_parse_frequency(char* input, double* result);
+
+/**
+ * Change user input from program arguments.
+ * If the `<file>` argument is set, this implies a call to `stdl_user_input_fill_from_toml()`.
+ *
+ * @param inp a valid user input structure
+ * @param argc number of arguments
+ * @param argv actual arguments
+ * @return error code
+ * @ingroup user_input
+ */
+int stdl_user_input_fill_from_args(stdl_user_input* inp, int argc, char* argv[]);
 
 #endif //STDLITE_USER_INPUT_H

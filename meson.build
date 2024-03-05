@@ -9,8 +9,8 @@ cc = meson.get_compiler('c')
 project_dep = []
 
 build_args = [
-  '-DPROJECT_NAME=' + meson.project_name(),
-  '-DPROJECT_VERSION=' + meson.project_version(),
+  '-DPROJECT_NAME="lib' + meson.project_name() + '"',
+  '-DPROJECT_VERSION="' + meson.project_version() + '"',
 ]
 
 libcint_dep = cc.find_library('libcint', required: false)

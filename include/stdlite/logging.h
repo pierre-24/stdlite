@@ -1,6 +1,27 @@
 #ifndef STDL_LOGGING_H
 #define STDL_LOGGING_H
 
+#ifndef PROJECT_NAME
+#define PROJECT_NAME "stdlite_lib"
+#define PROJECT_VERSION "unknown"
+#endif
+
+
+/**
+ * Get library name
+ * @return name
+ * @ingroup logging
+ */
+char* stdl_library_name();
+
+/**
+ * Get library version
+ * @return version
+ * @ingroup logging
+ */
+char* stdl_library_version();
+
+
 /// Handle error (if `assertion` is true) by printing a message and using an action.
 /// Inspired by B. Klemens in *21st century C* (O'Reilly).
 /// @ingroup logging
@@ -39,7 +60,9 @@ enum stdl_error_code_ {
     /// Write error
     STDL_ERR_WRITE = 4,
 
-    STDL_UNUSED5 = 5,
+    /// Input error
+    STDL_ERR_INPUT = 5,
+
     STDL_UNUSED6 = 6,
     STDL_UNUSED7 = 7,
     STDL_UNUSED8 = 8,

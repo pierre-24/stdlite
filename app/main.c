@@ -1,56 +1,56 @@
-#include <stdio.h>
 #include <stdlib.h>
-
-#include <argtable3.h>
+#include <string.h>
 
 #include "app.h"
+#include "timer.h"
 
-/**
- * Parse the arguments of the program.
- *
- * @param argc number of arguments
- * @param argv value of arguments
- * @return the exit code, so `EXIT_SUCCESS` if everything went well.
- */
-int parse_arguments(int argc, char* argv[]) {
-    char* self = argv[0];
-    struct arg_lit* arg_help;
-    struct arg_file* arg_input;
-    struct arg_end* arg_end_;
+#define NDASHES 80
 
-    int exit_code = EXIT_SUCCESS;
-
-    void* args_table[] = {
-            arg_help = arg_litn("h", "help", 0, 1, "display this help and exit"),
-            arg_input = arg_file1(NULL, NULL, "<input>", "input file (TOML format)"),
-            arg_end_ = arg_end(20)
-    };
-
-    int nerrors = arg_parse(argc, argv, args_table);
-
-    /* `--help` takes precedence over the rest */
-    if (arg_help->count > 0) {
-        printf("Usage: %s", self);
-        arg_print_syntax(stdout, args_table, "\n");
-        printf(STDL_APP_ARG_DOC);
-        arg_print_glossary(stdout, args_table, "  %-25s %s\n");
-
-        exit_code = EXIT_SUCCESS;
-    }  else if (nerrors > 0) {
-        arg_print_errors(stderr, arg_end_, self);
-        exit_code = EXIT_FAILURE;
+void title(char* title) {
+    int sz = strlen(title);
+    stdl_log_msg(0, "\n--- %s -", title);
+    for (int i = 0; i < NDASHES - sz - 6; ++i) {
+        stdl_log_msg(0, "-");
     }
-
-    arg_freetable(args_table, sizeof(args_table) / sizeof(args_table[0]));
-
-    return exit_code;
+    stdl_log_msg(0, "\n");
 }
 
 int main(int argc, char* argv[]) {
+    struct timespec elapsed_prog;
+    timer_start(&elapsed_prog);
 
-    int exit_code = parse_arguments(argc, argv);
-    if(exit_code != EXIT_SUCCESS)
-        return exit_code;
+    int err;
+    stdl_user_input* input = NULL;
 
-    return EXIT_SUCCESS;
+    // read input
+    err = stdl_user_input_new(&input);
+    STDL_ERROR_CODE_HANDLE(err, goto _end);
+
+    err = stdl_user_input_fill_from_args(input, argc, argv);
+    STDL_ERROR_CODE_HANDLE(err, goto _end);
+
+    // scream aloud
+    stdl_log_msg(0,
+                 "==========================================\n"
+                 "Running %s\n"
+                 "using %s (version %s)\n"
+                 "==========================================\n",
+                 APP_NAME, stdl_library_name(), stdl_library_version()
+                 );
+
+    _end:
+    if(input != NULL)
+        stdl_user_input_delete(input);
+
+    if(err < STDL_ERR_LAST) {
+        title("End");
+        stdl_log_msg(0, "Elapsed time in %s: %.2f secs", APP_NAME, timer_stop(&elapsed_prog));
+    }
+
+    if(err == STDL_ERR_OK || err > STDL_ERR_LAST) {
+        return EXIT_SUCCESS;
+    } else {
+        stdl_log_msg(0, "\n\n** Something went bad :(");
+        return err;
+    }
 }

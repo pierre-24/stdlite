@@ -1,5 +1,11 @@
 exe_args = []
 
+# build args
+app_build_args = [
+    '-DAPP_NAME="' + meson.project_name() + '_run"',
+    '-DAPP_VERSION="' + meson.project_version() + '"',
+]
+
 # dependencies
 app_dep = [stdlite_lib_dep]
 
@@ -45,6 +51,7 @@ stdlite_exe = executable(
     dependencies: app_dep,
     link_with: stdlite_app_lib,
     install: true,
+    c_args : app_build_args,
 )
 
 subdir('tests')

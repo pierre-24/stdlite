@@ -4,6 +4,14 @@
 
 #include "stdlite/logging.h"
 
+char* stdl_library_name() {
+    return PROJECT_NAME;
+}
+
+char* stdl_library_version()  {
+    return PROJECT_VERSION;
+}
+
 int LOG_LVL = 0; // by default, moderate logging
 
 void stdl_set_log_level(const int level) {

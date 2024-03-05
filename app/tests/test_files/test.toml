@@ -7,12 +7,10 @@ source_type = "FCHK"
 output = "context.h5"
 
 method = "monopole"
-use_tda = true
+use_tda = false
 
-gammaJ = 2.0
-gammaK = 4.0
 ethr = '12eV'
-ax = 1.0
+ax = 0.25
 
 [responses]
 
