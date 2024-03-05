@@ -53,7 +53,7 @@ void test_parse_incorrect_title_ko() {
         rewind(stream);
 
         ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
-        STDL_NOK(stdl_molden_parser_read_section_title(lx, &title));
+        ASSERT_STDL_KO(stdl_molden_parser_read_section_title(lx, &title));
 
         free(title);
 

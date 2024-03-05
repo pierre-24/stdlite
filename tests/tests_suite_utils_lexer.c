@@ -36,7 +36,7 @@ void test_lexer_ok() {
     }
 
     // if one continue to advance, it results in an error!
-    STDL_NOK(stdl_lexer_advance(lx, 1));
+    ASSERT_STDL_KO(stdl_lexer_advance(lx, 1));
     TEST_ASSERT_EQUAL_INT(STDL_TK_EOF, lx->current_tk_type);
 
     ASSERT_STDL_OK(stdl_lexer_delete(lx));
@@ -80,7 +80,7 @@ void test_lexer_eat_ok() {
     ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
 
     ASSERT_STDL_OK(stdl_lexer_eat(lx, STDL_TK_ALPHA)); // works on `a`, advance
-    STDL_NOK(stdl_lexer_eat(lx, STDL_TK_ALPHA)); // does not work on `\n`
+    ASSERT_STDL_KO(stdl_lexer_eat(lx, STDL_TK_ALPHA)); // does not work on `\n`
 
     ASSERT_STDL_OK(stdl_lexer_delete(lx));
 }

@@ -37,8 +37,8 @@
 
 /// Conversion to nanometers
 /// @ingroup helpers
-#ifndef STDL_CONST_HCL
-#define STDL_CONST_HCL 45.56335
+#ifndef STDL_CONST_HC
+#define STDL_CONST_HC 45.56335
 #endif
 
 /// Conversion to Angstrom

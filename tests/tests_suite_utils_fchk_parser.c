@@ -84,7 +84,7 @@ void test_parse_incorrect_section_info_ko() {
         rewind(stream);
 
         ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
-        STDL_NOK(stdl_fchk_parser_get_section_info(lx, &title, &type, &is_scalar));
+        ASSERT_STDL_KO(stdl_fchk_parser_get_section_info(lx, &title, &type, &is_scalar));
 
         free(title);
 
@@ -143,7 +143,7 @@ void test_parser_incorrect_vector_ints_ko() {
         rewind(stream);
 
         ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
-        STDL_NOK(stdl_fchk_parser_get_vector_integers(lx, &sz, &values));
+        ASSERT_STDL_KO(stdl_fchk_parser_get_vector_integers(lx, &sz, &values));
         ASSERT_STDL_OK(stdl_lexer_delete(lx));
     }
 
@@ -202,7 +202,7 @@ void test_parser_incorrect_vector_numbers_ko() {
         rewind(stream);
 
         ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
-        STDL_NOK(stdl_fchk_parser_get_vector_numbers(lx, &sz, &values));
+        ASSERT_STDL_KO(stdl_fchk_parser_get_vector_numbers(lx, &sz, &values));
         ASSERT_STDL_OK(stdl_lexer_delete(lx));
     }
 
@@ -380,7 +380,7 @@ void test_extract_wf_too_short_ko() {
 
     stdl_wavefunction *wf = NULL;
     stdl_basis *bs = NULL;
-    STDL_NOK(stdl_fchk_parser_extract(lx, &wf, &bs));
+    ASSERT_STDL_KO(stdl_fchk_parser_extract(lx, &wf, &bs));
 
     ASSERT_STDL_OK(stdl_lexer_delete(lx));
 }

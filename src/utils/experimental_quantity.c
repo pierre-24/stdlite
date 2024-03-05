@@ -57,7 +57,7 @@ int stdl_qexp_excitations_print(stdl_context *ctx, size_t nexci, float *energies
     printf("---- -------- ------- ------- -------- -------- -------- -------\n");
     for (size_t iexci = 0; iexci < nexci; ++iexci) {
         // print energies
-        printf("%4ld %8.5f %7.3f %7.2f", iexci + 1, energies[iexci], energies[iexci] * STDL_CONST_AU_TO_EV, STDL_CONST_HCL / energies[iexci]);
+        printf("%4ld %8.5f %7.3f %7.2f", iexci + 1, energies[iexci], energies[iexci] * STDL_CONST_AU_TO_EV, STDL_CONST_HC / energies[iexci]);
 
         // print transition dipole & oscillator strength
         printf(" % 8.5f % 8.5f % 8.5f %7.5f",

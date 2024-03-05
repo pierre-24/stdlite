@@ -56,7 +56,7 @@ void test_read_non_integer_ko() {
         rewind(stream);
 
         ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
-        STDL_NOK(stdl_parser_get_integer(lx, &actual)); // that does not works ;)
+        ASSERT_STDL_KO(stdl_parser_get_integer(lx, &actual)); // that does not works ;)
         ASSERT_STDL_OK(stdl_lexer_delete(lx));
     }
 }
@@ -189,7 +189,7 @@ void test_read_non_real_ko() {
         rewind(stream);
 
         ASSERT_STDL_OK(stdl_lexer_new(stream, &lx));
-        STDL_NOK(stdl_parser_get_number(lx, &actual)); // that does not works!
+        ASSERT_STDL_KO(stdl_parser_get_number(lx, &actual)); // that does not works!
         ASSERT_STDL_OK(stdl_lexer_delete(lx));
     }
 }
