@@ -309,3 +309,17 @@ int stdl_user_input_fill_from_args(stdl_user_input* inp, int argc, char* argv[])
     arg_freetable(args_table, sizeof(args_table) / sizeof(args_table[0]));
     return err;
 }
+
+
+int stdl_user_input_check(stdl_user_input* inp) {
+    STDL_ERROR_HANDLE_AND_REPORT(inp->ctx_source_path == NULL, return STDL_ERR_INPUT, "missing context.source");
+
+    STDL_ERROR_HANDLE_AND_REPORT(inp->ctx_gammaJ < .0, return STDL_ERR_INPUT, "context.gammaJ < 0");
+    STDL_ERROR_HANDLE_AND_REPORT(inp->ctx_gammaK < .0, return STDL_ERR_INPUT, "context.gammaK < 0");
+    STDL_ERROR_HANDLE_AND_REPORT(inp->ctx_ethr < .0, return STDL_ERR_INPUT, "context.ethr < 0");
+    STDL_ERROR_HANDLE_AND_REPORT(inp->ctx_e2thr < .0, return STDL_ERR_INPUT, "context.e2thr < 0");
+    STDL_ERROR_HANDLE_AND_REPORT(inp->ctx_ax < .0, return STDL_ERR_INPUT, "context.ax < 0");
+    STDL_ERROR_HANDLE_AND_REPORT(inp->ctx_ax > 1, return STDL_ERR_INPUT, "context.ax > 1");
+
+    return STDL_ERR_OK;
+}

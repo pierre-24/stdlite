@@ -123,4 +123,12 @@ int stdl_user_input_parse_frequency(char* input, double* result);
  */
 int stdl_user_input_fill_from_args(stdl_user_input* inp, int argc, char* argv[]);
 
+/**
+ * Check that the user input is correct.
+ * @param inp a valid user input structure
+ * @return error code
+ * @ingroup user_input
+ */
+int stdl_user_input_check(stdl_user_input* inp);
+
 #endif //STDLITE_USER_INPUT_H

@@ -13,6 +13,7 @@ void test_user_input_fill_from_toml_ok() {
     TEST_ASSERT_NOT_NULL(inp);
 
     ASSERT_STDL_OK(stdl_user_input_fill_from_toml(inp, "../app/tests/test_files/test.toml"));
+    ASSERT_STDL_OK(stdl_user_input_check(inp));
 
     TEST_ASSERT_EQUAL_STRING("test calculation", inp->title);
     TEST_ASSERT_EQUAL_STRING("water_sto3g.fchk", inp->ctx_source_path);
@@ -59,6 +60,7 @@ void test_user_input_fill_from_args_ok() {
     };
 
     ASSERT_STDL_OK(stdl_user_input_fill_from_args(inp, sizeof(args) / sizeof(char*), args));
+    ASSERT_STDL_OK(stdl_user_input_check(inp));
 
     TEST_ASSERT_EQUAL_STRING("water_sto3g.molden", inp->ctx_source_path);
     TEST_ASSERT_EQUAL(STDL_SRC_MOLDEN, inp->ctx_source_type);

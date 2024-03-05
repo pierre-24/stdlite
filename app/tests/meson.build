@@ -39,6 +39,13 @@ endforeach
 
 # -- app test
 test('help', stdlite_exe, args: ['-h'], suite: 'app')
+test('valid input', stdlite_exe, args: ['../app/tests/test_files/test.toml'], suite: 'app')
+
 test('noargs', stdlite_exe, suite: 'app', should_fail: true)
 test('unknown arg', stdlite_exe, args: ['-k'], suite: 'app', should_fail: true)
-test('valid input', stdlite_exe, args: ['../app/tests/test_files/test.toml'], suite: 'app')
+test('gammaJ < 0', stdlite_exe, args: ['--ctx_source=x', '--ctx_gammaJ=-1'], suite: 'app', should_fail: true)
+test('gammaK < 0', stdlite_exe, args: ['--ctx_source=x', '--ctx_gammaK=-1'], suite: 'app', should_fail: true)
+test('ethr < 0', stdlite_exe, args: ['--ctx_source=x', '--ctx_ethr="-1au"'], suite: 'app', should_fail: true)
+test('e2thr < 0', stdlite_exe, args: ['--ctx_source=x', '--ctx_e2thr="-1au"'], suite: 'app', should_fail: true)
+test('ax < 0', stdlite_exe, args: ['--ctx_source=x', '--ctx_ax=-1'], suite: 'app', should_fail: true)
+test('ax > 1', stdlite_exe, args: ['--ctx_source=x', '--ctx_ax=2'], suite: 'app', should_fail: true)

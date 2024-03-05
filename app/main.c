@@ -29,6 +29,9 @@ int main(int argc, char* argv[]) {
     err = stdl_user_input_fill_from_args(input, argc, argv);
     STDL_ERROR_CODE_HANDLE(err, goto _end);
 
+    err = stdl_user_input_check(input);
+    STDL_ERROR_CODE_HANDLE(err, goto _end);
+
     // scream aloud
     stdl_log_msg(0,
                  "==========================================\n"
