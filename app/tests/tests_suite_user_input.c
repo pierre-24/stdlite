@@ -25,6 +25,18 @@ void test_user_input_fill_from_toml_ok() {
     ASSERT_STDL_OK(stdl_user_input_delete(inp));
 }
 
+void test_user_input_incorrect_toml_ko() {
+    stdl_user_input* inp = NULL;
+    stdl_user_input_new(&inp);
+    TEST_ASSERT_NOT_NULL(inp);
+
+    ASSERT_STDL_KO(stdl_user_input_fill_from_toml(inp, "../app/tests/test_files/wrong.toml"));
+
+    ASSERT_STDL_OK(stdl_user_input_fill_from_toml(inp, "../app/tests/test_files/wrong2.toml"));
+    ASSERT_STDL_KO(stdl_user_input_check(inp));
+
+    ASSERT_STDL_OK(stdl_user_input_delete(inp));
+}
 
 void test_parse_frequency_ok() {
     double value;

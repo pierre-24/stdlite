@@ -16,20 +16,16 @@ void title(char* title) {
 }
 
 int main(int argc, char* argv[]) {
+
+    // record time
     struct timespec elapsed_prog;
     timer_start(&elapsed_prog);
 
     int err;
-    stdl_user_input* input = NULL;
 
     // read input
-    err = stdl_user_input_new(&input);
-    STDL_ERROR_CODE_HANDLE(err, goto _end);
-
-    err = stdl_user_input_fill_from_args(input, argc, argv);
-    STDL_ERROR_CODE_HANDLE(err, goto _end);
-
-    err = stdl_user_input_check(input);
+    stdl_user_input* input = NULL;
+    err = stdl_app_user_input(argc, argv, &input);
     STDL_ERROR_CODE_HANDLE(err, goto _end);
 
     // scream aloud
@@ -41,6 +37,7 @@ int main(int argc, char* argv[]) {
                  APP_NAME, stdl_library_name(), stdl_library_version()
                  );
 
+    // the end
     _end:
     if(input != NULL)
         stdl_user_input_delete(input);

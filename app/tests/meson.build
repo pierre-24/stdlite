@@ -43,6 +43,8 @@ test('valid input', stdlite_exe, args: ['../app/tests/test_files/test.toml'], su
 
 test('noargs', stdlite_exe, suite: 'app', should_fail: true)
 test('unknown arg', stdlite_exe, args: ['-k'], suite: 'app', should_fail: true)
+test('invalid TOML', stdlite_exe, args: ['../app/tests/test_files/wrong.toml'], suite: 'app', should_fail: true)
+test('invalid TOML 2', stdlite_exe, args: ['../app/tests/test_files/wrong2.toml'], suite: 'app', should_fail: true)
 test('gammaJ < 0', stdlite_exe, args: ['--ctx_source=x', '--ctx_gammaJ=-1'], suite: 'app', should_fail: true)
 test('gammaK < 0', stdlite_exe, args: ['--ctx_source=x', '--ctx_gammaK=-1'], suite: 'app', should_fail: true)
 test('ethr < 0', stdlite_exe, args: ['--ctx_source=x', '--ctx_ethr="-1au"'], suite: 'app', should_fail: true)

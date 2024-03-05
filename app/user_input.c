@@ -108,7 +108,7 @@ int stdl_user_input_fill_from_toml(stdl_user_input* inp, char* path) {
             } else if(strcmp(ctx_source_type.u.s, "STDL_CTX") == 0) {
                 inp->ctx_source_type = STDL_SRC_CTX;
             } else {
-                STDL_ERROR_HANDLE_AND_REPORT(1, free(ctx_source_type.u.s); goto _end, "unknown value for `context.source_type`");
+                STDL_ERROR_HANDLE_AND_REPORT(1, err = STDL_ERR_INPUT; free(ctx_source_type.u.s); goto _end, "unknown value for `context.source_type`");
             }
 
             free(ctx_source_type.u.s);
@@ -167,7 +167,6 @@ int stdl_user_input_fill_from_toml(stdl_user_input* inp, char* path) {
         }
     }
 
-    stdl_log_msg(0, "-");
     toml_table_t* response = toml_table_in(conf, "responses");
     if(response != NULL) {
         STDL_DEBUG("Read [responses]");
