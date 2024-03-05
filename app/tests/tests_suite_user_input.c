@@ -31,7 +31,9 @@ void test_user_input_incorrect_toml_ko() {
     TEST_ASSERT_NOT_NULL(inp);
 
     ASSERT_STDL_KO(stdl_user_input_fill_from_toml(inp, "../app/tests/test_files/wrong.toml"));
+    ASSERT_STDL_OK(stdl_user_input_delete(inp));
 
+    stdl_user_input_new(&inp);
     ASSERT_STDL_OK(stdl_user_input_fill_from_toml(inp, "../app/tests/test_files/wrong2.toml"));
     ASSERT_STDL_KO(stdl_user_input_check(inp));
 
