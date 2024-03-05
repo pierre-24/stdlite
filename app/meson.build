@@ -3,28 +3,48 @@ exe_args = []
 # dependencies
 app_dep = [stdlite_lib_dep]
 
-argtable_proj = subproject('argtable')
-argtable_dep = argtable_proj.get_variable('argtable_dep')
+argtable_dep = cc.find_library('argtable3', required: false)
+if not argtable_dep.found()
+    argtable_proj = subproject('argtable')
+    argtable_dep = argtable_proj.get_variable('argtable_dep')
+endif
 app_dep += argtable_dep
 
-tomlc99_proj = subproject('tomlc99')
-tomlc99_dep = tomlc99_proj.get_variable('tomlc99_dep')
+tomlc99_dep = cc.find_library('toml', required: false)
+if not tomlc99_dep.found()
+    tomlc99_proj = subproject('tomlc99')
+    tomlc99_dep = tomlc99_proj.get_variable('tomlc99_dep')
+endif
 app_dep += tomlc99_dep
 
 # sources
-srcs = files('main.c')
+srcs = files(
+    'user_input.c'
+)
+
+includes = include_directories('.')
+
+# library
+stdlite_app_lib = static_library(
+    meson.project_name() + '_app',
+    srcs,
+    include_directories : includes,
+    dependencies: app_dep,
+)
+
+stdlite_app_lib_dep = declare_dependency(
+    link_with: stdlite_app_lib,
+    include_directories: includes,
+    dependencies: app_dep,
+)
 
 # executable
 stdlite_exe = executable(
     meson.project_name() + '_run',
-    sources: srcs,
+    sources: ['main.c'],
     dependencies: app_dep,
+    link_with: stdlite_app_lib,
     install: true,
 )
 
-# tests
-test('help', stdlite_exe, args: ['-h'], suite: 'app')
-
-test('noargs', stdlite_exe, suite: 'app', should_fail: true)
-test('unknown arg', stdlite_exe, args: ['-k'], suite: 'app', should_fail: true)
-test('test input', stdlite_exe, args: ['../tests/test_files/test.toml'], suite: 'app')
+subdir('tests')
