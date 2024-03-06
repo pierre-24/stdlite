@@ -107,6 +107,8 @@ int stdl_user_input_fill_from_toml(stdl_user_input* inp, char* path) {
                 inp->ctx_source_type = STDL_SRC_MOLDEN;
             } else if(strcmp(ctx_source_type.u.s, "STDL_CTX") == 0) {
                 inp->ctx_source_type = STDL_SRC_CTX;
+            } else if(strcmp(ctx_source_type.u.s, "STDL_CTX_WB") == 0) {
+                inp->ctx_source_type = STDL_SRC_CTX_WB;
             } else {
                 STDL_ERROR_HANDLE_AND_REPORT(1, err = STDL_ERR_INPUT; free(ctx_source_type.u.s); goto _end, "unknown value for `context.source_type`");
             }
@@ -269,6 +271,8 @@ int stdl_user_input_fill_from_args(stdl_user_input* inp, int argc, char* argv[])
             inp->ctx_source_type = STDL_SRC_MOLDEN;
         } else if(strcmp(arg_ctx_source_type->sval[0], "STDL_CTX") == 0) {
             inp->ctx_source_type = STDL_SRC_CTX;
+        } else if(strcmp(arg_ctx_source_type->sval[0], "STDL_CTX_WB") == 0) {
+            inp->ctx_source_type = STDL_SRC_CTX_WB;
         } else {
             STDL_ERROR_HANDLE_AND_REPORT(1, err = STDL_ERR_INPUT; goto _end, "unknown source type `%s`", arg_ctx_source_type->sval[0]);
         }
@@ -335,6 +339,9 @@ int stdl_user_input_log(stdl_user_input* inp) {
     switch (inp->ctx_source_type) {
         case STDL_SRC_CTX:
             stdl_log_msg(0, "source_type = \"STDL_CTX\"\n");
+            break;
+        case STDL_SRC_CTX_WB:
+            stdl_log_msg(0, "source_type = \"STDL_CTX_WB\"\n");
             break;
         case STDL_SRC_FCHK:
             stdl_log_msg(0, "source_type = \"FCHK\"\n");

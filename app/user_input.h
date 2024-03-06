@@ -14,6 +14,7 @@ enum stdl_source_type_ {
     STDL_SRC_FCHK,
     STDL_SRC_MOLDEN,
     STDL_SRC_CTX,
+    STDL_SRC_CTX_WB,
 };
 
 typedef enum stdl_source_type_ stdl_source_type;

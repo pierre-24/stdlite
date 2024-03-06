@@ -4,6 +4,13 @@
 #include <stdlib.h>
 
 #include <cint_funcs.h>
+#ifdef USE_HDF5_SERIAL
+#include <hdf5/serial/hdf5.h>
+#include <hdf5/serial/hdf5_hl.h>
+# else
+#include <hdf5.h>
+#include <hdf5_hl.h>
+#endif
 
 /**
  * Describe a set of basis functions, centered on atoms.
@@ -125,5 +132,24 @@ int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S);
  * @ingroup basis
  */
 int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles);
+
+/**
+ * Dump a basis in a H5 file
+ *
+ * @param bs the wavefunction
+ * @param file_id a valid H5 file_id identifier
+ * @return error code
+ * @ingroup basis
+ */
+int stdl_basis_dump_h5(stdl_basis *bs, hid_t file_id);
+
+/**
+ * Load a basis from a H5 file
+ * @param file_id a valid H5 file_id identifier
+ * @param[out] bs_ptr the resulting wavefunction
+ * @return error code
+ * @ingroup basis
+ */
+int stdl_basis_load_h5(hid_t file_id, stdl_basis **bs_ptr);
 
 #endif //STDLITE_BASIS_H

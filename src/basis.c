@@ -296,3 +296,89 @@ int stdl_basis_reorder_C(size_t nmo, size_t nao, double *C, stdl_basis *bs, size
 
     return STDL_ERR_OK;
 }
+
+int stdl_basis_dump_h5(stdl_basis *bs, hid_t file_id) {
+    assert(file_id != H5I_INVALID_HID && bs != NULL);
+
+    hid_t bs_group_id;
+    herr_t status;
+
+    bs_group_id = H5Gcreate(file_id, "basis", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    STDL_ERROR_HANDLE_AND_REPORT(bs_group_id == H5I_INVALID_HID, return STDL_ERR_WRITE, "cannot create group");
+
+    // info
+    status = H5LTmake_dataset(bs_group_id, "info", 1, (hsize_t[]) {4}, H5T_NATIVE_ULONG, (size_t[]) {(size_t) bs->natm, (size_t) bs->nbas, bs->env_size,  (size_t) bs->use_spherical != 0});
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", bs_group_id);
+
+    // atm
+    status = H5LTmake_dataset(bs_group_id, "atm", 2, (hsize_t[]) {bs->natm, 6}, H5T_NATIVE_INT, bs->atm);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", bs_group_id);
+
+    // bas
+    status = H5LTmake_dataset(bs_group_id, "bas", 2, (hsize_t[]) {bs->nbas, 8}, H5T_NATIVE_INT, bs->bas);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", bs_group_id);
+
+    // env
+    status = H5LTmake_dataset(bs_group_id, "env", 1, (hsize_t[]) {bs->env_size}, H5T_NATIVE_DOUBLE, bs->env);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", bs_group_id);
+
+    // ... and close
+    status = H5Gclose(bs_group_id);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d", bs_group_id);
+
+    // set attributes
+    status = H5LTset_attribute_string(file_id, "basis", "type", "stdl_basis");
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot write attribute");
+
+    status = H5LTset_attribute_uint(file_id, "basis", "version", (unsigned int[]) {1, 0}, 2);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot write attribute");
+
+    return STDL_ERR_OK;
+}
+
+int stdl_basis_load_h5(hid_t file_id, stdl_basis **bs_ptr) {
+    assert(file_id != H5I_INVALID_HID && bs_ptr != NULL);
+
+    hid_t bs_group_id;
+    herr_t status;
+    int err = STDL_ERR_OK;
+    long ulongbuff[32];
+    char strbuff[128];
+    int version[2];
+
+    // check attributes
+    status = H5LTget_attribute_string(file_id, "basis", "type", strbuff);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0 || strcmp(strbuff, "stdl_basis") != 0, err = STDL_ERR_READ; goto _end, "missing or incorrect attribute for `basis`");
+
+    status = H5LTget_attribute_int(file_id, "basis", "version", version);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0 || version[0] != 1 || version[1] != 0, err = STDL_ERR_READ; goto _end, "missing or incorrect attribute for `basis`");
+
+    // read basis
+    bs_group_id = H5Gopen1(file_id, "basis");
+    STDL_ERROR_HANDLE_AND_REPORT(bs_group_id == H5I_INVALID_HID, err = STDL_ERR_READ; goto _end, "unable to open group");
+
+    status = H5LTread_dataset(bs_group_id, "info", H5T_NATIVE_ULONG, ulongbuff);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
+
+    err = stdl_basis_new((int) ulongbuff[0], (int) ulongbuff[1], ulongbuff[2], ulongbuff[3] != 0, bs_ptr);
+    STDL_ERROR_CODE_HANDLE(err, goto _end);
+
+    status = H5LTread_dataset(bs_group_id, "atm", H5T_NATIVE_INT, (*bs_ptr)->atm);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
+
+    status = H5LTread_dataset(bs_group_id, "bas", H5T_NATIVE_INT, (*bs_ptr)->bas);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
+
+    status = H5LTread_dataset(bs_group_id, "env", H5T_NATIVE_DOUBLE, (*bs_ptr)->env);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
+
+    status = H5Gclose(bs_group_id);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d",bs_group_id);
+
+    _end:
+    if(err != STDL_ERR_OK && *bs_ptr != NULL)
+        stdl_basis_delete(*bs_ptr);
+
+    return err;
+}
+

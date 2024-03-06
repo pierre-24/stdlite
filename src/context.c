@@ -3,14 +3,6 @@
 #include <math.h>
 #include <cblas.h>
 
-#ifdef USE_HDF5_SERIAL
-#include <hdf5/serial/hdf5.h>
-#include <hdf5/serial/hdf5_hl.h>
-# else
-#include <hdf5.h>
-#include <hdf5_hl.h>
-#endif
-
 #include "stdlite/context.h"
 #include "stdlite/logging.h"
 #include "stdlite/helpers.h"
@@ -800,7 +792,7 @@ int stdl_context_dump_h5(stdl_context* ctx, char* path) {
     stdl_log_msg(0, "Saving context in `%s` >", path);
     stdl_log_msg(1, "\n  | Save wavefunction ");
 
-    hid_t file_id, wf_group_id, bs_group_id, ctx_group_id;
+    hid_t file_id, ctx_group_id;
     herr_t status;
 
     file_id = H5Fcreate(path, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
@@ -808,64 +800,16 @@ int stdl_context_dump_h5(stdl_context* ctx, char* path) {
 
     // 1. Wavefunction
     stdl_wavefunction* wf = ctx->original_wf;
-    wf_group_id = H5Gcreate(file_id, "/wavefunction", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    STDL_ERROR_HANDLE_AND_REPORT(wf_group_id == H5I_INVALID_HID, return STDL_ERR_WRITE, "cannot create group");
+    int err = stdl_wavefunction_dump_h5(wf, file_id);
+    STDL_ERROR_CODE_HANDLE(err, return err);
 
-    // info
-    status = H5LTmake_dataset(wf_group_id, "info", 1, (hsize_t[]) {4}, H5T_NATIVE_ULONG, (size_t[]) {wf->natm, wf->nocc, wf->nao, wf->nmo});
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", wf_group_id);
-
-    // atm
-    status = H5LTmake_dataset(wf_group_id, "atm", 2, (hsize_t[]) {wf->natm, 4}, H5T_NATIVE_DOUBLE, wf->atm);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", wf_group_id);
-
-    // ao2atm
-    status = H5LTmake_dataset(wf_group_id, "aotoatm", 1, (hsize_t[]) {wf->nao}, H5T_NATIVE_ULONG, wf->aotoatm);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", wf_group_id);
-
-    // S
-    status = H5LTmake_dataset(wf_group_id, "S", 1, (hsize_t[]) {STDL_MATRIX_SP_SIZE(wf->nao)}, H5T_NATIVE_DOUBLE, wf->S);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", wf_group_id);
-
-    // C
-    status = H5LTmake_dataset(wf_group_id, "C", 2, (hsize_t[]) {wf->nao, wf->nmo}, H5T_NATIVE_DOUBLE, wf->C);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", wf_group_id);
-
-    // e
-    status = H5LTmake_dataset(wf_group_id, "e", 1, (hsize_t[]) {wf->nmo}, H5T_NATIVE_DOUBLE, wf->e);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", wf_group_id);
-
-    // ... and close
-    status = H5Gclose(wf_group_id);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d", wf_group_id);
-
+    // 2. Basis set
     stdl_log_msg(0, "-");
     stdl_log_msg(1, "\n  | Save basis ");
 
-    // 2. Basis set
     stdl_basis* bs = ctx->bs;
-    bs_group_id = H5Gcreate(file_id, "/basis", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    STDL_ERROR_HANDLE_AND_REPORT(bs_group_id == H5I_INVALID_HID, return STDL_ERR_WRITE, "cannot create group");
-
-    // info
-    status = H5LTmake_dataset(bs_group_id, "info", 1, (hsize_t[]) {4}, H5T_NATIVE_ULONG, (size_t[]) {(size_t) bs->natm, (size_t) bs->nbas, bs->env_size,  (size_t) bs->use_spherical != 0});
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", bs_group_id);
-
-    // atm
-    status = H5LTmake_dataset(bs_group_id, "atm", 2, (hsize_t[]) {bs->natm, 6}, H5T_NATIVE_INT, bs->atm);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", bs_group_id);
-
-    // bas
-    status = H5LTmake_dataset(bs_group_id, "bas", 2, (hsize_t[]) {bs->nbas, 8}, H5T_NATIVE_INT, bs->bas);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", bs_group_id);
-
-    // env
-    status = H5LTmake_dataset(bs_group_id, "env", 1, (hsize_t[]) {bs->env_size}, H5T_NATIVE_DOUBLE, bs->env);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", bs_group_id);
-
-    // ... and close
-    status = H5Gclose(bs_group_id);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d", bs_group_id);
+    err = stdl_basis_dump_h5(bs, file_id);
+    STDL_ERROR_CODE_HANDLE(err, return err);
 
     stdl_log_msg(0, "-");
     stdl_log_msg(1, "\n  | Save context ");
@@ -907,18 +851,6 @@ int stdl_context_dump_h5(stdl_context* ctx, char* path) {
     stdl_log_msg(1, "\n  | Set attributes ");
 
     // 4. set some attributes
-    status = H5LTset_attribute_string(file_id, "wavefunction", "type", "stdl_wavefunction");
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot write attribute");
-
-    status = H5LTset_attribute_uint(file_id, "wavefunction", "version", (unsigned int[]) {1, 0}, 2);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot write attribute");
-
-    status = H5LTset_attribute_string(file_id, "basis", "type", "stdl_basis");
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot write attribute");
-
-    status = H5LTset_attribute_uint(file_id, "basis", "version", (unsigned int[]) {1, 0}, 2);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot write attribute");
-
     status = H5LTset_attribute_string(file_id, "context", "type", "stdl_context");
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot write attribute");
 
@@ -941,7 +873,7 @@ int stdl_context_load_h5(char* path, stdl_context** ctx_ptr) {
     stdl_log_msg(0, "Reading context from `%s` >", path);
     stdl_log_msg(1, "\n  | Reading attributes ");
 
-    hid_t file_id, wf_group_id, bs_group_id, ctx_group_id;
+    hid_t file_id, ctx_group_id;
     herr_t status;
     int err = STDL_ERR_OK;
 
@@ -958,89 +890,31 @@ int stdl_context_load_h5(char* path, stdl_context** ctx_ptr) {
     file_id = H5Fopen(path, H5F_ACC_RDONLY, H5P_DEFAULT);
     STDL_ERROR_HANDLE_AND_REPORT(file_id == H5I_INVALID_HID, return STDL_ERR_OPEN, "cannot open %s", path);
 
-    // check attributes
-    status = H5LTget_attribute_string(file_id, "wavefunction", "type", strbuff);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0 || strcmp(strbuff, "stdl_wavefunction") != 0, err = STDL_ERR_READ; goto _end, "missing or incorrect attribute for `wavefunction`");
-
-    status = H5LTget_attribute_int(file_id, "wavefunction", "version", version);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0 || version[0] != 1 || version[1] != 0, err = STDL_ERR_READ; goto _end, "missing or incorrect attribute for `wavefunction`");
-
-    status = H5LTget_attribute_string(file_id, "basis", "type", strbuff);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0 || strcmp(strbuff, "stdl_basis") != 0, err = STDL_ERR_READ; goto _end, "missing or incorrect attribute for `basis`");
-
-    status = H5LTget_attribute_int(file_id, "basis", "version", version);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0 || version[0] != 1 || version[1] != 0, err = STDL_ERR_READ; goto _end, "missing or incorrect attribute for `basis`");
-
+    // 1. check attributes
     status = H5LTget_attribute_string(file_id, "context", "type", strbuff);
     STDL_ERROR_HANDLE_AND_REPORT(status < 0 || strcmp(strbuff, "stdl_context") != 0, err = STDL_ERR_READ; goto _end, "missing or incorrect attribute for `context`");
 
     status = H5LTget_attribute_int(file_id, "context", "version", version);
     STDL_ERROR_HANDLE_AND_REPORT(status < 0 || version[0] != 1 || version[1] != 0, err = STDL_ERR_READ; goto _end, "missing or incorrect  for `context`");
 
+    // 2. Wavefunction
     stdl_log_msg(0, "-");
     stdl_log_msg(1, "\n  | Reading wavefunction ");
-
-    // 1. Wavefunction
-    wf_group_id = H5Gopen1(file_id, "wavefunction");
-    STDL_ERROR_HANDLE_AND_REPORT(wf_group_id == H5I_INVALID_HID, err = STDL_ERR_READ; goto _end, "unable to open group");
-
-    status = H5LTread_dataset(wf_group_id, "info", H5T_NATIVE_ULONG, ulongbuff);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
-
-    err = stdl_wavefunction_new(ulongbuff[0], ulongbuff[1], ulongbuff[2], ulongbuff[3], &wf);
+    err = stdl_wavefunction_load_h5(file_id, &wf);
     STDL_ERROR_CODE_HANDLE(err, goto _end);
 
-    status = H5LTread_dataset(wf_group_id, "atm", H5T_NATIVE_DOUBLE, wf->atm);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
-
-    status = H5LTread_dataset(wf_group_id, "aotoatm", H5T_NATIVE_ULLONG, wf->aotoatm);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
-
-    status = H5LTread_dataset(wf_group_id, "S", H5T_NATIVE_DOUBLE, wf->S);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
-
-    status = H5LTread_dataset(wf_group_id, "C", H5T_NATIVE_DOUBLE, wf->C);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
-
-    status = H5LTread_dataset(wf_group_id, "e", H5T_NATIVE_DOUBLE, wf->e);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
-
-    status = H5Gclose(wf_group_id);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d", wf_group_id);
-
+    // 3. Basis set
     stdl_log_msg(0, "-");
     stdl_log_msg(1, "\n  | Reading basis ");
-
-    // 2. Basis set
-    bs_group_id = H5Gopen1(file_id, "basis");
-    STDL_ERROR_HANDLE_AND_REPORT(bs_group_id == H5I_INVALID_HID, err = STDL_ERR_READ; goto _end, "unable to open group");
-
-    status = H5LTread_dataset(bs_group_id, "info", H5T_NATIVE_ULONG, ulongbuff);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
-
-    STDL_ERROR_HANDLE_AND_REPORT(ulongbuff[0] != wf->natm, goto _end, "conflict between basis set and wavefunction on `natm`");
-
-    err = stdl_basis_new((int) ulongbuff[0], (int) ulongbuff[1], ulongbuff[2], ulongbuff[3] != 0, &bs);
+    err = stdl_basis_load_h5(file_id, &bs);
     STDL_ERROR_CODE_HANDLE(err, goto _end);
-
-    status = H5LTread_dataset(bs_group_id, "atm", H5T_NATIVE_INT, bs->atm);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
-
-    status = H5LTread_dataset(bs_group_id, "bas", H5T_NATIVE_INT, bs->bas);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
-
-    status = H5LTread_dataset(bs_group_id, "env", H5T_NATIVE_DOUBLE, bs->env);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
-
-    status = H5Gclose(bs_group_id);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d",bs_group_id);
 
     stdl_log_msg(0, "-");
     stdl_log_msg(1, "\n  | Reading context ");
 
-    // context
+    // 4. context
     ctx_group_id = H5Gopen1(file_id, "context");
-    STDL_ERROR_HANDLE_AND_REPORT(bs_group_id == H5I_INVALID_HID, err = STDL_ERR_READ; goto _end, "unable to open group");
+    STDL_ERROR_HANDLE_AND_REPORT(ctx_group_id == H5I_INVALID_HID, err = STDL_ERR_READ; goto _end, "unable to open group");
 
     status = H5LTread_dataset(ctx_group_id, "parameters", H5T_NATIVE_FLOAT, floatbuff);
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
@@ -1089,26 +963,13 @@ int stdl_context_load_h5(char* path, stdl_context** ctx_ptr) {
     }
 
     status = H5Gclose(ctx_group_id);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d",bs_group_id);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d", ctx_group_id);
 
     stdl_log_msg(0, "< done\n");
 
     size_t nprim = 0;
-    int si, center, shift = 0;
     for (int ibas = 0; ibas < bs->nbas; ++ibas) {
-        center = bs->bas[ibas * 8 + 0];
         nprim += bs->bas[ibas * 8 + 2];
-
-        if(bs->use_spherical)
-            si = CINTcgto_spheric(ibas, bs->bas);
-        else
-            si = CINTcgtos_cart(ibas, bs->bas);
-
-        for(int j = 0; j < si; j++) {
-            wf->aotoatm[shift + j] = center;
-        }
-
-        shift += si;
     }
 
     stdl_log_msg(0, "Got %d atoms, %d AOs (%d primitives in %d basis functions), and %d MOs\n", wf->natm, wf->nao, nprim, bs->nbas, wf->nmo);

@@ -2,6 +2,14 @@
 #define STDLITE_WAVEFUNCTION_H
 
 #include <stdlib.h>
+#ifdef USE_HDF5_SERIAL
+#include <hdf5/serial/hdf5.h>
+#include <hdf5/serial/hdf5_hl.h>
+# else
+#include <hdf5.h>
+#include <hdf5_hl.h>
+#endif
+
 
 /**
  * Structure that represent a (closed-shell!) wavefunction.
@@ -127,6 +135,25 @@ int stdl_wavefunction_dsp_ao_to_dsp_mo(size_t nao, size_t nmo, double* C, double
  * @ingroup wavefunction
  */
 int stdl_wavefunction_dge_ao_to_dge_mo(size_t nao, size_t nmo, double *C, double *X_AO, double *X_MO);
+
+/**
+ * Dump a wavefunction in a H5 file_id
+ *
+ * @param wf the wavefunction
+ * @param file_id a valid H5 file_id identifier
+ * @return error code
+ * @ingroup wavefunction
+ */
+int stdl_wavefunction_dump_h5(stdl_wavefunction* wf, hid_t file_id);
+
+/**
+ * Load a wavefunction from a H5 file_id
+ * @param file_id a valid H5 file_id identifier
+ * @param[out] wf_ptr the resulting wavefunction
+ * @return error code
+ * @ingroup wavefunction
+ */
+int stdl_wavefunction_load_h5(hid_t file_id, stdl_wavefunction **wf_ptr);
 
 
 #endif //STDLITE_WAVEFUNCTION_H
