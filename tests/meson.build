@@ -40,6 +40,7 @@ foreach t: tests_to_run
             dependencies: tests_dep,
             install: false,
             build_by_default: false,
+            c_args : build_args,
         ),
         suite: 'lib_code',
     )
