@@ -2,6 +2,7 @@
 #define STDLITE_WAVEFUNCTION_H
 
 #include <stdlib.h>
+
 #ifdef USE_HDF5_SERIAL
 #include <hdf5/serial/hdf5.h>
 #include <hdf5/serial/hdf5_hl.h>

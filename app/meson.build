@@ -1,7 +1,7 @@
 exe_args = []
 
 # build args
-app_build_args = [
+app_build_args = build_args + [
     '-DAPP_NAME="' + meson.project_name() + '_run"',
     '-DAPP_VERSION="' + meson.project_version() + '"',
 ]
@@ -37,6 +37,7 @@ stdlite_app_lib = static_library(
     srcs,
     include_directories : includes,
     dependencies: app_dep,
+    c_args : app_build_args,
 )
 
 stdlite_app_lib_dep = declare_dependency(
