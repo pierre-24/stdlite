@@ -46,11 +46,11 @@ int stdl_app_context(stdl_user_input* inp, stdl_context **ctx_ptr) {
     int err;
 
     if(inp->ctx_source_type == STDL_SRC_CTX) { // directly read context from a previous declaration
-        err = stdl_context_load_h5(inp->ctx_source_path, ctx_ptr);
+        err = stdl_context_load_h5(inp->ctx_source, ctx_ptr);
     } else { // read file
         stdl_lexer* lx = NULL;
-        FILE* f = fopen(inp->ctx_source_path, "r");
-        STDL_ERROR_HANDLE_AND_REPORT(f == NULL, return STDL_ERR_OPEN, "cannot open `%s`", inp->ctx_source_path);
+        FILE* f = fopen(inp->ctx_source, "r");
+        STDL_ERROR_HANDLE_AND_REPORT(f == NULL, return STDL_ERR_OPEN, "cannot open `%s`", inp->ctx_source);
 
         err = stdl_lexer_new(f, &lx);
         STDL_ERROR_CODE_HANDLE(err, fclose(f); return err);
@@ -78,7 +78,7 @@ int stdl_app_context(stdl_user_input* inp, stdl_context **ctx_ptr) {
         STDL_ERROR_CODE_HANDLE(err, return err);
     }
 
-    if(strcmp(inp->ctx_source_path, inp->ctx_output) != 0)
+    if(strcmp(inp->ctx_source, inp->ctx_output) != 0)
         err = stdl_context_dump_h5(*ctx_ptr, inp->ctx_output);
 
     return err;

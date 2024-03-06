@@ -39,7 +39,8 @@ endforeach
 
 # -- app test
 test('help', stdlite_exe, args: ['-h'], suite: 'app')
-test('valid input', stdlite_exe, args: ['../app/tests/test_files/test.toml'], suite: 'app')
+test('valid input (TOML)', stdlite_exe, args: ['../app/tests/test_files/test.toml'], suite: 'app')
+test('valid input (context)', stdlite_exe, args: ['--ctx_source=../app/tests/test_files/context_water_sto3g.h5', '--ctx_source_type=STDL_CTX'], suite: 'app')
 
 test('noargs', stdlite_exe, suite: 'app', should_fail: true)
 test('unknown arg', stdlite_exe, args: ['-k'], suite: 'app', should_fail: true)

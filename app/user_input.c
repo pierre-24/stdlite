@@ -17,7 +17,7 @@ int stdl_user_input_new(stdl_user_input** inp_ptr) {
     (*inp_ptr)->title = NULL;
 
     // context
-    (*inp_ptr)->ctx_source_path = NULL;
+    (*inp_ptr)->ctx_source = NULL;
     (*inp_ptr)->ctx_source_type = STDL_SRC_CTX;
 
     (*inp_ptr)->ctx_output = malloc(128 * sizeof(char ));
@@ -39,7 +39,7 @@ int stdl_user_input_new(stdl_user_input** inp_ptr) {
 int stdl_user_input_delete(stdl_user_input* inp) {
     assert(inp != NULL);
 
-    STDL_FREE_ALL(inp->title, inp->ctx_source_path, inp->ctx_output, inp);
+    STDL_FREE_ALL(inp->title, inp->ctx_source, inp->ctx_output, inp);
 
     return STDL_ERR_OK;
 }
@@ -93,7 +93,7 @@ int stdl_user_input_fill_from_toml(stdl_user_input* inp, char* path) {
 
         toml_datum_t ctx_source = toml_string_in(ctx, "source");
         if(ctx_source.ok) {
-            inp->ctx_source_path = ctx_source.u.s;
+            inp->ctx_source = ctx_source.u.s;
             STDL_DEBUG("- source");
         }
 
@@ -257,9 +257,9 @@ int stdl_user_input_fill_from_args(stdl_user_input* inp, int argc, char* argv[])
 
     if(arg_ctx_source->count > 0) {
         sz = strlen(arg_ctx_source->filename[0]);
-        inp->ctx_source_path = realloc(inp->ctx_source_path, (sz + 1) * sizeof(char ));
-        STDL_ERROR_HANDLE_AND_REPORT(inp->ctx_source_path == NULL, goto _end, "malloc");
-        strcpy(inp->ctx_source_path, arg_ctx_source->filename[0]);
+        inp->ctx_source = realloc(inp->ctx_source, (sz + 1) * sizeof(char ));
+        STDL_ERROR_HANDLE_AND_REPORT(inp->ctx_source == NULL, goto _end, "malloc");
+        strcpy(inp->ctx_source, arg_ctx_source->filename[0]);
     }
 
     if(arg_ctx_source_type->count > 0) {
@@ -311,7 +311,7 @@ int stdl_user_input_fill_from_args(stdl_user_input* inp, int argc, char* argv[])
 
 
 int stdl_user_input_check(stdl_user_input* inp) {
-    STDL_ERROR_HANDLE_AND_REPORT(inp->ctx_source_path == NULL, return STDL_ERR_INPUT, "missing context.source");
+    STDL_ERROR_HANDLE_AND_REPORT(inp->ctx_source == NULL, return STDL_ERR_INPUT, "missing context.source");
 
     STDL_ERROR_HANDLE_AND_REPORT(inp->ctx_gammaJ < .0, return STDL_ERR_INPUT, "context.gammaJ < 0");
     STDL_ERROR_HANDLE_AND_REPORT(inp->ctx_gammaK < .0, return STDL_ERR_INPUT, "context.gammaK < 0");
@@ -319,6 +319,52 @@ int stdl_user_input_check(stdl_user_input* inp) {
     STDL_ERROR_HANDLE_AND_REPORT(inp->ctx_e2thr < .0, return STDL_ERR_INPUT, "context.e2thr < 0");
     STDL_ERROR_HANDLE_AND_REPORT(inp->ctx_ax < .0, return STDL_ERR_INPUT, "context.ax < 0");
     STDL_ERROR_HANDLE_AND_REPORT(inp->ctx_ax > 1, return STDL_ERR_INPUT, "context.ax > 1");
+
+    return STDL_ERR_OK;
+}
+
+int stdl_user_input_log(stdl_user_input* inp) {
+
+    if(inp->title != NULL)
+        stdl_log_msg(0, "title = \"%s\"\n", inp->title);
+
+    stdl_log_msg(0, "[context]\n");
+
+    stdl_log_msg(0, "source = \"%s\"\n", inp->ctx_source);
+
+    switch (inp->ctx_source_type) {
+        case STDL_SRC_CTX:
+            stdl_log_msg(0, "source_type = \"STDL_CTX\"\n");
+            break;
+        case STDL_SRC_FCHK:
+            stdl_log_msg(0, "source_type = \"FCHK\"\n");
+            break;
+        case STDL_SRC_MOLDEN:
+            stdl_log_msg(0, "source_type = \"MOLDEN\"\n");
+            break;
+    }
+
+    if(inp->ctx_source_type != STDL_SRC_CTX) {
+        stdl_log_msg(0, "# parameters to build A' and B':\n");
+
+        switch (inp->ctx_method) {
+            case STDL_METHOD_MONOPOLE:
+                stdl_log_msg(0, "method = \"monopole\"\n");
+                break;
+            case STDL_METHOD_MONOPOLE_DIRECT:
+                stdl_log_msg(0, "method = \"monopole_direct\"\n");
+                break;
+        }
+
+        stdl_log_msg(0, "use_tda = %s\n", inp->ctx_use_tda? "true": "false");
+        stdl_log_msg(0, "gammaJ = %f\ngammaK = %f\nax = %f\n", inp->ctx_gammaJ, inp->ctx_gammaK, inp->ctx_ax);
+        stdl_log_msg(0, "ethr = %f # au\ne2thr = %e # au\n", inp->ctx_ethr, inp->ctx_e2thr);
+
+        stdl_log_msg(0, "output = \"%s\"\n", inp->ctx_output);
+    } else {
+        stdl_log_msg(0, "# remaining parameters will be obtained from %s\n", inp->ctx_source);
+    }
+
 
     return STDL_ERR_OK;
 }

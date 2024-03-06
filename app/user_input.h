@@ -42,7 +42,7 @@ struct stdl_user_input_ {
 
     // ----- context:
     /// Source path
-    char* ctx_source_path;
+    char* ctx_source;
 
     /// Source type
     stdl_source_type ctx_source_type;
@@ -130,5 +130,14 @@ int stdl_user_input_fill_from_args(stdl_user_input* inp, int argc, char* argv[])
  * @ingroup user_input
  */
 int stdl_user_input_check(stdl_user_input* inp);
+
+/**
+ * Print (through `stdl_log_msg()`) the user input, as a TOML-compatible.
+ *
+ * @param inp a valid user input structure
+ * @return error code
+ * @ingroup user_input
+ */
+int stdl_user_input_log(stdl_user_input* inp);
 
 #endif //STDLITE_USER_INPUT_H

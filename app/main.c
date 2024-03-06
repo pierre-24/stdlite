@@ -44,8 +44,12 @@ int main(int argc, char* argv[]) {
                  APP_NAME, stdl_library_name(), stdl_library_version()
                  );
 
+    title("User input");
+    err = stdl_user_input_log(input);
+    STDL_ERROR_CODE_HANDLE(err, goto _end);
+
     // create context
-    title("Context");
+    title("Create context");
     err = stdl_app_context(input, &ctx);
     STDL_ERROR_CODE_HANDLE(err, goto _end);
 
