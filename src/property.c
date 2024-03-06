@@ -11,7 +11,9 @@
 int stdl_property_polarizability(stdl_context* ctx, double* dips_MO, float* X, float* Y, float* alpha) {
     assert(ctx != NULL && dips_MO != NULL && X != NULL && Y != NULL && alpha != NULL);
 
+    stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute polarizability tensor >");
+    stdl_log_msg(1, "\n  | Preparing ");
 
     size_t nvirt = ctx->nmo - ctx->nocc;
 
@@ -22,6 +24,7 @@ int stdl_property_polarizability(stdl_context* ctx, double* dips_MO, float* X, f
             alpha[STDL_MATRIX_SP_IDX(zeta, sigma)] = .0f;
 
             stdl_log_msg(0, "-");
+            stdl_log_msg(1, "\n  | Computing (%d,%d) ", zeta, sigma);
 
             for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
                 size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
@@ -44,7 +47,9 @@ int stdl_property_polarizability(stdl_context* ctx, double* dips_MO, float* X, f
 int stdl_property_transition_dipoles(stdl_context *ctx, size_t nexci, double* dips_MO, float* X, float* Y, float * tdips) {
     assert(ctx != NULL && nexci > 0 && dips_MO != NULL && X != NULL && tdips != NULL);
 
+    stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute ground to excited transition dipole moments >");
+    stdl_log_msg(1, "\n  | Looping through CSFs ");
 
     size_t nvirt = ctx->nmo - ctx->nocc;
     float s2 = sqrtf(2);
@@ -145,7 +150,9 @@ int _first_hyperpolarizability_component(stdl_context* ctx, int component[3], do
 int stdl_property_first_hyperpolarizability(stdl_context* ctx, double* dips_MO, float * Xs[3], float * Ys[3], float* beta) {
     assert(ctx != NULL && dips_MO != NULL && Xs[0] != NULL && Xs[1] != NULL && Xs[2] != NULL && Ys[0] != NULL && Ys[1] != NULL && Ys[2] != NULL && beta != NULL);
 
+    stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute first hyperpolarizability tensor >");
+    stdl_log_msg(1, "\n  | Preparing ");
 
     int isset[3][3][3] = {0};
     stdl_permutations* set = NULL;
@@ -156,6 +163,7 @@ int stdl_property_first_hyperpolarizability(stdl_context* ctx, double* dips_MO, 
             for (int tau = 0; tau < 3; ++tau) {
                 if(!isset[zeta][sigma][tau]) {
                     stdl_log_msg(0, "-");
+                    stdl_log_msg(1, "\n  | Computing (%d,%d,%d) ", zeta, sigma, tau);
 
                     float value = .0f;
                     _first_hyperpolarizability_component(ctx, (int[]) {zeta, sigma, tau}, dips_MO, Xs, Ys, &value);
@@ -205,6 +213,10 @@ int stdl_property_e2e_transition_dipoles(stdl_context* ctx, size_t nexci, double
     assert(ctx != NULL && nexci > 0 && dips_MO != NULL && X != NULL && e2etdips != NULL);
     size_t nvirt = ctx->nmo - ctx->nocc;
 
+    stdl_log_msg(1, "+ ");
+    stdl_log_msg(0, "Compute excited to excited transition dipole moments >");
+    stdl_log_msg(1, "\n  | Looping through CSFs ");
+
     for (size_t m = 0; m < nexci; ++m) {
         for (size_t n = 0; n <= m; ++n) {
             float a_[3] = {0}, b_[3] = {0};
@@ -242,6 +254,8 @@ int stdl_property_e2e_transition_dipoles(stdl_context* ctx, size_t nexci, double
             }
         }
     }
+
+    stdl_log_msg(0, "< done\n");
 
     return STDL_ERR_OK;
 }

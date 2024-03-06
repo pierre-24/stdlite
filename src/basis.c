@@ -142,7 +142,7 @@ void _compute_renormalization(stdl_basis* bs, double* renorm, double* buff) {
 int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S) {
     assert(bs != NULL && S != NULL);
 
-    stdl_log_msg(1, "Computing <i|j> >");
+    STDL_DEBUG("Computing <i|j>");
 
     size_t nao = 0;
     for(int ibas=0; ibas < bs->nbas; ibas++) {
@@ -191,8 +191,6 @@ int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S) {
 
     free(renorm);
 
-    stdl_log_msg(1, "< done\n");
-
     return STDL_ERR_OK;
 }
 
@@ -200,7 +198,7 @@ int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S) {
 int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles) {
     assert(bs != NULL && dipoles != NULL);
 
-    stdl_log_msg(1, "Computing <i|µ|j> >");
+    STDL_DEBUG("Computing <i|µ|j>");
 
     size_t nao = 0;
     for(int ibas=0; ibas < bs->nbas; ibas++) {
@@ -254,8 +252,6 @@ int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles) {
 
     free(renorm);
 
-    stdl_log_msg(1, "< done\n");
-
     return STDL_ERR_OK;
 }
 
@@ -263,6 +259,8 @@ int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles) {
 
 int stdl_basis_reorder_C(size_t nmo, size_t nao, double *C, stdl_basis *bs, size_t maxshell, int **transpose) {
     assert(nao > 0 && nmo <= nao && C != NULL && bs != NULL && maxshell > 0 && transpose != NULL);
+
+    STDL_DEBUG("reorder orbitals");
 
     double buff[CART_MAX] = {0}; // maximum that can be handled at the moment
 
@@ -282,6 +280,7 @@ int stdl_basis_reorder_C(size_t nmo, size_t nao, double *C, stdl_basis *bs, size
                 sj = CINTcgtos_cart(j, bs->bas);
 
             if(angmom > 1) { // s & p functions are ok
+                STDL_DEBUG("reordering basis function #%d", j);
                 // reorder
                 for(int mu = 0; mu < sj; mu++) {
                     buff[transpose[angmom][mu]] = C[i * nao + joffset + mu];

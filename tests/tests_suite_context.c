@@ -11,6 +11,7 @@
 
 void setUp() {
     stdl_set_debug_level(-1);
+    stdl_set_log_level(0);
 }
 
 void test_context_select_MO_ok() {
@@ -195,7 +196,7 @@ void test_context_select_csfs_ok() {
     TEST_ASSERT_EQUAL_INT(10, ctx->ncsfs);
     TEST_ASSERT_NULL(ctx->B);
 
-    stdl_matrix_ssp_print(ctx->ncsfs, ctx->A, "A");
+    // stdl_matrix_ssp_print(ctx->ncsfs, ctx->A, "A");
 
     // check that energies are in increasing order
     for (size_t lia = 1; lia < ctx->ncsfs; ++lia) {

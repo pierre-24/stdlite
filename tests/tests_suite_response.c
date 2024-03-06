@@ -8,6 +8,7 @@
 
 void setUp() {
     stdl_set_debug_level(-1);
+    stdl_set_log_level(0);
 }
 
 // Use the spectral representation of a linear response vector to re-create Wlin, which is either X(w) or Y(w) depending on `getX`

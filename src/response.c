@@ -11,11 +11,14 @@
 int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X) {
     assert(ctx != NULL && ctx->ncsfs > 0 && nexci > 0 && nexci <= ctx->ncsfs && e != NULL && X != NULL);
 
+    stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute excitation amplitude vectors (TDA-DFT) >");
+    stdl_log_msg(1, "\n  | ");
 
     int err;
 
     if (nexci < ctx->ncsfs) {
+        stdl_log_msg(1, "use sspevx ");
         int found = 0;
 
         int* ifail = malloc(ctx->ncsfs * sizeof(float ));
@@ -31,6 +34,7 @@ int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
 
         STDL_FREE_ALL(ifail);
     } else {
+        stdl_log_msg(1, "use sspev ");
         err = LAPACKE_sspev(
                 LAPACK_ROW_MAJOR, 'V', 'L',
                 (int) ctx->ncsfs, ctx->A,
@@ -63,7 +67,9 @@ void _make_apb_amb(stdl_context* ctx) {
 int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X, float* Y) {
     assert(ctx != NULL && ctx->ncsfs > 0 && nexci <= ctx->ncsfs && ctx->B != NULL && e != NULL && X != NULL && Y != NULL);
 
+    stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute excitation amplitude vectors (TD-DFT) >");
+    stdl_log_msg(1, "\n  | Make A+B and A-B ");
 
     size_t sz = ctx->ncsfs * ctx->ncsfs;
     float * wrk = malloc(3 * sz * sizeof(float));
@@ -97,10 +103,12 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
     );
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | ");
 
     int err;
 
     if (nexci < ctx->ncsfs) {
+        stdl_log_msg(1, "use ssyevx ");
         int found = 0;
 
         int* ifail = malloc(ctx->ncsfs * sizeof(float ));
@@ -116,6 +124,7 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
 
         STDL_FREE_ALL(ifail);
     } else {
+        stdl_log_msg(1, "use ssyev ");
         err = LAPACKE_ssyev(
                 LAPACK_ROW_MAJOR, 'V', 'L',
                 (int) ctx->ncsfs, U, (int) ctx->ncsfs,
@@ -134,6 +143,7 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
     STDL_ERROR_CODE_HANDLE(err, free(wrk); return err);
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Compute X and Y ");
 
     // Get energies and compute X and Y
     for (size_t iexci = 0; iexci < nexci; ++iexci) {
@@ -175,7 +185,12 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
 }
 
 int stdl_response_perturbed_gradient(stdl_context* ctx, size_t dim, double* eta_MO, float *egrad) {
+    assert(ctx != NULL && dim > 0 && eta_MO != NULL && egrad != NULL);
+
+    stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute perturbed gradient >");
+    stdl_log_msg(1, "\n  | Looping through CSFs ");
+
     size_t nvirt = ctx->nmo - ctx->nocc;
     for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
         size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
@@ -193,7 +208,9 @@ int stdl_response_perturbed_gradient(stdl_context* ctx, size_t dim, double* eta_
 int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, float *egrad, float *X, float *Y) {
     assert(ctx != NULL && ctx->ncsfs > 0 && nw > 0 && ndim > 0 && ctx->B != NULL && egrad != NULL && X != NULL && Y != NULL);
 
+    stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute linear response vectors (TD-DFT) >");
+    stdl_log_msg(1, "\n  | Make A+B and A-B ");
 
     size_t szXY = ctx->ncsfs * ndim;
 
@@ -220,6 +237,7 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
 
     for (size_t iw = 0; iw < nw; ++iw) {
         stdl_log_msg(0, "-");
+        stdl_log_msg(1, "\n  | Compute linear response vector for w=%f ", w[iw]);
 
         // make left side: L = (A+B)-w^2*(A-B)^(-1)
         for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
@@ -277,7 +295,9 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
 int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, float *egrad, float *X, float *Y) {
     assert(ctx != NULL && ctx->ncsfs > 0 && nw > 0 && ndim > 0 && egrad != NULL && X != NULL && Y != NULL);
 
-    STDL_DEBUG("Compute linear response vectors (TDA-DFT)");
+    stdl_log_msg(1, "+ ");
+    stdl_log_msg(0, "Compute linear response vectors (TDA-DFT) >");
+    stdl_log_msg(1, "\n  | Invert A ");
 
     size_t szXY = ctx->ncsfs * ndim;
     int err;
@@ -302,7 +322,8 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
     STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(L, ipiv, Ai); return STDL_ERR_RESPONSE, "error while ssptri(): %d", err);
 
     for (size_t iw = 0; iw < nw; ++iw) {
-        STDL_DEBUG("- w=%f", w[iw]);
+        stdl_log_msg(0, "-");
+        stdl_log_msg(1, "\n  | Compute linear response vector for w=%f ", w[iw]);
 
         // make left side: L = A-w^2*A^(-1)
         for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
@@ -344,7 +365,7 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
         }
     }
 
-    STDL_DEBUG("done with linear response vectors");
+    stdl_log_msg(0, "< done\n");
 
     STDL_FREE_ALL(L, ipiv, Ai);
 

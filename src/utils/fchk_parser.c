@@ -597,7 +597,9 @@ int stdl_basis_data_count_nao(stdl_basis_data* dt, size_t* total) {
 int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_basis **bs_ptr) {
     assert(wf_ptr != NULL && bs_ptr != NULL && lx != NULL);
 
+    stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Extract wavefunction and basis set from FCHK >");
+    stdl_log_msg(1, "\n  | Reading FHCK ");
 
     STDL_DEBUG("reading FCHK file");
 
@@ -723,6 +725,7 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
     }
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | setting up atoms ");
 
     STDL_DEBUG("reading done");
 
@@ -732,6 +735,7 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
     // copy remaining stuffs
     memcpy((*wf_ptr)->atm, atm, 4 * natm * sizeof(double));
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | setting up basis set ");
 
     // create the basis set
     error = stdl_basis_data_to_basis(dt, natm, (*wf_ptr)->atm, bs_ptr);
@@ -741,6 +745,7 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
     dt = NULL;
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | mapping AO ");
 
     // map each AO to its atom
     int si, center, shift = 0;
@@ -762,6 +767,7 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
     }
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | fixing AO ordering ");
 
     // fix AO ordering
     int** transpose = STDL_G16_TRANSPOSE_CART;
@@ -771,6 +777,7 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
     stdl_basis_reorder_C(nmo, nao, (*wf_ptr)->C, *bs_ptr, 4, transpose);
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | create S ");
 
     // create the S matrix
     error = stdl_basis_dsp_ovlp((*bs_ptr), (*wf_ptr)->S);

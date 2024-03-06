@@ -150,7 +150,9 @@ int _context_new_noselect(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, f
 int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float gammaK, float ethr, float e2thr, float ax, stdl_context **ctx_ptr) {
     assert(ctx_ptr != NULL && wf != NULL && bs != NULL && gammaJ > 0 && gammaK > 0 && ethr > 0 && e2thr > 0 && ax >= 0 && ax <= 1);
 
+    stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Create new context and select MO >", gammaJ, gammaK);
+    stdl_log_msg(1, "\n  | Select MO ");
 
     int err = _context_new_noselect(wf, bs, gammaJ, gammaK, ethr, e2thr, ax, ctx_ptr);
     STDL_ERROR_CODE_HANDLE(err, return err);
@@ -174,6 +176,7 @@ int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float 
     }
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Copy LCAO coefficients ");
 
     (*ctx_ptr)->nmo = omax - omin + 1;
     (*ctx_ptr)->nocc = ohomo - omin + 1;
@@ -190,6 +193,7 @@ int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float 
     }
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Orthogonalize MO ");
 
     STDL_DEBUG("Orthogonalize MOs");
 
@@ -222,7 +226,9 @@ int stdl_context_delete(stdl_context* ctx) {
 int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     assert(ctx != NULL && ctx->ncsfs == 0);
 
+    stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Select CSFs (monopole approximation) >");
+    stdl_log_msg(1, "\n  | Build (AA|BB)_J and (AA|BB)_K ");
 
     size_t natm = ctx->original_wf->natm,
             nvirt = ctx->nmo - ctx->nocc,
@@ -258,8 +264,6 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     float* env = malloc(natm * (2 * natm + STDL_MATRIX_SP_SIZE(ctx->nmo) + nexci_ij + nexci_ia) * sizeof(float));
     STDL_ERROR_HANDLE_AND_REPORT(env == NULL, return STDL_ERR_MALLOC, "malloc");
 
-    STDL_DEBUG("Create (AA|BB)_J and (AA|BB)_K");
-
     // Coulomb and exchange-like integrals (AA|BB), `float[natm * natm]`
     float * AABB_J = env;
     float * AABB_K = env + natm * natm;
@@ -285,7 +289,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     // stdl_matrix_sge_print(natm, 0, AABB_K, "(AA|BB)_K");
 
     stdl_log_msg(0, "-");
-    STDL_DEBUG("Create Q_A^ij, Q_A^ab, and Q_A^ia");
+    stdl_log_msg(1, "\n  | Build Q_A^ij, Q_A^ab, and Q_A^ia ");
 
     // 1. density charges for Coulomb terms: Q_A^ij [in packed form, float[STDL_SP_SIZE(nocc)]], Q_A^ab [in packed form, float[STDL_SP_SIZE(nocc)]], and Q_A^ia [float[nocc * nvirt]].
     float* qAij = env + (2 * natm) * natm;
@@ -336,11 +340,11 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     }
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Build (ij|BB)_J and (ia|BB)_K ");
 
     // stdl_matrix_sge_print(nexci_ia, natm, qAia, "Q_A^ia");
 
     // 2. Intermediates: (ij|BB)_J [in packed form], and (ia|BB)_K:
-    STDL_DEBUG("Create (ij|BB)_J and (ia|BB)_K");
 
     float* ijBB_J = env + (2 * natm + STDL_MATRIX_SP_SIZE(ctx->nmo)) * natm;
     float* iaBB_K = env + (2 * natm + STDL_MATRIX_SP_SIZE(ctx->nmo) + nexci_ij) * natm;
@@ -365,12 +369,12 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
 
     // stdl_matrix_sge_print(nexci_ia, natm, iaBB_K, "(ia|BB)_K");
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Select primary CSFs below %f Eh, looping through %d CSFS ", ctx->ethr, nexci_ia);
 
     /*
      *  2) To select primary CSFs i→a, one needs to evaluate A'_ia,ia = (e_a - e_i) + 2*(ia|ia)' - (ii|aa)'.
      *     Then, CSFs are selected if A'_ia,ia <= E_thr.
      */
-    STDL_DEBUG("Select primary CSFs below %f Eh", ctx->ethr);
 
     // marks csfs_ensemble as not-included (0), primary (1), or secondary (2).
     char* csfs_ensemble = malloc(nexci_ia * sizeof(short));
@@ -445,7 +449,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     }
 
     stdl_log_msg(0, "-");
-    STDL_DEBUG("Select secondary CSFs with E^(2) < %f Eh", ctx->e2thr);
+    stdl_log_msg(1, "\n  | Select secondary CSFs with E^(2) < %f Eh, looping through %d CSFs ", ctx->e2thr, nexci_ia - ctx->ncsfs);
 
     if(ctx->ncsfs > 0) {
         /*
@@ -487,7 +491,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
         }
 
         stdl_log_msg(0, "-");
-        STDL_DEBUG("Build A' (and B') matrices with %ld CSFs (%.2f%% of %ld CSFs)", ctx->ncsfs, (float) ctx->ncsfs / (float) nexci_ia * 100, nexci_ia);
+        stdl_log_msg(1, "\n  | Build A' (and B') matrices with %ld CSF ", ctx->ncsfs);
 
         /*
          * 4) Store selected CSFs (in increasing energy order), and create A', B' matrices
@@ -585,7 +589,9 @@ float _pqrs_monopole_wrk(stdl_context* ctx, size_t p, size_t q, size_t r, size_t
 int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
     assert(ctx != NULL && ctx->ncsfs == 0);
 
+    stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Select CSFs (monopole approximation -- direct method) >");
+    stdl_log_msg(1, "\n  | Build (ij|BB)_J and (ia|BB)_K ");
 
     size_t natm = ctx->original_wf->natm,
             nvirt = ctx->nmo - ctx->nocc,
@@ -620,13 +626,12 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
     }
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Select primary CSFs below %f Eh ", ctx->ethr);
 
     /*
      *  2) To select primary CSFs i→a, one needs to evaluate A'_ia,ia = (e_a - e_i) + 2*(ia|ia)' - (ii|aa)'.
      *     Then, CSFs are selected if A'_ia,ia <= E_thr.
      */
-
-    STDL_DEBUG("Select primary CSFs below %f Eh", ctx->ethr);
 
     // marks csfs_ensemble as not-included (0), primary (1), or secondary (2).
     char* csfs_ensemble = malloc(nexci_ia * sizeof(short));
@@ -699,7 +704,7 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
          */
 
         stdl_log_msg(0, "-");
-        STDL_DEBUG("Select secondary CSFs with E^(2) < %f Eh", ctx->e2thr);
+        stdl_log_msg(1, "\n  | Select secondary CSFs with E^(2) < %f Eh ", ctx->e2thr);
 
         for(size_t kjb=0; kjb < nexci_ia; kjb++) { // loop over possible S-CSFs
             if(csfs_ensemble[kjb] == 2) {
@@ -728,9 +733,8 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
             }
         }
 
-
         stdl_log_msg(0, "-");
-        STDL_DEBUG("Build A' (and B') matrices with %ld CSFs (%.2f%% of %ld CSFs)", ctx->ncsfs, (float) ctx->ncsfs / (float) nexci_ia * 100, nexci_ia);
+        stdl_log_msg(1, "\n  | Build A' (and B') matrices with %ld CSFs", ctx->ncsfs);
 
         /*
          * 4) Store selected CSFs (in increasing energy order), and create A', B' matrices
@@ -796,7 +800,9 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
 int stdl_context_dump_h5(stdl_context* ctx, char* path) {
     assert(ctx != NULL && path != NULL);
 
+    stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Saving context in `%s` >", path);
+    stdl_log_msg(1, "\n  | Save wavefunction ");
 
     hid_t file_id, wf_group_id, bs_group_id, ctx_group_id;
     herr_t status;
@@ -838,6 +844,7 @@ int stdl_context_dump_h5(stdl_context* ctx, char* path) {
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d", wf_group_id);
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Save basis ");
 
     // 2. Basis set
     stdl_basis* bs = ctx->bs;
@@ -865,6 +872,7 @@ int stdl_context_dump_h5(stdl_context* ctx, char* path) {
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d", bs_group_id);
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Save context ");
 
     // 3. Context
     ctx_group_id = H5Gcreate(file_id, "/context", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -900,6 +908,7 @@ int stdl_context_dump_h5(stdl_context* ctx, char* path) {
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d", ctx_group_id);
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Set attributes ");
 
     // 4. set some attributes
     status = H5LTset_attribute_string(file_id, "wavefunction", "type", "stdl_wavefunction");
@@ -932,7 +941,9 @@ int stdl_context_dump_h5(stdl_context* ctx, char* path) {
 int stdl_context_load_h5(char* path, stdl_context** ctx_ptr) {
     assert(ctx_ptr != NULL && path != NULL);
 
+    stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Reading context from `%s` >", path);
+    stdl_log_msg(1, "\n  | Reading attributes ");
 
     hid_t file_id, wf_group_id, bs_group_id, ctx_group_id;
     herr_t status;
@@ -971,6 +982,7 @@ int stdl_context_load_h5(char* path, stdl_context** ctx_ptr) {
     STDL_ERROR_HANDLE_AND_REPORT(status < 0 || version[0] != 1 || version[1] != 0, err = STDL_ERR_READ; goto _end, "missing or incorrect  for `context`");
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Reading wavefunction ");
 
     // 1. Wavefunction
     wf_group_id = H5Gopen1(file_id, "wavefunction");
@@ -1001,6 +1013,7 @@ int stdl_context_load_h5(char* path, stdl_context** ctx_ptr) {
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d", wf_group_id);
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Reading basis ");
 
     // 2. Basis set
     bs_group_id = H5Gopen1(file_id, "basis");
@@ -1027,6 +1040,7 @@ int stdl_context_load_h5(char* path, stdl_context** ctx_ptr) {
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close group %d",bs_group_id);
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Reading context ");
 
     // context
     ctx_group_id = H5Gopen1(file_id, "context");

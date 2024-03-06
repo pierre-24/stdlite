@@ -11,6 +11,7 @@
 
 void setUp() {
     stdl_set_debug_level(-1);
+    stdl_set_log_level(0);
 }
 
 
