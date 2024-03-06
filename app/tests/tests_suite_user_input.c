@@ -16,11 +16,11 @@ void test_user_input_fill_from_toml_ok() {
     ASSERT_STDL_OK(stdl_user_input_check(inp));
 
     TEST_ASSERT_EQUAL_STRING("test calculation", inp->title);
-    TEST_ASSERT_EQUAL_STRING("water_sto3g.fchk", inp->ctx_source_path);
+    TEST_ASSERT_EQUAL_STRING("../tests/test_files/water_631g.fchk", inp->ctx_source_path);
     TEST_ASSERT_EQUAL(STDL_SRC_FCHK, inp->ctx_source_type);
     TEST_ASSERT_EQUAL_STRING("context.h5", inp->ctx_output);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 12.f / STDL_CONST_AU_TO_EV, inp->ctx_ethr);
-    TEST_ASSERT_FLOAT_WITHIN(1e-4, 0.25, inp->ctx_ax);
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, 1.0, inp->ctx_ax);
 
     ASSERT_STDL_OK(stdl_user_input_delete(inp));
 }

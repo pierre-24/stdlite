@@ -63,7 +63,9 @@ enum stdl_error_code_ {
     /// Input error
     STDL_ERR_INPUT = 5,
 
-    STDL_UNUSED6 = 6,
+    /// error in context
+    STDL_ERR_CONTEXT = 6,
+
     STDL_UNUSED7 = 7,
     STDL_UNUSED8 = 8,
     STDL_UNUSED9 = 9,

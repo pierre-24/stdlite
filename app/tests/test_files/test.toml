@@ -1,7 +1,7 @@
 title = "test calculation"
 
 [context]
-source = "water_sto3g.fchk"
+source = "../tests/test_files/water_631g.fchk"
 source_type = "FCHK"
 
 output = "context.h5"
@@ -10,7 +10,7 @@ method = "monopole"
 use_tda = false
 
 ethr = '12eV'
-ax = 0.25
+ax = 1.0
 
 [responses]
 

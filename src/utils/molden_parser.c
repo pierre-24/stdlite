@@ -536,7 +536,9 @@ void _use_spherical(stdl_basis_data* data) {
 int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction** wf_ptr, stdl_basis** bs_ptr) {
     assert(lx != NULL && wf_ptr != NULL && bs_ptr != NULL);
 
+    stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Extract wavefunction and basis set from MOLDEN >");
+    stdl_log_msg(1, "\n  | Read file ");
 
     char* title = NULL;
     int err;
@@ -592,6 +594,7 @@ int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction** wf_ptr, stdl_
     STDL_ERROR_HANDLE_AND_REPORT(!all_read, err = STDL_ERR_UTIL_MOLDEN; goto _end, "MOLDEN file was missing certain sections");
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Create wavefunction ");
 
     // create wavefunction
     stdl_wavefunction_new(natm, nocc, nao, nmo, wf_ptr);
@@ -601,6 +604,7 @@ int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction** wf_ptr, stdl_
     memcpy((*wf_ptr)->C, C, nao * nmo * sizeof(double ));
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Create basis ");
 
     // create basis
     err = stdl_basis_data_to_basis(dt, natm, atm, bs_ptr);
@@ -610,6 +614,7 @@ int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction** wf_ptr, stdl_
     dt = NULL;
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Map AO ");
 
     // map each AO to its atom
     int si, center, shift = 0, nprim = 0;
@@ -630,6 +635,7 @@ int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction** wf_ptr, stdl_
     }
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Fix AO ordering ");
 
     // fix AO ordering (use the one of Gaussian)
     int** transpose = STDL_G16_TRANSPOSE_CART;
@@ -639,6 +645,7 @@ int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction** wf_ptr, stdl_
     stdl_basis_reorder_C(nmo, nao, (*wf_ptr)->C, *bs_ptr, 4, transpose);
 
     stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Create S ");
 
     // create the S matrix
     err = stdl_basis_dsp_ovlp((*bs_ptr), (*wf_ptr)->S);

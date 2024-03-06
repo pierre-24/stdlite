@@ -10,6 +10,7 @@
 
 void setUp(void) {
     stdl_set_debug_level(-1);
+    stdl_set_log_level(0);
 }
 
 // check that the data are correct by computing the Mulliken population.

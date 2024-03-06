@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <stdlite/context.h>
+
 #include "app.h"
 #include "timer.h"
 
@@ -22,9 +24,14 @@ int main(int argc, char* argv[]) {
     timer_start(&elapsed_prog);
 
     int err;
+    stdl_user_input* input = NULL;
+    stdl_context* ctx = NULL;
+
+    // Environment variables
+    err = stdl_app_set_debug_log_level();
+    STDL_ERROR_CODE_HANDLE(err, goto _end);
 
     // read input
-    stdl_user_input* input = NULL;
     err = stdl_app_user_input(argc, argv, &input);
     STDL_ERROR_CODE_HANDLE(err, goto _end);
 
@@ -37,10 +44,18 @@ int main(int argc, char* argv[]) {
                  APP_NAME, stdl_library_name(), stdl_library_version()
                  );
 
+    // create context
+    title("Context");
+    err = stdl_app_context(input, &ctx);
+    STDL_ERROR_CODE_HANDLE(err, goto _end);
+
     // the end
     _end:
     if(input != NULL)
         stdl_user_input_delete(input);
+
+    if(ctx != NULL)
+        stdl_context_delete(ctx);
 
     if(err < STDL_ERR_LAST) {
         title("End");
