@@ -4,7 +4,7 @@ title = "test calculation"
 source = "../tests/test_files/water_631g.fchk"
 source_type = "FCHK"
 
-output = "context.h5"
+output = "context_water_631g.h5"
 
 method = "monopole"
 use_tda = false
