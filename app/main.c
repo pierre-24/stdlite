@@ -63,13 +63,13 @@ int main(int argc, char* argv[]) {
 
     if(err < STDL_ERR_LAST) {
         title("End");
-        stdl_log_msg(0, "Elapsed time in %s: %.2f secs", APP_NAME, timer_stop(&elapsed_prog));
+        stdl_log_msg(0, "Elapsed time in %s: %.2f secs\n", APP_NAME, timer_stop(&elapsed_prog));
     }
 
     if(err == STDL_ERR_OK || err > STDL_ERR_LAST) {
         return EXIT_SUCCESS;
     } else {
-        stdl_log_msg(0, "\n\n** Something went bad :(");
+        stdl_log_msg(0, "\n\n** Something went bad :(\n");
         return err;
     }
 }

@@ -8,6 +8,7 @@ nav:
   - index.md
   - theory.md
   - build.md
+  - app.md
   - Public API:
     - API/index.md
     - API/logging/index.md

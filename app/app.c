@@ -104,9 +104,9 @@ int stdl_app_context(stdl_user_input* inp, stdl_context **ctx_ptr) {
 
         // select and build A' and B'
         if(inp->ctx_method == STDL_METHOD_MONOPOLE)
-            err = stdl_context_select_csfs_monopole(*ctx_ptr, !inp->ctx_use_tda);
+            err = stdl_context_select_csfs_monopole(*ctx_ptr, !inp->ctx_tda);
         else if(inp->ctx_method == STDL_METHOD_MONOPOLE_DIRECT)
-            err = stdl_context_select_csfs_monopole_direct(*ctx_ptr, !inp->ctx_use_tda);
+            err = stdl_context_select_csfs_monopole_direct(*ctx_ptr, !inp->ctx_tda);
 
         STDL_ERROR_CODE_HANDLE(err, return err);
     }

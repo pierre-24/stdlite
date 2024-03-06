@@ -55,7 +55,7 @@ struct stdl_user_input_ {
     stdl_method ctx_method;
 
     /// Use the Tamm-Dancoff approximation
-    int ctx_use_tda;
+    int ctx_tda;
 
     /// gammaJ for monopole approximation
     float ctx_gammaJ;

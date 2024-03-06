@@ -1,0 +1,18 @@
+title = "test calculation"
+
+[context]
+# source of the wavefunction and basis set:
+source = "water.molden"
+source_type = "MOLDEN"
+
+# parameters:
+gammaJ = 4.0
+gammaK = 2.0
+ax = 1.0
+ethr = '16eV'  # different units are supported
+
+[responses]
+# compute linear response at 3 different frequencies
+linear = [
+    {target = 'electric_polarizability', w = [0, '1064nm', '512nm']}
+]

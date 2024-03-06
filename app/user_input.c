@@ -26,7 +26,7 @@ int stdl_user_input_new(stdl_user_input** inp_ptr) {
 
     // defaults of stda:
     (*inp_ptr)->ctx_method = STDL_METHOD_MONOPOLE;
-    (*inp_ptr)->ctx_use_tda = 1;
+    (*inp_ptr)->ctx_tda = 1;
     (*inp_ptr)->ctx_gammaJ = 4.f;
     (*inp_ptr)->ctx_gammaK = 2.f;
     (*inp_ptr)->ctx_ethr = 7.f / STDL_CONST_AU_TO_EV;
@@ -138,10 +138,10 @@ int stdl_user_input_fill_from_toml(stdl_user_input* inp, char* path) {
             free(ctx_method.u.s);
         }
 
-        toml_datum_t  ctx_use_tda = toml_bool_in(ctx, "use_tda");
-        if(ctx_use_tda.ok) {
-            STDL_DEBUG("- use_tda");
-            inp->ctx_use_tda = ctx_use_tda.u.b;
+        toml_datum_t  ctx_tda = toml_bool_in(ctx, "tda");
+        if(ctx_tda.ok) {
+            STDL_DEBUG("- tda");
+            inp->ctx_tda = ctx_tda.u.b;
         }
 
         toml_datum_t ctx_gammaJ = toml_double_in(ctx, "gammaJ");
@@ -209,6 +209,7 @@ int stdl_user_input_fill_from_args(stdl_user_input* inp, int argc, char* argv[])
     struct arg_file* arg_input, *arg_ctx_source, *arg_ctx_output;
     struct arg_dbl* arg_ctx_gammaJ, *arg_ctx_gammaK, *arg_ctx_ax;
     struct arg_str* arg_ctx_source_type, *arg_ctx_ethr, *arg_ctx_e2thr;
+    struct arg_int* arg_ctx_tda;
 
     int err = STDL_ERR_OK;
 
@@ -224,7 +225,8 @@ int stdl_user_input_fill_from_args(stdl_user_input* inp, int argc, char* argv[])
             arg_ctx_ethr = arg_str0(NULL, "ctx_ethr", "<freq>", "ethr"),
             arg_ctx_e2thr = arg_str0(NULL, "ctx_e2thr", "<freq>", "e2thr"),
             arg_ctx_ax = arg_dbl0(NULL, "ctx_ax", NULL, "HF exchange"),
-            // end
+            arg_ctx_tda = arg_int0(NULL, "ctx_tda", "{0,1}", "use the Tamm-Dancoff approximation"),
+            // end0
             arg_end_ = arg_end(20)
     };
 
@@ -308,6 +310,9 @@ int stdl_user_input_fill_from_args(stdl_user_input* inp, int argc, char* argv[])
     if(arg_ctx_ax->count > 0)
         inp->ctx_ax = (float) arg_ctx_ax->dval[0];
 
+    if(arg_ctx_tda->count > 0)
+        inp->ctx_tda = arg_ctx_tda->ival[0];
+
     _end:
     arg_freetable(args_table, sizeof(args_table) / sizeof(args_table[0]));
     return err;
@@ -363,7 +368,7 @@ int stdl_user_input_log(stdl_user_input* inp) {
                 break;
         }
 
-        stdl_log_msg(0, "use_tda = %s\n", inp->ctx_use_tda? "true": "false");
+        stdl_log_msg(0, "use_tda = %s\n", inp->ctx_tda ? "true" : "false");
         stdl_log_msg(0, "gammaJ = %f\ngammaK = %f\nax = %f\n", inp->ctx_gammaJ, inp->ctx_gammaK, inp->ctx_ax);
         stdl_log_msg(0, "ethr = %f # au\ne2thr = %e # au\n", inp->ctx_ethr, inp->ctx_e2thr);
 
