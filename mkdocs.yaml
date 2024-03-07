@@ -8,8 +8,9 @@ nav:
   - index.md
   - theory.md
   - build.md
+  - tutorial.md
   - app.md
-  - Public API:
+  - Public API of libstdlite:
     - API/index.md
     - API/logging/index.md
     - API/wavefunction/index.md
