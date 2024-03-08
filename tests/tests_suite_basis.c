@@ -1,10 +1,14 @@
 #include <string.h>
-#include <unistd.h>
 
 #include <stdlite/utils/fchk_parser.h>
 #include <stdlite/utils/matrix.h>
 
 #include "tests_suite.h"
+
+void setUp(void) {
+    stdl_set_debug_level(3);
+    stdl_set_log_level(0);
+}
 
 
 void _check_basis(stdl_basis* bs) {
