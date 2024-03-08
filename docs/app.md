@@ -87,12 +87,12 @@ These are the keywords related to the creation of the context, *i.e.*, the selec
 
 !!! abstract "Tamm-Dancoff approximation"
 
-    **Type**: `bool`
+    **Type**: `int`
     **Keyword**: `tda`
     **Command line option**: `--ctx_tda`
     **Default**: `1`
 
-    Use the [Tamm-Dancoff approximation](theory.md#application-to-dft-td-dft).
+    If different from 0, use the [Tamm-Dancoff approximation](theory.md#application-to-dft-td-dft).
 
 !!! abstract "Parameter for Coulomb integrals"
 
@@ -101,7 +101,7 @@ These are the keywords related to the creation of the context, *i.e.*, the selec
     **Command line option**: `--ctx_gammaJ`
     **Default**: `4.0`
 
-    Parameters for the Coulomb integral, $\gamma_J$, in the [default sTD-DFT procedure](theory.md#std-dft-or-the-monopole-approximation).
+    Parameters for the Coulomb integral, $\gamma_J$, in the [monopole approximation](theory.md#std-dft-or-the-monopole-approximation).
 
 !!! abstract "Parameter for exchange integrals"
 
@@ -110,7 +110,7 @@ These are the keywords related to the creation of the context, *i.e.*, the selec
     **Command line option**: `--ctx_gammaK`
     **Default**: `2.0`
 
-    Parameters for the exchange integral, $\gamma_K$, in the [default sTD-DFT procedure](theory.md#std-dft-or-the-monopole-approximation).
+    Parameters for the exchange integral, $\gamma_K$, in the [monopole approximation](theory.md#std-dft-or-the-monopole-approximation).
 
 !!! abstract "Hartree-Fock exchange percentage"
 

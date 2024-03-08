@@ -138,7 +138,7 @@ int stdl_user_input_fill_from_toml(stdl_user_input* inp, char* path) {
             free(ctx_method.u.s);
         }
 
-        toml_datum_t  ctx_tda = toml_bool_in(ctx, "tda");
+        toml_datum_t  ctx_tda = toml_int_in(ctx, "tda");
         if(ctx_tda.ok) {
             STDL_DEBUG("- tda");
             inp->ctx_tda = ctx_tda.u.b;

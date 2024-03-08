@@ -1,6 +1,8 @@
 # Tutorial
 
-It is possible to compute responses and properties by using `libstdlite` through the `stdlite_run` program.
+It is possible to compute responses and properties within the sTD-DFT framework by using `libstdlite` through the `stdlite_run` program.
+This is obviously not restricted to `stdlite`, and also possible, *e.g.*, with the original implementation called [`stda`](https://github.com/grimme-lab/stda). 
+All implementations should normally give the same answer.
 
 !!! note "Preamble"
 
@@ -41,8 +43,8 @@ stdlite_run example.toml > output.log
 
 As seen in the output file, a `stdlite` calculation is divided in different parts:
 
-+ Read the user input and check that everyting is ok;
-+ Create the "context", *i.e.*, select the CSFs and build the corresponding $\mathbf A'$ and $\mathbf B'$ super-matrices;
++ Read the user input and check that everything is ok;
++ Create the "context", *i.e.*, a) read the wavefuntion, b) select the CSFs, and c) build the corresponding $\mathbf A'$ and $\mathbf B'$ super-matrices;
 + Compute the linear response and amplitude vectors;
 + Use said vectors to compute actual properties (here, the polarizability).
 

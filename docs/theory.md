@@ -3,16 +3,16 @@ title: Theory
 ## Introduction
 
 Molecular properties are defined as a response of a (molecular) system to an external perturbation (change of geometry, application of an external electric field, etc).
-The goal of `stdlite` is to compute ground state linear response functions or excited states properties within a simplified TDA/RPA/TD-DFT framework.
+The goal of `stdlite` is to compute properties within the simplified TDA/TD-DFT framework.
 
 !!! note "TL;DR:"
 
     The following steps are required to perform a sTD-DFT calculation:
     
     1. Extract data (*i.e.*, the atomic orbitals, as well as the MO energies, $\varepsilon$, and LCAO coefficients, $\mathbf C$) from a QC calculation;
-    2. Select configuration state functions (CSFs, $\Psi_i^a$, or singly excited determinants) using [a set of rules](#the-simplified-approaches-to-td-dft) and build the corresponding electronic hessian matrices $\mathbf A'$ and $\mathbf B'$ (might be zero);
-    3. Using said matrices, solve the [linear response equation](#application-to-dft-td-dft). This generally requires to compute extra [expectation values](#expectation-values-and-others) matrices in MO basis, such as the [dipole moment](#dipole-moment);
-    4. Use the response vectors to compute the actual [properties](#properties).
+    2. Select configuration state functions (CSFs, $\ket{\Psi_i^a}$, or singly excited determinants) using [a set of rules](#the-simplified-approaches-to-td-dft) and build the corresponding electronic hessian (super-)matrices $\mathbf A'$ and $\mathbf B'$ (might be zero);
+    3. Using said matrices, compute the [linear response](#linear-response) or [amplitude](#excitations) vectors. This generally requires to compute extra [expectation values](#expectation-values-and-others) matrices in MO basis, such as the [dipole moment](#dipole-moment);
+    4. Use said response/amplitude vectors to compute actual [properties](#properties).
 
 
 ## Response function theory
