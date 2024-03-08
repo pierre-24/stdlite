@@ -2,14 +2,15 @@
 
 This page describe in details the inputs that `stdlite_run` takes.
 
-In the following, "Keyword" refers to keywords that can be put in the TOML input, while "commmand line option" refers to option you can directly give the program.
+## Preamble
+
+In the following, "Keyword" refers to keywords that can be put in the TOML input, while "command line option" refers to option you can directly give to the program.
 Note that a command line option, when it exists, have precedence over the TOML input file.
 
-## Preamble 
-
-When a keyword type is "`str` (energy)", the energy is to be given in the format `"xxxYY"`, where `xxx` is a number, and `YY` is a unit.
+When a keyword type is "`str`/`float` (energy)", the energy is to be given in the format `"xxxYY"`, where `xxx` is a number, and `YY` is a unit.
 Currently, 3 units are supported: `au` ([atomic units](https://en.wikipedia.org/wiki/Atomic_units)), `eV` ([electronvolts](https://en.wikipedia.org/wiki/Electronvolt)), and `nm` (nanometers).
-Valid inputs are, *e.g.*, `"8.5eV"`, `"1200nm"`, `"0.25au"`, etc.
+If no unit are given, atomic units are assumed.
+Valid inputs are, *e.g.*, `"8.5eV"`, `"1200nm"`, `"0.25au"`, `1.25`, etc.
 
 ## General 
 
@@ -54,7 +55,7 @@ These are the keywords related to the creation of the context, *i.e.*, the selec
 
 !!! abstract "Energy threshold"
 
-    **Type**: `str` (energy)
+    **Type**: `str`/`float` (energy)
     **Keyword**: `ethr`
     **Command line option**: `--ctx_ethr`
     **Default**: `"7eV"`
@@ -63,7 +64,7 @@ These are the keywords related to the creation of the context, *i.e.*, the selec
 
 !!! abstract "Perturbation energy threshold"
 
-    **Type**: `str` (energy)
+    **Type**: `str`/`float` (energy)
     **Keyword**: `e2thr`
     **Command line option**: `--ctx_e2thr`
     **Default**: `"1e-4au"`

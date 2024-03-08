@@ -46,6 +46,9 @@ void test_parse_frequency_ok() {
     ASSERT_STDL_OK(stdl_user_input_parse_frequency("1.25au", &value));
     TEST_ASSERT_DOUBLE_WITHIN(1e-6, 1.25, value);
 
+    ASSERT_STDL_OK(stdl_user_input_parse_frequency("1.25", &value));
+    TEST_ASSERT_DOUBLE_WITHIN(1e-6, 1.25, value);
+
     ASSERT_STDL_OK(stdl_user_input_parse_frequency("1.25eV", &value));
     TEST_ASSERT_DOUBLE_WITHIN(1e-6, 1.25 / STDL_CONST_AU_TO_EV, value);
 

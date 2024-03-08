@@ -102,7 +102,7 @@ int stdl_user_input_delete(stdl_user_input* inp);
 int stdl_user_input_fill_from_toml(stdl_user_input* inp, char* path);
 
 /**
- * Parse frequency given a a string of the form `NUMBER UNIT`, where `NUMBER` is a valid `double` and `UNIT` is either `au`, `eV` or `nm`.
+ * Parse frequency given a a string of the form `NUMBER UNIT`, where `NUMBER` is a valid `double` and `UNIT` is either nothing (atomic units are assumed), `au`, `eV` or `nm`.
  * The result is in atomic units.
  *
  * @param input a valid `\0`-terminated string

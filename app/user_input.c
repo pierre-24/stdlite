@@ -187,15 +187,18 @@ int stdl_user_input_parse_frequency(char* input, double* result) {
     double value = strtod(input, &endptr);
     STDL_ERROR_HANDLE_AND_REPORT(endptr == input, return STDL_ERR_READ, "incorrect number in `%s`", input);
 
-    if(strcmp(endptr, "eV") == 0 || strcmp(endptr, "ev") == 0) {
-        *result = value / STDL_CONST_AU_TO_EV;
-    } else if(strcmp(endptr, "nm") == 0) {
-        *result = STDL_CONST_HC / value;
-    } else if(strcmp(endptr, "au") == 0) {
+    if(*endptr != '\0') {
+        if(strcmp(endptr, "eV") == 0 || strcmp(endptr, "ev") == 0) {
+            *result = value / STDL_CONST_AU_TO_EV;
+        } else if(strcmp(endptr, "nm") == 0) {
+            *result = STDL_CONST_HC / value;
+        } else if(strcmp(endptr, "au") == 0) {
+            *result = value;
+        } else {
+            STDL_ERROR_HANDLE_AND_REPORT(1, return STDL_ERR_READ, "incorrect unit `%s`", endptr);
+        }
+    } else
         *result = value;
-    } else {
-        STDL_ERROR_HANDLE_AND_REPORT(1, return STDL_ERR_READ, "incorrect unit `%s`", endptr);
-    }
 
     return STDL_ERR_OK;
 }
