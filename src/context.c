@@ -785,18 +785,15 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
     return STDL_ERR_OK;
 }
 
-int stdl_context_dump_h5(stdl_context* ctx, char* path) {
-    assert(ctx != NULL && path != NULL);
+int stdl_context_dump_h5(stdl_context* ctx, hid_t file_id) {
+    assert(ctx != NULL && file_id != H5I_INVALID_HID);
 
     stdl_log_msg(1, "+ ");
-    stdl_log_msg(0, "Saving context in `%s` >", path);
+    stdl_log_msg(0, "Saving context >");
     stdl_log_msg(1, "\n  | Save wavefunction ");
 
-    hid_t file_id, ctx_group_id;
+    hid_t ctx_group_id;
     herr_t status;
-
-    file_id = H5Fcreate(path, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-    STDL_ERROR_HANDLE_AND_REPORT(file_id == H5I_INVALID_HID, return STDL_ERR_OPEN, "cannot open %s", path);
 
     // 1. Wavefunction
     stdl_wavefunction* wf = ctx->original_wf;
@@ -857,23 +854,18 @@ int stdl_context_dump_h5(stdl_context* ctx, char* path) {
     status = H5LTset_attribute_uint(file_id, "context", "version", (unsigned int[]) {1, 0}, 2);
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot write attribute");
 
-    // and finally close the file
-    status = H5Fclose(file_id);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot close %s", path);
-
     stdl_log_msg(0, "< done\n");
-
     return STDL_ERR_OK;
 }
 
-int stdl_context_load_h5(char* path, stdl_context** ctx_ptr) {
-    assert(ctx_ptr != NULL && path != NULL);
+int stdl_context_load_h5(hid_t file_id, stdl_context** ctx_ptr) {
+    assert(ctx_ptr != NULL && file_id != H5I_INVALID_HID);
 
     stdl_log_msg(1, "+ ");
-    stdl_log_msg(0, "Reading context from `%s` >", path);
+    stdl_log_msg(0, "Reading context >");
     stdl_log_msg(1, "\n  | Reading attributes ");
 
-    hid_t file_id, ctx_group_id;
+    hid_t ctx_group_id;
     herr_t status;
     int err = STDL_ERR_OK;
 
@@ -885,10 +877,6 @@ int stdl_context_load_h5(char* path, stdl_context** ctx_ptr) {
     int version[2] = {0};
     size_t ulongbuff[32];
     float floatbuff[32];
-
-    // open file
-    file_id = H5Fopen(path, H5F_ACC_RDONLY, H5P_DEFAULT);
-    STDL_ERROR_HANDLE_AND_REPORT(file_id == H5I_INVALID_HID, return STDL_ERR_OPEN, "cannot open %s", path);
 
     // 1. check attributes
     status = H5LTget_attribute_string(file_id, "context", "type", strbuff);
@@ -991,9 +979,6 @@ int stdl_context_load_h5(char* path, stdl_context** ctx_ptr) {
                 stdl_basis_delete(bs);
         }
     }
-
-    status = H5Fclose(file_id);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ, "cannot close %s", path);
 
     return err;
 }

@@ -252,10 +252,18 @@ void test_context_dump_load_h5_ok() {
     char tmp_path[512];
     sprintf(tmp_path, "%s/tmp.h5", P_tmpdir);
 
-    ASSERT_STDL_OK(stdl_context_dump_h5(ctx1, tmp_path));
+    hid_t file_id = H5Fcreate(tmp_path, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    TEST_ASSERT_NOT_EQUAL(file_id, H5I_INVALID_HID);
+    ASSERT_STDL_OK(stdl_context_dump_h5(ctx1, file_id));
+    H5Fclose(file_id);
 
     stdl_context* ctx2 = NULL;
-    ASSERT_STDL_OK(stdl_context_load_h5(tmp_path, &ctx2));
+
+    file_id = H5Fopen(tmp_path, H5F_ACC_RDONLY, H5P_DEFAULT);
+    TEST_ASSERT_NOT_EQUAL(file_id, H5I_INVALID_HID);
+    ASSERT_STDL_OK(stdl_context_load_h5(file_id, &ctx2));
+    H5Fclose(file_id);
+
     unlink(tmp_path);
 
     // test a few equalities

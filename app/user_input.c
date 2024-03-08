@@ -394,9 +394,8 @@ int stdl_user_input_log(stdl_user_input* inp) {
 
         stdl_log_msg(0, "output = \"%s\"\n", inp->ctx_output);
     } else {
-        stdl_log_msg(0, "# remaining parameters will be obtained from %s\n", inp->ctx_source);
+        stdl_log_msg(0, "# A' and B' are obtained from %s\n", inp->ctx_source);
     }
-
 
     return STDL_ERR_OK;
 }
@@ -429,17 +428,34 @@ int _from_h5(char* path, stdl_wavefunction** wf_ptr, stdl_basis** bs_ptr) {
     return STDL_ERR_OK;
 }
 
+int _from_h5_full(char* path, stdl_context** ctx_ptr) {
+    hid_t file_id;
+
+    // open
+    file_id = H5Fopen(path, H5F_ACC_RDONLY, H5P_DEFAULT);
+    STDL_ERROR_HANDLE_AND_REPORT(file_id == H5I_INVALID_HID, return STDL_ERR_OPEN, "cannot open %s", path);
+
+    // read
+    int err = stdl_context_load_h5(file_id, ctx_ptr);
+
+    // close
+    H5Fclose(file_id);
+
+    return err;
+}
+
 int stdl_user_input_make_context(stdl_user_input* inp, stdl_context **ctx_ptr) {
     stdl_wavefunction* wf = NULL;
     stdl_basis* bs = NULL;
     int err;
 
     if(inp->ctx_source_type == STDL_SRC_CTX) { // directly read context from a previous calculation
-        err = stdl_context_load_h5(inp->ctx_source, ctx_ptr);
+        err = _from_h5_full(inp->ctx_source, ctx_ptr);
         STDL_ERROR_CODE_HANDLE(err, return err);
     } else { // read file for wavefunction & basis, then select normally
         if(inp->ctx_source_type == STDL_SRC_CTX_WB) {
             err = _from_h5(inp->ctx_source, &wf, &bs);
+            STDL_ERROR_CODE_HANDLE(err, return err);
         } else { // MOLDEN or FCHK, requires lexer
             stdl_lexer* lx = NULL;
             FILE* f = fopen(inp->ctx_source, "r");
@@ -473,9 +489,13 @@ int stdl_user_input_make_context(stdl_user_input* inp, stdl_context **ctx_ptr) {
     }
 
     if(strcmp(inp->ctx_source, inp->ctx_output) == 0)
-        STDL_WARN("source and output are the same, so the content of `%s` is replaced", inp->ctx_source);
+        STDL_WARN("`context.source` and `contex.output` are the same, so the content of `%s` will be replaced", inp->ctx_output);
 
-    err = stdl_context_dump_h5(*ctx_ptr, inp->ctx_output);
+    hid_t file_id = H5Fcreate(inp->ctx_source, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    STDL_ERROR_HANDLE_AND_REPORT(file_id == H5I_INVALID_HID, return STDL_ERR_OPEN, "cannot open %s", inp->ctx_output)
+
+    err = stdl_context_dump_h5(*ctx_ptr, file_id);
+    H5Fclose(file_id);
 
     return err;
 }
