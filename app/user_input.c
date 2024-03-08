@@ -491,7 +491,7 @@ int stdl_user_input_make_context(stdl_user_input* inp, stdl_context **ctx_ptr) {
     if(strcmp(inp->ctx_source, inp->ctx_output) == 0)
         STDL_WARN("`context.source` and `contex.output` are the same, so the content of `%s` will be replaced", inp->ctx_output);
 
-    hid_t file_id = H5Fcreate(inp->ctx_source, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t file_id = H5Fcreate(inp->ctx_output, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     STDL_ERROR_HANDLE_AND_REPORT(file_id == H5I_INVALID_HID, return STDL_ERR_OPEN, "cannot open %s", inp->ctx_output)
 
     err = stdl_context_dump_h5(*ctx_ptr, file_id);
