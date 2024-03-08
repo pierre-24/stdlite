@@ -5,14 +5,19 @@
 #include <time.h>
 
 /** Create a timer
+ * @param t a valid `timespec` structure
+ * @ingroup app
  */
-void timer_start(struct timespec* t) {
+void stdl_timer_start(struct timespec* t) {
     clock_gettime(CLOCK_MONOTONIC, t);
 }
 
 /** Get the elapsed time (in second)
+ * @param start a valid `timespec` structure initialized with `stdl_timer_start`
+ * @return the number of second since `start`
+ * @ingroup app
  */
-double timer_stop(struct timespec* start) {
+double stdl_timer_stop(struct timespec* start) {
     struct timespec stop;
     clock_gettime(CLOCK_MONOTONIC, &stop);
     return (double) (stop.tv_sec - start->tv_sec) + (double) (stop.tv_nsec - start->tv_nsec) * 1e-9;

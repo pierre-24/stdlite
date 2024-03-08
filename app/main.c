@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
 
     // record time
     struct timespec elapsed_prog;
-    timer_start(&elapsed_prog);
+    stdl_timer_start(&elapsed_prog);
 
     int err;
     stdl_user_input* input = NULL;
@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
 
     if(err < STDL_ERR_LAST) {
         title("End");
-        stdl_log_msg(0, "Elapsed time in %s: %.2f secs\n", APP_NAME, timer_stop(&elapsed_prog));
+        stdl_log_msg(0, "Elapsed time in %s: %.2f secs\n", APP_NAME, stdl_timer_stop(&elapsed_prog));
     }
 
     if(err == STDL_ERR_OK || err > STDL_ERR_LAST) {

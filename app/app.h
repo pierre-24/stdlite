@@ -11,7 +11,7 @@
 #endif
 
 /**
- * Create user input from program input
+ * Create user input from program input.
  *
  * @param argc number of arguments
  * @param argv arguments
@@ -22,14 +22,14 @@
 int stdl_app_user_input(int argc, char* argv[], stdl_user_input** inp);
 
 /**
- * Set the debug and log level
+ * Set the debug and log level, using two environment variables: `LOGLEVEL` and `DEBUGLEVEL`
  * @return error code
  * @ingroup app
  */
 int stdl_app_set_debug_log_level();
 
 /**
- * Create context
+ * Create context from user input.
  * @param inp a valid user input
  * @param[out] ctx_ptr context to be created
  * @return error code

@@ -8,6 +8,7 @@ output: docs/API
 files:
   - "include/*.h"
   - "include/**/*.h"
+  - "app/*.h"
 groups:
   - name: logging
     title: Logging and errors
@@ -149,3 +150,17 @@ groups:
           !!! warning
           
               When using permutations on an array of structure, keep in mind [structure padding](https://www.geeksforgeeks.org/structure-member-alignment-padding-and-data-packing/), especially when removing duplicates.
+          ```
+
+  - name: app
+    title: The application
+    description: API of `stdlite_run`.
+    groups:
+      - name: user_input
+        title: User input
+        description: |
+          Deals with all user inputs, and convert that into requests.
+          
+          ```c
+          #include "user_input.h"
+          ```
