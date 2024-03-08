@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
     STDL_ERROR_CODE_HANDLE(err, goto _end);
 
     // read input
-    err = stdl_app_user_input(argc, argv, &input);
+    err = stdl_user_input_new_from_args(argc, argv, &input);
     STDL_ERROR_CODE_HANDLE(err, goto _end);
 
     // scream aloud
@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
 
     // create context
     title("Create context");
-    err = stdl_app_context(input, &ctx);
+    err = stdl_user_input_make_context(input, &ctx);
     STDL_ERROR_CODE_HANDLE(err, goto _end);
 
     // the end

@@ -71,6 +71,7 @@ typedef struct stdl_lrv_request_ stdl_lrv_request;
 
 /**
  * Create a new linear response vectors request for `op` at `nw` energies.
+ *
  * @param op operator
  * @param nw number of energies
  * @param[out] req_prt resulting request
@@ -81,6 +82,7 @@ int stdl_lrv_request_new(stdl_operator op, size_t nw, stdl_lrv_request** req_prt
 
 /**
  * Actually compute the requested linear response vectors
+ *
  * @param req a valid request
  * @param op_MO `double[dim,ctx->nmo,ctx->nmo]` elements of $\braket{p|op|q}$.
  * @return error code
@@ -90,6 +92,7 @@ int stdl_lrv_request_compute(stdl_lrv_request* req, stdl_context* ctx, double* o
 
 /**
  * Delete a LRV request.
+ *
  * @param req a valid request
  * @return error code
  * @ingroup user_input
@@ -98,6 +101,7 @@ int stdl_lrv_request_delete(stdl_lrv_request* req);
 
 /**
  * Any response request from the TOML file. It is a chained list.
+ *
  * @ingroup user_input
  */
  struct stdl_response_request_ {
@@ -129,6 +133,7 @@ int stdl_lrv_request_delete(stdl_lrv_request* req);
 
 /**
  * Create a new response request.
+ *
  * @param resp_order Order of the response, must be > 0.
  * @param res_order Order of the residue, must be `res_order < resp_order`
  * @param ops operators
@@ -141,7 +146,8 @@ int stdl_lrv_request_delete(stdl_lrv_request* req);
 int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator* ops, float* w, int nroot, stdl_response_request** req_ptr);
 
 /**
- * Delete a request
+ * Delete a request.
+ *
  * @param req a valid request
  * @return error code
  * @ingroup user_input
@@ -222,6 +228,7 @@ int stdl_user_input_new(stdl_user_input** inp_ptr);
 
 /**
  * Delete user input structure
+ *
  * @param inp a valid user input structure
  * @return error code
  * @ingroup user_input
@@ -229,13 +236,25 @@ int stdl_user_input_new(stdl_user_input** inp_ptr);
 int stdl_user_input_delete(stdl_user_input* inp);
 
 /**
- * Change user input from options found in a TOML-formatted file
+ * Change user input from options found in a TOML-formatted file.
+ *
  * @param inp a valid user input structure
  * @param path path to a TOML file
  * @return error code
  * @ingroup user_input
  */
 int stdl_user_input_fill_from_toml(stdl_user_input* inp, char* path);
+
+/**
+ * Helper function to create user input directly from program input.
+ *
+ * @param argc number of arguments
+ * @param argv arguments
+ * @param[out] inp
+ * @return error code
+ * @ingroup app
+ */
+int stdl_user_input_new_from_args(int argc, char* argv[], stdl_user_input** inp);
 
 /**
  * Parse frequency given a a string of the form `NUMBER UNIT`, where `NUMBER` is a valid `double` and `UNIT` is either nothing (atomic units are assumed), `au`, `eV` or `nm`.
@@ -276,5 +295,14 @@ int stdl_user_input_check(stdl_user_input* inp);
  * @ingroup user_input
  */
 int stdl_user_input_log(stdl_user_input* inp);
+
+/**
+ * Create context from user input.
+ * @param inp a valid user input
+ * @param[out] ctx_ptr context to be created
+ * @return error code
+ * @ingroup user_input
+ */
+int stdl_user_input_make_context(stdl_user_input* inp, stdl_context **ctx_ptr);
 
 #endif //STDLITE_USER_INPUT_H
