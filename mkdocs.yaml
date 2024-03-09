@@ -23,6 +23,7 @@ nav:
   - API of stdlite_run:
       - API/app/index.md
       - API/app/user_input/index.md
+      - API/app/requests/index.md
 
 theme:
   name: material

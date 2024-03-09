@@ -26,6 +26,7 @@ app_dep += tomlc99_dep
 # sources
 srcs = files(
     'app.c',
+    'requests.c',
     'user_input.c'
 )
 

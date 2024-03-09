@@ -159,8 +159,16 @@ groups:
       - name: user_input
         title: User input
         description: |
-          Deals with all user inputs, and convert that into requests.
+          Deals with all user inputs, convert that into requests, and compute said responses.
           
           ```c
           #include "user_input.h"
+          ```
+      - name: requests
+        title: Requests for response
+        description: |
+          Handle bare response and linear response vector requests.
+          
+          ```c
+          #include "requests.h"
           ```

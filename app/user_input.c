@@ -18,7 +18,7 @@ int stdl_user_input_new(stdl_user_input** inp_ptr) {
 
     (*inp_ptr)->title = NULL;
 
-    // context
+    // --- context:
     (*inp_ptr)->ctx_source = NULL;
     (*inp_ptr)->ctx_source_type = STDL_SRC_CTX;
 
@@ -35,13 +35,29 @@ int stdl_user_input_new(stdl_user_input** inp_ptr) {
     (*inp_ptr)->ctx_e2thr = 1e-4f;
     (*inp_ptr)->ctx_ax = 0.5f;
 
+    // -- response:
+    (*inp_ptr)->res_resreqs = NULL;
+    (*inp_ptr)->res_nlrvreq = 0;
+    (*inp_ptr)->res_lrvreqs = NULL;
+    (*inp_ptr)->res_nexci = 0;
+    (*inp_ptr)->res_eexci = NULL;
+    (*inp_ptr)->res_Xamp = NULL;
+    (*inp_ptr)->res_Yamp = NULL;
+
     return STDL_ERR_OK;
 }
 
 int stdl_user_input_delete(stdl_user_input* inp) {
     assert(inp != NULL);
 
-    STDL_FREE_ALL(inp->title, inp->ctx_source, inp->ctx_output, inp);
+    if(inp->res_resreqs != NULL)
+        stdl_response_request_delete(inp->res_resreqs);
+
+    for (size_t i = 0; i < inp->res_nlrvreq; ++i) {
+        stdl_lrv_request_delete(inp->res_lrvreqs);
+    }
+
+    STDL_FREE_ALL(inp->title, inp->ctx_source, inp->ctx_output, inp->res_eexci, inp->res_Xamp, inp->res_Yamp, inp);
 
     return STDL_ERR_OK;
 }
