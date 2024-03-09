@@ -67,15 +67,11 @@ int _frequency_float_in(toml_table_t* table, char* field, float* result) {
     return STDL_ERR_OK;
 }
 
-int stdl_user_input_fill_from_toml(stdl_user_input* inp, char* path) {
-    assert(inp != NULL && path != NULL);
-
-    FILE* f = fopen(path, "r");
-    STDL_ERROR_HANDLE_AND_REPORT(f == NULL, return STDL_ERR_OPEN, "cannot open `%s`", path);
+int stdl_user_input_fill_from_toml(stdl_user_input* inp, FILE *f) {
+    assert(inp != NULL && f != NULL);
 
     char errbuff[200];
     toml_table_t* conf = toml_parse_file(f, errbuff, sizeof(errbuff));
-    fclose(f);
 
     STDL_ERROR_HANDLE_AND_REPORT(conf == NULL, return STDL_ERR_READ, "error while parsing conf: %s", errbuff);
 
@@ -256,8 +252,13 @@ int stdl_user_input_fill_from_args(stdl_user_input* inp, int argc, char* argv[])
 
     // read input file
     if(arg_input->count > 0) {
-        err = stdl_user_input_fill_from_toml(inp, arg_input->filename[0]);
+        FILE* f = fopen(arg_input->filename[0], "r");
+        STDL_ERROR_HANDLE_AND_REPORT(f == NULL, err = STDL_ERR_OPEN; goto _end, "cannot open `%s`", arg_input->filename[0]);
+
+        err = stdl_user_input_fill_from_toml(inp, f);
         STDL_ERROR_CODE_HANDLE(err, goto _end);
+
+        fclose(f);
     }
 
     // modify context

@@ -3,14 +3,12 @@ title = "test calculation"
 [context]
 source = "../tests/test_files/water_631g.fchk"
 source_type = "FCHK"
-
 output = "context_water_631g.h5"
-
 method = "monopole"
-use_tda = false
-
 ethr = '12eV'
 ax = 1.0
+tda = 0
+e2thr=1e-4
 
 [responses]
 

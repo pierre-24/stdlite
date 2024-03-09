@@ -239,11 +239,11 @@ int stdl_user_input_delete(stdl_user_input* inp);
  * Change user input from options found in a TOML-formatted file.
  *
  * @param inp a valid user input structure
- * @param path path to a TOML file
+ * @param f path to a TOML file
  * @return error code
  * @ingroup user_input
  */
-int stdl_user_input_fill_from_toml(stdl_user_input* inp, char* path);
+int stdl_user_input_fill_from_toml(stdl_user_input* inp, FILE *f);
 
 /**
  * Helper function to create user input directly from program input.
