@@ -130,3 +130,71 @@ These are the keywords related to the creation of the context, *i.e.*, the selec
     **Default**: `"context.h5"`
 
     Path to the place where the context will be saved, after it has been completed.
+
+## Responses (`[responses]`)
+
+These are the keywords related to the calculation of responses, their residues, and the related properties.
+
+In the following, `wX` is a frequency, thus following the syntax for energy mentioned in the preamble.  
+`opX` is an operator, which should be one of:
+
++ `"dipl"`: diple length operator;
+
+Other operators will be added in the future.
+
+!!! abstract "Linear reponses"
+
+    **Type**: `list`
+    **Keyword**: `linear`
+    **Default**: `[]`
+
+    List the linear reponses to compute. 
+    Each linear response $\braket{\braket{\hat A;\hat B}}_\omega$ is to be given as: `{opA = "A", opB = "B", wB="w"}`.
+
+    For example, the following input will compute the electric polarizability at 512 and 1064nm:
+
+    ```toml
+    [responses]
+    linear = [
+        {opA = 'dipl', opB = 'dipl', wB = '512nm'}
+        {opA = 'dipl', opB = 'dipl', wB = '1064nm'}, 
+    ]
+    ```
+
+!!! abstract "Single residue of the linear response"
+
+    **Type**: `list`
+    **Keyword**: `linear_sr`
+    **Default**: `[]`
+
+    List the ground-to-excited states properties to compute.
+    Each request for $\braket{0|\hat A|m}$ is to be given as: `{op = "A", root = N}`.
+    `N` is the number of excited states, `\ket{m}`, to consider.
+    If `N` < 0, all possible excited states (*i.e.*, corresponding to the number of CSFs) are computed.
+
+    For example, the following input will compute the transition dipole moments for the 15 first excited states:
+
+    ```toml
+    [responses]
+    linear_sr = [
+        {op = 'dipl', root = 15}
+    ]
+    ```
+
+!!! abstract "Quadratic responses"
+
+    **Type**: `list`
+    **Keyword**: `quadratic`
+    **Default**: `[]`
+
+    List the quadratic reponses to compute. 
+    Each quadratic response $\braket{\braket{\hat A;\hat B, \hat C}}_{\omega_1,\omega_2}$ is to be given as: `{opA = "A", opB = "B", opC = "C", wB="w1", wC="w2"}`.
+
+    For example, the following input  will compute the SHG first hyperpolarizability at 1064nm:
+
+    ```toml
+    [responses]
+    quadratic = [
+        {opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = '1064nm', wC = '1064nm"}, 
+    ]
+    ```
