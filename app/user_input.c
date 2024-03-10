@@ -62,31 +62,56 @@ int stdl_user_input_delete(stdl_user_input* inp) {
     return STDL_ERR_OK;
 }
 
-int _frequency_float_in(toml_table_t* table, char* field, float* result) {
-    toml_datum_t freq = toml_double_in(table, field);
-    if(freq.ok) {
-        STDL_DEBUG("- (frequency) %s", field);
-        *result = (float) freq.u.d;
+int _energy_in(toml_table_t* table, char* field, float* result, int* isset) {
+    toml_datum_t energy = toml_double_in(table, field);
+    *isset = 0;
+
+    if(energy.ok) {
+        STDL_DEBUG("- (energy) %s", field);
+        *result = (float) energy.u.d;
+        *isset = 1;
     } else {
-        freq = toml_string_in(table, field);
-        if(freq.ok) {
-            STDL_DEBUG("- (frequency) %s", field);
+        energy = toml_string_in(table, field);
+        if(energy.ok) {
+            STDL_DEBUG("- (energy) %s", field);
             double val;
-            int err = stdl_user_input_parse_frequency(freq.u.s, &val);
-            free(freq.u.s);
+            int err = stdl_user_input_parse_frequency(energy.u.s, &val);
+            free(energy.u.s);
             STDL_ERROR_CODE_HANDLE(err, return err);
 
             *result = (float) val;
+            *isset = 1;
         }
     }
 
     return STDL_ERR_OK;
 }
 
+int _operator_in(toml_table_t* table, char* field, stdl_operator * result, int* isset) {
+    toml_datum_t op = toml_string_in(table, field);
+    int err = STDL_ERR_OK;
+    *isset = 0;
+
+    if(op.ok) {
+        STDL_DEBUG("- (operator) %s", field);
+        if(strcmp(op.u.s, "dipl") == 0) {
+            *result = STDL_OP_DIPL;
+            *isset = 1;
+        } else {
+            err = STDL_ERR_INPUT;
+        }
+
+        free(op.u.s);
+    }
+
+    return err;
+}
+
 int stdl_user_input_fill_from_toml(stdl_user_input* inp, FILE *f) {
     assert(inp != NULL && f != NULL);
 
     char errbuff[200];
+    int isset;
     toml_table_t* conf = toml_parse_file(f, errbuff, sizeof(errbuff));
 
     STDL_ERROR_HANDLE_AND_REPORT(conf == NULL, return STDL_ERR_READ, "error while parsing conf: %s", errbuff);
@@ -170,10 +195,10 @@ int stdl_user_input_fill_from_toml(stdl_user_input* inp, FILE *f) {
             inp->ctx_gammaK = (float) ctx_gammaK.u.d;
         }
 
-        err = _frequency_float_in(ctx, "ethr", &(inp->ctx_ethr));
+        err = _energy_in(ctx, "ethr", &(inp->ctx_ethr), &isset);
         STDL_ERROR_CODE_HANDLE(err, goto _end);
 
-        err = _frequency_float_in(ctx, "e2thr", &(inp->ctx_e2thr));
+        err = _energy_in(ctx, "e2thr", &(inp->ctx_e2thr), &isset);
         STDL_ERROR_CODE_HANDLE(err, goto _end);
 
         toml_datum_t ctx_ax = toml_double_in(ctx, "ax");
@@ -186,7 +211,132 @@ int stdl_user_input_fill_from_toml(stdl_user_input* inp, FILE *f) {
     toml_table_t* response = toml_table_in(conf, "responses");
     if(response != NULL) {
         STDL_DEBUG("Read [responses]");
-        // TODO: that.
+
+        stdl_response_request* prev = NULL;
+
+        // linear response
+        toml_array_t* lresp = toml_array_in(response, "linear");
+        if(lresp != NULL) {
+            STDL_DEBUG("- linear");
+            int i = 0;
+            toml_table_t* t = toml_table_at(lresp, i);
+            while (t != NULL) {
+                STDL_DEBUG("linear[%d]", i);
+
+                stdl_operator opA, opB;
+                err = _operator_in(t, "opA", &opA, &isset);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+                STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `opA` in `linear[%d]`", i);
+
+                err = _operator_in(t, "opB", &opB, &isset);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+                STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `opB` in `linear[%d]`", i);
+
+                float w;
+                err = _energy_in(t, "wB", &w, &isset);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+                STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `w` in `linear[%d]`", i);
+
+                stdl_response_request* req = NULL;
+                err = stdl_response_request_new(1, 0, (stdl_operator[]) {opA, opB}, (float[]) {w}, 0, &req);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+
+                if(prev == NULL) {
+                    inp->res_resreqs = req;
+                } else {
+                    prev->next = req;
+                }
+
+                prev = req;
+
+                i += 1;
+                t = toml_table_at(lresp, i);
+            }
+        }
+
+        // quadratic response
+        toml_array_t* qresp = toml_array_in(response, "quadratic");
+        if(qresp != NULL) {
+            STDL_DEBUG("- quadratic");
+            int i = 0;
+            toml_table_t* t = toml_table_at(qresp, i);
+            while (t != NULL) {
+                STDL_DEBUG("quadratic[%d]", i);
+
+                stdl_operator opA, opB, opC;
+                err = _operator_in(t, "opA", &opA, &isset);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+                STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `opA` in `quadratic[%d]`", i);
+
+                err = _operator_in(t, "opB", &opB, &isset);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+                STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `opB` in `quadratic[%d]`", i);
+
+                err = _operator_in(t, "opC", &opC, &isset);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+                STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `opC` in `quadratic[%d]`", i);
+
+                float wB, wC;
+                err = _energy_in(t, "wB", &wB, &isset);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+                STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `wB` in `quadratic[%d]`", i);
+
+                err = _energy_in(t, "wC", &wC, &isset);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+                STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `wC` in `quadratic[%d]`", i);
+
+                stdl_response_request* req = NULL;
+                err = stdl_response_request_new(2, 0, (stdl_operator[]) {opA, opB, opC}, (float[]) {wB, wC}, 0, &req);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+
+                if(prev == NULL) {
+                    inp->res_resreqs = req;
+                } else {
+                    prev->next = req;
+                }
+
+                prev = req;
+
+                i += 1;
+                t = toml_table_at(qresp, i);
+            }
+        }
+
+        // single residue of the linear response
+        toml_array_t* lresp_sr = toml_array_in(response, "linear_sr");
+        if(lresp_sr != NULL) {
+            STDL_DEBUG("- linear_sr");
+            int i = 0;
+            toml_table_t* t = toml_table_at(lresp_sr, i);
+            while (t != NULL) {
+                STDL_DEBUG("lresp_sr[%d]", i);
+
+                stdl_operator opA;
+                err = _operator_in(t, "op", &opA, &isset);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+                STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `op` in `linear_sr[%d]`", i);
+
+                int nroot;
+                toml_datum_t root = toml_int_in(t, "root");
+                STDL_ERROR_HANDLE_AND_REPORT(!root.ok, err = STDL_ERR_INPUT; goto _end, "missing `root` in `linear_sr[%d]`", i);
+                nroot = (int) root.u.i;
+
+                stdl_response_request* req = NULL;
+                err = stdl_response_request_new(1, 1, (stdl_operator[]) {opA}, NULL, nroot, &req);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+
+                if(prev == NULL) {
+                    inp->res_resreqs = req;
+                } else {
+                    prev->next = req;
+                }
+
+                prev = req;
+
+                i += 1;
+                t = toml_table_at(lresp_sr, i);
+            }
+        }
     }
 
     _end:

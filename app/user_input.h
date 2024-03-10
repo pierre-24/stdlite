@@ -76,7 +76,6 @@ struct stdl_user_input_ {
     /// Amount of HF exchange
     float ctx_ax;
 
-
     // ----- responses:
     /// Response requests
     stdl_response_request* res_resreqs;
@@ -90,13 +89,13 @@ struct stdl_user_input_ {
     /// Number of excited states requested
     size_t res_nexci;
 
-    /// `float[nexci]` the excitation energies
+    /// `float[res_nexci]` the excitation energies
     float* res_eexci;
 
-    /// `float[nexci,ncsfs]` amplitude vector $\mathbf x^m$ for each excitation $\ket{m}$
+    /// `float[res_nexci,ncsfs]` amplitude vector $\mathbf x^m$ for each excitation $\ket{m}$
     float* res_Xamp;
 
-    /// `float[nexci,ncsfs]` amplitude vector $\mathbf y^m$ for each excitation $\ket{m}$, might be `NULL` if TDA
+    /// `float[res_nexci,ncsfs]` amplitude vector $\mathbf y^m$ for each excitation $\ket{m}$, might be `NULL` if TDA
     float* res_Yamp;
 };
 

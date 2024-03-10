@@ -16,7 +16,7 @@ output = "responses.h5"
 
 linear = [
     {opA = 'dipl', opB = 'dipl', wB = '512nm'}, # polarizability
-    {target = 'electric_polarizability', w = '1064nm'}, # alternate notation
+    # {target = 'electric_polarizability', w = '1064nm'}, # alternate notation
 ]
 
 linear_sr = [
@@ -25,12 +25,12 @@ linear_sr = [
 
 quadratic = [
     {opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = '1064nm', wC = '1064nm'},  # SHG first hyperpolarizability
-    {target = 'first_hyperpolarizability_SHG', w = '800nm'}, # alternate notation
+    # {target = 'first_hyperpolarizability_SHG', w = '800nm'}, # alternate notation
 ]
 
-quadratic_dr = [
-    {op = 'dipl', root = -1}  # e2e transition dipoles
-]
+#quadratic_dr = [
+#    {op = 'dipl', root = -1}  # e2e transition dipoles
+#]
 
 # [analyses]
 # sos_linear = true
