@@ -732,7 +732,7 @@ int stdl_user_input_prepare_responses(stdl_user_input* inp, stdl_context * ctx) 
         }
 
         size_t nw = req->resp_order - req->res_order;
-        for (size_t iw = 0; iw < nw; ++iw) {
+        for (size_t iw = 0; iw < nw; ++iw) {// TODO: in fact, a quadratic response requires 3 frequencies, not 2 :o
             stdl_operator op = req->ops[iw + 1];
             struct _w_list* elm = NULL;
             err = _w_list_new(req->w[iw], &elm);
