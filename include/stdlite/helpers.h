@@ -46,4 +46,11 @@
 #define STDL_CONST_AU_TO_ANG  0.529177210903
 #endif
 
+
+#define MX(a, b) ((a < b)? b: a)
+
+static inline int stdl_float_equals(float a, float b, float epsilon) {
+    return (fabsf(a - b) <= epsilon * MX(fabsf(a), fabsf(b)));
+}
+
 #endif //STDLITE_HELPERS_H

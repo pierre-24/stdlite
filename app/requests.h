@@ -11,6 +11,8 @@
 enum stdl_operator_ {
     /// Dipole length operator
     STDL_OP_DIPL,
+
+    STDL_OP_COUNT
 };
 
 typedef enum stdl_operator_ stdl_operator;
@@ -44,11 +46,11 @@ typedef struct stdl_lrv_request_ stdl_lrv_request;
  *
  * @param op operator
  * @param nw number of energies
- * @param[out] req_prt resulting request
+ * @param[out] req_ptr resulting request
  * @return error code
  * @ingroup requests
  */
-int stdl_lrv_request_new(stdl_operator op, size_t nw, stdl_lrv_request** req_prt);
+int stdl_lrv_request_new(stdl_operator op, size_t nw, stdl_lrv_request** req_ptr);
 
 /**
  * Actually compute the requested linear response vectors
@@ -91,7 +93,7 @@ struct stdl_response_request_ {
     int nroot;
 
     /// `stdl_linear_response_vectors_request[resp_order-res_order]` for each operator (except the first one), the corresponding linear response vector request
-    struct stdl_lrv_request_* requests;
+    struct stdl_lrv_request_** requests;
 
     /// `size_t[resp_order-res_order]` For each frequency, its corresponding position in the linear response vector request
     size_t* wpos;

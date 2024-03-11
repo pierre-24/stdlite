@@ -16,6 +16,8 @@ int stdl_user_input_new(stdl_user_input** inp_ptr) {
     *inp_ptr = malloc(sizeof(stdl_user_input));
     STDL_ERROR_HANDLE_AND_REPORT(*inp_ptr == NULL, return STDL_ERR_MALLOC, "malloc");
 
+    STDL_DEBUG("create user_input %p", *inp_ptr);
+
     (*inp_ptr)->title = NULL;
 
     // --- context:
@@ -36,6 +38,8 @@ int stdl_user_input_new(stdl_user_input** inp_ptr) {
     (*inp_ptr)->ctx_ax = 0.5f;
 
     // -- response:
+    (*inp_ptr)->res_nops = 0;
+    (*inp_ptr)->res_ops = NULL;
     (*inp_ptr)->res_resreqs = NULL;
     (*inp_ptr)->res_nlrvreq = 0;
     (*inp_ptr)->res_lrvreqs = NULL;
@@ -50,14 +54,16 @@ int stdl_user_input_new(stdl_user_input** inp_ptr) {
 int stdl_user_input_delete(stdl_user_input* inp) {
     assert(inp != NULL);
 
+    STDL_DEBUG("delete user_input %p", inp);
+
     if(inp->res_resreqs != NULL)
         stdl_response_request_delete(inp->res_resreqs);
 
     for (size_t i = 0; i < inp->res_nlrvreq; ++i) {
-        stdl_lrv_request_delete(inp->res_lrvreqs);
+        stdl_lrv_request_delete(inp->res_lrvreqs[i]);
     }
 
-    STDL_FREE_ALL(inp->title, inp->ctx_source, inp->ctx_output, inp->res_eexci, inp->res_Xamp, inp->res_Yamp, inp);
+    STDL_FREE_ALL(inp->title, inp->ctx_source, inp->ctx_output, inp->res_lrvreqs, inp->res_ops, inp->res_eexci, inp->res_Xamp, inp->res_Yamp, inp);
 
     return STDL_ERR_OK;
 }
@@ -665,4 +671,182 @@ int stdl_user_input_make_context(stdl_user_input* inp, stdl_context **ctx_ptr) {
     H5Fclose(file_id);
 
     return err;
+}
+
+struct _w_list {
+    float w;
+    struct _w_list* next;
+};
+
+int _w_list_new(float w, struct _w_list** elm) {
+    *elm = malloc(sizeof(struct _w_list));
+    STDL_ERROR_HANDLE_AND_REPORT(*elm == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    (*elm)->w = w;
+    (*elm)->next = NULL;
+    return STDL_ERR_OK;
+}
+
+int _w_list_delete(struct _w_list* lst) {
+    assert(lst != NULL);
+
+    if(lst->next != NULL)
+        _w_list_delete(lst->next);
+
+    STDL_FREE_IF_USED(lst);
+
+    return STDL_ERR_OK;
+}
+
+int stdl_user_input_prepare_responses(stdl_user_input* inp, stdl_context * ctx) {
+    assert(inp != NULL && ctx != NULL);
+
+    int err;
+
+    stdl_log_msg(1, "+ ");
+    stdl_log_msg(0, "Prepare responses >");
+    stdl_log_msg(1, "\n  | Count requests ");
+
+    // count the number of operators, LRV requests, amplitudes, and freqs.
+    inp->res_nops = 0;
+    inp->res_nlrvreq = 0;
+    inp->res_nexci = 0;
+
+    short operators[STDL_OP_COUNT] = {0};
+    short islrvs[STDL_OP_COUNT] = {0};
+    struct _w_list* lrvs_w[STDL_OP_COUNT] = {NULL};
+
+    stdl_response_request* req = inp->res_resreqs;
+    while (req != NULL) {
+        // check out if it contains a new operator
+        size_t nops = req->resp_order - req->res_order + 1;
+        for (size_t iop = 0; iop < nops; ++iop) {
+            stdl_operator op = req->ops[iop];
+            if(!operators[op])
+                inp->res_nops += 1;
+
+            if(!islrvs[op] && req->res_order < req->resp_order)
+                inp->res_nlrvreq += 1;
+
+            operators[op] = islrvs[op] = 1;
+        }
+
+        size_t nw = req->resp_order - req->res_order;
+        for (size_t iw = 0; iw < nw; ++iw) {
+            stdl_operator op = req->ops[iw + 1];
+            struct _w_list* elm = NULL;
+            err = _w_list_new(req->w[iw], &elm);
+            STDL_ERROR_CODE_HANDLE(err, return err);
+
+            if(lrvs_w[op] == NULL) {
+                lrvs_w[op] = elm;
+            } else {
+                struct _w_list* last = lrvs_w[op];
+                int already_in = 0;
+                while (last->next != NULL && !already_in) {
+                    if(stdl_float_equals(req->w[iw], last->w, 1e-6f))
+                        already_in = 1;
+
+                    last = last->next;
+                }
+
+                if(!already_in)
+                    last->next = elm;
+            }
+        }
+
+        // check out if it requires amplitudes
+        if(req->res_order > 0) {
+            if(req->nroot < 0)
+                inp->res_nexci = ctx->ncsfs;
+            else if((size_t) req->nroot > inp->res_nexci)
+                inp->res_nexci = (size_t) req->nroot;
+        }
+
+        req = req->next;
+    }
+
+    STDL_ERROR_HANDLE_AND_REPORT(inp->res_nops == 0, return STDL_ERR_INPUT, "No requests found, exiting");
+
+    stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | build requests ");
+
+    inp->res_ops = malloc(inp->res_nops * sizeof(stdl_operator));
+    inp->res_lrvreqs = malloc(inp->res_nlrvreq * sizeof(stdl_lrv_request*));
+    STDL_ERROR_HANDLE_AND_REPORT(inp->res_ops == NULL || inp->res_lrvreqs == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    // find the number of excited states
+    int ioffset = 0;
+    for (int iop = 0; iop < STDL_OP_COUNT; ++iop) {
+        if(operators[iop]) {
+            inp->res_ops[ioffset] = iop;
+            ioffset++;
+        }
+    }
+
+    // create LRV requests
+    stdl_lrv_request* lrvs[STDL_OP_COUNT] = {NULL};
+    ioffset = 0;
+    for (int iop = 0; iop < STDL_OP_COUNT; ++iop) {
+        if(islrvs[iop]) {
+            // count the number of frequencies
+            size_t nw = 0;
+            struct _w_list* last = lrvs_w[iop];
+            while (last != NULL) {
+                nw++;
+                last = last->next;
+            }
+
+            STDL_ERROR_HANDLE_AND_REPORT(nw == 0, return STDL_ERR_INPUT, "LRV but nw=0");
+
+            // create LRV request
+            inp->res_lrvreqs[ioffset] = NULL;
+            err = stdl_lrv_request_new(iop, nw, (inp->res_lrvreqs) + ioffset);
+            STDL_ERROR_CODE_HANDLE(err, return err);
+
+            lrvs[iop] = inp->res_lrvreqs[ioffset];
+
+            // copy frequencies
+            nw = 0;
+            struct _w_list* curr = lrvs_w[iop];
+            struct _w_list* prev = NULL;
+            while (curr != NULL) {
+                inp->res_lrvreqs[ioffset]->w[nw] = curr->w;
+
+                nw++;
+
+                prev = curr;
+                curr = curr->next;
+                prev->next = NULL;
+                _w_list_delete(prev);
+            }
+
+            ioffset++;
+        }
+    }
+
+    stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | assign each response to its request");
+
+    req = inp->res_resreqs;
+    while (req != NULL) {
+        size_t nw = req->resp_order - req->res_order;
+        for (size_t iop = 0; iop < nw; ++iop) {
+            stdl_lrv_request* lrvreq = lrvs[req->ops[iop + 1]];
+            req->requests[iop] = lrvreq;
+            for (size_t jw = 0; jw < lrvreq->nw; ++jw) {
+                if(req->w[iop] == lrvreq->w[jw]) {
+                    req->wpos[iop] = jw;
+                    break;
+                }
+            }
+        }
+
+        req = req->next;
+    }
+
+    stdl_log_msg(0, "< done\n");
+
+
+    return STDL_ERR_OK;
 }

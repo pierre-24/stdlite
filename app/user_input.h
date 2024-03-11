@@ -80,11 +80,17 @@ struct stdl_user_input_ {
     /// Response requests
     stdl_response_request* res_resreqs;
 
+    /// Number of operators
+    size_t res_nops;
+
+    /// `stdl_operator[res_nops]` list of operators
+    stdl_operator* res_ops;
+
     /// Number of LRV requests
     size_t res_nlrvreq;
 
-    /// `stdl_lrv_request[nlrv_req]` Corresponding linear response vectors requests
-    stdl_lrv_request* res_lrvreqs;
+    /// `stdl_lrv_request*[nlrv_req]` Corresponding linear response vectors requests
+    stdl_lrv_request** res_lrvreqs;
 
     /// Number of excited states requested
     size_t res_nexci;
@@ -188,5 +194,14 @@ int stdl_user_input_log(stdl_user_input* inp);
  * @ingroup user_input
  */
 int stdl_user_input_make_context(stdl_user_input* inp, stdl_context **ctx_ptr);
+
+/**
+ * Compute responses
+ * @param inp a valid user input
+ * @param ctx a valid context
+ * @return error code
+ * @ingroup user_input
+ */
+int stdl_user_input_prepare_responses(stdl_user_input* inp, stdl_context * ctx);
 
 #endif //STDLITE_USER_INPUT_H
