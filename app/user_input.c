@@ -312,7 +312,7 @@ int stdl_user_input_fill_from_toml(stdl_user_input* inp, FILE *f) {
                 STDL_DEBUG("lresp_sr[%d]", i);
 
                 stdl_operator opA;
-                err = _operator_in(t, "op", &opA, &isset);
+                err = _operator_in(t, "opA", &opA, &isset);
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
                 STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `op` in `linear_sr[%d]`", i);
 

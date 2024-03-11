@@ -7,7 +7,7 @@
 FILE* stream;
 
 void setUp(void) {
-    stdl_set_debug_level(3);
+    stdl_set_debug_level(-1);
 
     stream = tmpfile();
 }
@@ -225,7 +225,7 @@ void test_user_input_lresp_ok() {
           "[responses]\n"
           "linear = [{opA = 'dipl', opB = 'dipl', wB = '1064nm'}, {opA = 'dipl', opB = 'dipl', wB = '512nm'}]\n"
           "quadratic = [{opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = '1064nm', wC = '1064nm'}]\n"
-          "linear_sr = [{op = 'dipl', root = -1}]",
+          "linear_sr = [{opA = 'dipl', root = -1}]",
           stream);
     rewind(stream);
 

@@ -135,10 +135,9 @@ These are the keywords related to the creation of the context, *i.e.*, the selec
 
 These are the keywords related to the calculation of responses, their residues, and the related properties.
 
-In the following, `wX` is a frequency, thus following the syntax for energy mentioned in the preamble.  
-`opX` is an operator, which should be one of:
+In the following, `wX` is a frequency, thus following the syntax for energy mentioned in the preamble. `opX` is an operator, which should be one of:
 
-+ `"dipl"`: diple length operator;
++ `"dipl"`: dipole length operator;
 
 Other operators will be added in the future.
 
@@ -168,7 +167,7 @@ Other operators will be added in the future.
     **Default**: `[]`
 
     List the ground-to-excited states properties to compute.
-    Each request for $\braket{0|\hat A|m}$ is to be given as: `{op = "A", root = N}`.
+    Each request for $\braket{0|\hat A|m}$ is to be given as: `{opA = "A", root = N}`.
     `N` is the number of excited states, `\ket{m}`, to consider.
     If `N` < 0, all possible excited states (*i.e.*, corresponding to the number of CSFs) are computed.
 
@@ -177,7 +176,7 @@ Other operators will be added in the future.
     ```toml
     [responses]
     linear_sr = [
-        {op = 'dipl', root = 15}
+        {opA = 'dipl', root = 15}
     ]
     ```
 
@@ -188,7 +187,7 @@ Other operators will be added in the future.
     **Default**: `[]`
 
     List the quadratic reponses to compute. 
-    Each quadratic response $\braket{\braket{\hat A;\hat B, \hat C}}_{\omega_1,\omega_2}$ is to be given as: `{opA = "A", opB = "B", opC = "C", wB="w1", wC="w2"}`.
+    Each quadratic response $\braket{\braket{\hat A;\hat B, \hat C}}_{\omega_1,\omega_2}$ is to be given as: `{opA = "A", opB = "B", opC = "C", wB = "w1", wC = "w2"}`.
 
     For example, the following input  will compute the SHG first hyperpolarizability at 1064nm:
 

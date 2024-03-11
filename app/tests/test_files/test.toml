@@ -20,7 +20,7 @@ linear = [
 ]
 
 linear_sr = [
-    {op = 'dipl', root = -1},  # transition dipole
+    {opA = 'dipl', root = -1},  # transition dipole
 ]
 
 quadratic = [
