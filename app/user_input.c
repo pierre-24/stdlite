@@ -244,7 +244,7 @@ int stdl_user_input_fill_from_toml(stdl_user_input* inp, FILE *f) {
                 STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `w` in `linear[%d]`", i);
 
                 stdl_response_request* req = NULL;
-                err = stdl_response_request_new(1, 0, (stdl_operator[]) {opA, opB}, (float[]) {w}, 0, &req);
+                err = stdl_response_request_new(1, 0, (stdl_operator[]) {opA, opB}, (float[]) {-w, w}, 0, &req);
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
 
                 if(prev == NULL) {
@@ -292,7 +292,7 @@ int stdl_user_input_fill_from_toml(stdl_user_input* inp, FILE *f) {
                 STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `wC` in `quadratic[%d]`", i);
 
                 stdl_response_request* req = NULL;
-                err = stdl_response_request_new(2, 0, (stdl_operator[]) {opA, opB, opC}, (float[]) {wB, wC}, 0, &req);
+                err = stdl_response_request_new(2, 0, (stdl_operator[]) {opA, opB, opC}, (float[]) {- wB - wC, wB, wC}, 0, &req);
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
 
                 if(prev == NULL) {
@@ -731,9 +731,10 @@ int stdl_user_input_prepare_responses(stdl_user_input* inp, stdl_context * ctx) 
             operators[op] = islrvs[op] = 1;
         }
 
-        size_t nw = req->resp_order - req->res_order;
-        for (size_t iw = 0; iw < nw; ++iw) {// TODO: in fact, a quadratic response requires 3 frequencies, not 2 :o
-            stdl_operator op = req->ops[iw + 1];
+        // if LRV is required, add frequency
+        size_t nw = (req->resp_order == req->res_order)? 0: req->resp_order-req->res_order+1;
+        for (size_t iw = 0; iw < nw; ++iw) {
+            stdl_operator op = req->ops[iw];
             struct _w_list* elm = NULL;
             err = _w_list_new(req->w[iw], &elm);
             STDL_ERROR_CODE_HANDLE(err, return err);

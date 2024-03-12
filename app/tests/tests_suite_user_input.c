@@ -7,7 +7,7 @@
 FILE* stream;
 
 void setUp(void) {
-    stdl_set_debug_level(3);
+    stdl_set_debug_level(-1);
 
     stream = tmpfile();
 }
@@ -223,7 +223,7 @@ void test_user_input_lresp_ok() {
           "source = \"../tests/test_files/water_631g.fchk\"\n"
           "source_type = \"FCHK\"\n"
           "[responses]\n"
-          "linear = [{opA = 'dipl', opB = 'dipl', wB = '1064nm'}, {opA = 'dipl', opB = 'dipl', wB = '512nm'}]\n"
+          "linear = [{opA = 'dipl', opB = 'dipl', wB = '1064nm'}, {opA = 'dipl', opB = 'dipl', wB = '532nm'}]\n"
           "quadratic = [{opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = '1064nm', wC = '1064nm'}]\n"
           "linear_sr = [{opA = 'dipl', root = -1}]",
           stream);
@@ -237,7 +237,8 @@ void test_user_input_lresp_ok() {
 
     TEST_ASSERT_EQUAL(1, req->resp_order);
     TEST_ASSERT_EQUAL(0, req->res_order);
-    TEST_ASSERT_FLOAT_WITHIN(1e-4, req->w[0], STDL_CONST_HC / 1064.f);
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, STDL_CONST_HC / req->w[0], -1064.f);
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, STDL_CONST_HC / req->w[1], 1064.f);
     TEST_ASSERT_EQUAL(req->ops[0], STDL_OP_DIPL);
     TEST_ASSERT_EQUAL(0, req->nroot);
 
@@ -245,7 +246,8 @@ void test_user_input_lresp_ok() {
     req = req->next;
     TEST_ASSERT_EQUAL(1, req->resp_order);
     TEST_ASSERT_EQUAL(0, req->res_order);
-    TEST_ASSERT_FLOAT_WITHIN(1e-4, req->w[0], STDL_CONST_HC / 512.f);
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, STDL_CONST_HC / req->w[0], -532.f);
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, STDL_CONST_HC / req->w[1], 532.f);
     TEST_ASSERT_EQUAL(req->ops[0], STDL_OP_DIPL);
     TEST_ASSERT_EQUAL(0, req->nroot);
 
@@ -253,7 +255,9 @@ void test_user_input_lresp_ok() {
     req = req->next;
     TEST_ASSERT_EQUAL(2, req->resp_order);
     TEST_ASSERT_EQUAL(0, req->res_order);
-    TEST_ASSERT_FLOAT_WITHIN(1e-4, req->w[0], STDL_CONST_HC / 1064.f);
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, STDL_CONST_HC / req->w[0], -532.f);
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, STDL_CONST_HC / req->w[1], 1064.f);
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, STDL_CONST_HC / req->w[2], 1064.f);
     TEST_ASSERT_EQUAL(req->ops[0], STDL_OP_DIPL);
     TEST_ASSERT_EQUAL(0, req->nroot);
 
@@ -278,7 +282,8 @@ void test_user_input_prepare_responses() {
           "source_type = \"FCHK\"\n"
           "ethr = '12eV'\n"
           "[responses]\n"
-          "linear = [{opA = 'dipl', opB = 'dipl', wB = '1064nm'}, {opA = 'dipl', opB = 'dipl', wB = '512nm'}]\n",
+          "linear = [{opA = 'dipl', opB = 'dipl', wB = '1064nm'}, {opA = 'dipl', opB = 'dipl', wB = '532nm'}]\n"
+          "quadratic = [{opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = '1064nm', wC = '1064nm'}]\n",
           stream);
     rewind(stream);
 
@@ -301,16 +306,18 @@ void test_user_input_prepare_responses() {
     stdl_lrv_request * lrv_req = inp->res_lrvreqs[0];
     TEST_ASSERT_NOT_NULL(lrv_req);
     TEST_ASSERT_EQUAL(STDL_OP_DIPL, lrv_req->op);
-    TEST_ASSERT_EQUAL(2, lrv_req->nw);
-    TEST_ASSERT_FLOAT_WITHIN(1e-4, 1064.f, STDL_CONST_HC / lrv_req->w[0]);
-    TEST_ASSERT_FLOAT_WITHIN(1e-4, 512.f, STDL_CONST_HC / lrv_req->w[1]);
+    TEST_ASSERT_EQUAL(4, lrv_req->nw);
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, -1064.f, STDL_CONST_HC / lrv_req->w[0]); // TODO: that one is not very useful ;)
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, 1064.f, STDL_CONST_HC / lrv_req->w[1]);
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, -532.f, STDL_CONST_HC / lrv_req->w[2]);
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, 532.f, STDL_CONST_HC / lrv_req->w[3]);
 
     stdl_response_request* req = inp->res_resreqs;
     TEST_ASSERT_NOT_NULL(req);
 
     TEST_ASSERT_EQUAL(1, req->resp_order);
     TEST_ASSERT_EQUAL(0, req->res_order);
-    TEST_ASSERT_FLOAT_WITHIN(1e-4, req->w[0], STDL_CONST_HC / 1064.f);
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, STDL_CONST_HC / req->w[0], -1064.f);
     TEST_ASSERT_EQUAL(req->ops[0], STDL_OP_DIPL);
     TEST_ASSERT_EQUAL(0, req->nroot);
     TEST_ASSERT_EQUAL(lrv_req, req->requests[0]);
@@ -320,11 +327,11 @@ void test_user_input_prepare_responses() {
     req = req->next;
     TEST_ASSERT_EQUAL(1, req->resp_order);
     TEST_ASSERT_EQUAL(0, req->res_order);
-    TEST_ASSERT_FLOAT_WITHIN(1e-4, req->w[0], STDL_CONST_HC / 512.f);
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, STDL_CONST_HC / req->w[0], -532.f);
     TEST_ASSERT_EQUAL(req->ops[0], STDL_OP_DIPL);
     TEST_ASSERT_EQUAL(0, req->nroot);
     TEST_ASSERT_EQUAL(lrv_req, req->requests[0]);
-    TEST_ASSERT_EQUAL(1, req->wpos[0]);
+    TEST_ASSERT_EQUAL(2, req->wpos[0]);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
     ASSERT_STDL_OK(stdl_user_input_delete(inp));

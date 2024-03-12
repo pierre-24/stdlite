@@ -8,8 +8,6 @@
 int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator* ops, float* w, int nroot, stdl_response_request** req_ptr) {
     assert(req_ptr != NULL && resp_order > 0);
 
-    size_t nw = resp_order - res_order;
-
     *req_ptr = malloc(sizeof(stdl_response_request));
     STDL_ERROR_HANDLE_AND_REPORT(*req_ptr == NULL, return STDL_ERR_MALLOC, "malloc");
 
@@ -18,18 +16,28 @@ int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator
     (*req_ptr)->resp_order = resp_order;
     (*req_ptr)->res_order = res_order;
     (*req_ptr)->nroot = nroot;
-
-    (*req_ptr)->wpos = 0;
     (*req_ptr)->next = NULL;
 
-    (*req_ptr)->ops = malloc((nw + 1) * sizeof(stdl_operator));
-    (*req_ptr)->w = malloc(nw * sizeof(float ));
-    (*req_ptr)->requests = malloc(nw * sizeof (stdl_lrv_request*));
-    (*req_ptr)->wpos = malloc(nw * sizeof(size_t ));
-    STDL_ERROR_HANDLE_AND_REPORT((*req_ptr)->ops == NULL || (*req_ptr)->w == NULL || (*req_ptr)->requests == NULL || (*req_ptr)->wpos == NULL, stdl_response_request_delete(*req_ptr); return STDL_ERR_MALLOC, "malloc");
+    (*req_ptr)->w = NULL;
+    (*req_ptr)->requests = NULL;
+    (*req_ptr)->wpos = NULL;
 
-    memcpy((*req_ptr)->ops, ops, (nw + 1) * sizeof(stdl_operator));
-    memcpy((*req_ptr)->w, w, nw * sizeof(float ));
+    size_t nops = resp_order-res_order+1;
+    (*req_ptr)->ops = malloc(nops * sizeof(stdl_operator));
+    STDL_ERROR_HANDLE_AND_REPORT((*req_ptr)->ops == NULL, stdl_response_request_delete(*req_ptr); return STDL_ERR_MALLOC, "malloc");
+    memcpy((*req_ptr)->ops, ops, nops * sizeof(stdl_operator));
+
+    size_t nw = (resp_order == res_order)? 0: resp_order-res_order+1;
+    if(nw > 0) {
+        (*req_ptr)->w = malloc(nw * sizeof(float));
+        (*req_ptr)->requests = malloc(nw * sizeof(stdl_lrv_request*));
+        (*req_ptr)->wpos = malloc(nw * sizeof(size_t));
+        STDL_ERROR_HANDLE_AND_REPORT(
+                (*req_ptr)->ops == NULL || (*req_ptr)->w == NULL || (*req_ptr)->requests == NULL || (*req_ptr)->wpos == NULL,
+                stdl_response_request_delete(*req_ptr); return STDL_ERR_MALLOC, "malloc");
+
+        memcpy((*req_ptr)->w, w, nw * sizeof(float ));
+    }
 
     return STDL_ERR_OK;
 }

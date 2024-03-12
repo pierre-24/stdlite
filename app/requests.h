@@ -86,7 +86,7 @@ struct stdl_response_request_ {
     /// `stdl_operator[resp_order-res_order+1]` the operators associated with the request
     stdl_operator *ops;
 
-    /// `float[resp_order-res_order]` the energies at which linear response vectors should be computed
+    /// `float[(resp_order == res_order)? 0: resp_order-res_order+1]` the energies at which linear response vectors should be computed
     float* w;
 
     /// number of amplitude vectors (*i.e.*, excitations) requested, any negatives number means "all"
