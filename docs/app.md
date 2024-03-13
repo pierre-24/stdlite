@@ -1,18 +1,43 @@
-# Description of `stdlite_run` inputs
+# `stdlite_run`
 
-This page describe in details the inputs that `stdlite_run` takes.
+This page describe in details the usage of `stdlite_run`.
 
-## Preamble
+## Calling `stlite_run`
 
-In the following, "Keyword" refers to keywords that can be put in the TOML input, while "command line option" refers to option you can directly give to the program.
-Note that a command line option, when it exists, have precedence over the TOML input file.
+The utility `stdlite_run` primarily read an input file written in the [TOML format](https://toml.io/), described below.
+
+A typical way to call the utility is to use:
+
+```bash
+stdlite_run input.toml
+```
+
+Command line options, described below can also be given:
+
+```bash
+stdlite_run input.toml --ctx_ax="0.7"
+```
+
+Note that a command line option, when it exists, have precedence over the input file.
+
+Eventually, the verbosity level can be adjusted through environment variables:
+
+```bash
+export STDL_LOG_LEVEL=1 # default is 0, set to -1 to silence the program
+export STDL_DEBUG_LEVEL=3 # default is 1, set to -1 to silence the program
+stdlite_run input.toml
+```
+
+## Inputs
+
+In the following, "Keyword" refers to keywords that can be put in the TOML input.
 
 When a keyword type is "`str`/`float` (energy)", the energy is to be given in the format `"xxxYY"`, where `xxx` is a number, and `YY` is a unit.
 Currently, 3 units are supported: `au` ([atomic units](https://en.wikipedia.org/wiki/Atomic_units)), `eV` ([electronvolts](https://en.wikipedia.org/wiki/Electronvolt)), and `nm` (nanometers).
 If no unit are given, atomic units are assumed.
 Valid inputs are, *e.g.*, `"8.5eV"`, `"1200nm"`, `"0.25au"`, `1.25`, etc.
 
-## General 
+### General 
 
 !!! abstract "Title"
 
@@ -23,7 +48,7 @@ Valid inputs are, *e.g.*, `"8.5eV"`, `"1200nm"`, `"0.25au"`, `1.25`, etc.
     Title of the calculation, in free format.
     It is there for documentation/archiving purposes, and will never be parsed.
 
-## Context (`[context]`)
+### Context (`[context]`)
 
 These are the keywords related to the creation of the context, *i.e.*, the selection of the CSFs and the creation of the $\mathbf A'$ and $\mathbf B'$ super-matrices. 
 
@@ -131,7 +156,7 @@ These are the keywords related to the creation of the context, *i.e.*, the selec
 
     Path to the place where the context will be saved, after it has been completed.
 
-## Responses (`[responses]`)
+### Responses (`[responses]`)
 
 These are the keywords related to the calculation of responses, their residues, and the related properties.
 
@@ -194,6 +219,22 @@ Other operators will be added in the future.
     ```toml
     [responses]
     quadratic = [
-        {opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = '1064nm', wC = '1064nm"}, 
+        {opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = '1064nm', wC = '1064nm'}, 
     ]
     ```
+
+## Outputs
+
+Log messages are written in `stdout`, while errors are given in `stderr`.
+
+### Context
+
+After run, the context is saved in a [HDF5 file](https://en.wikipedia.org/wiki/Hierarchical_Data_Format) (by default, `context.h5`).
+
+It acts as a checkpoint file for the first part of the program, since you can re-use a context with:
+
+```toml
+[context]
+source = "context.h5"
+source_type = "STDL_CTX"
+```
