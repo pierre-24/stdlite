@@ -91,8 +91,8 @@ void test_response_TDA_ok() {
     }
 
     // solve linear response
-    size_t nw = 3;
-    float w[] = {0, 4.282270E-2f, 4.282270E-2f * 2};
+    size_t nw = 4;
+    float w[] = {0, STDL_CONST_HC / 1064.f, STDL_CONST_HC / 532.f, -STDL_CONST_HC / 532.f};
 
     float* Xtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(Xtda);
@@ -101,6 +101,13 @@ void test_response_TDA_ok() {
     TEST_ASSERT_NOT_NULL(Ytda);
 
     ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, egrad, Xtda, Ytda));
+
+    // check that static X and Y are equals
+    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, Xtda, Ytda,  3 * ctx->ncsfs);
+
+    // check that X(-w) = Y(w) (and conversely)
+    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, Xtda + 2 * 3 * ctx->ncsfs, Ytda + 3 * 3 * ctx->ncsfs,  3 * ctx->ncsfs);
+    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, Ytda + 2 * 3 * ctx->ncsfs, Xtda + 3 * 3 * ctx->ncsfs,  3 * ctx->ncsfs);
 
     // stdl_matrix_sge_print(ctx->ncsfs, 3, Xtda + 2 * 3 * ctx->ncsfs, "X");
 
@@ -113,12 +120,9 @@ void test_response_TDA_ok() {
     for (size_t iexci = 0; iexci < nw; ++iexci) {
         _make_response_vector(ctx, w[iexci], dipoles_mat, etda, Xamptda, NULL, 1, reXtda);
         _make_response_vector(ctx, w[iexci], dipoles_mat, etda, Xamptda, NULL, 0, reYtda);
-        for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
-            for (int zeta = 0; zeta < 3; ++zeta) {
-                TEST_ASSERT_FLOAT_WITHIN(1e-1, Xtda[iexci * 3 * ctx->ncsfs + lia * 3 + zeta], reXtda[lia * 3 + zeta]);
-                TEST_ASSERT_FLOAT_WITHIN(1e-1, Ytda[iexci * 3 * ctx->ncsfs + lia * 3 + zeta], reYtda[lia * 3 + zeta]);
-            }
-        }
+
+        TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, Xtda + iexci * 3 * ctx->ncsfs, reXtda,  3 * ctx->ncsfs);
+        TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, Ytda + iexci * 3 * ctx->ncsfs, reYtda,  3 * ctx->ncsfs);
     }
 
     STDL_FREE_ALL(dipoles_mat, etda, Xamptda, egrad, Xtda, Ytda, reXtda, reYtda);
@@ -193,8 +197,8 @@ void test_response_TD_ok() {
     stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
 
     // solve linear response
-    size_t nw = 3;
-    float w[] = {0, 4.282270E-2f, 4.282270E-2f * 2};
+    size_t nw = 4;
+    float w[] = {0, STDL_CONST_HC / 1064.f, STDL_CONST_HC / 532.f, - STDL_CONST_HC / 532.f};
 
     float* Xtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Xtd);
@@ -203,6 +207,13 @@ void test_response_TD_ok() {
     TEST_ASSERT_NOT_NULL(Ytd);
 
     ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, egrad, Xtd, Ytd));
+
+    // check that static X and Y are equals
+    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, Xtd, Ytd,  3 * ctx->ncsfs);
+
+    // check that X(-w) = Y(w) (and conversely)
+    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, Xtd + 2 * 3 * ctx->ncsfs, Ytd + 3 * 3 * ctx->ncsfs,  3 * ctx->ncsfs);
+    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, Ytd + 2 * 3 * ctx->ncsfs, Xtd + 3 * 3 * ctx->ncsfs,  3 * ctx->ncsfs);
 
     // stdl_matrix_sge_print(ctx->ncsfs, 3, Xtd + 1 * 3 * ctx->ncsfs, "X");
     // stdl_matrix_sge_print(ctx->ncsfs, 3, Ytd + 1 * 3 * ctx->ncsfs, "Y");
@@ -217,12 +228,8 @@ void test_response_TD_ok() {
         _make_response_vector(ctx, w[iexci], dipoles_mat, etd, Xamptd, Yamptd, 1, reXtd);
         _make_response_vector(ctx, w[iexci], dipoles_mat, etd, Xamptd, Yamptd, 0, reYtd);
 
-        for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
-            for (int zeta = 0; zeta < 3; ++zeta) {
-                TEST_ASSERT_FLOAT_WITHIN(1e-1, Xtd[iexci * 3 * ctx->ncsfs + lia * 3 + zeta], reXtd[lia * 3 + zeta]);
-                TEST_ASSERT_FLOAT_WITHIN(1e-1, Ytd[iexci * 3 * ctx->ncsfs + lia * 3 + zeta], reYtd[lia * 3 + zeta]);
-            }
-        }
+        TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, Xtd + iexci * 3 * ctx->ncsfs, reXtd,  3 * ctx->ncsfs);
+        TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, Ytd + iexci * 3 * ctx->ncsfs, reYtd,  3 * ctx->ncsfs);
     }
 
     STDL_FREE_ALL(etd, Xamptd, Yamptd, dipoles_mat, egrad, Xtd, Ytd, reXtd, reYtd);

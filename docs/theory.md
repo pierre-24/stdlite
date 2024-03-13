@@ -182,6 +182,18 @@ y_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia}
 where these expression involves a summation over the manifold $\{\ket{m}\}$ of excited states (and one can set $\mathbf y^m = 0$ to get the TDA version).
 These representations lead to simplification when taking residue of response functions.
 
+!!! info "Implications"
+
+    From the spectral representations of $x_{ia,\zeta}(\omega)$ and $y_{ia,\zeta}(\omega)$, it is easy to see that:
+
+    $$x_{ia,\zeta}(0) = y_{ia,\zeta}(0),$$
+
+    and:
+    
+    $$x_{ia,\zeta}(-\omega) = y_{ia,\zeta}(\omega) \land y_{ia,\zeta}(-\omega) = x_{ia,\zeta}(\omega).$$
+
+    The latter is usefull to evaluate linear and quadratic response properties at the same time.
+
 ## The simplified approaches to TD-DFT
 
 In the rest of this development a **global hybrid** density functional is assumed,

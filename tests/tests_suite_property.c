@@ -266,7 +266,7 @@ void test_property_polarizability_TD_SOS_ok() {
 
     // solve linear response
     size_t nw = 3;
-    float w[] = {0, 4.282270E-2f, 4.282270E-2f * 2};
+    float w[] = {0, STDL_CONST_HC / 1064.f, STDL_CONST_HC / 532.f};
 
     float* Xtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Xtd);
@@ -319,8 +319,8 @@ void test_property_first_hyperpolarizability_TD_ok() {
     stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
 
     // solve response
-    size_t nw = 3;
-    float w[] = {0, 4.282270E-2f, 4.282270E-2f * -2};
+    size_t nw = 4;
+    float w[] = {0, STDL_CONST_HC / 1064.f, -STDL_CONST_HC / 532.f, STDL_CONST_HC / 532.f};
 
     float* X = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(X);
@@ -360,6 +360,20 @@ void test_property_first_hyperpolarizability_TD_ok() {
     TEST_ASSERT_FLOAT_WITHIN(1e-2, 272.19, beta2_ZZZ);
     TEST_ASSERT_FLOAT_WITHIN(1e-2, 43.85, beta2_ZXX);
 
+    // check that one gets the same result by using X(-w) = Y(w)
+    ASSERT_STDL_OK(stdl_property_first_hyperpolarizability(
+            ctx,
+            dipoles_mat,
+            (float* []) {Y + 3 * 3 * ctx->ncsfs, X + 1 * 3 * ctx->ncsfs, X + 1 * 3 * ctx->ncsfs},
+            (float* []) {X + 3 * 3 * ctx->ncsfs, Y + 1 * 3 * ctx->ncsfs, Y + 1 * 3 * ctx->ncsfs},
+            (float*) beta
+    ));
+
+    stdl_qexp_first_hyperpolarizability_hrs(beta, &beta2_ZZZ, &beta2_ZXX);
+
+    TEST_ASSERT_FLOAT_WITHIN(1e-2, 272.19, beta2_ZZZ);
+    TEST_ASSERT_FLOAT_WITHIN(1e-2, 43.85, beta2_ZXX);
+
     STDL_FREE_ALL(dipoles_mat, egrad, X, Y);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
@@ -388,7 +402,7 @@ void test_property_polarizability_TDA_ok() {
 
     // solve response
     size_t nw = 3;
-    float w[] = {0, 4.282270E-2f, 4.282270E-2f * 2};
+    float w[] = {0, STDL_CONST_HC / 1064.f, STDL_CONST_HC / 532.f};
 
     // solve
     float* Xtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
@@ -454,7 +468,7 @@ void test_property_polarizability_TDA_SOS_ok() {
 
     // solve linear response
     size_t nw = 3;
-    float w[] = {0, 4.282270E-2f, 4.282270E-2f * 2};
+    float w[] = {0, STDL_CONST_HC / 1064.f, STDL_CONST_HC / 532.f};
 
     float* Xtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(Xtda);
@@ -599,7 +613,7 @@ void test_property_first_hyperpolarizability_TD_SOS_ok() {
 
     // solve linear response
     size_t nw = 3;
-    float w[] = {0, 4.282270E-2f * 2, 4.282270E-2f * -4};
+    float w[] = {0, STDL_CONST_HC / 1064.f, -STDL_CONST_HC / 532.f};
 
     float* Xtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Xtd);
@@ -716,7 +730,7 @@ void test_property_first_hyperpolarizability_TDA_SOS_ok() {
 
     // solve linear response
     size_t nw = 3;
-    float w[] = {0, 4.282270E-2f * 2, 4.282270E-2f * -4};
+    float w[] = {0, STDL_CONST_HC / 1064.f, - STDL_CONST_HC / 532.f};
 
     float* Xtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Xtda);

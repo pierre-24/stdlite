@@ -244,7 +244,7 @@ int stdl_user_input_fill_from_toml(stdl_user_input* inp, FILE *f) {
                 STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `w` in `linear[%d]`", i);
 
                 stdl_response_request* req = NULL;
-                err = stdl_response_request_new(1, 0, (stdl_operator[]) {opA, opB}, (float[]) {-w, w}, 0, &req);
+                err = stdl_response_request_new(1, 0, (stdl_operator[]) {opA, opB}, (float[]) {w, w}, 0, &req);
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
 
                 if(prev == NULL) {
@@ -292,7 +292,7 @@ int stdl_user_input_fill_from_toml(stdl_user_input* inp, FILE *f) {
                 STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `wC` in `quadratic[%d]`", i);
 
                 stdl_response_request* req = NULL;
-                err = stdl_response_request_new(2, 0, (stdl_operator[]) {opA, opB, opC}, (float[]) {- wB - wC, wB, wC}, 0, &req);
+                err = stdl_response_request_new(2, 0, (stdl_operator[]) {opA, opB, opC}, (float[]) {wB + wC, wB, wC}, 0, &req);
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
 
                 if(prev == NULL) {
@@ -745,13 +745,14 @@ int stdl_user_input_prepare_responses(stdl_user_input* inp, stdl_context * ctx) 
                 struct _w_list* last = lrvs_w[op];
                 int already_in = 0;
                 while (last->next != NULL && !already_in) {
-                    if(stdl_float_equals(req->w[iw], last->w, 1e-6f))
+                    if(stdl_float_equals(req->w[iw], last->w, 1e-6f)) {
                         already_in = 1;
+                    }
 
                     last = last->next;
                 }
 
-                if(!already_in)
+                if(!already_in && !stdl_float_equals(req->w[iw], last->w, 1e-6f))
                     last->next = elm;
                 else
                     _w_list_delete(elm);
@@ -833,12 +834,12 @@ int stdl_user_input_prepare_responses(stdl_user_input* inp, stdl_context * ctx) 
 
     req = inp->res_resreqs;
     while (req != NULL) {
-        size_t nw = req->resp_order - req->res_order;
-        for (size_t iop = 0; iop < nw; ++iop) {
-            stdl_lrv_request* lrvreq = lrvs[req->ops[iop + 1]];
+        size_t nops = req->resp_order - req->res_order + 1;
+        for (size_t iop = 0; iop < nops; ++iop) {
+            stdl_lrv_request* lrvreq = lrvs[req->ops[iop]];
             req->requests[iop] = lrvreq;
             for (size_t jw = 0; jw < lrvreq->nw; ++jw) {
-                if(req->w[iop] == lrvreq->w[jw]) {
+                if(stdl_float_equals(req->w[iop], lrvreq->w[jw], 1e-6f)) {
                     req->wpos[iop] = jw;
                     break;
                 }
