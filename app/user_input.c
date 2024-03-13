@@ -753,6 +753,8 @@ int stdl_user_input_prepare_responses(stdl_user_input* inp, stdl_context * ctx) 
 
                 if(!already_in)
                     last->next = elm;
+                else
+                    _w_list_delete(elm);
             }
         }
 
