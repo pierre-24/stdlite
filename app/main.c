@@ -20,8 +20,8 @@ void title(char* title) {
 int main(int argc, char* argv[]) {
 
     // record time
-    struct timespec elapsed_prog;
-    stdl_timer_start(&elapsed_prog);
+    struct timespec elapsed_time_prog;
+    stdl_timer_start(&elapsed_time_prog);
 
     int err;
     stdl_user_input* input = NULL;
@@ -49,22 +49,43 @@ int main(int argc, char* argv[]) {
     STDL_ERROR_CODE_HANDLE(err, goto _end);
 
     // create context
+    struct timespec elapsed_time_ctx;
+    stdl_timer_start(&elapsed_time_ctx);
+
     title("Create context");
     err = stdl_user_input_make_context(input, &ctx);
     STDL_ERROR_CODE_HANDLE(err, goto _end);
 
+    stdl_log_msg(0, "Elapsed time in context: %.2f secs\n", stdl_timer_stop(&elapsed_time_ctx));
+
+    // Compute responses
+    struct timespec elapsed_time_response;
+    stdl_timer_start(&elapsed_time_response);
+
+    title("Compute responses");
+    if(input->res_resreqs != NULL) {
+        err = stdl_user_input_prepare_responses(input, ctx);
+        STDL_ERROR_CODE_HANDLE(err, goto _end);
+    } else {
+        stdl_log_msg(0, "No response requested, exiting\n");
+    }
+
+    stdl_log_msg(0, "Elapsed time in response: %.2f secs\n", stdl_timer_stop(&elapsed_time_response));
+
     // the end
     _end:
+    if(err < STDL_ERR_LAST) {
+        title("End");
+    }
+
     if(input != NULL)
         stdl_user_input_delete(input);
 
     if(ctx != NULL)
         stdl_context_delete(ctx);
 
-    if(err < STDL_ERR_LAST) {
-        title("End");
-        stdl_log_msg(0, "Elapsed time in %s: %.2f secs\n", APP_NAME, stdl_timer_stop(&elapsed_prog));
-    }
+    if(err < STDL_ERR_LAST)
+        stdl_log_msg(0, "Elapsed time in %s: %.2f secs\n", APP_NAME, stdl_timer_stop(&elapsed_time_prog));
 
     if(err == STDL_ERR_OK || err > STDL_ERR_LAST) {
         return EXIT_SUCCESS;

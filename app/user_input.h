@@ -196,12 +196,22 @@ int stdl_user_input_log(stdl_user_input* inp);
 int stdl_user_input_make_context(stdl_user_input* inp, stdl_context **ctx_ptr);
 
 /**
- * Compute responses
+ * Prepare response calculations
+ *
  * @param inp a valid user input
  * @param ctx a valid context
  * @return error code
  * @ingroup user_input
  */
 int stdl_user_input_prepare_responses(stdl_user_input* inp, stdl_context * ctx);
+
+/**
+ * Compute responses
+ * @param inp a valid user input
+ * @param ctx a valid context
+ * @return error code
+ * @ingroup user_input
+ */
+int stdl_user_input_compute_responses(stdl_user_input* inp, stdl_context * ctx);
 
 #endif //STDLITE_USER_INPUT_H

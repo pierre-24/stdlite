@@ -12,20 +12,20 @@ e2thr=1e-4
 
 [responses]
 
-output = "responses.h5"
+# output = "responses.h5"
 
 linear = [
     {opA = 'dipl', opB = 'dipl', wB = '512nm'}, # polarizability
     # {target = 'electric_polarizability', w = '1064nm'}, # alternate notation
 ]
 
-linear_sr = [
-    {opA = 'dipl', root = -1},  # transition dipole
-]
-
 quadratic = [
     {opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = '1064nm', wC = '1064nm'},  # SHG first hyperpolarizability
     # {target = 'first_hyperpolarizability_SHG', w = '800nm'}, # alternate notation
+]
+
+linear_sr = [
+    {opA = 'dipl', root = -1},  # transition dipole
 ]
 
 #quadratic_dr = [

@@ -699,12 +699,12 @@ int _w_list_delete(struct _w_list* lst) {
 }
 
 int stdl_user_input_prepare_responses(stdl_user_input* inp, stdl_context * ctx) {
-    assert(inp != NULL && ctx != NULL);
+    assert(inp != NULL && ctx != NULL && inp->res_resreqs != NULL);
 
     int err;
 
     stdl_log_msg(1, "+ ");
-    stdl_log_msg(0, "Prepare responses >");
+    stdl_log_msg(0, "Preparing responses >");
     stdl_log_msg(1, "\n  | Count requests ");
 
     // count the number of operators, LRV requests, amplitudes, and freqs.
@@ -763,14 +763,17 @@ int stdl_user_input_prepare_responses(stdl_user_input* inp, stdl_context * ctx) 
         if(req->res_order > 0) {
             if(req->nroot < 0)
                 inp->res_nexci = ctx->ncsfs;
-            else if((size_t) req->nroot > inp->res_nexci)
+            else if((size_t) req->nroot > inp->res_nexci) {
+                if((size_t) req->nroot > ctx->ncsfs) {
+                    STDL_WARN("%ld excited states requested, which is more than the number of CSFs", req->nroot);
+                    req->nroot = (int) ctx->ncsfs;
+                }
                 inp->res_nexci = (size_t) req->nroot;
+            }
         }
 
         req = req->next;
     }
-
-    STDL_ERROR_HANDLE_AND_REPORT(inp->res_nops == 0, return STDL_ERR_INPUT, "No requests found, exiting");
 
     stdl_log_msg(0, "-");
     stdl_log_msg(1, "\n  | build requests ");
@@ -830,18 +833,20 @@ int stdl_user_input_prepare_responses(stdl_user_input* inp, stdl_context * ctx) 
     }
 
     stdl_log_msg(0, "-");
-    stdl_log_msg(1, "\n  | assign each response to its request");
+    stdl_log_msg(1, "\n  | assign each response to its request ");
 
     req = inp->res_resreqs;
     while (req != NULL) {
-        size_t nops = req->resp_order - req->res_order + 1;
-        for (size_t iop = 0; iop < nops; ++iop) {
-            stdl_lrv_request* lrvreq = lrvs[req->ops[iop]];
-            req->requests[iop] = lrvreq;
-            for (size_t jw = 0; jw < lrvreq->nw; ++jw) {
-                if(stdl_float_equals(req->w[iop], lrvreq->w[jw], 1e-6f)) {
-                    req->wpos[iop] = jw;
-                    break;
+        if(req->resp_order != req->res_order) {
+            size_t nops = req->resp_order - req->res_order + 1;
+            for (size_t iop = 0; iop < nops; ++iop) {
+                stdl_lrv_request *lrvreq = lrvs[req->ops[iop]];
+                req->requests[iop] = lrvreq;
+                for (size_t jw = 0; jw < lrvreq->nw; ++jw) {
+                    if (stdl_float_equals(req->w[iop], lrvreq->w[jw], 1e-6f)) {
+                        req->wpos[iop] = jw;
+                        break;
+                    }
                 }
             }
         }
@@ -850,7 +855,7 @@ int stdl_user_input_prepare_responses(stdl_user_input* inp, stdl_context * ctx) 
     }
 
     stdl_log_msg(0, "< done\n");
-
+    stdl_log_msg(0, "Will compute %ld EV matrix(ces), %ld response vector(s), and %ld amplitude vector(s)\n", inp->res_nops, inp->res_nlrvreq, inp->res_nexci);
 
     return STDL_ERR_OK;
 }
