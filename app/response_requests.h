@@ -1,5 +1,5 @@
-#ifndef STDLITE_REQUESTS_H
-#define STDLITE_REQUESTS_H
+#ifndef STDLITE_RESPONSE_REQUESTS_H
+#define STDLITE_RESPONSE_REQUESTS_H
 
 
 #include <stdlite/context.h>
@@ -128,4 +128,4 @@ int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator
 int stdl_response_request_delete(stdl_response_request* req);
 
 
-#endif //STDLITE_REQUESTS_H
+#endif //STDLITE_RESPONSE_REQUESTS_H

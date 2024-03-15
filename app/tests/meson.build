@@ -19,7 +19,7 @@ tests_dep += unity_dep
 
 # create tests
 tests_to_run = [
-    'user_input',
+    'user_input_handler',
 ]
 
 foreach t: tests_to_run

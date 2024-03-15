@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
     stdl_timer_start(&elapsed_time_prog);
 
     int err;
-    stdl_user_input* input = NULL;
+    stdl_user_input_handler* input = NULL;
     stdl_context* ctx = NULL;
 
     // Environment variables
@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
     STDL_ERROR_CODE_HANDLE(err, goto _end);
 
     // read input
-    err = stdl_user_input_new_from_args(argc, argv, &input);
+    err = stdl_user_input_handler_new_from_args(argc, argv, &input);
     STDL_ERROR_CODE_HANDLE(err, goto _end);
 
     // scream aloud
@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
                  );
 
     title("User input");
-    err = stdl_user_input_log(input);
+    err = stdl_user_input_handler_log(input);
     STDL_ERROR_CODE_HANDLE(err, goto _end);
 
     // create context
@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
     stdl_timer_start(&elapsed_time_ctx);
 
     title("Create context");
-    err = stdl_user_input_make_context(input, &ctx);
+    err = stdl_user_input_handler_make_context(input, &ctx);
     STDL_ERROR_CODE_HANDLE(err, goto _end);
 
     stdl_log_msg(0, "Elapsed time in context: %.2f secs\n", stdl_timer_stop(&elapsed_time_ctx));
@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
 
     title("Compute responses");
     if(input->res_resreqs != NULL) {
-        err = stdl_user_input_prepare_responses(input, ctx);
+        err = stdl_user_input_handler_prepare_responses(input, ctx);
         STDL_ERROR_CODE_HANDLE(err, goto _end);
     } else {
         stdl_log_msg(0, "No response requested, exiting\n");
@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
     }
 
     if(input != NULL)
-        stdl_user_input_delete(input);
+        stdl_user_input_handler_delete(input);
 
     if(ctx != NULL)
         stdl_context_delete(ctx);

@@ -3,7 +3,7 @@
 #include <stdlite/helpers.h>
 #include <string.h>
 
-#include "requests.h"
+#include "response_requests.h"
 
 int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator* ops, float* w, int nroot, stdl_response_request** req_ptr) {
     assert(req_ptr != NULL && resp_order > 0);

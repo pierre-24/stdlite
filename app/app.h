@@ -3,7 +3,7 @@
 
 #include <stdlite/context.h>
 
-#include "user_input.h"
+#include "user_input_handler.h"
 
 #ifndef APP_NAME
 #define APP_NAME "stdlite_app"

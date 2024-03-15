@@ -8,12 +8,12 @@
 #include <stdlite/utils/fchk_parser.h>
 #include <stdlite/utils/molden_parser.h>
 
-#include "user_input.h"
+#include "user_input_handler.h"
 
-int stdl_user_input_new(stdl_user_input** inp_ptr) {
+int stdl_user_input_handler_new(stdl_user_input_handler** inp_ptr) {
     assert(inp_ptr != NULL);
 
-    *inp_ptr = malloc(sizeof(stdl_user_input));
+    *inp_ptr = malloc(sizeof(stdl_user_input_handler));
     STDL_ERROR_HANDLE_AND_REPORT(*inp_ptr == NULL, return STDL_ERR_MALLOC, "malloc");
 
     STDL_DEBUG("create user_input %p", *inp_ptr);
@@ -25,7 +25,7 @@ int stdl_user_input_new(stdl_user_input** inp_ptr) {
     (*inp_ptr)->ctx_source_type = STDL_SRC_CTX;
 
     (*inp_ptr)->ctx_output = malloc(128 * sizeof(char ));
-    STDL_ERROR_HANDLE_AND_REPORT((*inp_ptr)->ctx_output == NULL, stdl_user_input_delete(*inp_ptr); return STDL_ERR_MALLOC, "malloc");
+    STDL_ERROR_HANDLE_AND_REPORT((*inp_ptr)->ctx_output == NULL, stdl_user_input_handler_delete(*inp_ptr); return STDL_ERR_MALLOC, "malloc");
     strcpy((*inp_ptr)->ctx_output, "context.h5\0");
 
     // defaults of stda:
@@ -51,7 +51,7 @@ int stdl_user_input_new(stdl_user_input** inp_ptr) {
     return STDL_ERR_OK;
 }
 
-int stdl_user_input_delete(stdl_user_input* inp) {
+int stdl_user_input_handler_delete(stdl_user_input_handler* inp) {
     assert(inp != NULL);
 
     STDL_DEBUG("delete user_input %p", inp);
@@ -81,7 +81,7 @@ int _energy_in(toml_table_t* table, char* field, float* result, int* isset) {
         if(energy.ok) {
             STDL_DEBUG("- (energy) %s", field);
             double val;
-            int err = stdl_user_input_parse_frequency(energy.u.s, &val);
+            int err = stdl_user_input_handler_parse_frequency(energy.u.s, &val);
             free(energy.u.s);
             STDL_ERROR_CODE_HANDLE(err, return err);
 
@@ -113,7 +113,7 @@ int _operator_in(toml_table_t* table, char* field, stdl_operator * result, int* 
     return err;
 }
 
-int stdl_user_input_fill_from_toml(stdl_user_input* inp, FILE *f) {
+int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f) {
     assert(inp != NULL && f != NULL);
 
     char errbuff[200];
@@ -350,7 +350,7 @@ int stdl_user_input_fill_from_toml(stdl_user_input* inp, FILE *f) {
     return err;
 }
 
-int stdl_user_input_parse_frequency(char* input, double* result) {
+int stdl_user_input_handler_parse_frequency(char* input, double* result) {
     assert(input != NULL && result != NULL);
 
     char *endptr;
@@ -373,7 +373,7 @@ int stdl_user_input_parse_frequency(char* input, double* result) {
     return STDL_ERR_OK;
 }
 
-int stdl_user_input_fill_from_args(stdl_user_input* inp, int argc, char* argv[]) {
+int stdl_user_input_handler_fill_from_args(stdl_user_input_handler* inp, int argc, char* argv[]) {
     assert(inp != NULL && argc > 0 && argv != NULL);
 
     char* self = argv[0];
@@ -427,7 +427,7 @@ int stdl_user_input_fill_from_args(stdl_user_input* inp, int argc, char* argv[])
         FILE* f = fopen(arg_input->filename[0], "r");
         STDL_ERROR_HANDLE_AND_REPORT(f == NULL, err = STDL_ERR_OPEN; goto _end, "cannot open `%s`", arg_input->filename[0]);
 
-        err = stdl_user_input_fill_from_toml(inp, f);
+        err = stdl_user_input_handler_fill_from_toml(inp, f);
         STDL_ERROR_CODE_HANDLE(err, goto _end);
 
         fclose(f);
@@ -472,14 +472,14 @@ int stdl_user_input_fill_from_args(stdl_user_input* inp, int argc, char* argv[])
         inp->ctx_gammaK = (float) arg_ctx_gammaK->dval[0];
 
     if(arg_ctx_ethr->count > 0) {
-        err = stdl_user_input_parse_frequency(arg_ctx_ethr->sval[0], &val);
+        err = stdl_user_input_handler_parse_frequency(arg_ctx_ethr->sval[0], &val);
         STDL_ERROR_CODE_HANDLE(err, goto _end);
 
         inp->ctx_ethr = (float) val;
     }
 
     if(arg_ctx_e2thr->count > 0) {
-        err = stdl_user_input_parse_frequency(arg_ctx_e2thr->sval[0], &val);
+        err = stdl_user_input_handler_parse_frequency(arg_ctx_e2thr->sval[0], &val);
         STDL_ERROR_CODE_HANDLE(err, goto _end);
 
         inp->ctx_e2thr = (float) val;
@@ -497,7 +497,7 @@ int stdl_user_input_fill_from_args(stdl_user_input* inp, int argc, char* argv[])
 }
 
 
-int stdl_user_input_check(stdl_user_input* inp) {
+int stdl_user_input_handler_check(stdl_user_input_handler* inp) {
     STDL_ERROR_HANDLE_AND_REPORT(inp->ctx_source == NULL, return STDL_ERR_INPUT, "missing context.source");
 
     STDL_ERROR_HANDLE_AND_REPORT(inp->ctx_gammaJ < .0, return STDL_ERR_INPUT, "context.gammaJ < 0");
@@ -510,22 +510,22 @@ int stdl_user_input_check(stdl_user_input* inp) {
     return STDL_ERR_OK;
 }
 
-int stdl_user_input_new_from_args(int argc, char* argv[], stdl_user_input** inp) {
+int stdl_user_input_handler_new_from_args(int argc, char* argv[], stdl_user_input_handler** inp) {
     int err;
 
-    err = stdl_user_input_new(inp);
+    err = stdl_user_input_handler_new(inp);
     STDL_ERROR_CODE_HANDLE(err, return err);
 
-    err = stdl_user_input_fill_from_args(*inp, argc, argv);
-    STDL_ERROR_CODE_HANDLE(err, stdl_user_input_delete(*inp); *inp = NULL; return err);
+    err = stdl_user_input_handler_fill_from_args(*inp, argc, argv);
+    STDL_ERROR_CODE_HANDLE(err, stdl_user_input_handler_delete(*inp); *inp = NULL; return err);
 
-    err = stdl_user_input_check(*inp);
-    STDL_ERROR_CODE_HANDLE(err, stdl_user_input_delete(*inp); *inp = NULL; return err);
+    err = stdl_user_input_handler_check(*inp);
+    STDL_ERROR_CODE_HANDLE(err, stdl_user_input_handler_delete(*inp); *inp = NULL; return err);
 
     return STDL_ERR_OK;
 }
 
-int stdl_user_input_log(stdl_user_input* inp) {
+int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
 
     if(inp->title != NULL)
         stdl_log_msg(0, "title = \"%s\"\n", inp->title);
@@ -617,7 +617,7 @@ int _from_h5_full(char* path, stdl_context** ctx_ptr) {
     return err;
 }
 
-int stdl_user_input_make_context(stdl_user_input* inp, stdl_context **ctx_ptr) {
+int stdl_user_input_handler_make_context(stdl_user_input_handler* inp, stdl_context **ctx_ptr) {
     stdl_wavefunction* wf = NULL;
     stdl_basis* bs = NULL;
     int err;
@@ -698,7 +698,7 @@ int _w_list_delete(struct _w_list* lst) {
     return STDL_ERR_OK;
 }
 
-int stdl_user_input_prepare_responses(stdl_user_input* inp, stdl_context * ctx) {
+int stdl_user_input_handler_prepare_responses(stdl_user_input_handler* inp, stdl_context * ctx) {
     assert(inp != NULL && ctx != NULL && inp->res_resreqs != NULL);
 
     int err;

@@ -1,11 +1,11 @@
-#ifndef STDLITE_USER_INPUT_H
-#define STDLITE_USER_INPUT_H
+#ifndef STDLITE_USER_INPUT_HANDLER_H
+#define STDLITE_USER_INPUT_HANDLER_H
 
 #include <toml.h>
 #include <stdlite/logging.h>
 #include <stdlite/context.h>
 
-#include "requests.h"
+#include "response_requests.h"
 
 #define STDL_APP_ARG_DOC "Run a sTDA/sTD-DFT calculation.\n\n"
 
@@ -41,7 +41,7 @@ typedef enum stdl_method_ stdl_method;
  * User input structure
  * @ingroup user_input
  */
-struct stdl_user_input_ {
+struct stdl_user_input_handler_ {
     /// Title
     char* title;
 
@@ -105,7 +105,7 @@ struct stdl_user_input_ {
     float* res_Yamp;
 };
 
-typedef struct stdl_user_input_ stdl_user_input;
+typedef struct stdl_user_input_handler_ stdl_user_input_handler;
 
 /**
  * Create an empty user input structure with default parameters.
@@ -114,7 +114,7 @@ typedef struct stdl_user_input_ stdl_user_input;
  * @return error code
  * @ingroup user_input
  */
-int stdl_user_input_new(stdl_user_input** inp_ptr);
+int stdl_user_input_handler_new(stdl_user_input_handler** inp_ptr);
 
 /**
  * Delete user input structure
@@ -123,7 +123,7 @@ int stdl_user_input_new(stdl_user_input** inp_ptr);
  * @return error code
  * @ingroup user_input
  */
-int stdl_user_input_delete(stdl_user_input* inp);
+int stdl_user_input_handler_delete(stdl_user_input_handler* inp);
 
 /**
  * Change user input from options found in a TOML-formatted file.
@@ -133,7 +133,7 @@ int stdl_user_input_delete(stdl_user_input* inp);
  * @return error code
  * @ingroup user_input
  */
-int stdl_user_input_fill_from_toml(stdl_user_input* inp, FILE *f);
+int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f);
 
 /**
  * Helper function to create user input directly from program input.
@@ -144,7 +144,7 @@ int stdl_user_input_fill_from_toml(stdl_user_input* inp, FILE *f);
  * @return error code
  * @ingroup app
  */
-int stdl_user_input_new_from_args(int argc, char* argv[], stdl_user_input** inp);
+int stdl_user_input_handler_new_from_args(int argc, char* argv[], stdl_user_input_handler** inp);
 
 /**
  * Parse frequency given a a string of the form `NUMBER UNIT`, where `NUMBER` is a valid `double` and `UNIT` is either nothing (atomic units are assumed), `au`, `eV` or `nm`.
@@ -155,11 +155,11 @@ int stdl_user_input_new_from_args(int argc, char* argv[], stdl_user_input** inp)
  * @return error code
  * @ingroup user_input
  */
-int stdl_user_input_parse_frequency(char* input, double* result);
+int stdl_user_input_handler_parse_frequency(char* input, double* result);
 
 /**
  * Change user input from program arguments.
- * If the `<file>` argument is set, this implies a call to `stdl_user_input_fill_from_toml()`.
+ * If the `<file>` argument is set, this implies a call to `stdl_user_input_handler_fill_from_toml()`.
  *
  * @param inp a valid user input structure
  * @param argc number of arguments
@@ -167,7 +167,7 @@ int stdl_user_input_parse_frequency(char* input, double* result);
  * @return error code
  * @ingroup user_input
  */
-int stdl_user_input_fill_from_args(stdl_user_input* inp, int argc, char* argv[]);
+int stdl_user_input_handler_fill_from_args(stdl_user_input_handler* inp, int argc, char* argv[]);
 
 /**
  * Check that the user input is correct.
@@ -175,7 +175,7 @@ int stdl_user_input_fill_from_args(stdl_user_input* inp, int argc, char* argv[])
  * @return error code
  * @ingroup user_input
  */
-int stdl_user_input_check(stdl_user_input* inp);
+int stdl_user_input_handler_check(stdl_user_input_handler* inp);
 
 /**
  * Print (through `stdl_log_msg()`) the user input, as a TOML-compatible.
@@ -184,7 +184,7 @@ int stdl_user_input_check(stdl_user_input* inp);
  * @return error code
  * @ingroup user_input
  */
-int stdl_user_input_log(stdl_user_input* inp);
+int stdl_user_input_handler_log(stdl_user_input_handler* inp);
 
 /**
  * Create context from user input.
@@ -193,7 +193,7 @@ int stdl_user_input_log(stdl_user_input* inp);
  * @return error code
  * @ingroup user_input
  */
-int stdl_user_input_make_context(stdl_user_input* inp, stdl_context **ctx_ptr);
+int stdl_user_input_handler_make_context(stdl_user_input_handler* inp, stdl_context **ctx_ptr);
 
 /**
  * Prepare response calculations
@@ -203,15 +203,6 @@ int stdl_user_input_make_context(stdl_user_input* inp, stdl_context **ctx_ptr);
  * @return error code
  * @ingroup user_input
  */
-int stdl_user_input_prepare_responses(stdl_user_input* inp, stdl_context * ctx);
+int stdl_user_input_handler_prepare_responses(stdl_user_input_handler* inp, stdl_context * ctx);
 
-/**
- * Compute responses
- * @param inp a valid user input
- * @param ctx a valid context
- * @return error code
- * @ingroup user_input
- */
-int stdl_user_input_compute_responses(stdl_user_input* inp, stdl_context * ctx);
-
-#endif //STDLITE_USER_INPUT_H
+#endif //STDLITE_USER_INPUT_HANDLER_H

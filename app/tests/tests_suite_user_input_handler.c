@@ -2,7 +2,7 @@
 #include <unistd.h>
 
 #include "tests_suite.h"
-#include "user_input.h"
+#include "user_input_handler.h"
 
 FILE* stream;
 
@@ -18,8 +18,8 @@ void tearDown(void) {
 
 
 void test_user_input_context_fill_from_toml_ok() {
-    stdl_user_input* inp = NULL;
-    stdl_user_input_new(&inp);
+    stdl_user_input_handler* inp = NULL;
+    stdl_user_input_handler_new(&inp);
     TEST_ASSERT_NOT_NULL(inp);
 
     fputs("title = \"test calculation\"\n"
@@ -37,8 +37,8 @@ void test_user_input_context_fill_from_toml_ok() {
           stream);
     rewind(stream);
 
-    ASSERT_STDL_OK(stdl_user_input_fill_from_toml(inp, stream));
-    ASSERT_STDL_OK(stdl_user_input_check(inp));
+    ASSERT_STDL_OK(stdl_user_input_handler_fill_from_toml(inp, stream));
+    ASSERT_STDL_OK(stdl_user_input_handler_check(inp));
 
     TEST_ASSERT_EQUAL_STRING("test calculation", inp->title);
     TEST_ASSERT_EQUAL_STRING("../tests/test_files/water_631g.fchk", inp->ctx_source);
@@ -52,12 +52,12 @@ void test_user_input_context_fill_from_toml_ok() {
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 1.0, inp->ctx_gammaJ);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 0.5, inp->ctx_gammaK);
 
-    ASSERT_STDL_OK(stdl_user_input_delete(inp));
+    ASSERT_STDL_OK(stdl_user_input_handler_delete(inp));
 }
 
 void test_user_input_context_fill_from_args_ok() {
-    stdl_user_input* inp = NULL;
-    stdl_user_input_new(&inp);
+    stdl_user_input_handler* inp = NULL;
+    stdl_user_input_handler_new(&inp);
     TEST_ASSERT_NOT_NULL(inp);
 
     char* args[] =  {
@@ -73,8 +73,8 @@ void test_user_input_context_fill_from_args_ok() {
             "--ctx_tda=0",
     };
 
-    ASSERT_STDL_OK(stdl_user_input_fill_from_args(inp, sizeof(args) / sizeof(char*), args));
-    ASSERT_STDL_OK(stdl_user_input_check(inp));
+    ASSERT_STDL_OK(stdl_user_input_handler_fill_from_args(inp, sizeof(args) / sizeof(char *), args));
+    ASSERT_STDL_OK(stdl_user_input_handler_check(inp));
 
     TEST_ASSERT_EQUAL_STRING("../tests/test_files/water_631g.molden", inp->ctx_source);
     TEST_ASSERT_EQUAL(STDL_SRC_MOLDEN, inp->ctx_source_type);
@@ -86,12 +86,12 @@ void test_user_input_context_fill_from_args_ok() {
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 1.0, inp->ctx_ax);
     TEST_ASSERT_EQUAL(0, inp->ctx_tda);
 
-    ASSERT_STDL_OK(stdl_user_input_delete(inp));
+    ASSERT_STDL_OK(stdl_user_input_handler_delete(inp));
 }
 
 void test_user_input_context_fill_from_args_and_file_ok() {
-    stdl_user_input* inp = NULL;
-    stdl_user_input_new(&inp);
+    stdl_user_input_handler* inp = NULL;
+    stdl_user_input_handler_new(&inp);
     TEST_ASSERT_NOT_NULL(inp);
 
     char* args[] =  {
@@ -100,18 +100,18 @@ void test_user_input_context_fill_from_args_and_file_ok() {
             "--ctx_e2thr=1e-3",
     };
 
-    ASSERT_STDL_OK(stdl_user_input_fill_from_args(inp, sizeof(args) / sizeof(char*), args));
-    ASSERT_STDL_OK(stdl_user_input_check(inp));
+    ASSERT_STDL_OK(stdl_user_input_handler_fill_from_args(inp, sizeof(args) / sizeof(char *), args));
+    ASSERT_STDL_OK(stdl_user_input_handler_check(inp));
 
     TEST_ASSERT_EQUAL_STRING("test calculation", inp->title);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 1e-3, inp->ctx_e2thr);
 
-    ASSERT_STDL_OK(stdl_user_input_delete(inp));
+    ASSERT_STDL_OK(stdl_user_input_handler_delete(inp));
 }
 
 void test_user_input_incorrect_toml_ko() {
-    stdl_user_input* inp = NULL;
-    stdl_user_input_new(&inp);
+    stdl_user_input_handler* inp = NULL;
+    stdl_user_input_handler_new(&inp);
     TEST_ASSERT_NOT_NULL(inp);
 
     fputs("[context]\n"
@@ -120,13 +120,13 @@ void test_user_input_incorrect_toml_ko() {
           stream);
     rewind(stream);
 
-    ASSERT_STDL_KO(stdl_user_input_fill_from_toml(inp, stream));
-    ASSERT_STDL_OK(stdl_user_input_delete(inp));
+    ASSERT_STDL_KO(stdl_user_input_handler_fill_from_toml(inp, stream));
+    ASSERT_STDL_OK(stdl_user_input_handler_delete(inp));
 }
 
 void test_user_input_incorrect_check_args_ko() {
-    stdl_user_input* inp = NULL;
-    stdl_user_input_new(&inp);
+    stdl_user_input_handler* inp = NULL;
+    stdl_user_input_handler_new(&inp);
     TEST_ASSERT_NOT_NULL(inp);
 
     fputs("[context]\n"
@@ -135,35 +135,35 @@ void test_user_input_incorrect_check_args_ko() {
           stream);
     rewind(stream);
 
-    ASSERT_STDL_OK(stdl_user_input_fill_from_toml(inp, stream));
-    ASSERT_STDL_KO(stdl_user_input_check(inp));
+    ASSERT_STDL_OK(stdl_user_input_handler_fill_from_toml(inp, stream));
+    ASSERT_STDL_KO(stdl_user_input_handler_check(inp));
 
-    ASSERT_STDL_OK(stdl_user_input_delete(inp));
+    ASSERT_STDL_OK(stdl_user_input_handler_delete(inp));
 }
 
 
 void test_parse_frequency_ok() {
     double value;
 
-    ASSERT_STDL_OK(stdl_user_input_parse_frequency("1.25au", &value));
+    ASSERT_STDL_OK(stdl_user_input_handler_parse_frequency("1.25au", &value));
     TEST_ASSERT_DOUBLE_WITHIN(1e-6, 1.25, value);
 
-    ASSERT_STDL_OK(stdl_user_input_parse_frequency("1.25", &value));
+    ASSERT_STDL_OK(stdl_user_input_handler_parse_frequency("1.25", &value));
     TEST_ASSERT_DOUBLE_WITHIN(1e-6, 1.25, value);
 
-    ASSERT_STDL_OK(stdl_user_input_parse_frequency("1.25eV", &value));
+    ASSERT_STDL_OK(stdl_user_input_handler_parse_frequency("1.25eV", &value));
     TEST_ASSERT_DOUBLE_WITHIN(1e-6, 1.25 / STDL_CONST_AU_TO_EV, value);
 
-    ASSERT_STDL_OK(stdl_user_input_parse_frequency("125nm", &value));
+    ASSERT_STDL_OK(stdl_user_input_handler_parse_frequency("125nm", &value));
     TEST_ASSERT_DOUBLE_WITHIN(1e-6, STDL_CONST_HC / 125, value);
 
-    ASSERT_STDL_KO(stdl_user_input_parse_frequency("1.25 au", &value));
-    ASSERT_STDL_KO(stdl_user_input_parse_frequency("au", &value));
-    ASSERT_STDL_KO(stdl_user_input_parse_frequency("1.25aux", &value));
+    ASSERT_STDL_KO(stdl_user_input_handler_parse_frequency("1.25 au", &value));
+    ASSERT_STDL_KO(stdl_user_input_handler_parse_frequency("au", &value));
+    ASSERT_STDL_KO(stdl_user_input_handler_parse_frequency("1.25aux", &value));
 }
 
 void test_user_input_make_context() {
-    stdl_user_input* inp = NULL;
+    stdl_user_input_handler* inp = NULL;
 
     char* args[] =  {
             "self",
@@ -176,7 +176,7 @@ void test_user_input_make_context() {
             "--ctx_ax=1.0",
     };
 
-    ASSERT_STDL_OK(stdl_user_input_new_from_args(sizeof(args) / sizeof(char*), args, &inp));
+    ASSERT_STDL_OK(stdl_user_input_handler_new_from_args(sizeof(args) / sizeof(char *), args, &inp));
 
     TEST_ASSERT_EQUAL_STRING("../tests/test_files/water_631g.molden", inp->ctx_source);
     TEST_ASSERT_EQUAL(STDL_SRC_MOLDEN, inp->ctx_source_type);
@@ -189,7 +189,7 @@ void test_user_input_make_context() {
 
     // create context
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_user_input_make_context(inp, &ctx));
+    ASSERT_STDL_OK(stdl_user_input_handler_make_context(inp, &ctx));
     TEST_ASSERT_NOT_NULL(ctx);
 
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 0.5, ctx->gammaJ);
@@ -209,12 +209,12 @@ void test_user_input_make_context() {
     H5Fclose(file_id);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
-    ASSERT_STDL_OK(stdl_user_input_delete(inp));
+    ASSERT_STDL_OK(stdl_user_input_handler_delete(inp));
 }
 
 void test_user_input_prepare_responses() {
-    stdl_user_input* inp = NULL;
-    stdl_user_input_new(&inp);
+    stdl_user_input_handler* inp = NULL;
+    stdl_user_input_handler_new(&inp);
     TEST_ASSERT_NOT_NULL(inp);
 
     fputs("title = \"test calculation\"\n"
@@ -229,16 +229,16 @@ void test_user_input_prepare_responses() {
           stream);
     rewind(stream);
 
-    ASSERT_STDL_OK(stdl_user_input_fill_from_toml(inp, stream));
-    ASSERT_STDL_OK(stdl_user_input_check(inp));
+    ASSERT_STDL_OK(stdl_user_input_handler_fill_from_toml(inp, stream));
+    ASSERT_STDL_OK(stdl_user_input_handler_check(inp));
 
     // create context
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_user_input_make_context(inp, &ctx));
+    ASSERT_STDL_OK(stdl_user_input_handler_make_context(inp, &ctx));
     TEST_ASSERT_NOT_NULL(ctx);
 
     // prepare responses
-    ASSERT_STDL_OK(stdl_user_input_prepare_responses(inp, ctx));
+    ASSERT_STDL_OK(stdl_user_input_handler_prepare_responses(inp, ctx));
 
     TEST_ASSERT_EQUAL(1, inp->res_nops);
     TEST_ASSERT_EQUAL(STDL_OP_DIPL, inp->res_ops[0]);
@@ -298,5 +298,5 @@ void test_user_input_prepare_responses() {
     TEST_ASSERT_NULL(req->wpos);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
-    ASSERT_STDL_OK(stdl_user_input_delete(inp));
+    ASSERT_STDL_OK(stdl_user_input_handler_delete(inp));
 }
