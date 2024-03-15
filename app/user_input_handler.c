@@ -38,15 +38,7 @@ int stdl_user_input_handler_new(stdl_user_input_handler** inp_ptr) {
     (*inp_ptr)->ctx_ax = 0.5f;
 
     // -- response:
-    (*inp_ptr)->res_nops = 0;
-    (*inp_ptr)->res_ops = NULL;
     (*inp_ptr)->res_resreqs = NULL;
-    (*inp_ptr)->res_nlrvreq = 0;
-    (*inp_ptr)->res_lrvreqs = NULL;
-    (*inp_ptr)->res_nexci = 0;
-    (*inp_ptr)->res_eexci = NULL;
-    (*inp_ptr)->res_Xamp = NULL;
-    (*inp_ptr)->res_Yamp = NULL;
 
     return STDL_ERR_OK;
 }
@@ -59,11 +51,7 @@ int stdl_user_input_handler_delete(stdl_user_input_handler* inp) {
     if(inp->res_resreqs != NULL)
         stdl_response_request_delete(inp->res_resreqs);
 
-    for (size_t i = 0; i < inp->res_nlrvreq; ++i) {
-        stdl_lrv_request_delete(inp->res_lrvreqs[i]);
-    }
-
-    STDL_FREE_ALL(inp->title, inp->ctx_source, inp->ctx_output, inp->res_lrvreqs, inp->res_ops, inp->res_eexci, inp->res_Xamp, inp->res_Yamp, inp);
+    STDL_FREE_ALL(inp->title, inp->ctx_source, inp->ctx_output, inp);
 
     return STDL_ERR_OK;
 }
@@ -698,8 +686,8 @@ int _w_list_delete(struct _w_list* lst) {
     return STDL_ERR_OK;
 }
 
-int stdl_user_input_handler_prepare_responses(stdl_user_input_handler* inp, stdl_context * ctx) {
-    assert(inp != NULL && ctx != NULL && inp->res_resreqs != NULL);
+int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl_context *ctx, stdl_responses_handler **rh_ptr) {
+    assert(inp != NULL && ctx != NULL && inp->res_resreqs != NULL && rh_ptr != NULL);
 
     int err;
 
@@ -708,9 +696,7 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler* inp, stdl
     stdl_log_msg(1, "\n  | Count requests ");
 
     // count the number of operators, LRV requests, amplitudes, and freqs.
-    inp->res_nops = 0;
-    inp->res_nlrvreq = 0;
-    inp->res_nexci = 0;
+    size_t res_nops = 0, res_nlrvreq = 0, res_nexci = 0;
 
     short operators[STDL_OP_COUNT] = {0};
     short islrvs[STDL_OP_COUNT] = {0};
@@ -723,10 +709,10 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler* inp, stdl
         for (size_t iop = 0; iop < nops; ++iop) {
             stdl_operator op = req->ops[iop];
             if(!operators[op])
-                inp->res_nops += 1;
+                res_nops += 1;
 
             if(!islrvs[op] && req->res_order < req->resp_order)
-                inp->res_nlrvreq += 1;
+                res_nlrvreq += 1;
 
             operators[op] = islrvs[op] = 1;
         }
@@ -762,13 +748,13 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler* inp, stdl
         // check out if it requires amplitudes
         if(req->res_order > 0) {
             if(req->nroot < 0)
-                inp->res_nexci = ctx->ncsfs;
-            else if((size_t) req->nroot > inp->res_nexci) {
+                res_nexci = ctx->ncsfs;
+            else if((size_t) req->nroot > res_nexci) {
                 if((size_t) req->nroot > ctx->ncsfs) {
                     STDL_WARN("%ld excited states requested, which is more than the number of CSFs", req->nroot);
                     req->nroot = (int) ctx->ncsfs;
                 }
-                inp->res_nexci = (size_t) req->nroot;
+                res_nexci = (size_t) req->nroot;
             }
         }
 
@@ -778,15 +764,14 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler* inp, stdl
     stdl_log_msg(0, "-");
     stdl_log_msg(1, "\n  | build requests ");
 
-    inp->res_ops = malloc(inp->res_nops * sizeof(stdl_operator));
-    inp->res_lrvreqs = malloc(inp->res_nlrvreq * sizeof(stdl_lrv_request*));
-    STDL_ERROR_HANDLE_AND_REPORT(inp->res_ops == NULL || inp->res_lrvreqs == NULL, return STDL_ERR_MALLOC, "malloc");
+    err = stdl_responses_handler_new(res_nops, res_nlrvreq, res_nexci, ctx, rh_ptr);
+    STDL_ERROR_CODE_HANDLE(err, return err);
 
-    // find the number of excited states
+    // copy operators
     int ioffset = 0;
     for (int iop = 0; iop < STDL_OP_COUNT; ++iop) {
         if(operators[iop]) {
-            inp->res_ops[ioffset] = iop;
+            (*rh_ptr)->ops[ioffset] = iop;
             ioffset++;
         }
     }
@@ -807,18 +792,18 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler* inp, stdl
             STDL_ERROR_HANDLE_AND_REPORT(nw == 0, return STDL_ERR_INPUT, "LRV but nw=0");
 
             // create LRV request
-            inp->res_lrvreqs[ioffset] = NULL;
-            err = stdl_lrv_request_new(iop, nw, (inp->res_lrvreqs) + ioffset);
+            (*rh_ptr)->lrvreqs[ioffset] = NULL;
+            err = stdl_lrv_request_new(iop, nw, (*rh_ptr)->lrvreqs + ioffset);
             STDL_ERROR_CODE_HANDLE(err, return err);
 
-            lrvs[iop] = inp->res_lrvreqs[ioffset];
+            lrvs[iop] = (*rh_ptr)->lrvreqs[ioffset];
 
             // copy frequencies
             nw = 0;
             struct _w_list* curr = lrvs_w[iop];
             struct _w_list* prev = NULL;
             while (curr != NULL) {
-                inp->res_lrvreqs[ioffset]->w[nw] = curr->w;
+                (*rh_ptr)->lrvreqs[ioffset]->w[nw] = curr->w;
 
                 nw++;
 
@@ -855,7 +840,7 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler* inp, stdl
     }
 
     stdl_log_msg(0, "< done\n");
-    stdl_log_msg(0, "Will compute %ld EV matrix(ces), %ld response vector(s), and %ld amplitude vector(s)\n", inp->res_nops, inp->res_nlrvreq, inp->res_nexci);
+    stdl_log_msg(0, "Will compute %ld EV matrix(ces), %ld response vector(s), and %ld amplitude vector(s)\n", (*rh_ptr)->nops, (*rh_ptr)->nlrvreqs, (*rh_ptr)->nexci);
 
     return STDL_ERR_OK;
 }

@@ -6,12 +6,13 @@
 #include <stdlite/context.h>
 
 #include "response_requests.h"
+#include "responses_handler.h"
 
 #define STDL_APP_ARG_DOC "Run a sTDA/sTD-DFT calculation.\n\n"
 
 /**
  * Type of input for wavefunction & basis set
- * @ingroup user_input
+ * @ingroup user_input_handler
  */
 enum stdl_source_type_ {
     STDL_SRC_FCHK,
@@ -24,7 +25,7 @@ typedef enum stdl_source_type_ stdl_source_type;
 
 /**
  * Method to select CSFs and build A/B matrices
- * @ingroup user_input
+ * @ingroup user_input_handler
  */
 enum stdl_method_ {
     /// Monopole approximation
@@ -39,7 +40,7 @@ typedef enum stdl_method_ stdl_method;
 
 /**
  * User input structure
- * @ingroup user_input
+ * @ingroup user_input_handler
  */
 struct stdl_user_input_handler_ {
     /// Title
@@ -79,30 +80,6 @@ struct stdl_user_input_handler_ {
     // ----- responses:
     /// Response requests
     stdl_response_request* res_resreqs;
-
-    /// Number of operators
-    size_t res_nops;
-
-    /// `stdl_operator[res_nops]` list of operators
-    stdl_operator* res_ops;
-
-    /// Number of LRV requests
-    size_t res_nlrvreq;
-
-    /// `stdl_lrv_request*[nlrv_req]` Corresponding linear response vectors requests
-    stdl_lrv_request** res_lrvreqs;
-
-    /// Number of excited states requested
-    size_t res_nexci;
-
-    /// `float[res_nexci]` the excitation energies
-    float* res_eexci;
-
-    /// `float[res_nexci,ncsfs]` amplitude vector $\mathbf x^m$ for each excitation $\ket{m}$
-    float* res_Xamp;
-
-    /// `float[res_nexci,ncsfs]` amplitude vector $\mathbf y^m$ for each excitation $\ket{m}$, might be `NULL` if TDA
-    float* res_Yamp;
 };
 
 typedef struct stdl_user_input_handler_ stdl_user_input_handler;
@@ -112,16 +89,16 @@ typedef struct stdl_user_input_handler_ stdl_user_input_handler;
  *
  * @param[out] inp_ptr resulting structure
  * @return error code
- * @ingroup user_input
+ * @ingroup user_input_handler
  */
 int stdl_user_input_handler_new(stdl_user_input_handler** inp_ptr);
 
 /**
- * Delete user input structure
+ * Delete handler
  *
  * @param inp a valid user input structure
  * @return error code
- * @ingroup user_input
+ * @ingroup user_input_handler
  */
 int stdl_user_input_handler_delete(stdl_user_input_handler* inp);
 
@@ -131,7 +108,7 @@ int stdl_user_input_handler_delete(stdl_user_input_handler* inp);
  * @param inp a valid user input structure
  * @param f path to a TOML file
  * @return error code
- * @ingroup user_input
+ * @ingroup user_input_handler
  */
 int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f);
 
@@ -153,7 +130,7 @@ int stdl_user_input_handler_new_from_args(int argc, char* argv[], stdl_user_inpu
  * @param input a valid `\0`-terminated string
  * @param[out] result the resulting frequency in atomic unit, if any
  * @return error code
- * @ingroup user_input
+ * @ingroup user_input_handler
  */
 int stdl_user_input_handler_parse_frequency(char* input, double* result);
 
@@ -165,7 +142,7 @@ int stdl_user_input_handler_parse_frequency(char* input, double* result);
  * @param argc number of arguments
  * @param argv actual arguments
  * @return error code
- * @ingroup user_input
+ * @ingroup user_input_handler
  */
 int stdl_user_input_handler_fill_from_args(stdl_user_input_handler* inp, int argc, char* argv[]);
 
@@ -173,7 +150,7 @@ int stdl_user_input_handler_fill_from_args(stdl_user_input_handler* inp, int arg
  * Check that the user input is correct.
  * @param inp a valid user input structure
  * @return error code
- * @ingroup user_input
+ * @ingroup user_input_handler
  */
 int stdl_user_input_handler_check(stdl_user_input_handler* inp);
 
@@ -182,7 +159,7 @@ int stdl_user_input_handler_check(stdl_user_input_handler* inp);
  *
  * @param inp a valid user input structure
  * @return error code
- * @ingroup user_input
+ * @ingroup user_input_handler
  */
 int stdl_user_input_handler_log(stdl_user_input_handler* inp);
 
@@ -191,7 +168,7 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp);
  * @param inp a valid user input
  * @param[out] ctx_ptr context to be created
  * @return error code
- * @ingroup user_input
+ * @ingroup user_input_handler
  */
 int stdl_user_input_handler_make_context(stdl_user_input_handler* inp, stdl_context **ctx_ptr);
 
@@ -200,9 +177,10 @@ int stdl_user_input_handler_make_context(stdl_user_input_handler* inp, stdl_cont
  *
  * @param inp a valid user input
  * @param ctx a valid context
+ * @param[out] rh_ptr resulting responses handler
  * @return error code
- * @ingroup user_input
+ * @ingroup user_input_handler
  */
-int stdl_user_input_handler_prepare_responses(stdl_user_input_handler* inp, stdl_context * ctx);
+int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl_context *ctx, stdl_responses_handler **rh_ptr);
 
 #endif //STDLITE_USER_INPUT_HANDLER_H

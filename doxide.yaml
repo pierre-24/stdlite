@@ -156,13 +156,13 @@ groups:
     title: The application
     description: API of `stdlite_run`.
     groups:
-      - name: user_input
-        title: User input
+      - name: user_input_handler
+        title: User input handler
         description: |
-          Deals with all user inputs, convert that into requests, and compute said responses.
+          Deals with all user inputs and convert that into requests.
           
           ```c
-          #include "user_input.h"
+          #include "user_input_handler.h"
           ```
       - name: requests
         title: Requests for response
@@ -170,5 +170,13 @@ groups:
           Handle bare response and linear response vector requests.
           
           ```c
-          #include "requests.h"
+          #include "response_requests.h"
+          ```
+      - name: responses_handler
+        title: Responses handler
+        description: |
+          Deals with responses, by computing them.
+          
+          ```c
+          #include "responses_handler.h"
           ```

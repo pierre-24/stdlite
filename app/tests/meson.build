@@ -19,6 +19,7 @@ tests_dep += unity_dep
 
 # create tests
 tests_to_run = [
+    'responses_handler',
     'user_input_handler',
 ]
 

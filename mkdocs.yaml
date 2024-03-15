@@ -22,8 +22,9 @@ nav:
     - API/utilities/index.md
   - API of stdlite_run:
       - API/app/index.md
-      - API/app/user_input/index.md
+      - API/app/user_input_handler/index.md
       - API/app/requests/index.md
+      - API/app/responses_handler/index.md
 
 theme:
   name: material

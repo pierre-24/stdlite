@@ -25,6 +25,7 @@ int main(int argc, char* argv[]) {
 
     int err;
     stdl_user_input_handler* input = NULL;
+    stdl_responses_handler * rh = NULL;
     stdl_context* ctx = NULL;
 
     // Environment variables
@@ -64,7 +65,7 @@ int main(int argc, char* argv[]) {
 
     title("Compute responses");
     if(input->res_resreqs != NULL) {
-        err = stdl_user_input_handler_prepare_responses(input, ctx);
+        err = stdl_user_input_handler_prepare_responses(input, ctx, &rh);
         STDL_ERROR_CODE_HANDLE(err, goto _end);
     } else {
         stdl_log_msg(0, "No response requested, exiting\n");
@@ -83,6 +84,9 @@ int main(int argc, char* argv[]) {
 
     if(ctx != NULL)
         stdl_context_delete(ctx);
+
+    if(rh != NULL)
+        stdl_responses_handler_delete(rh);
 
     if(err < STDL_ERR_LAST)
         stdl_log_msg(0, "Elapsed time in %s: %.2f secs\n", APP_NAME, stdl_timer_stop(&elapsed_time_prog));

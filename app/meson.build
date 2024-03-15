@@ -27,6 +27,7 @@ app_dep += tomlc99_dep
 srcs = files(
     'app.c',
     'response_requests.c',
+    'responses_handler.c',
     'user_input_handler.c'
 )
 
