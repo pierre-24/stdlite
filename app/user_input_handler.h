@@ -173,7 +173,7 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp);
 int stdl_user_input_handler_make_context(stdl_user_input_handler* inp, stdl_context **ctx_ptr);
 
 /**
- * Prepare response calculations
+ * Prepare response calculations by creating a handler.
  *
  * @param inp a valid user input
  * @param ctx a valid context

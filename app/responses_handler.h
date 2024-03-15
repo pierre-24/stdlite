@@ -57,5 +57,15 @@ int stdl_responses_handler_new(size_t nops, size_t nlrvreqs, size_t nexci, stdl_
  */
 int stdl_responses_handler_delete(stdl_responses_handler* rh);
 
+/**
+ * Compute linear/amplitude vectors.
+ *
+ * @param rh a valid responses handler
+ * @param ctx a valid context
+ * @return error code
+ * @ingroup responses_handler
+ */
+int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx);
+
 
 #endif //STDLITE_RESPONSES_HANDLER_H

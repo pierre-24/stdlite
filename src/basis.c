@@ -198,7 +198,7 @@ int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S) {
 int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles) {
     assert(bs != NULL && dipoles != NULL);
 
-    STDL_DEBUG("Computing <i|µ|j>");
+    stdl_log_msg(0, "Computing <µ|µ|ν> elements >");
 
     size_t nao = 0;
     for(int ibas=0; ibas < bs->nbas; ibas++) {
@@ -251,6 +251,8 @@ int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles) {
     }
 
     free(renorm);
+
+    stdl_log_msg(0, "< done\n");
 
     return STDL_ERR_OK;
 }

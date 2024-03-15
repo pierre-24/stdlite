@@ -67,11 +67,14 @@ int main(int argc, char* argv[]) {
     if(input->res_resreqs != NULL) {
         err = stdl_user_input_handler_prepare_responses(input, ctx, &rh);
         STDL_ERROR_CODE_HANDLE(err, goto _end);
+
+        err = stdl_responses_handler_compute(rh, ctx);
+        STDL_ERROR_CODE_HANDLE(err, goto _end);
     } else {
         stdl_log_msg(0, "No response requested, exiting\n");
     }
 
-    stdl_log_msg(0, "Elapsed time in response: %.2f secs\n", stdl_timer_stop(&elapsed_time_response));
+    stdl_log_msg(0, "Elapsed time in responses: %.2f secs\n", stdl_timer_stop(&elapsed_time_response));
 
     // the end
     _end:
