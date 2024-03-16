@@ -19,7 +19,7 @@ int stdl_operator_dim(stdl_operator op, size_t* dim) {
     return STDL_ERR_OK;
 }
 
-int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator* ops, float* w, int nroot, stdl_response_request** req_ptr) {
+int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator* ops, float* w, int nroots, stdl_response_request** req_ptr) {
     assert(req_ptr != NULL && resp_order > 0);
 
     *req_ptr = malloc(sizeof(stdl_response_request));
@@ -29,7 +29,7 @@ int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator
 
     (*req_ptr)->resp_order = resp_order;
     (*req_ptr)->res_order = res_order;
-    (*req_ptr)->nroot = nroot;
+    (*req_ptr)->nroots = nroots;
     (*req_ptr)->next = NULL;
 
     (*req_ptr)->w = NULL;

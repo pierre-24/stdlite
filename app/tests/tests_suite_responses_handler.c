@@ -30,7 +30,7 @@ void test_user_input_prepare_responses() {
           "[responses]\n"
           "linear = [{opA = 'dipl', opB = 'dipl', wB = '1064nm'}, {opA = 'dipl', opB = 'dipl', wB = '532nm'}]\n"
           "quadratic = [{opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = '1064nm', wC = '1064nm'}]\n"
-          "linear_sr = [{opA = 'dipl', root = -1}]",
+          "linear_sr = [{opA = 'dipl', nroots = -1}]",
           stream);
     rewind(stream);
 
@@ -65,7 +65,7 @@ void test_user_input_prepare_responses() {
     TEST_ASSERT_EQUAL(0, req->res_order);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, STDL_CONST_HC / req->w[0], 1064.f);
     TEST_ASSERT_EQUAL(req->ops[0], STDL_OP_DIPL);
-    TEST_ASSERT_EQUAL(0, req->nroot);
+    TEST_ASSERT_EQUAL(0, req->nroots);
     TEST_ASSERT_EQUAL(lrv_req, req->requests[0]);
     TEST_ASSERT_EQUAL(0, req->wpos[0]);
 
@@ -75,7 +75,7 @@ void test_user_input_prepare_responses() {
     TEST_ASSERT_EQUAL(0, req->res_order);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, STDL_CONST_HC / req->w[0], 532.f);
     TEST_ASSERT_EQUAL(req->ops[0], STDL_OP_DIPL);
-    TEST_ASSERT_EQUAL(0, req->nroot);
+    TEST_ASSERT_EQUAL(0, req->nroots);
     TEST_ASSERT_EQUAL(lrv_req, req->requests[0]);
     TEST_ASSERT_EQUAL(1, req->wpos[0]);
 
@@ -87,7 +87,7 @@ void test_user_input_prepare_responses() {
     TEST_ASSERT_FLOAT_WITHIN(1e-4, STDL_CONST_HC / req->w[1], 1064.f);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, STDL_CONST_HC / req->w[2], 1064.f);
     TEST_ASSERT_EQUAL(req->ops[0], STDL_OP_DIPL);
-    TEST_ASSERT_EQUAL(0, req->nroot);
+    TEST_ASSERT_EQUAL(0, req->nroots);
     TEST_ASSERT_EQUAL(lrv_req, req->requests[0]);
     TEST_ASSERT_EQUAL(1, req->wpos[0]);
     TEST_ASSERT_EQUAL(0, req->wpos[1]);
@@ -98,7 +98,7 @@ void test_user_input_prepare_responses() {
     TEST_ASSERT_EQUAL(1, req->resp_order);
     TEST_ASSERT_EQUAL(1, req->res_order);
     TEST_ASSERT_EQUAL(req->ops[0], STDL_OP_DIPL);
-    TEST_ASSERT_EQUAL(-1, req->nroot);
+    TEST_ASSERT_EQUAL(-1, req->nroots);
     TEST_ASSERT_NULL(req->w);
     TEST_ASSERT_NULL(req->requests);
     TEST_ASSERT_NULL(req->wpos);
@@ -121,7 +121,7 @@ void test_user_input_compute_responses() {
           "[responses]\n"
           "linear = [{opA = 'dipl', opB = 'dipl', wB = '1064nm'}, {opA = 'dipl', opB = 'dipl', wB = '532nm'}]\n"
           "quadratic = [{opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = '1064nm', wC = '1064nm'}]\n"
-          "linear_sr = [{opA = 'dipl', root = -1}]",
+          "linear_sr = [{opA = 'dipl', nroots = -1}]",
           stream);
     rewind(stream);
 

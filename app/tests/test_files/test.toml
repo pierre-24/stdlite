@@ -25,7 +25,7 @@ quadratic = [
 ]
 
 linear_sr = [
-    {opA = 'dipl', root = -1},  # transition dipole
+    {opA = 'dipl', nroots = -1},  # transition dipole
 ]
 
 #quadratic_dr = [

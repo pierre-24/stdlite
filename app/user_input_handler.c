@@ -310,13 +310,13 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
                 STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `op` in `linear_sr[%d]`", i);
 
-                int nroot;
-                toml_datum_t root = toml_int_in(t, "root");
-                STDL_ERROR_HANDLE_AND_REPORT(!root.ok, err = STDL_ERR_INPUT; goto _end, "missing `root` in `linear_sr[%d]`", i);
-                nroot = (int) root.u.i;
+                int nroots;
+                toml_datum_t root = toml_int_in(t, "nroots");
+                STDL_ERROR_HANDLE_AND_REPORT(!root.ok, err = STDL_ERR_INPUT; goto _end, "missing `nroots` in `linear_sr[%d]`", i);
+                nroots = (int) root.u.i;
 
                 stdl_response_request* req = NULL;
-                err = stdl_response_request_new(1, 1, (stdl_operator[]) {opA}, NULL, nroot, &req);
+                err = stdl_response_request_new(1, 1, (stdl_operator[]) {opA}, NULL, nroots, &req);
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
 
                 if(prev == NULL) {
@@ -513,6 +513,19 @@ int stdl_user_input_handler_new_from_args(int argc, char* argv[], stdl_user_inpu
     return STDL_ERR_OK;
 }
 
+void _op_log(char* name, stdl_operator op) {
+    stdl_log_msg(0, "%s=\"", name);
+    switch (op) {
+        case STDL_OP_DIPL:
+            stdl_log_msg(0, "dipl");
+            break;
+        default:
+            stdl_log_msg(0, "unk");
+    }
+
+    stdl_log_msg(0, "\"");
+}
+
 int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
 
     if(inp->title != NULL)
@@ -556,6 +569,57 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
         stdl_log_msg(0, "output = \"%s\"\n", inp->ctx_output);
     } else {
         stdl_log_msg(0, "# A' and B' are obtained from %s\n", inp->ctx_source);
+    }
+
+    if(inp->res_resreqs != NULL) {
+        stdl_log_msg(0, "[responses]\n");
+
+        stdl_response_request* req = NULL;
+
+        // linear
+        stdl_log_msg(0, "linear = [\n");
+        req = inp->res_resreqs;
+        while(req != NULL) {
+            if(req->resp_order == 1 && req->res_order == 0) {
+                stdl_log_msg(0, "  {");
+                _op_log("opA", req->ops[0]);
+                stdl_log_msg(0, ", ");
+                _op_log("opB", req->ops[1]);
+                stdl_log_msg(0, ", wB=%f},\n", req->w[1]);
+            }
+            req = req->next;
+        }
+        stdl_log_msg(0, "]\n");
+
+        // quadratic
+        stdl_log_msg(0, "quadratic = [\n");
+        req = inp->res_resreqs;
+        while(req != NULL) {
+            if(req->resp_order == 2 && req->res_order == 0) {
+                stdl_log_msg(0, "  {");
+                _op_log("opA", req->ops[0]);
+                stdl_log_msg(0, ", ");
+                _op_log("opB", req->ops[1]);
+                stdl_log_msg(0, ", ");
+                _op_log("opC", req->ops[2]);
+                stdl_log_msg(0, ", wB=%f, wC=%f},\n", req->w[1], req->w[2]);
+            }
+            req = req->next;
+        }
+        stdl_log_msg(0, "]\n");
+
+        // linear_sr
+        stdl_log_msg(0, "linear_sr = [\n");
+        req = inp->res_resreqs;
+        while(req != NULL) {
+            if(req->resp_order == 1 && req->res_order == 1) {
+                stdl_log_msg(0, "  {");
+                _op_log("opA", req->ops[0]);
+                stdl_log_msg(0, ", nroots=%d},\n", req->nroots);
+            }
+            req = req->next;
+        }
+        stdl_log_msg(0, "]\n");
     }
 
     return STDL_ERR_OK;
@@ -748,14 +812,14 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl
 
         // check out if it requires amplitudes
         if(req->res_order > 0) {
-            if(req->nroot < 0)
+            if(req->nroots < 0)
                 res_nexci = ctx->ncsfs;
-            else if((size_t) req->nroot > res_nexci) {
-                if((size_t) req->nroot > ctx->ncsfs) {
-                    STDL_WARN("%ld excited states requested, which is more than the number of CSFs", req->nroot);
-                    req->nroot = (int) ctx->ncsfs;
+            else if((size_t) req->nroots > res_nexci) {
+                if((size_t) req->nroots > ctx->ncsfs) {
+                    STDL_WARN("%ld excited states requested, which is more than the number of CSFs", req->nroots);
+                    req->nroots = (int) ctx->ncsfs;
                 }
-                res_nexci = (size_t) req->nroot;
+                res_nexci = (size_t) req->nroots;
             }
         }
 

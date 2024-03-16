@@ -100,7 +100,7 @@ struct stdl_response_request_ {
     float* w;
 
     /// number of amplitude vectors (*i.e.*, excitations) requested, any negatives number means "all"
-    int nroot;
+    int nroots;
 
     /// `stdl_linear_response_vectors_request[resp_order-res_order]` for each operator (except the first one), the corresponding linear response vector request
     struct stdl_lrv_request_** requests;
@@ -121,12 +121,12 @@ typedef struct stdl_response_request_ stdl_response_request;
  * @param res_order Order of the residue, must be `res_order < resp_order`
  * @param ops operators
  * @param w energies at which linear response vectors shoudl be computed
- * @param nroot number of excitations (and, thus, amplitude vectors) that should be computed. Negative number means "all"
+ * @param nroots number of excitations (and, thus, amplitude vectors) that should be computed. Negative number means "all"
  * @param[out] req_ptr the resulting request
  * @return error code
  * @ingroup requests
  */
-int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator* ops, float* w, int nroot, stdl_response_request** req_ptr);
+int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator* ops, float* w, int nroots, stdl_response_request** req_ptr);
 
 /**
  * Delete a request.

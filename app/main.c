@@ -45,6 +45,7 @@ int main(int argc, char* argv[]) {
                  APP_NAME, stdl_library_name(), stdl_library_version()
                  );
 
+    // Show what was understood
     title("User input");
     err = stdl_user_input_handler_log(input);
     STDL_ERROR_CODE_HANDLE(err, goto _end);
