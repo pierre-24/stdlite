@@ -16,8 +16,6 @@
  * Only returns the first `nexci` first excitation energies. Works well if `nexci << ncsfs`.
  * The precision on the eigenvalues is given by `STDL_RESPONSE_EIGV_ABSTOL`.
  *
- * @warning the `ctx->A` matrix is irreversibly modified in the process.
- *
  * @param ctx a valid context, with `ctx->ncsfs > 0`.
  * @param nexci number of excitations requested. Must be `0 < nexci <= ctx->ncsfs`.
  * @param[out] e `float[nexci]` excitation energies $\omega_m$ .
@@ -31,8 +29,6 @@ int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
  * Solve the Casida equation to get excitation energies and their corresponding amplitude vectors ($\mathbf x^m$, $\mathbf y^m$).
  * Only returns the first `nexci` first excitation energies. Works well if `nexci << ncsfs`.
  * The precision on the eigenvalues is given by `STDL_RESPONSE_EIGV_ABSTOL`.
- *
- * @warning the `ctx->A` and `ctx->B` matrices are irreversibly modified in the process.
  *
  * @param ctx a valid context, with `ctx->ncsfs > 0 && ctx->B != NULL`.
  * @param nexci number of excitations requested. Must be `0 < nexci <= ctx->ncsfs`.
@@ -60,8 +56,6 @@ int stdl_response_perturbed_gradient(stdl_context* ctx, size_t dim, double* eta_
 
 /**
  * Solve the linear response equation at `nw` energies $\{\omega_i\}$  to get the corresponding response vectors ($\mathbf x(\omega_i)$, $\mathbf y(\omega_i)$).
- *
- * @warning the `ctx->A` and `ctx->B` matrices are irreversibly modified in the process.
  *
  * @param ctx a valid context, with `ctx->ncsfs > 0 && ctx->B != NULL`.
  * @param nw number of energies at which linear response should be computed

@@ -17,16 +17,21 @@ int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
 
     int err;
 
+    float * wrk = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float ));
+    STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    memcpy(wrk, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float ));
+
     if (nexci < ctx->ncsfs) {
         stdl_log_msg(1, "use sspevx ");
         int found = 0;
 
         int* ifail = malloc(ctx->ncsfs * sizeof(float ));
-        STDL_ERROR_HANDLE_AND_REPORT(ifail == NULL, return STDL_ERR_MALLOC, "malloc");
+        STDL_ERROR_HANDLE_AND_REPORT(ifail == NULL, free(wrk); return STDL_ERR_MALLOC, "malloc");
 
         err = LAPACKE_sspevx(
                 LAPACK_ROW_MAJOR, 'V', 'I', 'L',
-                (int) ctx->ncsfs, ctx->A,
+                (int) ctx->ncsfs, wrk,
                 .0f, .0f,
                 1 /* even though we are in C, it starts at 1 */, (int) nexci, STDL_RESPONSE_EIGV_ABSTOL,
                 &found, e, X, (int) nexci, ifail
@@ -37,15 +42,17 @@ int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
         stdl_log_msg(1, "use sspev ");
         err = LAPACKE_sspev(
                 LAPACK_ROW_MAJOR, 'V', 'L',
-                (int) ctx->ncsfs, ctx->A,
+                (int) ctx->ncsfs, wrk,
                 e, X, (int) ctx->ncsfs
         );
     }
 
-    STDL_ERROR_HANDLE_AND_REPORT(err != 0, return STDL_ERR_RESPONSE, "error while sspevx(): %d", err);
+    STDL_ERROR_HANDLE_AND_REPORT(err != 0, free(wrk); return STDL_ERR_RESPONSE, "error while sspevx(): %d", err);
 
     err = stdl_matrix_sge_transpose(ctx->ncsfs, nexci, X);
-    STDL_ERROR_CODE_HANDLE(err, return err);
+    STDL_ERROR_CODE_HANDLE(err, free(wrk); return err);
+
+    STDL_FREE_ALL(wrk);
 
     stdl_log_msg(0, "< done\n");
 
@@ -69,22 +76,28 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
 
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute excitation amplitude vectors (TD-DFT) >");
-    stdl_log_msg(1, "\n  | Make A+B and A-B ");
+    stdl_log_msg(1, "\n  | Make A+B and (A-B)^½ ");
 
     size_t sz = ctx->ncsfs * ctx->ncsfs;
-    float * wrk = malloc(3 * sz * sizeof(float));
+    float * wrk = malloc((3 * sz + 2 * STDL_MATRIX_SP_SIZE(ctx->ncsfs)) * sizeof(float));
     STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
-    float *U = wrk, *V = wrk + sz, *W = wrk + 2 * sz;
+    float *U = wrk, *V = wrk + sz, *W = wrk + 2 * sz, *ApB = wrk + 3 * sz, *AmB = wrk + 3 * sz + STDL_MATRIX_SP_SIZE(ctx->ncsfs);
 
     // compute A+B and A-B
-    _make_apb_amb(ctx);
+    for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
+        for (size_t kjb = 0; kjb <= kia; ++kjb) {
+            float a = ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)], b = ctx->B[STDL_MATRIX_SP_IDX(kia, kjb)];
+            ApB[STDL_MATRIX_SP_IDX(kia, kjb)] = a + b;
+            AmB[STDL_MATRIX_SP_IDX(kia, kjb)] = a - b;
+        }
+    }
 
     // U=A+B
-    stdl_matrix_ssp_blowsy(ctx->ncsfs, 'L', ctx->A, U);
+    stdl_matrix_ssp_blowsy(ctx->ncsfs, 'L', ApB, U);
 
     // get V=(A-B)^1/2
-    stdl_matrix_ssp_sqrt_sy(ctx->ncsfs, ctx->B, V);
+    stdl_matrix_ssp_sqrt_sy(ctx->ncsfs, AmB, V);
 
     // W = (A+B)*(A-B)^1/2 = U*V
     cblas_ssymm(CblasRowMajor, CblasRight, CblasLower,
@@ -134,13 +147,13 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
         memcpy(X, U, sz * sizeof(float));
     }
 
-    STDL_ERROR_HANDLE_AND_REPORT(err != 0, return STDL_ERR_RESPONSE, "error while ssyevx(): %d", err);
+    STDL_ERROR_HANDLE_AND_REPORT(err != 0, free(wrk); return STDL_ERR_RESPONSE, "error while ssyevx(): %d", err);
 
     err = stdl_matrix_sge_transpose(ctx->ncsfs, nexci, X); // Now, X' = (A-B)^(-1/2)*(X+Y).
 
-    // stdl_matrix_sge_print(nexci, ctx->ncsfs, X, "Z");
-
     STDL_ERROR_CODE_HANDLE(err, free(wrk); return err);
+
+    // stdl_matrix_sge_print(nexci, ctx->ncsfs, X, "Z");
 
     stdl_log_msg(0, "-");
     stdl_log_msg(1, "\n  | Compute X and Y ");
@@ -163,7 +176,7 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
         for(size_t kia = 0; kia < ctx->ncsfs; kia++) {
             float sum = .0f;
             for(size_t kjb = 0; kjb < ctx->ncsfs; kjb++) {
-                sum += ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)] * X[iexci * ctx->ncsfs + kjb] / e[iexci];
+                sum += ApB[STDL_MATRIX_SP_IDX(kia, kjb)] * X[iexci * ctx->ncsfs + kjb] / e[iexci];
             }
 
             Y[iexci * ctx->ncsfs + kia] = sum;
@@ -210,30 +223,34 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
 
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute linear response vectors (TD-DFT) >");
-    stdl_log_msg(1, "\n  | Make A+B and A-B ");
+    stdl_log_msg(1, "\n  | Make A+B and (A-B)⁻¹ ");
 
     size_t szXY = ctx->ncsfs * ndim;
 
+    float * wrk = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+    STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    float *ApB = wrk, *AmB = wrk + STDL_MATRIX_SP_SIZE(ctx->ncsfs), *L = wrk + 2 *STDL_MATRIX_SP_SIZE(ctx->ncsfs);
+
     // compute A+B and A-B
-    _make_apb_amb(ctx);
-
-    // stdl_matrix_ssp_print(ctx->ncsfs, ctx->A, "A+B");
-    // stdl_matrix_ssp_print(ctx->ncsfs, ctx->B, "A-B");
-
-    // allocate space for the L size of the linear response equation
-    float* L = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-    STDL_ERROR_HANDLE_AND_REPORT(L == NULL, return STDL_ERR_MALLOC, "malloc");
+    for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
+        for (size_t kjb = 0; kjb <= kia; ++kjb) {
+            float a = ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)], b = ctx->B[STDL_MATRIX_SP_IDX(kia, kjb)];
+            ApB[STDL_MATRIX_SP_IDX(kia, kjb)] = a + b;
+            AmB[STDL_MATRIX_SP_IDX(kia, kjb)] = a - b;
+        }
+    }
 
     // invert A-B, taking advantage of its `sp` storage
     int* ipiv = malloc(ctx->ncsfs * sizeof(int));
-    STDL_ERROR_HANDLE_AND_REPORT(ipiv == NULL, STDL_FREE_ALL(L); return STDL_ERR_MALLOC, "malloc");
+    STDL_ERROR_HANDLE_AND_REPORT(ipiv == NULL, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "malloc");
 
-    int err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, ctx->B, ipiv);
-    STDL_ERROR_HANDLE_AND_REPORT(err != 0,  STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", err);
+    int err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, AmB, ipiv);
+    STDL_ERROR_HANDLE_AND_REPORT(err != 0,  STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", err);
 
-    err = LAPACKE_ssptri(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, ctx->B, ipiv);
-    STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptri(): %d", err);
-    // now, ctx->B contains (A-B)^(-1)
+    err = LAPACKE_ssptri(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, AmB, ipiv);
+    STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptri(): %d", err);
+    // now, AmB contains (A-B)^(-1)
 
     for (size_t iw = 0; iw < nw; ++iw) {
         stdl_log_msg(0, "-");
@@ -242,7 +259,7 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
         // make left side: L = (A+B)-w^2*(A-B)^(-1)
         for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
             for(size_t kjb = 0; kjb <= kia; ++kjb)
-                L[STDL_MATRIX_SP_IDX(kia, kjb)] = ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)] - powf(w[iw], 2) * ctx->B[STDL_MATRIX_SP_IDX(kia, kjb)];
+                L[STDL_MATRIX_SP_IDX(kia, kjb)] = ApB[STDL_MATRIX_SP_IDX(kia, kjb)] - powf(w[iw], 2) * AmB[STDL_MATRIX_SP_IDX(kia, kjb)];
         }
 
         float *Xi = X + iw * szXY, *Yi = Y + iw * szXY;
@@ -252,10 +269,10 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
 
         // solve the problem
         err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, L, ipiv);
-        STDL_ERROR_HANDLE_AND_REPORT(err != 0,  STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", err);
+        STDL_ERROR_HANDLE_AND_REPORT(err != 0,  STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", err);
 
         err = LAPACKE_ssptrs(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, (int) ndim, L, ipiv, Xi, (int) ndim);
-        STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptrs(): %d", err);
+        STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptrs(): %d", err);
 
         // stdl_matrix_sge_print(ctx->ncsfs, ndim, Xi, "X'");
 
@@ -265,7 +282,7 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
             for(size_t cpt = 0; cpt < ndim; cpt++) {
                 float sum = .0f;
                 for (size_t kjb = 0; kjb < ctx->ncsfs; kjb++)
-                    sum += ctx->B[STDL_MATRIX_SP_IDX(kia, kjb)] * w[iw] * Xi[kia * ndim + cpt];
+                    sum += AmB[STDL_MATRIX_SP_IDX(kia, kjb)] * w[iw] * Xi[kia * ndim + cpt];
 
                 Yi[kia * ndim + cpt] = sum;
             }
@@ -286,7 +303,7 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
 
     stdl_log_msg(0, "< done\n");
 
-    STDL_FREE_ALL(L, ipiv);
+    STDL_FREE_ALL(wrk, ipiv);
 
     return STDL_ERR_OK;
 }
@@ -302,18 +319,17 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
     size_t szXY = ctx->ncsfs * ndim;
     int err;
 
-    // allocate space for the left size of the linear response equation
-    float* L = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-    STDL_ERROR_HANDLE_AND_REPORT(L == NULL, return STDL_ERR_MALLOC, "malloc");
+    // allocate space
+    float* wrk = malloc(2 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+    STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    float* L = wrk, *Ai = wrk + STDL_MATRIX_SP_SIZE(ctx->ncsfs);
 
     // invert A
+    memcpy(Ai, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+
     int* ipiv = malloc(ctx->ncsfs * sizeof(int));
     STDL_ERROR_HANDLE_AND_REPORT(ipiv == NULL, STDL_FREE_ALL(L); return STDL_ERR_MALLOC, "malloc");
-
-    float* Ai = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-    STDL_ERROR_HANDLE_AND_REPORT(Ai == NULL, STDL_FREE_ALL(L, ipiv); return STDL_ERR_MALLOC, "malloc");
-
-    memcpy(Ai, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
 
     err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, Ai, ipiv);
     STDL_ERROR_HANDLE_AND_REPORT(err != 0,  STDL_FREE_ALL(L, ipiv, Ai); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", err);
@@ -367,7 +383,7 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
 
     stdl_log_msg(0, "< done\n");
 
-    STDL_FREE_ALL(L, ipiv, Ai);
+    STDL_FREE_ALL(wrk, ipiv);
 
     return STDL_ERR_OK;
 }

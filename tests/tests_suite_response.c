@@ -63,19 +63,10 @@ void test_response_TDA_ok() {
 
     stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
 
-    // copy A for latter
-    float* Ap = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Ap);
-    memcpy(Ap, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-
     // fetch all excitations
     float* etda = malloc(ctx->ncsfs * sizeof(float ));
     float* Xamptda = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float ));
     ASSERT_STDL_OK(stdl_response_TDA_casida(ctx, ctx->ncsfs, etda, Xamptda));
-
-    // replace A, which has now been severely damaged.
-    free(ctx->A);
-    ctx->A = Ap;
 
     for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
         // The eigenvalues are more or less the diagonal elements of A.
@@ -144,15 +135,6 @@ void test_response_TD_ok() {
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
     TEST_ASSERT_EQUAL_INT(ctx->ncsfs, 10);
 
-    // copy A&B for latter
-    float* Ap = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Ap);
-    memcpy(Ap, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-
-    float* Bp = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Bp);
-    memcpy(Bp, ctx->B, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-
     // fetch excitations
     float* etd = malloc(ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(etd);
@@ -164,12 +146,6 @@ void test_response_TD_ok() {
     TEST_ASSERT_NOT_NULL(Yamptd);
 
     ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, etd, Xamptd, Yamptd));
-
-    // replace A&B
-    free(ctx->A);
-    ctx->A = Ap;
-    free(ctx->B);
-    ctx->B = Bp;
 
     for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
         // The eigenvalues are more or less the diagonal elements of A.

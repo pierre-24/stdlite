@@ -37,11 +37,6 @@ void test_property_print_excitations_ok() {
 
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
 
-    // copy A for latter
-    float* Ap = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Ap);
-    memcpy(Ap, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-
     // compute dipole integrals and convert to MO
     double* dipoles_sp_MO = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_sp_MO);
@@ -60,10 +55,6 @@ void test_property_print_excitations_ok() {
 
     ASSERT_STDL_OK(stdl_qexp_excitations_print(ctx, nrequested, etda, tdipstda));
     ASSERT_STDL_OK(stdl_qexp_excitations_contribs_print(ctx, nrequested, etda, Xtda, NULL, .0001f));
-
-    // replace A
-    free(ctx->A);
-    ctx->A = Ap;
 
     float* etd = malloc(ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(etd);
@@ -221,15 +212,6 @@ void test_property_polarizability_TD_SOS_ok() {
     ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 25. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
 
-    // copy A&B for latter
-    float* Ap = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Ap);
-    memcpy(Ap, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-
-    float* Bp = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Bp);
-    memcpy(Bp, ctx->B, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-
     // fetch excitations
     float* etd = malloc(ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(etd);
@@ -257,12 +239,6 @@ void test_property_polarizability_TD_SOS_ok() {
     TEST_ASSERT_NOT_NULL(egrad);
 
     stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
-
-    // replace A&B
-    free(ctx->A);
-    ctx->A = Ap;
-    free(ctx->B);
-    ctx->B = Bp;
 
     // solve linear response
     size_t nw = 3;
@@ -448,11 +424,6 @@ void test_property_polarizability_TDA_SOS_ok() {
 
     stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
 
-    // copy A for latter
-    float* Ap = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Ap);
-    memcpy(Ap, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-
     // fetch all excitations
     float* etda = malloc(ctx->ncsfs * sizeof(float ));
     float* Xamptda = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float ));
@@ -461,10 +432,6 @@ void test_property_polarizability_TDA_SOS_ok() {
     // get transition dipoles
     float* tdipstda = malloc(ctx->ncsfs * 3 * sizeof(float ));
     ASSERT_STDL_OK(stdl_property_transition_dipoles(ctx, ctx->ncsfs, dipoles_mat, Xamptda, NULL, tdipstda));
-
-    // replace A, which has now been severely damaged.
-    free(ctx->A);
-    ctx->A = Ap;
 
     // solve linear response
     size_t nw = 3;
@@ -562,15 +529,6 @@ void test_property_first_hyperpolarizability_TD_SOS_ok() {
     ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 20. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
 
-    // copy A&B for latter
-    float* Ap = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Ap);
-    memcpy(Ap, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-
-    float* Bp = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Bp);
-    memcpy(Bp, ctx->B, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-
     // fetch excitations
     float* etd = malloc(ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(etd);
@@ -604,12 +562,6 @@ void test_property_first_hyperpolarizability_TD_SOS_ok() {
     TEST_ASSERT_NOT_NULL(egrad);
 
     stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
-
-    // replace A&B
-    free(ctx->A);
-    ctx->A = Ap;
-    free(ctx->B);
-    ctx->B = Bp;
 
     // solve linear response
     size_t nw = 3;
@@ -688,11 +640,6 @@ void test_property_first_hyperpolarizability_TDA_SOS_ok() {
     ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 20. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
 
-    // copy A for latter
-    float* Ap = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Ap);
-    memcpy(Ap, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-
     // fetch excitations
     float* etda = malloc(ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(etda);
@@ -723,10 +670,6 @@ void test_property_first_hyperpolarizability_TDA_SOS_ok() {
     TEST_ASSERT_NOT_NULL(egrad);
 
     stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
-
-    // replace A
-    free(ctx->A);
-    ctx->A = Ap;
 
     // solve linear response
     size_t nw = 3;
