@@ -696,7 +696,7 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl
     stdl_log_msg(1, "\n  | Count requests ");
 
     // count the number of operators, LRV requests, amplitudes, and freqs.
-    size_t res_nops = 0, res_nlrvreq = 0, res_nexci = 0;
+    size_t res_nops = 0, res_nlrvreq = 0, res_nexci = 0, totnw = 0;
 
     short operators[STDL_OP_COUNT] = {0};
     short islrvs[STDL_OP_COUNT] = {0};
@@ -738,8 +738,9 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl
                     last = last->next;
                 }
 
-                if(!already_in && !stdl_float_equals(req->w[iw], last->w, 1e-6f))
+                if(!already_in && !stdl_float_equals(req->w[iw], last->w, 1e-6f)) {
                     last->next = elm;
+                }
                 else
                     _w_list_delete(elm);
             }
@@ -789,11 +790,13 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl
                 last = last->next;
             }
 
+            totnw += nw;
+
             STDL_ERROR_HANDLE_AND_REPORT(nw == 0, return STDL_ERR_INPUT, "LRV but nw=0");
 
             // create LRV request
             (*rh_ptr)->lrvreqs[ioffset] = NULL;
-            err = stdl_lrv_request_new(iop, nw, (*rh_ptr)->lrvreqs + ioffset);
+            err = stdl_lrv_request_new(iop, nw, ctx->ncsfs, (*rh_ptr)->lrvreqs + ioffset);
             STDL_ERROR_CODE_HANDLE(err, return err);
 
             lrvs[iop] = (*rh_ptr)->lrvreqs[ioffset];
@@ -840,7 +843,7 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl
     }
 
     stdl_log_msg(0, "< done\n");
-    stdl_log_msg(0, "Will compute %ld EV matrix(ces), %ld response vector(s), and %ld amplitude vector(s)\n", (*rh_ptr)->nops, (*rh_ptr)->nlrvreqs, (*rh_ptr)->nexci);
+    stdl_log_msg(0, "Will compute %ld EV matrix(ces), %ld response vector(s), and %ld amplitude vector(s)\n", (*rh_ptr)->nops, totnw, (*rh_ptr)->nexci);
 
     return STDL_ERR_OK;
 }

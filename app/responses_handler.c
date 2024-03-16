@@ -72,11 +72,13 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
 
     for (size_t iop = 0; iop < rh->nops; ++iop) {
         size_t dim;
-        double* op_AO = NULL;
+        err = stdl_operator_dim(rh->ops[iop], &dim);
+        STDL_ERROR_CODE_HANDLE(err, goto _end);
+
+        double* op_AO = malloc(dim * STDL_MATRIX_SP_SIZE(ctx->original_wf->nao) * sizeof(double ));
+        STDL_ERROR_HANDLE_AND_REPORT(op_AO == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
+
         if(rh->ops[iop] == STDL_OP_DIPL) {
-            dim = 3;
-            op_AO = malloc(dim * STDL_MATRIX_SP_SIZE(ctx->original_wf->nao) * sizeof(double ));
-            STDL_ERROR_HANDLE_AND_REPORT(op_AO == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
             err = stdl_basis_dsp_dipole(ctx->bs, op_AO);
             STDL_ERROR_CODE_HANDLE(err, free(op_AO); goto _end);
         } else {
@@ -107,16 +109,9 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
 
             stdl_lrv_request* lrvreq = rh->lrvreqs[ilrv];
             float* egrad = NULL;
-            size_t dim;
-
-            switch (lrvreq->op) {
-                case STDL_OP_DIPL:
-                    stdl_log_msg(0, "LRVs for the dipole length operator\n");
-                    dim = 3;
-                    break;
-                default:
-                    dim = 1;
-            }
+            size_t dim = 0;
+            err = stdl_operator_dim(lrvreq->op, &dim);
+            STDL_ERROR_CODE_HANDLE(err, goto _end);
 
             // compute perturbed gradient
             egrad = malloc(dim * ctx->ncsfs * sizeof(float ));
@@ -129,11 +124,6 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
                 }
             }
 
-            // allocate space
-            lrvreq->X = malloc(dim * lrvreq->nw * ctx->ncsfs * sizeof(float));
-            lrvreq->Y = malloc(dim * lrvreq->nw * ctx->ncsfs * sizeof(float));
-            STDL_ERROR_HANDLE_AND_REPORT(lrvreq->X == NULL || lrvreq->Y == NULL, free(egrad); err = STDL_ERR_MALLOC, "malloc");
-
             // compute
             if(ctx->B == NULL)
                 err = stdl_response_TDA_linear(ctx, lrvreq->nw, lrvreq->w, dim, egrad, lrvreq->X, lrvreq->Y);
@@ -143,6 +133,15 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
             STDL_FREE_IF_USED(egrad);
             STDL_ERROR_CODE_HANDLE(err, goto _end);
         }
+    }
+
+    if(rh->nexci > 0) {
+        stdl_log_msg(0, "~~ Compute amplitude vectors\n");
+
+        if(ctx->B == NULL)
+            stdl_response_TDA_casida(ctx, rh->nexci, rh->eexci, rh->Xamp);
+        else
+            stdl_response_TD_casida(ctx, rh->nexci, rh->eexci, rh->Xamp, rh->Yamp);
     }
 
 

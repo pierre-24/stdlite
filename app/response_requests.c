@@ -5,6 +5,20 @@
 
 #include "response_requests.h"
 
+int stdl_operator_dim(stdl_operator op, size_t* dim) {
+    assert(op < STDL_OP_COUNT && dim != NULL);
+
+    switch (op) {
+        case STDL_OP_DIPL:
+            *dim = 3;
+            break;
+        default:
+            *dim = 1;
+    }
+
+    return STDL_ERR_OK;
+}
+
 int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator* ops, float* w, int nroot, stdl_response_request** req_ptr) {
     assert(req_ptr != NULL && resp_order > 0);
 
@@ -56,7 +70,7 @@ int stdl_response_request_delete(stdl_response_request* req) {
 
 }
 
-int stdl_lrv_request_new(stdl_operator op, size_t nw, stdl_lrv_request** req_ptr) {
+int stdl_lrv_request_new(stdl_operator op, size_t nw, size_t ncsfs, stdl_lrv_request **req_ptr) {
     assert(req_ptr != NULL);
 
     *req_ptr = malloc(sizeof(stdl_lrv_request));
@@ -67,11 +81,14 @@ int stdl_lrv_request_new(stdl_operator op, size_t nw, stdl_lrv_request** req_ptr
     (*req_ptr)->op = op;
     (*req_ptr)->nw = nw;
 
-    (*req_ptr)->X = NULL;
-    (*req_ptr)->Y = NULL;
+    size_t dim;
+    int err = stdl_operator_dim(op, &dim);
+    STDL_ERROR_HANDLE(err, stdl_lrv_request_delete(*req_ptr); return err);
 
     (*req_ptr)->w = malloc(nw * sizeof(float ));
-    STDL_ERROR_HANDLE_AND_REPORT((*req_ptr)->w == NULL, stdl_lrv_request_delete(*req_ptr); return STDL_ERR_MALLOC, "malloc");
+    (*req_ptr)->X = malloc(nw * ncsfs * dim * sizeof(float ));
+    (*req_ptr)->Y = malloc(nw * ncsfs * dim * sizeof(float ));
+    STDL_ERROR_HANDLE_AND_REPORT((*req_ptr)->w == NULL || (*req_ptr)->X == NULL || (*req_ptr)->Y == NULL, stdl_lrv_request_delete(*req_ptr); return STDL_ERR_MALLOC, "malloc");
 
     return STDL_ERR_OK;
 }

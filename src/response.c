@@ -12,7 +12,7 @@ int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
     assert(ctx != NULL && ctx->ncsfs > 0 && nexci > 0 && nexci <= ctx->ncsfs && e != NULL && X != NULL);
 
     stdl_log_msg(1, "+ ");
-    stdl_log_msg(0, "Compute excitation amplitude vectors (TDA-DFT) >");
+    stdl_log_msg(0, "Compute %ld excitation amplitude vectors (TDA-DFT) >", nexci);
     stdl_log_msg(1, "\n  | ");
 
     int err;
@@ -75,7 +75,7 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
     assert(ctx != NULL && ctx->ncsfs > 0 && nexci <= ctx->ncsfs && ctx->B != NULL && e != NULL && X != NULL && Y != NULL);
 
     stdl_log_msg(1, "+ ");
-    stdl_log_msg(0, "Compute excitation amplitude vectors (TD-DFT) >");
+    stdl_log_msg(0, "Compute %ld excitation amplitude vectors (TD-DFT) >", nexci);
     stdl_log_msg(1, "\n  | Make A+B and (A-B)^½ ");
 
     size_t sz = ctx->ncsfs * ctx->ncsfs;
@@ -222,7 +222,7 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
     assert(ctx != NULL && ctx->ncsfs > 0 && nw > 0 && ndim > 0 && ctx->B != NULL && egrad != NULL && X != NULL && Y != NULL);
 
     stdl_log_msg(1, "+ ");
-    stdl_log_msg(0, "Compute linear response vectors (TD-DFT) >");
+    stdl_log_msg(0, "Compute %ld linear response vectors (TD-DFT) >", nw);
     stdl_log_msg(1, "\n  | Make A+B and (A-B)⁻¹ ");
 
     size_t szXY = ctx->ncsfs * ndim;
@@ -313,7 +313,7 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
     assert(ctx != NULL && ctx->ncsfs > 0 && nw > 0 && ndim > 0 && egrad != NULL && X != NULL && Y != NULL);
 
     stdl_log_msg(1, "+ ");
-    stdl_log_msg(0, "Compute linear response vectors (TDA-DFT) >");
+    stdl_log_msg(0, "Compute %ld linear response vectors (TDA-DFT) >", nw);
     stdl_log_msg(1, "\n  | Invert A ");
 
     size_t szXY = ctx->ncsfs * ndim;

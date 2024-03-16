@@ -17,6 +17,16 @@ enum stdl_operator_ {
 
 typedef enum stdl_operator_ stdl_operator;
 
+/**
+ * Get the dimension of a given operator
+ *
+ * @param op the operator
+ * @param[out] dim its dimension
+ * @return error code
+ * @ingroup requests
+ */
+int stdl_operator_dim(stdl_operator op, size_t* dim);
+
 
 /**
  * Linear response vectors (LRV) requests, in an orderly manner. Also store linear vectors when computed.
@@ -50,7 +60,7 @@ typedef struct stdl_lrv_request_ stdl_lrv_request;
  * @return error code
  * @ingroup requests
  */
-int stdl_lrv_request_new(stdl_operator op, size_t nw, stdl_lrv_request** req_ptr);
+int stdl_lrv_request_new(stdl_operator op, size_t nw, size_t ncsfs, stdl_lrv_request **req_ptr);
 
 /**
  * Actually compute the requested linear response vectors

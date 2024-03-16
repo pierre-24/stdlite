@@ -15,7 +15,7 @@ e2thr=1e-4
 # output = "responses.h5"
 
 linear = [
-    {opA = 'dipl', opB = 'dipl', wB = '512nm'}, # polarizability
+    {opA = 'dipl', opB = 'dipl', wB = '532nm'}, # polarizability
     # {target = 'electric_polarizability', w = '1064nm'}, # alternate notation
 ]
 
