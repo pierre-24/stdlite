@@ -119,9 +119,10 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
             egrad = malloc(dim * ctx->ncsfs * sizeof(float ));
             STDL_ERROR_HANDLE_AND_REPORT(egrad == NULL,  err = STDL_ERR_MALLOC; goto _end, "malloc");
 
-            for (size_t iop = 0; iop < rh->nops; ++iop) {
+            for (size_t iop = 0; iop < rh->nops; ++iop) { // find the correct operator
                 if (rh->ops[iop] == lrvreq->op) {
-                    stdl_response_perturbed_gradient(ctx, dim, rh->ev_matrices[iop], egrad);
+                    lrvreq->eta_MO = rh->ev_matrices[iop];
+                    stdl_response_perturbed_gradient(ctx, dim, lrvreq->eta_MO, egrad);
                     break;
                 }
             }
@@ -145,7 +146,6 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
         else
             stdl_response_TD_casida(ctx, rh->nexci, rh->eexci, rh->Xamp, rh->Yamp);
     }
-
 
     _end:
     return err;

@@ -20,8 +20,8 @@ void title(char* title) {
 int main(int argc, char* argv[]) {
 
     // record time
-    struct timespec elapsed_time_prog;
-    stdl_timer_start(&elapsed_time_prog);
+    struct timespec elapsed_time_app;
+    stdl_timer_start(&elapsed_time_app);
 
     int err;
     stdl_user_input_handler* input = NULL;
@@ -72,10 +72,25 @@ int main(int argc, char* argv[]) {
         err = stdl_responses_handler_compute(rh, ctx);
         STDL_ERROR_CODE_HANDLE(err, goto _end);
     } else {
-        stdl_log_msg(0, "No response requested, exiting\n");
+        stdl_log_msg(0, "No response requested.\n");
     }
 
     stdl_log_msg(0, "Elapsed time in responses: %.2f secs\n", stdl_timer_stop(&elapsed_time_response));
+
+
+    // compute properties
+    struct timespec elapsed_time_properties;
+    stdl_timer_start(&elapsed_time_properties);
+
+    title("Properties");
+    if(input->res_resreqs != NULL) {
+        err = stdl_user_input_handler_compute_properties(input, ctx, rh);
+        STDL_ERROR_CODE_HANDLE(err, goto _end);
+    } else {
+        stdl_log_msg(0, "No properties.\n");
+    }
+
+    stdl_log_msg(0, "Elapsed time in properties: %.2f secs\n", stdl_timer_stop(&elapsed_time_properties));
 
     // the end
     _end:
@@ -93,7 +108,7 @@ int main(int argc, char* argv[]) {
         stdl_responses_handler_delete(rh);
 
     if(err < STDL_ERR_LAST)
-        stdl_log_msg(0, "Elapsed time in %s: %.2f secs\n", APP_NAME, stdl_timer_stop(&elapsed_time_prog));
+        stdl_log_msg(0, "Elapsed time in %s: %.2f secs\n", APP_NAME, stdl_timer_stop(&elapsed_time_app));
 
     if(err == STDL_ERR_OK || err > STDL_ERR_LAST) {
         return EXIT_SUCCESS;

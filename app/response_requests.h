@@ -36,6 +36,9 @@ struct stdl_lrv_request_ {
     /// Operator
     stdl_operator op;
 
+    /// pointer to the MO representation of `op`
+    double* eta_MO;
+
     /// Number of energies at which the vectors should be computed
     size_t nw;
 
@@ -103,9 +106,9 @@ struct stdl_response_request_ {
     int nroots;
 
     /// `stdl_linear_response_vectors_request[resp_order-res_order]` for each operator (except the first one), the corresponding linear response vector request
-    struct stdl_lrv_request_** requests;
+    struct stdl_lrv_request_** lrvreqs;
 
-    /// `size_t[resp_order-res_order]` For each frequency, its corresponding position in the linear response vector request
+    /// `size_t[(resp_order == res_order)? 0: resp_order-res_order+1]` For each frequency, its corresponding position in the linear response vector request
     size_t* wpos;
 
     /// Next request

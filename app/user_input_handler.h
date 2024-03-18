@@ -183,4 +183,16 @@ int stdl_user_input_handler_make_context(stdl_user_input_handler* inp, stdl_cont
  */
 int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl_context *ctx, stdl_responses_handler **rh_ptr);
 
+
+/**
+ * Compute (and display) the properties requested by the user.
+ *
+ * @param inp a valid user input
+ * @param ctx a valid context
+ * @param rh a valid responses handler, with all responses computed
+ * @return error code
+ * @ingroup user_input_handler
+ */
+int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, stdl_context* ctx, stdl_responses_handler* rh);
+
 #endif //STDLITE_USER_INPUT_HANDLER_H

@@ -66,7 +66,7 @@ void test_user_input_prepare_responses() {
     TEST_ASSERT_FLOAT_WITHIN(1e-4, STDL_CONST_HC / req->w[0], 1064.f);
     TEST_ASSERT_EQUAL(req->ops[0], STDL_OP_DIPL);
     TEST_ASSERT_EQUAL(0, req->nroots);
-    TEST_ASSERT_EQUAL(lrv_req, req->requests[0]);
+    TEST_ASSERT_EQUAL(lrv_req, req->lrvreqs[0]);
     TEST_ASSERT_EQUAL(0, req->wpos[0]);
 
     TEST_ASSERT_NOT_NULL(req->next);
@@ -76,7 +76,7 @@ void test_user_input_prepare_responses() {
     TEST_ASSERT_FLOAT_WITHIN(1e-4, STDL_CONST_HC / req->w[0], 532.f);
     TEST_ASSERT_EQUAL(req->ops[0], STDL_OP_DIPL);
     TEST_ASSERT_EQUAL(0, req->nroots);
-    TEST_ASSERT_EQUAL(lrv_req, req->requests[0]);
+    TEST_ASSERT_EQUAL(lrv_req, req->lrvreqs[0]);
     TEST_ASSERT_EQUAL(1, req->wpos[0]);
 
     TEST_ASSERT_NOT_NULL(req->next);
@@ -88,7 +88,7 @@ void test_user_input_prepare_responses() {
     TEST_ASSERT_FLOAT_WITHIN(1e-4, STDL_CONST_HC / req->w[2], 1064.f);
     TEST_ASSERT_EQUAL(req->ops[0], STDL_OP_DIPL);
     TEST_ASSERT_EQUAL(0, req->nroots);
-    TEST_ASSERT_EQUAL(lrv_req, req->requests[0]);
+    TEST_ASSERT_EQUAL(lrv_req, req->lrvreqs[0]);
     TEST_ASSERT_EQUAL(1, req->wpos[0]);
     TEST_ASSERT_EQUAL(0, req->wpos[1]);
     TEST_ASSERT_EQUAL(0, req->wpos[2]);
@@ -100,7 +100,7 @@ void test_user_input_prepare_responses() {
     TEST_ASSERT_EQUAL(req->ops[0], STDL_OP_DIPL);
     TEST_ASSERT_EQUAL(-1, req->nroots);
     TEST_ASSERT_NULL(req->w);
-    TEST_ASSERT_NULL(req->requests);
+    TEST_ASSERT_NULL(req->lrvreqs);
     TEST_ASSERT_NULL(req->wpos);
 
     ASSERT_STDL_OK(stdl_responses_handler_delete(rh));
@@ -139,6 +139,9 @@ void test_user_input_compute_responses() {
 
     // compute responses
     ASSERT_STDL_OK(stdl_responses_handler_compute(rh, ctx));
+
+    // compute properties
+    ASSERT_STDL_OK(stdl_user_input_handler_compute_properties(inp, ctx, rh));
 
     ASSERT_STDL_OK(stdl_responses_handler_delete(rh));
     ASSERT_STDL_OK(stdl_context_delete(ctx));

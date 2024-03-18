@@ -30,9 +30,7 @@ int stdl_property_polarizability(stdl_context* ctx, double* dips_MO, float* X, f
                 size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
 
                 d = (float) dips_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)];
-                s = X[lia * 3 + sigma];
-                if(Y != NULL)
-                    s += Y[lia * 3 + sigma];
+                s = X[lia * 3 + sigma]+ Y[lia * 3 + sigma];
 
                 alpha[STDL_MATRIX_SP_IDX(zeta, sigma)] += -2.f * d * s;
             }

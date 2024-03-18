@@ -7,6 +7,8 @@
 #include <stdlite/helpers.h>
 #include <stdlite/utils/fchk_parser.h>
 #include <stdlite/utils/molden_parser.h>
+#include <stdlite/property.h>
+#include <stdlite/utils/matrix.h>
 
 #include "user_input_handler.h"
 
@@ -893,7 +895,7 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl
             size_t nops = req->resp_order - req->res_order + 1;
             for (size_t iop = 0; iop < nops; ++iop) {
                 stdl_lrv_request *lrvreq = lrvs[req->ops[iop]];
-                req->requests[iop] = lrvreq;
+                req->lrvreqs[iop] = lrvreq;
                 for (size_t jw = 0; jw < lrvreq->nw; ++jw) {
                     if (stdl_float_equals(req->w[iop], lrvreq->w[jw], 1e-6f)) {
                         req->wpos[iop] = jw;
@@ -908,6 +910,39 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl
 
     stdl_log_msg(0, "< done\n");
     stdl_log_msg(0, "Will compute %ld EV matrix(ces), %ld response vector(s), and %ld amplitude vector(s)\n", (*rh_ptr)->nops, totnw, (*rh_ptr)->nexci);
+
+    return STDL_ERR_OK;
+}
+
+int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, stdl_context* ctx, stdl_responses_handler* rh) {
+    assert(inp != NULL && ctx != NULL && rh != NULL);
+
+    stdl_response_request* req = inp->res_resreqs;
+    while (req != NULL) {
+
+
+        if(req->resp_order == 1 && req->res_order == 0) { // linear
+            float alpha[6];
+            size_t dim = 1;
+            stdl_operator_dim(req->lrvreqs[1]->op, &dim);
+            stdl_property_polarizability(
+                    ctx,
+                    req->lrvreqs[0]->eta_MO,
+                    req->lrvreqs[1]->X + req->wpos[1] * dim * ctx->ncsfs,
+                    req->lrvreqs[1]->Y + req->wpos[1] * dim * ctx->ncsfs,
+                    alpha
+                    );
+
+            stdl_matrix_ssp_print(3, alpha, "alpha");
+
+        } else if(req->resp_order == 2 && req->res_order == 0) { // quadratic
+
+        } else if(req->resp_order == 1 && req->res_order == 1) { // linear SR
+
+        }
+
+        req = req->next;
+    }
 
     return STDL_ERR_OK;
 }
