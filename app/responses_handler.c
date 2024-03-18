@@ -25,9 +25,10 @@ int stdl_responses_handler_new(size_t nops, size_t nlrvreqs, size_t nexci, stdl_
     (*rh_ptr)->Yamp = NULL;
 
     (*rh_ptr)->ops = malloc(nops * sizeof(stdl_operator));
+    (*rh_ptr)->ev_matrices =calloc(nops, sizeof(double*));
     (*rh_ptr)->lrvreqs = calloc(nops, sizeof(stdl_lrv_request*));
 
-    STDL_ERROR_HANDLE_AND_REPORT((*rh_ptr)->ops == NULL || (*rh_ptr)->lrvreqs == NULL, stdl_responses_handler_delete(*rh_ptr); return STDL_ERR_MALLOC, "malloc");
+    STDL_ERROR_HANDLE_AND_REPORT((*rh_ptr)->ops == NULL || (*rh_ptr)->ev_matrices == NULL || (*rh_ptr)->lrvreqs == NULL, stdl_responses_handler_delete(*rh_ptr); return STDL_ERR_MALLOC, "malloc");
 
     if(nexci > 0) {
         (*rh_ptr)->eexci = malloc(nexci * sizeof(float ));
@@ -55,7 +56,11 @@ int stdl_responses_handler_delete(stdl_responses_handler* rh) {
             stdl_lrv_request_delete(rh->lrvreqs[i]);
     }
 
-    STDL_FREE_ALL(rh->ops, rh->lrvreqs, rh->eexci, rh->Xamp, rh->Yamp, rh);
+    for (size_t i = 0; i < rh->nops; ++i) {
+        STDL_FREE_IF_USED(rh->ev_matrices[i]);
+    }
+
+    STDL_FREE_ALL(rh->ops, rh->ev_matrices, rh->lrvreqs, rh->eexci, rh->Xamp, rh->Yamp, rh);
 
     return STDL_ERR_OK;
 }
@@ -66,9 +71,6 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
     int err;
 
     stdl_log_msg(0, "~~ Compute EV matrices in MO basis\n");
-
-    double** ev_matrices = calloc(rh->nops, sizeof(double*));
-    STDL_ERROR_HANDLE_AND_REPORT(ev_matrices == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
 
     for (size_t iop = 0; iop < rh->nops; ++iop) {
         size_t dim;
@@ -87,7 +89,7 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
         }
 
         // AO to MO
-        ev_matrices[iop] = malloc(dim * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
+        rh->ev_matrices[iop] = malloc(dim * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
 
         for (size_t cpt = 0; cpt < dim; ++cpt) {
             err = stdl_wavefunction_dsp_ao_to_dsp_mo(
@@ -95,7 +97,7 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
                     ctx->nmo,
                     ctx->C_ptr,
                     op_AO + cpt * STDL_MATRIX_SP_SIZE(ctx->original_wf->nao),
-                    ev_matrices[iop] + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo)
+                    rh->ev_matrices[iop] + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo)
             );
             STDL_ERROR_CODE_HANDLE(err, free(op_AO); goto _end);
         }
@@ -119,7 +121,7 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
 
             for (size_t iop = 0; iop < rh->nops; ++iop) {
                 if (rh->ops[iop] == lrvreq->op) {
-                    stdl_response_perturbed_gradient(ctx, dim, ev_matrices[iop], egrad);
+                    stdl_response_perturbed_gradient(ctx, dim, rh->ev_matrices[iop], egrad);
                     break;
                 }
             }
@@ -146,11 +148,5 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
 
 
     _end:
-    for (size_t i = 0; i < rh->nops; ++i) {
-        STDL_FREE_IF_USED(ev_matrices[i]);
-    }
-
-    STDL_FREE_ALL(ev_matrices);
-
     return err;
 }

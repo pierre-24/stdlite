@@ -14,6 +14,9 @@ struct stdl_responses_handler_ {
     /// `stdl_operator[nops]` list of operators
     stdl_operator* ops;
 
+    /// `double[nops]`, <r|op|s> (in MO basis)
+    double** ev_matrices;
+
     /// Number of LRV requests
     size_t nlrvreqs;
 
