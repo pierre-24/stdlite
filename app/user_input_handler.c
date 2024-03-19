@@ -9,6 +9,7 @@
 #include <stdlite/utils/molden_parser.h>
 #include <stdlite/property.h>
 #include <stdlite/utils/matrix.h>
+#include <stdlite/utils/experimental_quantity.h>
 
 #include "user_input_handler.h"
 
@@ -920,23 +921,114 @@ int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, std
     stdl_response_request* req = inp->res_resreqs;
     while (req != NULL) {
 
-
         if(req->resp_order == 1 && req->res_order == 0) { // linear
+            size_t dim0 = 1, dim1 = 1;
+            stdl_operator_dim(req->lrvreqs[0]->op, &dim0);
+            stdl_operator_dim(req->lrvreqs[1]->op, &dim1);
+
+
+            // TODO: it should be more general than that!
             float alpha[6];
-            size_t dim = 1;
-            stdl_operator_dim(req->lrvreqs[1]->op, &dim);
             stdl_property_polarizability(
                     ctx,
                     req->lrvreqs[0]->eta_MO,
-                    req->lrvreqs[1]->X + req->wpos[1] * dim * ctx->ncsfs,
-                    req->lrvreqs[1]->Y + req->wpos[1] * dim * ctx->ncsfs,
+                    req->lrvreqs[1]->X + req->wpos[1] * dim1 * ctx->ncsfs,
+                    req->lrvreqs[1]->Y + req->wpos[1] * dim1 * ctx->ncsfs,
                     alpha
                     );
 
-            stdl_matrix_ssp_print(3, alpha, "alpha");
+            if(req->ops[0] == STDL_OP_DIPL && req->ops[1] == STDL_OP_DIPL) {
+                stdl_log_msg(0, "** alpha(-w;w), w=%f (%.2f nm)\n", req->lrvreqs[1]->w[req->wpos[1]], STDL_CONST_HC / req->lrvreqs[1]->w[req->wpos[1]]);
+                stdl_log_msg(0, "         x            y            z\n");
+
+                for (size_t zeta = 0; zeta < dim0; ++zeta) {
+                    switch (zeta) {
+                        case 0:
+                            stdl_log_msg(0, "x");
+                            break;
+                        case 1:
+                            stdl_log_msg(0, "y");
+                            break;
+                        case 2:
+                            stdl_log_msg(0, "z");
+                            break;
+                    }
+                    for (size_t sigma = 0; sigma < dim1; ++sigma) {
+                        stdl_log_msg(0, " % 12.5f", alpha[STDL_MATRIX_SP_IDX(zeta, sigma)]);
+                    }
+                    stdl_log_msg(0, "\n");
+                }
+
+                float iso, aniso;
+                stdl_qexp_polarizability(alpha, &iso, &aniso);
+                stdl_log_msg(0, "iso =   % 12.5f\naniso = % 12.5f\n", iso, aniso);
+            }
 
         } else if(req->resp_order == 2 && req->res_order == 0) { // quadratic
+            size_t dim0 = 3, dim1 = 3, dim2 = 3;
+            stdl_operator_dim(req->lrvreqs[0]->op, &dim0);
+            stdl_operator_dim(req->lrvreqs[1]->op, &dim1);
+            stdl_operator_dim(req->lrvreqs[2]->op, &dim2);
 
+            // TODO: it should be more general than that!
+            float beta[3][3][3];
+            stdl_property_first_hyperpolarizability(
+                    ctx,
+                    req->lrvreqs[1]->eta_MO,
+                    (float*[]) {req->lrvreqs[0]->Y + req->wpos[0] * dim0 * ctx->ncsfs, req->lrvreqs[1]->X + req->wpos[1] * dim1 * ctx->ncsfs,req->lrvreqs[2]->X + req->wpos[2] * dim2 * ctx->ncsfs},
+                    (float*[]) {req->lrvreqs[0]->X + req->wpos[0] * dim0 * ctx->ncsfs, req->lrvreqs[1]->Y + req->wpos[1] * dim1 * ctx->ncsfs,req->lrvreqs[2]->Y + req->wpos[2] * dim2 * ctx->ncsfs},
+                    beta
+                    );
+
+
+            if(req->ops[0] == STDL_OP_DIPL && req->ops[1] == STDL_OP_DIPL && req->ops[2] == STDL_OP_DIPL) {
+                stdl_log_msg(0,
+                             "** beta(-w1-w2;w1,w2), w1=%f (%.2f nm), w2=%f (%.2f nm)\n",
+                             req->lrvreqs[1]->w[req->wpos[1]], STDL_CONST_HC / req->lrvreqs[1]->w[req->wpos[1]],
+                             req->lrvreqs[2]->w[req->wpos[2]], STDL_CONST_HC / req->lrvreqs[2]->w[req->wpos[2]]
+                             );
+
+                stdl_log_msg(0, "          x            y            z\n");
+                for (size_t zeta = 0; zeta < dim0; ++zeta) {
+                    for (size_t sigma = 0; sigma < dim1; ++sigma) {
+                        switch (zeta) {
+                            case 0:
+                                stdl_log_msg(0, "x");
+                                break;
+                            case 1:
+                                stdl_log_msg(0, "y");
+                                break;
+                            case 2:
+                                stdl_log_msg(0, "z");
+                                break;
+                        }
+                        switch (sigma) {
+                            case 0:
+                                stdl_log_msg(0, "x");
+                                break;
+                            case 1:
+                                stdl_log_msg(0, "y");
+                                break;
+                            case 2:
+                                stdl_log_msg(0, "z");
+                                break;
+                        }
+
+                        for (size_t tau = 0; tau < dim2; ++tau) {
+                            stdl_log_msg(0, " % 12.5f", beta[zeta][sigma][tau]);
+                        }
+
+                        stdl_log_msg(0, "\n");
+                    }
+                }
+            }
+
+            if(stdl_float_equals(req->lrvreqs[1]->w[req->wpos[1]], req->lrvreqs[2]->w[req->wpos[2]], 1e-6)) {
+                float b2ZZZ, b2ZXX;
+                stdl_qexp_first_hyperpolarizability_hrs(beta, &b2ZZZ, &b2ZXX);
+                stdl_log_msg(0, "<B2ZZZ> = % 12.5f\n<B2ZXX> = % 12.5f\nBHRS    = % 12.5f\nDR      = % 12.5f\n", b2ZZZ, b2ZXX, sqrtf(b2ZZZ +  b2ZXX), b2ZZZ / b2ZXX);
+
+            }
         } else if(req->resp_order == 1 && req->res_order == 1) { // linear SR
 
         }
