@@ -1031,6 +1031,30 @@ int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, std
             }
         } else if(req->resp_order == 1 && req->res_order == 1) { // linear SR
 
+            float* tdips = malloc(rh->nexci * 3 * sizeof(float ));
+            STDL_ERROR_HANDLE_AND_REPORT(tdips == NULL, return STDL_ERR_MALLOC, "malloc");
+
+            // TODO: it should be more general than that!
+            stdl_property_transition_dipoles(ctx, rh->nexci, rh->ev_matrices[0] /* <- !!!! */, rh->Xamp, rh->Yamp, tdips);
+
+            stdl_log_msg(0, "      -------- Energy -------- ------ Transition dipole ---------\n");
+            stdl_log_msg(0, "       (Eh)     (eV)    (nm)      X        Y        Z      fL   \n");
+            for (size_t iexci = 0; iexci < rh->nexci; ++iexci) {
+                // print energies
+                stdl_log_msg(0, "%4ld %8.5f %7.3f %7.2f", iexci + 1, rh->eexci[iexci], rh->eexci[iexci] * STDL_CONST_AU_TO_EV, STDL_CONST_HC / rh->eexci[iexci]);
+
+                // print transition dipole & oscillator strength
+                stdl_log_msg(0, " % 8.5f % 8.5f % 8.5f %7.5f",
+                       tdips[0 * rh->nexci + iexci],
+                       tdips[1 * rh->nexci + iexci],
+                       tdips[2 * rh->nexci + iexci],
+                       rh->eexci[iexci] * (powf(tdips[0 * rh->nexci + iexci], 2) + powf(tdips[1 * rh->nexci + iexci], 2) + powf(tdips[2 * rh->nexci + iexci], 2)) * 2.f / 3
+                );
+
+                stdl_log_msg(0, "\n");
+            }
+
+            STDL_FREE_IF_USED(tdips);
         }
 
         req = req->next;
