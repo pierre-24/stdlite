@@ -24,6 +24,7 @@ void test_user_input_prepare_responses() {
     TEST_ASSERT_NOT_NULL(inp);
 
     fputs("title = \"test calculation\"\n"
+          "data_output=\"test_prepare_response.h5\"\n"
           "[context]\n"
           "source = \"../tests/test_files/water_631g.fchk\"\n"
           "source_type = \"FCHK\"\n"
@@ -104,6 +105,9 @@ void test_user_input_prepare_responses() {
     TEST_ASSERT_NULL(req->lrvreqs);
     TEST_ASSERT_NULL(req->wpos);
 
+    // delete data output
+    unlink(inp->data_output);
+
     ASSERT_STDL_OK(stdl_responses_handler_delete(rh));
     ASSERT_STDL_OK(stdl_context_delete(ctx));
     ASSERT_STDL_OK(stdl_user_input_handler_delete(inp));
@@ -145,9 +149,10 @@ void test_user_input_compute_responses() {
     // compute properties
     ASSERT_STDL_OK(stdl_user_input_handler_compute_properties(inp, ctx, rh));
 
+    // delete data output
+    unlink(inp->data_output);
+
     ASSERT_STDL_OK(stdl_responses_handler_delete(rh));
     ASSERT_STDL_OK(stdl_context_delete(ctx));
     ASSERT_STDL_OK(stdl_user_input_handler_delete(inp));
-
-    unlink(inp->data_output);
 }
