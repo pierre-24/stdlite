@@ -115,7 +115,7 @@ void test_user_input_compute_responses() {
     TEST_ASSERT_NOT_NULL(inp);
 
     fputs("title = \"test calculation\"\n"
-          "data_output=\"test.h5\"\n"
+          "data_output=\"test_compute_response.h5\"\n"
           "[context]\n"
           "source = \"../tests/test_files/water_631g.fchk\"\n"
           "source_type = \"FCHK\"\n"
@@ -149,5 +149,5 @@ void test_user_input_compute_responses() {
     ASSERT_STDL_OK(stdl_context_delete(ctx));
     ASSERT_STDL_OK(stdl_user_input_handler_delete(inp));
 
-    unlink("test.h5");
+    unlink(inp->data_output);
 }

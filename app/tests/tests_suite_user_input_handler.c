@@ -167,7 +167,7 @@ void test_user_input_make_context() {
 
     char* args[] =  {
             "self",
-            "--data_output=test.h5",
+            "--data_output=test_make_context.h5",
             "--ctx_source=../tests/test_files/water_631g.molden",
             "--ctx_source_type=MOLDEN",
             "--ctx_gammaJ=0.5",
@@ -180,7 +180,7 @@ void test_user_input_make_context() {
 
     TEST_ASSERT_EQUAL_STRING("../tests/test_files/water_631g.molden", inp->ctx_source);
     TEST_ASSERT_EQUAL(STDL_SRC_MOLDEN, inp->ctx_source_type);
-    TEST_ASSERT_EQUAL_STRING("test.h5", inp->data_output);
+    TEST_ASSERT_EQUAL_STRING("test_make_context.h5", inp->data_output);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 0.5, inp->ctx_gammaJ);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 1.0, inp->ctx_gammaK);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 20.f / STDL_CONST_AU_TO_EV, inp->ctx_ethr);
