@@ -54,7 +54,7 @@ struct stdl_user_input_handler_ {
     stdl_source_type ctx_source_type;
 
     /// H5 file output
-    char* ctx_output;
+    char* data_output;
 
     /// Method
     stdl_method ctx_method;

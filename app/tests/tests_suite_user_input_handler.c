@@ -23,10 +23,10 @@ void test_user_input_context_fill_from_toml_ok() {
     TEST_ASSERT_NOT_NULL(inp);
 
     fputs("title = \"test calculation\"\n"
+          "data_output = \"water_631g.h5\"\n"
           "[context]\n"
           "source = \"../tests/test_files/water_631g.fchk\"\n"
           "source_type = \"FCHK\"\n"
-          "output = \"context_water_631g.h5\"\n"
           "method = \"monopole_direct\"\n"
           "tda = 0\n"
           "ethr = '12eV'\n"
@@ -41,9 +41,9 @@ void test_user_input_context_fill_from_toml_ok() {
     ASSERT_STDL_OK(stdl_user_input_handler_check(inp));
 
     TEST_ASSERT_EQUAL_STRING("test calculation", inp->title);
+    TEST_ASSERT_EQUAL_STRING("water_631g.h5", inp->data_output);
     TEST_ASSERT_EQUAL_STRING("../tests/test_files/water_631g.fchk", inp->ctx_source);
     TEST_ASSERT_EQUAL(STDL_SRC_FCHK, inp->ctx_source_type);
-    TEST_ASSERT_EQUAL_STRING("context_water_631g.h5", inp->ctx_output);
     TEST_ASSERT_EQUAL(STDL_METHOD_MONOPOLE_DIRECT, inp->ctx_method);
     TEST_ASSERT_EQUAL(0, inp->ctx_tda);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 12.f / STDL_CONST_AU_TO_EV, inp->ctx_ethr);
@@ -62,9 +62,9 @@ void test_user_input_context_fill_from_args_ok() {
 
     char* args[] =  {
             "self",
+            "--data_output=test.h5",
             "--ctx_source=../tests/test_files/water_631g.molden",
             "--ctx_source_type=MOLDEN",
-            "--ctx_output=test.h5",
             "--ctx_gammaJ=0.5",
             "--ctx_gammaK=1.0",
             "--ctx_ethr=12eV",
@@ -76,9 +76,9 @@ void test_user_input_context_fill_from_args_ok() {
     ASSERT_STDL_OK(stdl_user_input_handler_fill_from_args(inp, sizeof(args) / sizeof(char *), args));
     ASSERT_STDL_OK(stdl_user_input_handler_check(inp));
 
+    TEST_ASSERT_EQUAL_STRING("test.h5", inp->data_output);
     TEST_ASSERT_EQUAL_STRING("../tests/test_files/water_631g.molden", inp->ctx_source);
     TEST_ASSERT_EQUAL(STDL_SRC_MOLDEN, inp->ctx_source_type);
-    TEST_ASSERT_EQUAL_STRING("test.h5", inp->ctx_output);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 0.5, inp->ctx_gammaJ);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 1.0, inp->ctx_gammaK);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 12.f / STDL_CONST_AU_TO_EV, inp->ctx_ethr);
@@ -167,9 +167,9 @@ void test_user_input_make_context() {
 
     char* args[] =  {
             "self",
+            "--data_output=test.h5",
             "--ctx_source=../tests/test_files/water_631g.molden",
             "--ctx_source_type=MOLDEN",
-            "--ctx_output=test.h5",
             "--ctx_gammaJ=0.5",
             "--ctx_gammaK=1.0",
             "--ctx_ethr=20eV",
@@ -180,7 +180,7 @@ void test_user_input_make_context() {
 
     TEST_ASSERT_EQUAL_STRING("../tests/test_files/water_631g.molden", inp->ctx_source);
     TEST_ASSERT_EQUAL(STDL_SRC_MOLDEN, inp->ctx_source_type);
-    TEST_ASSERT_EQUAL_STRING("test.h5", inp->ctx_output);
+    TEST_ASSERT_EQUAL_STRING("test.h5", inp->data_output);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 0.5, inp->ctx_gammaJ);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 1.0, inp->ctx_gammaK);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 20.f / STDL_CONST_AU_TO_EV, inp->ctx_ethr);
@@ -200,7 +200,7 @@ void test_user_input_make_context() {
     TEST_ASSERT_NULL(ctx->B); // because ctx_tda=0 by default
 
     // just check context
-    hid_t file_id = H5Fopen(inp->ctx_output, H5F_ACC_RDONLY, H5P_DEFAULT);
+    hid_t file_id = H5Fopen(inp->data_output, H5F_ACC_RDONLY, H5P_DEFAULT);
     TEST_ASSERT_NOT_EQUAL(file_id, H5I_INVALID_HID);
     stdl_context* ctx2 = NULL;
     ASSERT_STDL_OK(stdl_context_load_h5(file_id, &ctx2));

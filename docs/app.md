@@ -48,6 +48,15 @@ Valid inputs are, *e.g.*, `"8.5eV"`, `"1200nm"`, `"0.25au"`, `1.25`, etc.
     Title of the calculation, in free format.
     It is there for documentation/archiving purposes, and will never be parsed.
 
+!!! abstract "Output"
+
+    **Type**: `str` (path)
+    **Keyword**: `data_output`
+    **Command line option**: `--data_output`
+    **Default**: `"stdlite_calculation.h5"`
+
+    Path where the data of the calculation will be stored, in [HDF5](https://en.wikipedia.org/wiki/Hierarchical_Data_Format).
+
 ### Context (`[context]`)
 
 These are the keywords related to the creation of the context, *i.e.*, the selection of the CSFs and the creation of the $\mathbf A'$ and $\mathbf B'$ super-matrices. 
@@ -147,15 +156,6 @@ These are the keywords related to the creation of the context, *i.e.*, the selec
 
     Assuming a global hybrid, amount of Hartree-Fock exchange, between 0 and 1.
 
-!!! abstract "Output"
-
-    **Type**: `str` (path)
-    **Keyword**: `output`
-    **Command line option**: `--ctx_output`
-    **Default**: `"context.h5"`
-
-    Path to the place where the context will be saved, after it has been completed.
-
 ### Responses (`[responses]`)
 
 These are the keywords related to the calculation of responses, their residues, and the related properties.
@@ -227,14 +227,14 @@ Other operators will be added in the future.
 
 Log messages are written in `stdout`, while errors are given in `stderr`.
 
-### Context
+### Data
 
-After run, the context is saved in a [HDF5 file](https://en.wikipedia.org/wiki/Hierarchical_Data_Format) (by default, `context.h5`).
+After run, all data are saved in a [HDF5 file](https://en.wikipedia.org/wiki/Hierarchical_Data_Format) (by default, `stdlite_calculation.h5`).
 
-It acts as a checkpoint file for the first part of the program, since you can re-use a context with:
+You can re-use the context (e.g., to compute other responses) with:
 
 ```toml
 [context]
-source = "context.h5"
+source = "stdlite_calculation.h5"
 source_type = "STDL_CTX"
 ```

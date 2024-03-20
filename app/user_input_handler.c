@@ -27,9 +27,9 @@ int stdl_user_input_handler_new(stdl_user_input_handler** inp_ptr) {
     (*inp_ptr)->ctx_source = NULL;
     (*inp_ptr)->ctx_source_type = STDL_SRC_CTX;
 
-    (*inp_ptr)->ctx_output = malloc(128 * sizeof(char ));
-    STDL_ERROR_HANDLE_AND_REPORT((*inp_ptr)->ctx_output == NULL, stdl_user_input_handler_delete(*inp_ptr); return STDL_ERR_MALLOC, "malloc");
-    strcpy((*inp_ptr)->ctx_output, "context.h5\0");
+    (*inp_ptr)->data_output = malloc(128 * sizeof(char ));
+    STDL_ERROR_HANDLE_AND_REPORT((*inp_ptr)->data_output == NULL, stdl_user_input_handler_delete(*inp_ptr); return STDL_ERR_MALLOC, "malloc");
+    strcpy((*inp_ptr)->data_output, "stdlite_calculation.h5\0");
 
     // defaults of stda:
     (*inp_ptr)->ctx_method = STDL_METHOD_MONOPOLE;
@@ -54,7 +54,7 @@ int stdl_user_input_handler_delete(stdl_user_input_handler* inp) {
     if(inp->res_resreqs != NULL)
         stdl_response_request_delete(inp->res_resreqs);
 
-    STDL_FREE_ALL(inp->title, inp->ctx_source, inp->ctx_output, inp);
+    STDL_FREE_ALL(inp->title, inp->ctx_source, inp->data_output, inp);
 
     return STDL_ERR_OK;
 }
@@ -122,6 +122,14 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
         inp->title = title.u.s;
     }
 
+    toml_datum_t ctx_output = toml_string_in(conf, "data_output");
+    if(ctx_output.ok) {
+        STDL_DEBUG("- data output");
+        STDL_FREE_IF_USED(inp->data_output);
+
+        inp->data_output = ctx_output.u.s;
+    }
+
     // context
     toml_table_t* ctx = toml_table_in(conf, "context");
     if(ctx != NULL) {
@@ -150,14 +158,6 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
             }
 
             free(ctx_source_type.u.s);
-        }
-
-        toml_datum_t ctx_output = toml_string_in(ctx, "output");
-        if(ctx_output.ok) {
-            STDL_DEBUG("- output");
-            STDL_FREE_IF_USED(inp->ctx_output);
-
-            inp->ctx_output = ctx_output.u.s;
         }
 
         toml_datum_t ctx_method = toml_string_in(ctx, "method");
@@ -370,7 +370,7 @@ int stdl_user_input_handler_fill_from_args(stdl_user_input_handler* inp, int arg
     char* self = argv[0];
     struct arg_lit* arg_help;
     struct arg_end* arg_end_;
-    struct arg_file* arg_input, *arg_ctx_source, *arg_ctx_output;
+    struct arg_file* arg_input, *arg_ctx_source, *arg_data_output;
     struct arg_dbl* arg_ctx_gammaJ, *arg_ctx_gammaK, *arg_ctx_ax;
     struct arg_str* arg_ctx_source_type, *arg_ctx_ethr, *arg_ctx_e2thr;
     struct arg_int* arg_ctx_tda;
@@ -383,7 +383,7 @@ int stdl_user_input_handler_fill_from_args(stdl_user_input_handler* inp, int arg
             // context
             arg_ctx_source = arg_file0(NULL, "ctx_source", NULL, "source of wavefunction/basis"),
             arg_ctx_source_type = arg_str0(NULL, "ctx_source_type", "{FCHK,MOLDEN,STDL_CTX}", "type of source"),
-            arg_ctx_output = arg_file0(NULL, "ctx_output", NULL, "output of context phase"),
+            arg_data_output = arg_file0(NULL, "data_output", NULL, "checkpoint file"),
             arg_ctx_gammaJ = arg_dbl0(NULL, "ctx_gammaJ", NULL, "gamma_J"),
             arg_ctx_gammaK = arg_dbl0(NULL, "ctx_gammaK", NULL, "gamma_K"),
             arg_ctx_ethr = arg_str0(NULL, "ctx_ethr", "<freq>", "ethr"),
@@ -424,8 +424,15 @@ int stdl_user_input_handler_fill_from_args(stdl_user_input_handler* inp, int arg
         fclose(f);
     }
 
-    // modify context
     size_t sz;
+    if(arg_data_output->count > 0) {
+        sz = strlen(arg_data_output->filename[0]);
+        inp->data_output = realloc(inp->data_output, (sz + 1) * sizeof(char ));
+        STDL_ERROR_HANDLE_AND_REPORT(inp->data_output == NULL, goto _end, "malloc");
+        strcpy(inp->data_output, arg_data_output->filename[0]);
+    }
+
+    // modify context
     double val;
 
     if(arg_ctx_source->count > 0) {
@@ -447,13 +454,6 @@ int stdl_user_input_handler_fill_from_args(stdl_user_input_handler* inp, int arg
         } else {
             STDL_ERROR_HANDLE_AND_REPORT(1, err = STDL_ERR_INPUT; goto _end, "unknown source type `%s`", arg_ctx_source_type->sval[0]);
         }
-    }
-
-    if(arg_ctx_output->count > 0) {
-        sz = strlen(arg_ctx_output->filename[0]);
-        inp->ctx_output = realloc(inp->ctx_output, (sz + 1) * sizeof(char ));
-        STDL_ERROR_HANDLE_AND_REPORT(inp->ctx_output == NULL, goto _end, "malloc");
-        strcpy(inp->ctx_output, arg_ctx_output->filename[0]);
     }
 
     if(arg_ctx_gammaJ->count > 0)
@@ -534,6 +534,8 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
     if(inp->title != NULL)
         stdl_log_msg(0, "title = \"%s\"\n", inp->title);
 
+    stdl_log_msg(0, "data_output = \"%s\"\n", inp->data_output);
+
     stdl_log_msg(0, "[context]\n");
 
     stdl_log_msg(0, "source = \"%s\"\n", inp->ctx_source);
@@ -568,8 +570,6 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
         stdl_log_msg(0, "tda = %s\n", inp->ctx_tda ? "true" : "false");
         stdl_log_msg(0, "gammaJ = %f\ngammaK = %f\nax = %f\n", inp->ctx_gammaJ, inp->ctx_gammaK, inp->ctx_ax);
         stdl_log_msg(0, "ethr = %f # au\ne2thr = %e # au\n", inp->ctx_ethr, inp->ctx_e2thr);
-
-        stdl_log_msg(0, "output = \"%s\"\n", inp->ctx_output);
     } else {
         stdl_log_msg(0, "# A' and B' are obtained from %s\n", inp->ctx_source);
     }
@@ -714,16 +714,17 @@ int stdl_user_input_handler_make_context(stdl_user_input_handler* inp, stdl_cont
             err = stdl_context_select_csfs_monopole_direct(*ctx_ptr, !inp->ctx_tda);
 
         STDL_ERROR_CODE_HANDLE(err, return err);
+
+        // save context
+        if(strcmp(inp->ctx_source, inp->data_output) == 0)
+            STDL_WARN("`context.source` and `context.data_output` are the same, so the content of `%s` will be replaced", inp->data_output);
+
+        hid_t file_id = H5Fcreate(inp->data_output, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+        STDL_ERROR_HANDLE_AND_REPORT(file_id == H5I_INVALID_HID, return STDL_ERR_OPEN, "cannot open %s", inp->data_output)
+
+        err = stdl_context_dump_h5(*ctx_ptr, file_id);
+        H5Fclose(file_id);
     }
-
-    if(strcmp(inp->ctx_source, inp->ctx_output) == 0)
-        STDL_WARN("`context.source` and `contex.output` are the same, so the content of `%s` will be replaced", inp->ctx_output);
-
-    hid_t file_id = H5Fcreate(inp->ctx_output, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-    STDL_ERROR_HANDLE_AND_REPORT(file_id == H5I_INVALID_HID, return STDL_ERR_OPEN, "cannot open %s", inp->ctx_output)
-
-    err = stdl_context_dump_h5(*ctx_ptr, file_id);
-    H5Fclose(file_id);
 
     return err;
 }
@@ -1037,7 +1038,7 @@ int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, std
             // TODO: it should be more general than that!
             stdl_property_transition_dipoles(ctx, rh->nexci, rh->ev_matrices[0] /* <- !!!! */, rh->Xamp, rh->Yamp, tdips);
 
-            stdl_log_msg(0, "      -------- Energy -------- ------ Transition dipole ---------\n");
+            stdl_log_msg(0, "**    -------- Energy -------- ------ Transition dipole ---------\n");
             stdl_log_msg(0, "       (Eh)     (eV)    (nm)      X        Y        Z      fL   \n");
             for (size_t iexci = 0; iexci < rh->nexci; ++iexci) {
                 // print energies

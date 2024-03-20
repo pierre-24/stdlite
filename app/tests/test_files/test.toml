@@ -1,9 +1,9 @@
 title = "test calculation"
+data_output = "water_631g.h5"
 
 [context]
 source = "../tests/test_files/water_631g.fchk"
 source_type = "FCHK"
-output = "context_water_631g.h5"
 method = "monopole"
 ethr = '12eV'
 ax = 1.0
@@ -11,8 +11,6 @@ tda = 0
 e2thr=1e-4
 
 [responses]
-
-# output = "responses.h5"
 
 linear = [
     {opA = 'dipl', opB = 'dipl', wB = 0}, # polarizability
