@@ -833,7 +833,7 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl
     stdl_log_msg(0, "-");
     stdl_log_msg(1, "\n  | build requests ");
 
-    err = stdl_responses_handler_new(res_nops, res_nlrvreq, res_nexci, ctx, rh_ptr);
+    err = stdl_responses_handler_new(res_nops, res_nlrvreq, res_nexci, inp->data_output, ctx, rh_ptr);
     STDL_ERROR_CODE_HANDLE(err, return err);
 
     // copy operators

@@ -36,8 +36,14 @@ struct stdl_lrv_request_ {
     /// Operator
     stdl_operator op;
 
+    /// Dimensionality of `op`
+    size_t dim;
+
     /// pointer to the MO representation of `op`
     double* eta_MO;
+
+    /// `float[]` perturbed gradient
+    float* egrad;
 
     /// Number of energies at which the vectors should be computed
     size_t nw;
@@ -68,12 +74,12 @@ int stdl_lrv_request_new(stdl_operator op, size_t nw, size_t ncsfs, stdl_lrv_req
 /**
  * Actually compute the requested linear response vectors
  *
- * @param req a valid request
+ * @param lrvreq a valid request
  * @param op_MO `double[dim,ctx->nmo,ctx->nmo]` elements of $\braket{p|op|q}$.
  * @return error code
  * @ingroup requests
  */
-int stdl_lrv_request_compute(stdl_lrv_request* req, stdl_context* ctx, double* op_MO);
+int stdl_lrv_request_compute(stdl_lrv_request *lrvreq, stdl_context *ctx);
 
 /**
  * Delete a LRV request.
@@ -123,7 +129,7 @@ typedef struct stdl_response_request_ stdl_response_request;
  * @param resp_order Order of the response, must be > 0.
  * @param res_order Order of the residue, must be `res_order < resp_order`
  * @param ops operators
- * @param w energies at which linear response vectors shoudl be computed
+ * @param w energies at which linear response vectors should be computed
  * @param nroots number of excitations (and, thus, amplitude vectors) that should be computed. Negative number means "all"
  * @param[out] req_ptr the resulting request
  * @return error code
@@ -139,6 +145,16 @@ int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator
  * @ingroup requests
  */
 int stdl_response_request_delete(stdl_response_request* req);
+
+/**
+ * Dump a LRV request.
+ *
+ * @param req a valid request
+ * @param group_id a valid H5 group
+ * @return error code
+ * @ingroup requests
+ */
+int stdl_lrv_request_dump_h5(stdl_lrv_request *req, stdl_context *ctx, hid_t group_id);
 
 
 #endif //STDLITE_RESPONSE_REQUESTS_H

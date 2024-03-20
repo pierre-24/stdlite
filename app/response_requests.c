@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdlite/logging.h>
 #include <stdlite/helpers.h>
+#include <stdlite/response.h>
 #include <string.h>
 
 #include "response_requests.h"
@@ -81,14 +82,14 @@ int stdl_lrv_request_new(stdl_operator op, size_t nw, size_t ncsfs, stdl_lrv_req
     (*req_ptr)->op = op;
     (*req_ptr)->nw = nw;
 
-    size_t dim;
-    int err = stdl_operator_dim(op, &dim);
+    int err = stdl_operator_dim(op, &((*req_ptr)->dim));
     STDL_ERROR_HANDLE(err, stdl_lrv_request_delete(*req_ptr); return err);
 
     (*req_ptr)->w = malloc(nw * sizeof(float ));
-    (*req_ptr)->X = malloc(nw * ncsfs * dim * sizeof(float ));
-    (*req_ptr)->Y = malloc(nw * ncsfs * dim * sizeof(float ));
-    STDL_ERROR_HANDLE_AND_REPORT((*req_ptr)->w == NULL || (*req_ptr)->X == NULL || (*req_ptr)->Y == NULL, stdl_lrv_request_delete(*req_ptr); return STDL_ERR_MALLOC, "malloc");
+    (*req_ptr)->egrad = malloc((*req_ptr)->dim * ncsfs * sizeof(float ));
+    (*req_ptr)->X = malloc(nw * ncsfs * (*req_ptr)->dim * sizeof(float ));
+    (*req_ptr)->Y = malloc(nw * ncsfs * (*req_ptr)->dim * sizeof(float ));
+    STDL_ERROR_HANDLE_AND_REPORT((*req_ptr)->w == NULL || (*req_ptr)->egrad == NULL || (*req_ptr)->X == NULL || (*req_ptr)->Y == NULL, stdl_lrv_request_delete(*req_ptr); return STDL_ERR_MALLOC, "malloc");
 
     return STDL_ERR_OK;
 }
@@ -98,7 +99,71 @@ int stdl_lrv_request_delete(stdl_lrv_request* req) {
 
     STDL_DEBUG("delete lrv_request %p", req);
 
-    STDL_FREE_ALL(req->w, req->X, req->Y, req);
+    STDL_FREE_ALL(req->w, req->egrad, req->X, req->Y, req);
 
+    return STDL_ERR_OK;
+}
+
+int stdl_lrv_request_compute(stdl_lrv_request *lrvreq, stdl_context *ctx) {
+    assert(lrvreq != NULL && ctx != NULL && lrvreq->eta_MO != NULL);
+
+    // get perturbed gradient
+    int err = stdl_response_perturbed_gradient(ctx, lrvreq->dim, lrvreq->eta_MO, lrvreq->egrad);
+    STDL_ERROR_CODE_HANDLE(err, return err);
+
+    // compute response vectors
+    if(ctx->B == NULL)
+        err = stdl_response_TDA_linear(ctx, lrvreq->nw, lrvreq->w, lrvreq->dim, lrvreq->egrad, lrvreq->X, lrvreq->Y);
+    else
+        err = stdl_response_TD_linear(ctx, lrvreq->nw, lrvreq->w, lrvreq->dim, lrvreq->egrad, lrvreq->X, lrvreq->Y);
+
+
+    return err;
+}
+
+int stdl_lrv_request_dump_h5(stdl_lrv_request *req, stdl_context *ctx, hid_t group_id) {
+    assert(req != NULL && group_id != H5I_INVALID_HID);
+
+    stdl_log_msg(1, "+ ");
+
+    herr_t status;
+
+    char* gname;
+    switch (req->op) {
+        case STDL_OP_DIPL:
+            gname = "dipl";
+            break;
+        default:
+            gname = "unk";
+            break;
+    }
+
+    stdl_log_msg(0, "Saving LRV >");
+    stdl_log_msg(1, "\n  | Create group `responses/%s` ", gname);
+
+    hid_t lrv_group_id = H5Gcreate(group_id, gname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    STDL_ERROR_HANDLE_AND_REPORT(lrv_group_id == H5I_INVALID_HID, return STDL_ERR_WRITE, "cannot create group");
+
+    stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Store egrad and LRV ");
+
+    status = H5LTmake_dataset(lrv_group_id, "info", 1, (hsize_t[]) {3}, H5T_NATIVE_ULONG, (size_t[]) {req->op, req->dim, req->nw});
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", lrv_group_id);
+
+    status = H5LTmake_dataset(lrv_group_id, "w", 1, (hsize_t[]) {req->nw}, H5T_NATIVE_FLOAT, req->w);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", lrv_group_id);
+
+    status = H5LTmake_dataset(lrv_group_id, "egrad", 2, (hsize_t[]) {ctx->ncsfs, req->dim}, H5T_NATIVE_FLOAT, req->egrad);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", lrv_group_id);
+
+    status = H5LTmake_dataset(lrv_group_id, "X", 3, (hsize_t[]) {req->nw, ctx->ncsfs, req->dim}, H5T_NATIVE_FLOAT, req->X);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", lrv_group_id);
+
+    status = H5LTmake_dataset(lrv_group_id, "Y", 3, (hsize_t[]) {req->nw, ctx->ncsfs, req->dim}, H5T_NATIVE_FLOAT, req->Y);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", lrv_group_id);
+
+    stdl_log_msg(0, "< done\n");
+
+    H5Gclose(lrv_group_id);
     return STDL_ERR_OK;
 }

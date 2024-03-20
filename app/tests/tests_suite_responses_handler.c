@@ -1,4 +1,5 @@
 #include <stdlite/helpers.h>
+#include <unistd.h>
 
 #include "user_input_handler.h"
 #include "responses_handler.h"
@@ -114,6 +115,7 @@ void test_user_input_compute_responses() {
     TEST_ASSERT_NOT_NULL(inp);
 
     fputs("title = \"test calculation\"\n"
+          "data_output=\"test.h5\"\n"
           "[context]\n"
           "source = \"../tests/test_files/water_631g.fchk\"\n"
           "source_type = \"FCHK\"\n"
@@ -146,4 +148,6 @@ void test_user_input_compute_responses() {
     ASSERT_STDL_OK(stdl_responses_handler_delete(rh));
     ASSERT_STDL_OK(stdl_context_delete(ctx));
     ASSERT_STDL_OK(stdl_user_input_handler_delete(inp));
+
+    unlink("test.h5");
 }

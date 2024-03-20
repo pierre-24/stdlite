@@ -34,6 +34,9 @@ struct stdl_responses_handler_ {
 
     /// `float[nexci,ncsfs]` amplitude vector $\mathbf y^m$ for each excitation $\ket{m}$, might be `NULL` if TDA
     float* Yamp;
+
+    /// place to save responses
+    char* data_output;
 };
 
 typedef struct stdl_responses_handler_ stdl_responses_handler;
@@ -48,7 +51,7 @@ typedef struct stdl_responses_handler_ stdl_responses_handler;
  * @return error code
  * @ingroup responses_handler
  */
-int stdl_responses_handler_new(size_t nops, size_t nlrvreqs, size_t nexci, stdl_context *ctx,  stdl_responses_handler **rh_ptr);
+int stdl_responses_handler_new(size_t nops, size_t nlrvreqs, size_t nexci, char *data_output, stdl_context *ctx, stdl_responses_handler **rh_ptr);
 
 
 /**

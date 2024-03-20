@@ -8,17 +8,18 @@
 #include "responses_handler.h"
 
 
-int stdl_responses_handler_new(size_t nops, size_t nlrvreqs, size_t nexci, stdl_context *ctx, stdl_responses_handler **rh_ptr) {
-    assert(nops > 0 && ctx != NULL && rh_ptr != NULL);
+int stdl_responses_handler_new(size_t nops, size_t nlrvreqs, size_t nexci, char *data_output, stdl_context *ctx, stdl_responses_handler **rh_ptr) {
+    assert(nops > 0 && ctx != NULL && rh_ptr != NULL && data_output != NULL);
 
     *rh_ptr = malloc(sizeof(stdl_responses_handler));
     STDL_ERROR_HANDLE_AND_REPORT(*rh_ptr == NULL, return STDL_ERR_MALLOC, "malloc");
 
-    STDL_DEBUG("create responses_hanlder %p", *rh_ptr);
+    STDL_DEBUG("create responses_handler %p", *rh_ptr);
 
     (*rh_ptr)->nops = nops;
     (*rh_ptr)->nlrvreqs = nlrvreqs;
     (*rh_ptr)->nexci = nexci;
+    (*rh_ptr)->data_output = data_output;
 
     (*rh_ptr)->eexci = NULL;
     (*rh_ptr)->Xamp = NULL;
@@ -65,10 +66,48 @@ int stdl_responses_handler_delete(stdl_responses_handler* rh) {
     return STDL_ERR_OK;
 }
 
+int _dump_amplitudes_h5(hid_t group_id, stdl_context* ctx, stdl_responses_handler* rh) {
+
+    stdl_log_msg(1, "+ ");
+    stdl_log_msg(0, "Saving amplitudes >");
+    stdl_log_msg(1, "\n  | Create group `responses/amplitudes` ");
+
+    hid_t amp_group_id = H5Gcreate(group_id, "amplitudes", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    STDL_ERROR_HANDLE_AND_REPORT(amp_group_id == H5I_INVALID_HID, return STDL_ERR_WRITE, "cannot create group");
+
+    stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Store amplitudes ");
+
+    herr_t status = H5LTmake_dataset(amp_group_id, "info", 1, (hsize_t[]) {1}, H5T_NATIVE_ULONG, (size_t[]) {rh->nexci});
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", amp_group_id);
+
+    status = H5LTmake_dataset(amp_group_id, "X", 2, (hsize_t[]) {rh->nexci, ctx->ncsfs}, H5T_NATIVE_FLOAT, rh->Xamp);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", amp_group_id);
+
+    if(rh->Yamp != NULL) {
+        status = H5LTmake_dataset(amp_group_id, "Y", 2, (hsize_t[]) {rh->nexci, ctx->ncsfs}, H5T_NATIVE_FLOAT, rh->Yamp);
+        STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", amp_group_id);
+    }
+
+    H5Gclose(amp_group_id);
+
+    stdl_log_msg(0, "< done\n");
+
+    return STDL_ERR_OK;
+}
+
 int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx) {
     assert(rh != NULL && rh->nops > 0 && ctx != NULL);
 
     int err;
+
+    // open H5 file
+    hid_t file_id = H5Fopen(rh->data_output, H5F_ACC_RDWR, H5P_DEFAULT);
+    STDL_ERROR_HANDLE_AND_REPORT(file_id == H5I_INVALID_HID, return STDL_ERR_OPEN, "cannot open %s", rh->data_output);
+
+    // create group
+    hid_t res_group_id = H5Gcreate(file_id, "responses", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    STDL_ERROR_HANDLE_AND_REPORT(res_group_id == H5I_INVALID_HID, return STDL_ERR_WRITE, "cannot create group");
 
     stdl_log_msg(0, "~~ Compute EV matrices in MO basis\n");
 
@@ -110,30 +149,21 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
         for (size_t ilrv = 0; ilrv < rh->nlrvreqs; ++ilrv) {
 
             stdl_lrv_request* lrvreq = rh->lrvreqs[ilrv];
-            float* egrad = NULL;
-            size_t dim = 0;
-            err = stdl_operator_dim(lrvreq->op, &dim);
-            STDL_ERROR_CODE_HANDLE(err, goto _end);
 
-            // compute perturbed gradient
-            egrad = malloc(dim * ctx->ncsfs * sizeof(float ));
-            STDL_ERROR_HANDLE_AND_REPORT(egrad == NULL,  err = STDL_ERR_MALLOC; goto _end, "malloc");
-
-            for (size_t iop = 0; iop < rh->nops; ++iop) { // find the correct operator
+            // find the correct operator
+            for (size_t iop = 0; iop < rh->nops; ++iop) {
                 if (rh->ops[iop] == lrvreq->op) {
                     lrvreq->eta_MO = rh->ev_matrices[iop];
-                    stdl_response_perturbed_gradient(ctx, dim, lrvreq->eta_MO, egrad);
                     break;
                 }
             }
 
-            // compute
-            if(ctx->B == NULL)
-                err = stdl_response_TDA_linear(ctx, lrvreq->nw, lrvreq->w, dim, egrad, lrvreq->X, lrvreq->Y);
-            else
-                err = stdl_response_TD_linear(ctx, lrvreq->nw, lrvreq->w, dim, egrad, lrvreq->X, lrvreq->Y);
+            // compute perturbed gradient
+            err = stdl_lrv_request_compute(lrvreq, ctx);
+            STDL_ERROR_CODE_HANDLE(err, goto _end);
 
-            STDL_FREE_IF_USED(egrad);
+            // dump
+            err = stdl_lrv_request_dump_h5(lrvreq, ctx, res_group_id);
             STDL_ERROR_CODE_HANDLE(err, goto _end);
         }
     }
@@ -145,8 +175,13 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
             stdl_response_TDA_casida(ctx, rh->nexci, rh->eexci, rh->Xamp);
         else
             stdl_response_TD_casida(ctx, rh->nexci, rh->eexci, rh->Xamp, rh->Yamp);
+
+        _dump_amplitudes_h5(res_group_id, ctx, rh);
     }
 
     _end:
+    H5Gclose(res_group_id);
+    H5Fclose(file_id);
+
     return err;
 }
