@@ -265,6 +265,7 @@ int stdl_matrix_ssp_sqrt_sy(size_t n, float *mat, float * matsy) {
     STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "ssyev() returned %d", info);
 
     // compute the square root of eigenvalues
+    #pragma omp parallel for
     for(size_t i = 0; i < n; i++) {
         if(e[i] < .0) {
             STDL_WARN("eigenvalue of S #%d is < .0, will be set to 0", i);
@@ -274,7 +275,7 @@ int stdl_matrix_ssp_sqrt_sy(size_t n, float *mat, float * matsy) {
     }
 
     // wcc = w * e * w^T
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(guided)
     for(size_t i = 0; i < n; i++) {
         for(size_t j=0; j <= i; j++) {
             float s = 0;
@@ -304,6 +305,7 @@ int stdl_matrix_ssp_sqrt(size_t n, float *mat) {
     STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "ssyev() returned %d", info);
 
     // compute the square root of eigenvalues
+    #pragma omp parallel for
     for(size_t i = 0; i < n; i++) {
         if(e[i] < .0) {
             STDL_WARN("eigenvalue of S #%d is < .0, will be set to 0", i);
@@ -313,6 +315,7 @@ int stdl_matrix_ssp_sqrt(size_t n, float *mat) {
     }
 
     // wcc = w * e * w^T
+    #pragma omp parallel for schedule(guided)
     for(size_t i = 0; i < n; i++) {
         for(size_t j=0; j <= i; j++) {
             float s = 0;
@@ -389,6 +392,7 @@ int stdl_matrix_ssp_blowge(int issym, size_t n, float *in, float *out) {
 
     LAPACKE_stpttr(LAPACK_ROW_MAJOR, 'L', (int) n, in, out, (int) n);
 
+    #pragma omp parallel for
     for (size_t i = 0; i < n; ++i) {
         for(size_t j = i + 1; j < n; ++j) {
             out[i * n + j] = (issym ? 1.f : -1.f) * out[j * n + i];

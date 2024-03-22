@@ -59,24 +59,12 @@ int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
     return STDL_ERR_OK;
 }
 
-
-// turn ctx->A and ctx-B to A+B and A-B, respectively
-void _make_apb_amb(stdl_context* ctx) {
-    for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
-        for (size_t kjb = 0; kjb <= kia; ++kjb) {
-            float a = ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)], b = ctx->B[STDL_MATRIX_SP_IDX(kia, kjb)];
-            ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)] = a + b;
-            ctx->B[STDL_MATRIX_SP_IDX(kia, kjb)] = a - b;
-        }
-    }
-}
-
 int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X, float* Y) {
     assert(ctx != NULL && ctx->ncsfs > 0 && nexci <= ctx->ncsfs && ctx->B != NULL && e != NULL && X != NULL && Y != NULL);
 
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute %ld excitation amplitude vectors (TD-DFT) >", nexci);
-    stdl_log_msg(1, "\n  | Make A+B and (A-B)^½ ");
+    stdl_log_msg(1, "\n  | Make A+B and A-B ");
 
     size_t sz = ctx->ncsfs * ctx->ncsfs;
     float * wrk = malloc((3 * sz + 2 * STDL_MATRIX_SP_SIZE(ctx->ncsfs)) * sizeof(float));
@@ -85,6 +73,7 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
     float *U = wrk, *V = wrk + sz, *W = wrk + 2 * sz, *ApB = wrk + 3 * sz, *AmB = wrk + 3 * sz + STDL_MATRIX_SP_SIZE(ctx->ncsfs);
 
     // compute A+B and A-B
+    #pragma omp parallel for schedule(guided)
     for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
         for (size_t kjb = 0; kjb <= kia; ++kjb) {
             float a = ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)], b = ctx->B[STDL_MATRIX_SP_IDX(kia, kjb)];
@@ -96,8 +85,14 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
     // U=A+B
     stdl_matrix_ssp_blowsy(ctx->ncsfs, 'L', ApB, U);
 
+    stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Make (A-B)^½ ");
+
     // get V=(A-B)^1/2
     stdl_matrix_ssp_sqrt_sy(ctx->ncsfs, AmB, V);
+
+    stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Make (A-B)^½*(A+B)*(A-B)^½ ");
 
     // W = (A+B)*(A-B)^1/2 = U*V
     cblas_ssymm(CblasRowMajor, CblasRight, CblasLower,
@@ -149,6 +144,9 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
 
     STDL_ERROR_HANDLE_AND_REPORT(err != 0, free(wrk); return STDL_ERR_RESPONSE, "error while ssyevx(): %d", err);
 
+    stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Transpose ");
+
     err = stdl_matrix_sge_transpose(ctx->ncsfs, nexci, X); // Now, X' = (A-B)^(-1/2)*(X+Y).
 
     STDL_ERROR_CODE_HANDLE(err, free(wrk); return err);
@@ -159,6 +157,7 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
     stdl_log_msg(1, "\n  | Compute X and Y ");
 
     // Get energies and compute X and Y
+    #pragma omp parallel for
     for (size_t iexci = 0; iexci < nexci; ++iexci) {
         e[iexci]  = sqrtf(e[iexci]);
 
@@ -205,6 +204,8 @@ int stdl_response_perturbed_gradient(stdl_context* ctx, size_t dim, double* eta_
     stdl_log_msg(1, "\n  | Looping through CSFs ");
 
     size_t nvirt = ctx->nmo - ctx->nocc;
+
+    #pragma omp parallel for
     for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
         size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
         for (size_t cpt = 0; cpt < dim; ++cpt) {
@@ -233,6 +234,7 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
     float *ApB = wrk, *AmB = wrk + STDL_MATRIX_SP_SIZE(ctx->ncsfs), *L = wrk + 2 *STDL_MATRIX_SP_SIZE(ctx->ncsfs);
 
     // compute A+B and A-B
+    #pragma omp parallel for schedule(guided)
     for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
         for (size_t kjb = 0; kjb <= kia; ++kjb) {
             float a = ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)], b = ctx->B[STDL_MATRIX_SP_IDX(kia, kjb)];
@@ -257,6 +259,7 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
         stdl_log_msg(1, "\n  | Compute linear response vector for w=%f ", w[iw]);
 
         // make left side: L = (A+B)-w^2*(A-B)^(-1)
+        #pragma omp parallel for schedule(guided)
         for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
             for(size_t kjb = 0; kjb <= kia; ++kjb)
                 L[STDL_MATRIX_SP_IDX(kia, kjb)] = ApB[STDL_MATRIX_SP_IDX(kia, kjb)] - powf(w[iw], 2) * AmB[STDL_MATRIX_SP_IDX(kia, kjb)];
@@ -278,6 +281,7 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
 
         // separate X and Y
         // Yi' = w*(A-B)^(-1)*Xi'
+        #pragma omp parallel for
         for(size_t kia = 0; kia < ctx->ncsfs; kia++) {
             for(size_t cpt = 0; cpt < ndim; cpt++) {
                 float sum = .0f;
@@ -289,6 +293,7 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
         }
 
         // Xi = 1/2*(Xi' + Yi') && Yi = 1/2*(Xi' - Yi')
+        #pragma omp parallel for
         for(size_t kia = 0; kia < ctx->ncsfs; kia++) {
             for(size_t cpt = 0; cpt < ndim; cpt++) {
                 float u = Xi[kia * ndim + cpt], v = Yi[kia * ndim + cpt];
@@ -342,6 +347,7 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
         stdl_log_msg(1, "\n  | Compute linear response vector for w=%f ", w[iw]);
 
         // make left side: L = A-w^2*A^(-1)
+        #pragma omp parallel for schedule(guided)
         for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
             for(size_t kjb = 0; kjb <= kia; ++kjb)
                 L[STDL_MATRIX_SP_IDX(kia, kjb)] = ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)] - powf(w[iw], 2) * Ai[STDL_MATRIX_SP_IDX(kia, kjb)];
@@ -361,6 +367,7 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
 
         // separate X and Y
         // Yi' = w*A^(-1)*Xi'
+        #pragma omp parallel for
         for(size_t kia = 0; kia < ctx->ncsfs; kia++) {
             for(size_t cpt = 0; cpt < ndim; cpt++) {
                 float sum = .0f;
@@ -372,6 +379,7 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
         }
 
         // Xi = 1/2*(Xi' + Yi') && Yi = 1/2*(Xi' - Yi')
+        #pragma omp parallel for
         for(size_t kia = 0; kia < ctx->ncsfs; kia++) {
             for(size_t cpt = 0; cpt < ndim; cpt++) {
                 float u = Xi[kia * ndim + cpt], v = Yi[kia * ndim + cpt];
