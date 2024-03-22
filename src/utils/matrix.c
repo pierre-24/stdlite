@@ -232,7 +232,7 @@ int stdl_matrix_dsp_sqrt(size_t n, double *mat) {
     }
 
     // wcc = w * e * w^T
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(guided)
     for(size_t i = 0; i < n; i++) {
         for(size_t j=0; j <= i; j++) {
             double s = 0;
@@ -274,6 +274,7 @@ int stdl_matrix_ssp_sqrt_sy(size_t n, float *mat, float * matsy) {
     }
 
     // wcc = w * e * w^T
+    #pragma omp parallel for
     for(size_t i = 0; i < n; i++) {
         for(size_t j=0; j <= i; j++) {
             float s = 0;

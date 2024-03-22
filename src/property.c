@@ -25,15 +25,19 @@ int stdl_property_polarizability(stdl_context* ctx, double* dips_MO, float* X, f
 
             stdl_log_msg(0, "-");
             stdl_log_msg(1, "\n  | Computing (%d,%d) ", zeta, sigma);
+            float value = .0f;
 
+            #pragma omp parallel for reduction(+:value) private(s, d)
             for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
                 size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
 
                 d = (float) dips_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)];
                 s = X[lia * 3 + sigma]+ Y[lia * 3 + sigma];
 
-                alpha[STDL_MATRIX_SP_IDX(zeta, sigma)] += -2.f * d * s;
+                value += -2.f * d * s;
             }
+
+            alpha[STDL_MATRIX_SP_IDX(zeta, sigma)] = value;
         }
     }
 
@@ -52,6 +56,7 @@ int stdl_property_transition_dipoles(stdl_context *ctx, size_t nexci, double* di
     size_t nvirt = ctx->nmo - ctx->nocc;
     float s2 = sqrtf(2);
 
+    #pragma omp parallel for
     for (size_t iexci = 0; iexci < nexci; ++iexci) {
         tdips[0 * nexci + iexci] =  tdips[1 * nexci + iexci] =  tdips[2 * nexci + iexci] = .0f;
 
@@ -111,6 +116,9 @@ int _first_hyperpolarizability_component(stdl_context* ctx, int component[3], do
         float* cX = e0->X, *cY = e2->Y;
         size_t zeta = e0->cpt, sigma = e1->cpt, tau = e2->cpt;
 
+        float Ap = .0f, Bp = .0f;
+
+        #pragma omp parallel for reduction(+:Ap) reduction(+:Bp)
         for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
             size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt;
             float x = cX[lia * 3 + zeta];
@@ -121,15 +129,18 @@ int _first_hyperpolarizability_component(stdl_context* ctx, int component[3], do
 
                 if(b == a) { // jb == ja, so A'
                     float d = (float) -dips_MO[sigma * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)];
-                    A += x * d * y;
+                    Ap += x * d * y;
                 }
 
                 if(j == i) {// jb == ib so B'
                     float d = (float) -dips_MO[sigma * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)];
-                    B += x * d * y;
+                    Bp += x * d * y;
                 }
             }
         }
+
+        A += Ap;
+        B += Bp;
 
         current = current->next;
         nperm++;
@@ -215,6 +226,7 @@ int stdl_property_e2e_transition_dipoles(stdl_context* ctx, size_t nexci, double
     stdl_log_msg(0, "Compute excited to excited transition dipole moments >");
     stdl_log_msg(1, "\n  | Looping through CSFs ");
 
+    # pragma omp parallel for schedule(guided)
     for (size_t m = 0; m < nexci; ++m) {
         for (size_t n = 0; n <= m; ++n) {
             float a_[3] = {0}, b_[3] = {0};

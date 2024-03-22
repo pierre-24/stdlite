@@ -33,7 +33,7 @@ jobs:
           -C ${{ env.BUILD_DIR }}
       - name: Run unit tests (with Meson)
         run: >-
-          OMP_NUM_THREADS=1 meson test
+          meson test
           --print-errorlogs
           -C ${{ env.BUILD_DIR }}
       - name: Memcheck (with Meson & Valgdrind)
