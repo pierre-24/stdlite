@@ -260,6 +260,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     float * AABB_J = env;
     float * AABB_K = env + natm * natm;
 
+    #pragma omp parallel for
     for(size_t A_=0; A_ < natm; A_++) {
         for(size_t B_=0; B_ <= A_; B_++) {
             float r_AB = 0;
@@ -288,6 +289,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     float* qAab = env + (2 * natm + nexci_ij) * natm;
     float* qAia = env + (2 * natm + nexci_ij + nexci_ab) * natm;
 
+    #pragma omp parallel for
     for(size_t i=0; i < ctx->nocc; i++) {
         for(size_t j=0; j <= i; j++) {
             size_t k = STDL_MATRIX_SP_IDX(i, j);
@@ -302,7 +304,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     }
 
     // stdl_matrix_sge_print(nexci_ij, natm, qAij, "q_A^ij");
-
+    #pragma omp parallel for
     for(size_t a=0; a < nvirt; a++) {
         for(size_t b=0; b <= a; b++) {
             size_t k = STDL_MATRIX_SP_IDX(a, b);
@@ -317,7 +319,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     }
 
     // stdl_matrix_sge_print(nexci_ab, natm, qAab, "q^A_ab");
-
+    #pragma omp parallel for
     for(size_t i=0; i < ctx->nocc; i++) {
         for (size_t a = 0; a < nvirt; ++a) {
             size_t k = i * nvirt + a;
@@ -378,6 +380,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
 
     ctx->ncsfs = 0;
 
+    #pragma omp parallel for
     for(size_t i=0; i < ctx->nocc; i++) {
         size_t kii = STDL_MATRIX_SP_IDX(i, i);
 
@@ -405,6 +408,9 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     }
 
     // while we're at it, sort the CSFs
+    stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Sorting CSFs ");
+
     size_t* csfs_sorted_indices = malloc(nexci_ia * sizeof(size_t));
     STDL_ERROR_HANDLE_AND_REPORT(csfs_sorted_indices == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag); return STDL_ERR_MALLOC, "malloc");
 
@@ -449,6 +455,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
      * 3) Now, select S-CSFs j→b so that E^(2)_jb > E^(2)_thr.
      */
 
+    #pragma omp parallel for
     for(size_t kjb=0; kjb < nexci_ia; kjb++) { // loop over possible S-CSFs
         if(csfs_ensemble[kjb] == 2) {
             size_t b = kjb % nvirt, j = kjb / nvirt;
@@ -511,6 +518,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     }
 
     // build A' and B' (if requested)
+    #pragma omp parallel for
     for(lia=0; lia < ctx->ncsfs; lia++) {
         size_t kia = ctx->csfs[lia];
         size_t a = kia % nvirt, i = kia / nvirt;
@@ -601,6 +609,7 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
     float * AABB_K = env + STDL_MATRIX_SP_SIZE(natm);
     float* wrk = env + 2 * STDL_MATRIX_SP_SIZE(natm);
 
+    #pragma omp parallel for
     for(size_t A_=0; A_ < natm; A_++) {
         for(size_t B_=0; B_ <= A_; B_++) {
             float r_AB = 0;
@@ -616,7 +625,7 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
     }
 
     stdl_log_msg(0, "-");
-    stdl_log_msg(1, "\n  | Select primary CSFs below %f Eh ", ctx->ethr);
+    stdl_log_msg(1, "\n  | Select primary CSFs below %f Eh, looping through %d CSFS ", ctx->ethr, nexci_ia);
 
     /*
      *  2) To select primary CSFs i→a, one needs to evaluate A'_ia,ia = (e_a - e_i) + 2*(ia|ia)' - (ii|aa)'.
@@ -633,6 +642,7 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
 
     ctx->ncsfs = 0;
 
+    #pragma omp parallel for
     for(size_t i=0; i < ctx->nocc; i++) {
         for (size_t a = 0; a < nvirt; ++a) {
             size_t kia = i * nvirt + a;
@@ -653,6 +663,9 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
     }
 
     // while we're at it, sort the CSFs
+    stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Sorting CSFs ");
+
     size_t* csfs_sorted_indices = malloc(nexci_ia * sizeof(size_t));
     STDL_ERROR_HANDLE_AND_REPORT(csfs_sorted_indices == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag); return STDL_ERR_MALLOC, "malloc");
 
@@ -702,6 +715,7 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
             size_t b = kjb % nvirt, j = kjb / nvirt;
             float e2 = .0f; // perturbation energy
 
+            #pragma omp parallel for
             for(size_t kia=0; kia < nexci_ia; kia++) { // loop over P-CSFs
                 if(csfs_ensemble[kia] == 1) {
 
@@ -752,6 +766,7 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
     }
 
     // build A' and B' (if requested)
+    #pragma omp parallel for
     for(lia=0; lia < ctx->ncsfs; lia++) {
         size_t kia = ctx->csfs[lia];
         size_t a = kia % nvirt, i = kia / nvirt;

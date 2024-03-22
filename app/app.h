@@ -17,4 +17,11 @@
  */
 int stdl_app_set_debug_log_level();
 
+/**
+ * Log the environment variables
+ * @return error code
+ * @ingroup app
+ */
+int stdl_app_log_env();
+
 #endif //STDLITE_APP_H

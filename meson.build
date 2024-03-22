@@ -13,6 +13,10 @@ build_args = [
   '-DPROJECT_VERSION="' + meson.project_version() + '"',
 ]
 
+if get_option('openmp')
+  project_dep += dependency('openmp')
+endif
+
 libcint_dep = cc.find_library('libcint', required: false)
 if not libcint_dep.found()
   libcint_proj = subproject('libcint', default_options: [])

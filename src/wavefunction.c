@@ -103,6 +103,7 @@ int stdl_wavefunction_compute_density_dsp(size_t nocc, size_t nmo, size_t nao, d
 int stdl_wavefunction_dsp_ao_to_dsp_mo(size_t nao, size_t nmo, double* C, double* X_AO, double* X_MO) {
     assert(C != NULL && X_AO != NULL && nmo > 0 && nao > 0 && X_MO != NULL);
 
+    #pragma omp parallel for
     for (size_t p = 0; p < nmo; ++p) {
         for (size_t q = 0; q <= p; ++q) {
             double sum = 0;
@@ -122,6 +123,7 @@ int stdl_wavefunction_dsp_ao_to_dsp_mo(size_t nao, size_t nmo, double* C, double
 int stdl_wavefunction_dge_ao_to_dge_mo(size_t nao, size_t nmo, double *C, double *X_AO, double *X_MO) {
     assert(C != NULL && X_AO != NULL && nmo > 0 && nao > 0 && X_MO != NULL);
 
+    #pragma omp parallel for
     for (size_t p = 0; p < nmo; ++p) {
         for (size_t q = 0; q < nmo; ++q) {
             double sum = 0;

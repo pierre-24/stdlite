@@ -50,6 +50,10 @@ int main(int argc, char* argv[]) {
     err = stdl_user_input_handler_log(input);
     STDL_ERROR_CODE_HANDLE(err, goto _end);
 
+    title("Environment");
+    err = stdl_app_log_env();
+    STDL_ERROR_CODE_HANDLE(err, goto _end);
+
     // create context
     struct timespec elapsed_time_ctx;
     stdl_timer_start(&elapsed_time_ctx);

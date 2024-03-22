@@ -6,3 +6,10 @@ option(
     choices: ['default', 'openblas'],
     description : 'linear algebra backend'
 )
+
+option(
+    'openmp',
+    type: 'boolean',
+    value: true,
+    description: 'Use OpenMP',
+)
