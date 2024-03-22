@@ -130,7 +130,11 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
         // AO to MO
         rh->ev_matrices[iop] = malloc(dim * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
 
+        stdl_log_msg(1, "+ ");
+        stdl_log_msg(0, "Converting from AO basis to MO basis (dim=%ld) >", dim);
+
         for (size_t cpt = 0; cpt < dim; ++cpt) {
+            stdl_log_msg(1, "\n  | component %ld ", cpt);
             err = stdl_wavefunction_dsp_ao_to_dsp_mo(
                     ctx->original_wf->nao,
                     ctx->nmo,
@@ -139,7 +143,11 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
                     rh->ev_matrices[iop] + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo)
             );
             STDL_ERROR_CODE_HANDLE(err, free(op_AO); goto _end);
+            stdl_log_msg(0, "-");
         }
+
+
+        stdl_log_msg(0, "< done\n");
 
         STDL_FREE_IF_USED(op_AO);
     }

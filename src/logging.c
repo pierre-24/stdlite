@@ -43,6 +43,8 @@ void stdl_log_msg(int loglevel, char *format, ...) {
     va_start(arglist, format);
     vfprintf(stdout, format, arglist);
     va_end(arglist);
+
+    fflush(stdout);
 }
 
 void stdl_debug_msg(char *file, int line, char *format, ...) {
