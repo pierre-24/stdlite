@@ -12,6 +12,7 @@
 #include <stdlite/utils/experimental_quantity.h>
 
 #include "user_input_handler.h"
+#include "log_property.h"
 
 int stdl_user_input_handler_new(stdl_user_input_handler** inp_ptr) {
     assert(inp_ptr != NULL);
@@ -927,7 +928,6 @@ int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, std
             stdl_operator_dim(req->lrvreqs[0]->op, &dim0);
             stdl_operator_dim(req->lrvreqs[1]->op, &dim1);
 
-
             // TODO: it should be more general than that!
             float alpha[6];
             stdl_property_polarizability(
@@ -938,32 +938,8 @@ int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, std
                     alpha
                     );
 
-            if(req->ops[0] == STDL_OP_DIPL && req->ops[1] == STDL_OP_DIPL) {
-                stdl_log_msg(0, "** alpha(-w;w), w=%f (%.2f nm)\n", req->lrvreqs[1]->w[req->wpos[1]], STDL_CONST_HC / req->lrvreqs[1]->w[req->wpos[1]]);
-                stdl_log_msg(0, "         x            y            z\n");
-
-                for (size_t zeta = 0; zeta < dim0; ++zeta) {
-                    switch (zeta) {
-                        case 0:
-                            stdl_log_msg(0, "x");
-                            break;
-                        case 1:
-                            stdl_log_msg(0, "y");
-                            break;
-                        case 2:
-                            stdl_log_msg(0, "z");
-                            break;
-                    }
-                    for (size_t sigma = 0; sigma < dim1; ++sigma) {
-                        stdl_log_msg(0, " % 12.5f", alpha[STDL_MATRIX_SP_IDX(zeta, sigma)]);
-                    }
-                    stdl_log_msg(0, "\n");
-                }
-
-                float iso, aniso;
-                stdl_qexp_polarizability(alpha, &iso, &aniso);
-                stdl_log_msg(0, "iso =   % 12.5f\naniso = % 12.5f\n", iso, aniso);
-            }
+            if(req->ops[0] == STDL_OP_DIPL && req->ops[1] == STDL_OP_DIPL)
+                stdl_log_property_polarizability(req, alpha);
 
         } else if(req->resp_order == 2 && req->res_order == 0) { // quadratic
             size_t dim0 = 3, dim1 = 3, dim2 = 3;
@@ -981,55 +957,9 @@ int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, std
                     beta
                     );
 
+            if(req->ops[0] == STDL_OP_DIPL && req->ops[1] == STDL_OP_DIPL && req->ops[2] == STDL_OP_DIPL)
+                stdl_log_property_first_hyperpolarizability(req, beta);
 
-            if(req->ops[0] == STDL_OP_DIPL && req->ops[1] == STDL_OP_DIPL && req->ops[2] == STDL_OP_DIPL) {
-                stdl_log_msg(0,
-                             "** beta(-w1-w2;w1,w2), w1=%f (%.2f nm), w2=%f (%.2f nm)\n",
-                             req->lrvreqs[1]->w[req->wpos[1]], STDL_CONST_HC / req->lrvreqs[1]->w[req->wpos[1]],
-                             req->lrvreqs[2]->w[req->wpos[2]], STDL_CONST_HC / req->lrvreqs[2]->w[req->wpos[2]]
-                             );
-
-                stdl_log_msg(0, "          x            y            z\n");
-                for (size_t zeta = 0; zeta < dim0; ++zeta) {
-                    for (size_t sigma = 0; sigma < dim1; ++sigma) {
-                        switch (zeta) {
-                            case 0:
-                                stdl_log_msg(0, "x");
-                                break;
-                            case 1:
-                                stdl_log_msg(0, "y");
-                                break;
-                            case 2:
-                                stdl_log_msg(0, "z");
-                                break;
-                        }
-                        switch (sigma) {
-                            case 0:
-                                stdl_log_msg(0, "x");
-                                break;
-                            case 1:
-                                stdl_log_msg(0, "y");
-                                break;
-                            case 2:
-                                stdl_log_msg(0, "z");
-                                break;
-                        }
-
-                        for (size_t tau = 0; tau < dim2; ++tau) {
-                            stdl_log_msg(0, " % 12.5f", beta[zeta][sigma][tau]);
-                        }
-
-                        stdl_log_msg(0, "\n");
-                    }
-                }
-            }
-
-            if(stdl_float_equals(req->lrvreqs[1]->w[req->wpos[1]], req->lrvreqs[2]->w[req->wpos[2]], 1e-6)) {
-                float b2ZZZ, b2ZXX;
-                stdl_qexp_first_hyperpolarizability_hrs(beta, &b2ZZZ, &b2ZXX);
-                stdl_log_msg(0, "<B2ZZZ> = % 12.5f\n<B2ZXX> = % 12.5f\nBHRS    = % 12.5f\nDR      = % 12.5f\n", b2ZZZ, b2ZXX, sqrtf(b2ZZZ +  b2ZXX), b2ZZZ / b2ZXX);
-
-            }
         } else if(req->resp_order == 1 && req->res_order == 1) { // linear SR
 
             float* tdips = malloc(rh->nexci * 3 * sizeof(float ));
@@ -1038,22 +968,7 @@ int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, std
             // TODO: it should be more general than that!
             stdl_property_transition_dipoles(ctx, rh->nexci, rh->ev_matrices[0] /* <- !!!! */, rh->Xamp, rh->Yamp, tdips);
 
-            stdl_log_msg(0, "**    -------- Energy -------- ------ Transition dipole ---------\n");
-            stdl_log_msg(0, "       (Eh)     (eV)    (nm)      X        Y        Z      fL   \n");
-            for (size_t iexci = 0; iexci < rh->nexci; ++iexci) {
-                // print energies
-                stdl_log_msg(0, "%4ld %8.5f %7.3f %7.2f", iexci + 1, rh->eexci[iexci], rh->eexci[iexci] * STDL_CONST_AU_TO_EV, STDL_CONST_HC / rh->eexci[iexci]);
-
-                // print transition dipole & oscillator strength
-                stdl_log_msg(0, " % 8.5f % 8.5f % 8.5f %7.5f",
-                       tdips[0 * rh->nexci + iexci],
-                       tdips[1 * rh->nexci + iexci],
-                       tdips[2 * rh->nexci + iexci],
-                       rh->eexci[iexci] * (powf(tdips[0 * rh->nexci + iexci], 2) + powf(tdips[1 * rh->nexci + iexci], 2) + powf(tdips[2 * rh->nexci + iexci], 2)) * 2.f / 3
-                );
-
-                stdl_log_msg(0, "\n");
-            }
+            stdl_log_property_g2e_dipoles(rh, ctx, tdips, 1e-3f);
 
             STDL_FREE_IF_USED(tdips);
         }

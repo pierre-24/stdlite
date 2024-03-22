@@ -14,69 +14,6 @@ void setUp() {
     stdl_set_log_level(0);
 }
 
-
-void test_property_print_excitations_ok() {
-    TEST_IGNORE_MESSAGE("for manual check only");
-
-    /* MUST MATCH:
-     * state    eV      nm       fL        Rv(corr)
-     *    1    7.354   168.6     0.0105     0.0000    -1.00(   4->   5)  0.04(   4->   9) -0.00(   3->   5)
-     *    2    9.190   134.9     0.1303    -0.0000     1.00(   3->   5) -0.03(   3->   9)  0.02(   1->   5)
-     *    3   10.022   123.7     0.0000    -0.0000    -1.00(   4->   6) -0.04(   4->  11) -0.03(   4->   7)
-     *    4   11.859   104.6     0.2028     0.0000    -1.00(   3->   6) -0.07(   2->   5) -0.03(   3->  11)
-     *    5   13.791    89.9     0.3154     0.0000    -1.00(   2->   5)  0.07(   3->   6)  0.02(   3->   7)
-     *    6   16.578    74.8     0.2052     0.0000     1.00(   2->   6)  0.02(   2->  11)  0.02(   3->   9)
-     */
-
-    stdl_wavefunction * wf = NULL;
-    stdl_basis * bs = NULL;
-    read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
-
-    stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 25. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
-
-    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
-
-    // compute dipole integrals and convert to MO
-    double* dipoles_sp_MO = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
-    TEST_ASSERT_NOT_NULL(dipoles_sp_MO);
-
-    make_dipoles_MO(wf, bs, ctx, dipoles_sp_MO);
-
-    // request all excitations
-    size_t nrequested =  ctx->ncsfs;
-    float* etda = malloc(nrequested * sizeof(float));
-    float* Xtda = malloc(nrequested * ctx->ncsfs * sizeof(float));
-
-    ASSERT_STDL_OK(stdl_response_TDA_casida(ctx, nrequested, etda, Xtda));
-
-    float* tdipstda = malloc(nrequested * 3 * sizeof(float ));
-    stdl_property_transition_dipoles(ctx, nrequested, dipoles_sp_MO, Xtda, NULL, tdipstda);
-
-    ASSERT_STDL_OK(stdl_qexp_excitations_print(ctx, nrequested, etda, tdipstda));
-    ASSERT_STDL_OK(stdl_qexp_excitations_contribs_print(ctx, nrequested, etda, Xtda, NULL, .0001f));
-
-    float* etd = malloc(ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(etd);
-
-    float* Xtd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(Xtd);
-
-    float* Ytd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(Ytd);
-
-    ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, etd, Xtd, Ytd));
-
-    float* tdipstd = malloc(nrequested * 3 * sizeof(float ));
-    stdl_property_transition_dipoles(ctx, nrequested, dipoles_sp_MO, Xtd, Ytd, tdipstd);
-
-    ASSERT_STDL_OK(stdl_qexp_excitations_print(ctx, nrequested, etd, tdipstd));
-
-    STDL_FREE_ALL(dipoles_sp_MO, etda, Xtda, tdipstda, etd, Xtd, Ytd, tdipstd);
-
-    ASSERT_STDL_OK(stdl_context_delete(ctx));
-}
-
 void test_property_polarizability_TD_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;

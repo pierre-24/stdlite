@@ -179,6 +179,7 @@ int stdl_matrix_dsp_sqrt_sy(size_t n, double *mat, double* matsy) {
     STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
     // eig
+    STDL_DEBUG("dspev");
     int info = LAPACKE_dspev(LAPACK_ROW_MAJOR, 'V', 'L', (int) n, matsy, e, w, (int) n);
 
     STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "dsyev() returned %d", info);
@@ -193,6 +194,7 @@ int stdl_matrix_dsp_sqrt_sy(size_t n, double *mat, double* matsy) {
     }
 
     // wcc = w * e * w^T
+    STDL_DEBUG("product");
     #pragma omp parallel for
     for(size_t i = 0; i < n; i++) {
         for(size_t j=0; j <= i; j++) {
@@ -218,6 +220,7 @@ int stdl_matrix_dsp_sqrt(size_t n, double *mat) {
     STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
     // eig
+    STDL_DEBUG("dspev");
     int info = LAPACKE_dspev(LAPACK_ROW_MAJOR, 'V', 'L', (int) n, mat, e, w, (int) n);
 
     STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "dsyev() returned %d", info);
@@ -232,6 +235,7 @@ int stdl_matrix_dsp_sqrt(size_t n, double *mat) {
     }
 
     // wcc = w * e * w^T
+    STDL_DEBUG("product");
     #pragma omp parallel for schedule(guided)
     for(size_t i = 0; i < n; i++) {
         for(size_t j=0; j <= i; j++) {
@@ -260,6 +264,7 @@ int stdl_matrix_ssp_sqrt_sy(size_t n, float *mat, float * matsy) {
     STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
     // eig
+    STDL_DEBUG("sspev");
     int info = LAPACKE_sspev(LAPACK_ROW_MAJOR, 'V', 'L', (int) n, matsy, e, w, (int) n);
 
     STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "ssyev() returned %d", info);
@@ -275,6 +280,7 @@ int stdl_matrix_ssp_sqrt_sy(size_t n, float *mat, float * matsy) {
     }
 
     // wcc = w * e * w^T
+    STDL_DEBUG("product");
     #pragma omp parallel for schedule(guided)
     for(size_t i = 0; i < n; i++) {
         for(size_t j=0; j <= i; j++) {
