@@ -1,6 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef USE_OPENMP
 #include <omp.h>
+#endif
 
 #include "app.h"
 
@@ -27,9 +30,13 @@ int stdl_app_log_env() {
     stdl_log_msg(0, "STDL_LOG_LEVEL=%d\n", stdl_get_log_level());
     stdl_log_msg(0, "STDL_DEBUG_LEVEL=%d\n", stdl_get_debug_level());
 
+#ifdef USE_OPENMP
     #pragma omp parallel
-    if(omp_get_thread_num() == 0)
-        stdl_log_msg(0, "OMP_NUM_THREADS=%d\n", omp_get_num_threads());
+    {
+        if(omp_get_thread_num() == 0)
+            stdl_log_msg(0, "OMP_NUM_THREADS=%d\n", omp_get_num_threads());
+    }
+#endif
 
     return STDL_ERR_OK;
 }

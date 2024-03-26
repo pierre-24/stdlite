@@ -10,6 +10,13 @@
 #define ASSERT_STDL_OK(v) TEST_ASSERT_EQUAL_INT(STDL_ERR_OK, v)
 #define ASSERT_STDL_KO(v) TEST_ASSERT_NOT_EQUAL_INT(STDL_ERR_OK, v)
 
+#ifdef USE_MKL
+#include <mkl.h>
+#else
+#include <cblas.h>
+#include <lapacke.h>
+#endif
+
 void read_fchk(char* fchk_path, stdl_wavefunction** wf, stdl_basis** bs);
 void read_molden(char* molden_path, stdl_wavefunction** wf, stdl_basis** bs);
 

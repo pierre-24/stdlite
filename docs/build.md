@@ -4,9 +4,10 @@ title: Build & install
 
 To build `stdlite` from its sources, you'll need:
 
-1. The [Meson build system](https://github.com/mesonbuild/meson), with a backend (generally [ninja](https://github.com/ninja-build/ninja)).
-2. A linear algebra backend. Currently, only [openblas](https://www.openblas.net/)+lapack are supported.
-3. The [HDF5 library](https://github.com/HDFGroup/hdf5) (and its headers), which is most probably available in your favorite distribution package manager.
+1. A C compiler. Currently, both GCC and [clang](https://clang.llvm.org/) are supported.
+2. The [Meson build system](https://github.com/mesonbuild/meson), with a backend (generally [ninja](https://github.com/ninja-build/ninja)).
+3. A linear algebra backend. Currently, either [openblas](https://www.openblas.net/)+lapack or [Intel MKL](https://en.wikipedia.org/wiki/Math_Kernel_Library) are supported. To install MKL, see [this link](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl-download.html).
+4. The [HDF5 library](https://github.com/HDFGroup/hdf5) (and its headers), which is most probably available in your favorite distribution package manager.
 
 
 ??? note "Optional dependencies"
@@ -38,7 +39,13 @@ or directly on the [GitHub repository](https://github.com/pierre-24/stdlite), as
 
 ## Compilation
 
-Use the `meson` subcommands to set up and compile the project:
+If you want to use `clang`, set the `CC` variable to do so:
+
+```bash
+export CC=clang
+```
+
+Use the `meson` subcommands to set up the project.
 
 ```bash
 # go in folder
@@ -46,9 +53,21 @@ cd stdlite
 
 # Setup the build.
 # It downloads extra dependencies if required. 
-meson setup _build
+meson setup _build --buildtype=release
+```
 
-# Compile dependencies (if any) and stdlite.
+The default build instruction use OpenBLAS and OpenMP. To change this, use:
+```bash
+# to use MKL:
+meson configure _build -Dla_backend=mkl
+
+# to disable OpenMP
+meson configure _build -Dopenmp=false
+```
+
+Then, compile the project:
+
+```bash
 meson compile -C _build
 ```
 

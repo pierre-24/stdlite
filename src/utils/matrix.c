@@ -1,9 +1,13 @@
 #include <stdio.h>
 #include <string.h>
-#include <lapacke.h>
 #include <math.h>
-#include <cblas.h>
 #include <assert.h>
+
+#ifdef USE_MKL
+#include <mkl.h>
+#else
+#include <lapacke.h>
+#endif
 
 #include "include/stdlite/utils/matrix.h"
 #include "stdlite/logging.h"

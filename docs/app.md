@@ -20,12 +20,19 @@ stdlite_run input.toml --ctx_ax="0.7"
 
 Note that a command line option, when it exists, have precedence over the input file.
 
+## Environment variables
+
+If the application is built to do so (which is the default), one can control the number of processors used by [OpenMP](https://openmp.llvm.org/) to accelerate the program:
+
+```bash
+export OMP_NUM_THREADS=4
+```
+
 Eventually, the verbosity level can be adjusted through environment variables:
 
 ```bash
 export STDL_LOG_LEVEL=1 # default is 0, set to -1 to silence the program
 export STDL_DEBUG_LEVEL=3 # default is 1, set to -1 to silence the program
-stdlite_run input.toml
 ```
 
 ## Inputs

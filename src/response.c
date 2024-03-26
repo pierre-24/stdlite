@@ -1,7 +1,12 @@
 #include <assert.h>
-#include <lapacke.h>
 #include <string.h>
+
+#ifdef USE_MKL
+#include <mkl.h>
+#else
 #include <cblas.h>
+#include <lapacke.h>
+#endif
 
 #include "stdlite/response.h"
 #include "stdlite/logging.h"
@@ -24,9 +29,14 @@ int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
 
     if (nexci < ctx->ncsfs) {
         stdl_log_msg(1, "use sspevx ");
-        int found = 0;
 
-        int* ifail = malloc(ctx->ncsfs * sizeof(float ));
+#ifdef USE_MKL
+        MKL_INT found = 0;
+        MKL_INT* ifail = malloc(ctx->ncsfs * sizeof(MKL_INT));
+#else
+        int found = 0;
+        int* ifail = malloc(ctx->ncsfs * sizeof(int));
+#endif
         STDL_ERROR_HANDLE_AND_REPORT(ifail == NULL, free(wrk); return STDL_ERR_MALLOC, "malloc");
 
         err = LAPACKE_sspevx(
@@ -117,9 +127,14 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
 
     if (nexci < ctx->ncsfs) {
         stdl_log_msg(1, "use ssyevx ");
-        int found = 0;
 
-        int* ifail = malloc(ctx->ncsfs * sizeof(float ));
+#ifdef USE_MKL
+        MKL_INT found = 0;
+        MKL_INT* ifail = malloc(ctx->ncsfs * sizeof(MKL_INT));
+#else
+        int found = 0;
+        int* ifail = malloc(ctx->ncsfs * sizeof(int));
+#endif
         STDL_ERROR_HANDLE_AND_REPORT(ifail == NULL, return STDL_ERR_MALLOC, "malloc");
 
         err = LAPACKE_ssyevx(
@@ -244,7 +259,12 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
     }
 
     // invert A-B, taking advantage of its `sp` storage
+#ifdef USE_MKL
+    MKL_INT* ipiv = malloc(ctx->ncsfs * sizeof(MKL_INT));
+#else
     int* ipiv = malloc(ctx->ncsfs * sizeof(int));
+#endif
+
     STDL_ERROR_HANDLE_AND_REPORT(ipiv == NULL, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "malloc");
 
     int err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, AmB, ipiv);
@@ -333,7 +353,11 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
     // invert A
     memcpy(Ai, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
 
+#ifdef USE_MKL
+    MKL_INT* ipiv = malloc(ctx->ncsfs * sizeof(MKL_INT));
+#else
     int* ipiv = malloc(ctx->ncsfs * sizeof(int));
+#endif
     STDL_ERROR_HANDLE_AND_REPORT(ipiv == NULL, STDL_FREE_ALL(L); return STDL_ERR_MALLOC, "malloc");
 
     err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, Ai, ipiv);

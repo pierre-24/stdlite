@@ -1,10 +1,8 @@
 #include <string.h>
 
-#include <stdlite/utils/fchk_parser.h>
 #include <stdlite/utils/matrix.h>
 #include <stdlite/context.h>
 #include <stdlite/helpers.h>
-#include <cblas.h>
 #include <unistd.h>
 
 #include "tests_suite.h"
