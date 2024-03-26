@@ -32,9 +32,13 @@ jobs:
         uses: egor-tensin/setup-clang@v1
         with:
           version: latest
-      - name: Install buil dependencies
+      - name: Install build dependencies
         run: |
           sudo apt-get install meson ninja-build valgrind libhdf5-dev
+      - name: add OMP (for clang && openblas)
+        if: ${{ matrix.compiler == 'clang' && matrix.la_backend == 'openblas' }}
+        run: |
+          sudo apt-get install libomp-dev
       - name: Install OpenBLAS & Lapack(e) & configure
         if: ${{ matrix.la_backend == 'openblas' }}
         run: |
