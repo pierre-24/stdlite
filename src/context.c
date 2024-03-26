@@ -1,7 +1,13 @@
 #include <assert.h>
 #include <string.h>
 #include <math.h>
+
+#ifdef USE_MKL
+#include <mkl.h>
+#else
 #include <cblas.h>
+#include <lapacke.h>
+#endif
 
 #include "stdlite/context.h"
 #include "stdlite/logging.h"
@@ -644,8 +650,9 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
     STDL_ERROR_HANDLE_AND_REPORT(A_diag == NULL, STDL_FREE_ALL(env, csfs_ensemble); return STDL_ERR_MALLOC, "malloc");
 
     ctx->ncsfs = 0;
+    size_t ncsfs = 0;
 
-    #pragma omp parallel for private(wrk)
+    #pragma omp parallel for private(wrk) reduction(+:ncsfs)
     for(size_t i=0; i < ctx->nocc; i++) {
         wrk = malloc(2 * natm * sizeof(float ));
 
@@ -659,7 +666,7 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
 
             if(A_diag[kia] <= ctx->ethr) {
                 csfs_ensemble[kia] = 1;
-                (ctx->ncsfs)++;
+                ncsfs++;
                 STDL_DEBUG("selected primary:: %ld→%ld [%d] (E=%f Eh)", i, ctx->nocc + a, kia, A_diag[kia]);
             } else {// ... the rest is selected to be considered in perturbation.
                 csfs_ensemble[kia] = 2; // mark as potentially secondary for the moment
@@ -708,16 +715,16 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
         }
     }
 
-    STDL_ERROR_HANDLE_AND_REPORT(ctx->ncsfs == 0, return STDL_ERR_CONTEXT, "no CSFs selected. `E_thr` should be at least %f Eh!", A_diag[csfs_sorted_indices[0]]);
+    STDL_ERROR_HANDLE_AND_REPORT(ncsfs == 0, return STDL_ERR_CONTEXT, "no CSFs selected. `E_thr` should be at least %f Eh!", A_diag[csfs_sorted_indices[0]]);
 
     /*
      * 3) Now, select S-CSFs j→b so that E^(2)_jb > E^(2)_thr.
      */
 
     stdl_log_msg(0, "-");
-    stdl_log_msg(1, "\n  | Select secondary CSFs with E^(2) < %e Eh, looping through the %d remaining CSFs ", ctx->e2thr, nexci_ia - ctx->ncsfs);
+    stdl_log_msg(1, "\n  | Select secondary CSFs with E^(2) < %e Eh, looping through the %d remaining CSFs ", ctx->e2thr, nexci_ia - ncsfs);
 
-    #pragma omp parallel for private(wrk)
+    #pragma omp parallel for private(wrk) reduction(+:ncsfs)
     for(size_t kjb=0; kjb < nexci_ia; kjb++) { // loop over possible S-CSFs
         if(csfs_ensemble[kjb] == 2) {
             size_t b = kjb % nvirt, j = kjb / nvirt;
@@ -742,12 +749,14 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
                 csfs_ensemble[kjb] = 0; // discarded
             } else {
                 STDL_DEBUG("selected secondary:: %ld→%ld [%d] (E=%f Eh)", j, ctx->nocc + b, kjb, A_diag[kjb]);
-                (ctx->ncsfs)++;
+                ncsfs++;
             }
 
             free(wrk);
         }
     }
+
+    ctx->ncsfs = ncsfs;
 
     stdl_log_msg(0, "-");
     stdl_log_msg(1, "\n  | Build A' (and B') matrices with %ld CSFs", ctx->ncsfs);

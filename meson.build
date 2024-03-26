@@ -29,6 +29,15 @@ if la_backend == 'openblas' or la_backend == 'default'
   project_dep += cc.find_library('openblas', required : true)
   project_dep += cc.find_library('lapack', required : true)
   project_dep += cc.find_library('lapacke', required : true)
+  build_args += '-DUSE_OPENBLAS'
+elif la_backend == 'flexiblas'
+  project_dep += cc.find_library('flexiblas', required : true)
+  project_dep += cc.find_library('lapacke', required : true)
+  build_args += '-DUSE_FLEXIBLAS'
+elif la_backend == 'mkl'
+  # found using `pkg-config --list-all | grep "mkl"`
+  project_dep += dependency('mkl-dynamic-ilp64-gomp', required: true)
+  build_args += '-DUSE_MKL'
 endif
 
 h5noserial = cc.find_library('hdf5', required: false)

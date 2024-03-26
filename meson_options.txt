@@ -3,7 +3,7 @@ option(
     'la_backend',
     type: 'combo',
     value: 'default',
-    choices: ['default', 'openblas'],
+    choices: ['default', 'openblas', 'flexiblas', 'mkl'],
     description : 'linear algebra backend'
 )
 
