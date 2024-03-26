@@ -13,10 +13,6 @@ build_args = [
   '-DPROJECT_VERSION="' + meson.project_version() + '"',
 ]
 
-if get_option('openmp')
-  project_dep += dependency('openmp')
-endif
-
 libcint_dep = cc.find_library('libcint', required: false)
 if not libcint_dep.found()
   libcint_proj = subproject('libcint', default_options: [])
@@ -32,6 +28,9 @@ if la_backend == 'openblas' or la_backend == 'default'
   project_dep += cc.find_library('openblas', required : true)
   project_dep += cc.find_library('lapack', required : true)
   project_dep += cc.find_library('lapacke', required : true)
+  if get_option('openmp')
+    project_dep += dependency('openmp')
+  endif
   build_args += '-DUSE_OPENBLAS'
 elif la_backend == 'mkl'
   # found using `pkg-config --list-all | grep "mkl"`

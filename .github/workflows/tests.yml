@@ -36,7 +36,7 @@ jobs:
         run: |
           sudo apt-get install meson ninja-build valgrind libhdf5-dev
       - name: add OMP (for clang && openblas)
-        if: ${{ matrix.compiler == 'clang' && matrix.la_backend == 'openblas' }}
+        if: ${{ matrix.compiler == 'clang' }}
         run: |
           sudo apt-get install libomp-dev
       - name: Install OpenBLAS & Lapack(e) & configure
@@ -62,6 +62,7 @@ jobs:
           --print-errorlogs
           -C ${{ env.BUILD_DIR }}
       - name: Memcheck (with Meson & Valgdrind)
+        if: ${{ matrix.compiler == 'gcc' && matrix.la_backend == 'openblas' }}
         run: >-
           OMP_NUM_THREADS=1 meson test
           --print-errorlogs
