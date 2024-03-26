@@ -29,9 +29,6 @@ nav:
 theme:
   name: material
   custom_dir: docs/overrides
-  features:
-    - navigation.indexes
-    - content.tabs.link
 
 extra_css:
   - stylesheets/doxide.css

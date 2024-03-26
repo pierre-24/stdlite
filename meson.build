@@ -29,17 +29,19 @@ if la_backend == 'openblas' or la_backend == 'default'
   project_dep += cc.find_library('lapack', required : true)
   project_dep += cc.find_library('lapacke', required : true)
   if get_option('openmp')
+    build_args += '-DUSE_OPENMP'
     project_dep += dependency('openmp')
   endif
   build_args += '-DUSE_OPENBLAS'
 elif la_backend == 'mkl'
   # found using `pkg-config --list-all | grep "mkl"`
   if get_option('openmp')
+    build_args += '-DUSE_OPENMP'
+    build_args += '-fopenmp'
     project_dep += dependency('mkl-dynamic-ilp64-iomp', required: true)
   else
     project_dep += dependency('mkl-dynamic-ilp64-seq', required: true)
   endif
-
   build_args += '-DUSE_MKL'
 endif
 

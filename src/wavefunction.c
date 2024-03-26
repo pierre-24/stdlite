@@ -1,6 +1,11 @@
 #include <assert.h>
-#include <cblas.h>
 #include <string.h>
+
+#ifdef USE_MKL
+#include <mkl.h>
+#else
+#include <cblas.h>
+#endif
 
 #include "stdlite/wavefunction.h"
 #include "stdlite/logging.h"
