@@ -35,7 +35,12 @@ if la_backend == 'openblas' or la_backend == 'default'
   build_args += '-DUSE_OPENBLAS'
 elif la_backend == 'mkl'
   # found using `pkg-config --list-all | grep "mkl"`
-  project_dep += dependency('mkl-dynamic-ilp64-gomp', required: true)
+  if get_option('openmp')
+    project_dep += dependency('mkl-dynamic-ilp64-iomp', required: true)
+  else
+    project_dep += dependency('mkl-dynamic-ilp64-seq', required: true)
+  endif
+
   build_args += '-DUSE_MKL'
 endif
 

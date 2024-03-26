@@ -13,6 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         compiler: [gcc]
         la_backend: [openblas, mkl]
@@ -29,21 +30,19 @@ jobs:
       - name: Install buil dependencies
         run: |
           sudo apt-get install meson ninja-build valgrind libhdf5-dev
-      - name: Install OpenBLAS & Lapack(e)
+      - name: Install OpenBLAS & Lapack(e) & configure
         if: ${{ matrix.la_backend == 'openblas' }}
         run: |
           sudo apt-get install libopenblas-dev liblapack-dev liblapacke-dev
-      - name: Install MKL
+          meson setup ${{ env.BUILD_DIR }} -Dla_backend=openblas --buildtype=debug
+      - name: Install MKL & configure
         if: ${{ matrix.la_backend == 'mkl' }}
         run: |
           wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
           echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
           sudo apt update
           sudo apt install intel-oneapi-mkl-devel
-      - name: Configure (with Meson)
-        run: >-
-          meson setup ${{ env.BUILD_DIR }}
-          --buildtype=debug
+          meson setup ${{ env.BUILD_DIR }} -Dla_backend=mkl --buildtype=debug
       - name: Compile (with Meson)
         run: >-
           meson compile
