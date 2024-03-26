@@ -2,7 +2,6 @@ name: Run test suite
 
 env:
   BUILD_DIR: _build
-  CC: gcc
 
 on:
   push:
@@ -13,16 +12,34 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [gcc]
+        la_backend: [openblas, mkl]
+    env:
+      CC: ${{ matrix.compiler == 'intel' && 'icc' || 'gcc' }}
+
     steps:
       - uses: actions/checkout@v3
       - name: Set up GCC
+        if: ${{ matrix.compiler == 'gcc' }}
         uses: egor-tensin/setup-gcc@v1
         with:
           version: latest
-      - name: Install other dependencies
+      - name: Install buil dependencies
         run: |
-          sudo apt-get install libopenblas-dev liblapack-dev liblapacke-dev libhdf5-dev
-          sudo apt-get install meson ninja-build valgrind
+          sudo apt-get install meson ninja-build valgrind libhdf5-dev
+      - name: Install OpenBLAS & Lapack(e)
+        if: ${{ matrix.la_backend == 'openblas' }}
+        run: |
+          sudo apt-get install libopenblas-dev liblapack-dev liblapacke-dev
+      - name: Install MKL
+        if: ${{ matrix.la_backend == 'mkl' }}
+        run: |
+          wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+          sudo apt update
+          sudo apt install intel-oneapi-mkl-devel
       - name: Configure (with Meson)
         run: >-
           meson setup ${{ env.BUILD_DIR }}
