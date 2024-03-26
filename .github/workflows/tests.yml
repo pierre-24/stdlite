@@ -15,16 +15,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler: [gcc]
+        compiler: [gcc, clang]
         la_backend: [openblas, mkl]
     env:
-      CC: ${{ matrix.compiler == 'intel' && 'icc' || 'gcc' }}
+      CC: ${{ matrix.compiler == 'clang' && 'clang' || 'gcc' }}
 
     steps:
       - uses: actions/checkout@v3
       - name: Set up GCC
         if: ${{ matrix.compiler == 'gcc' }}
         uses: egor-tensin/setup-gcc@v1
+        with:
+          version: latest
+      - name: Set up clang
+        if: ${{ matrix.compiler == 'clang' }}
+        uses: egor-tensin/setup-clang@v1
         with:
           version: latest
       - name: Install buil dependencies
