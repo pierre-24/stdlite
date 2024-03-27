@@ -68,6 +68,7 @@ elif la_backend == 'mkl'
     endif
   endif
   build_args += '-DUSE_MKL'
+  build_args += '-DMKL_ILP64'
 endif
 
 h5noserial = cc.find_library('hdf5', required: false)
