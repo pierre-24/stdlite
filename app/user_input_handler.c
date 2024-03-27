@@ -780,10 +780,12 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl
             if(!operators[op])
                 res_nops += 1;
 
-            if(!islrvs[op] && req->res_order < req->resp_order)
+            if(!islrvs[op] && req->res_order < req->resp_order) {
+                islrvs[op] = 1;
                 res_nlrvreq += 1;
+            }
 
-            operators[op] = islrvs[op] = 1;
+            operators[op] = 1;
         }
 
         // if LRV is required, add frequency

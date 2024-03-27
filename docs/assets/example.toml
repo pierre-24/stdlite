@@ -1,4 +1,4 @@
-title = "test calculation"
+title = "Calculation of the (hyper)polarizability of water (TDA approximation)"
 
 [context]
 # source of the wavefunction and basis set:
@@ -6,13 +6,22 @@ source = "water.molden"
 source_type = "MOLDEN"
 
 # parameters:
-gammaJ = 4.0
-gammaK = 2.0
-ax = 1.0
-ethr = '16eV'  # different units are supported
+gammaJ = 1.0
+gammaK = 0.5
+ax = 1.0  # full HF exchange
+ethr = '20eV'  # different units are supported
+tda = 0 # use the TD-DFT approach
 
 [responses]
 # compute linear response at 3 different frequencies
 linear = [
-    {target = 'electric_polarizability', w = [0, '1064nm', '512nm']}
+    {opA = 'dipl', opB = 'dipl', wB = 0}, # polarizability
+    {opA = 'dipl', opB = 'dipl', wB = '1064nm'},
+    {opA = 'dipl', opB = 'dipl', wB = '532nm'},
+]
+
+# compute quadratic response at 2 different frequencies
+quadratic = [
+    {opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = 0, wC = 0},  # SHG first hyperpolarizability
+    {opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = '1064nm', wC = '1064nm'},
 ]
