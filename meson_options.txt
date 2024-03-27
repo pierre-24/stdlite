@@ -13,3 +13,10 @@ option(
     value: true,
     description: 'Use OpenMP',
 )
+
+option(
+    'tests',
+    type: 'boolean',
+    value: true,
+    description: 'Include tests',
+)

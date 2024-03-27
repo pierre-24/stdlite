@@ -55,6 +55,7 @@ elif la_backend == 'mkl'
       project_dep += cc.find_library('mkl_core')
       project_dep += cc.find_library('mkl_intel_ilp64')
       project_dep += cc.find_library('mkl_intel_thread')
+      project_dep += cc.find_library('iomp5')
     endif
   else
     dep_mkl = dependency('mkl-dynamic-ilp64-seq', required: false)
@@ -102,4 +103,6 @@ stdlite_lib_dep = declare_dependency(
 subdir('app')
 
 # tests
-subdir('tests')
+if get_option('tests')
+  subdir('tests')
+endif

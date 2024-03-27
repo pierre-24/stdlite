@@ -3,7 +3,6 @@ exe_args = []
 # build args
 app_build_args = build_args + [
     '-DAPP_NAME="' + meson.project_name() + '_run"',
-    '-DAPP_VERSION="' + meson.project_version() + '"',
 ]
 
 # dependencies
@@ -59,4 +58,6 @@ stdlite_exe = executable(
     c_args : app_build_args,
 )
 
-subdir('tests')
+if get_option('tests')
+    subdir('tests')
+endif
