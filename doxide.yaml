@@ -156,6 +156,14 @@ groups:
     title: The application
     description: API of `stdlite_run`.
     groups:
+      - name: app_main
+        title: Miscellaneous
+        description: |
+          Helper function for the application.
+          
+          ```c
+          #include "app.h"
+          ```
       - name: user_input_handler
         title: User input handler
         description: |
@@ -179,4 +187,12 @@ groups:
           
           ```c
           #include "responses_handler.h"
+          ```
+      - name: log_property
+        title: Print out property
+        description: |
+          Print out (in log) the different properties
+          
+          ```c
+          #include "log_property.h"
           ```

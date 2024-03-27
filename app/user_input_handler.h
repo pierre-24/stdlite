@@ -119,7 +119,7 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
  * @param argv arguments
  * @param[out] inp
  * @return error code
- * @ingroup app
+ * @ingroup user_input_handler
  */
 int stdl_user_input_handler_new_from_args(int argc, char* argv[], stdl_user_input_handler** inp);
 

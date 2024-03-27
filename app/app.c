@@ -40,3 +40,14 @@ int stdl_app_log_env() {
 
     return STDL_ERR_OK;
 }
+
+
+void stdl_timer_start(struct timespec* t) {
+    clock_gettime(CLOCK_MONOTONIC, t);
+}
+
+double stdl_timer_stop(struct timespec* start) {
+    struct timespec stop;
+    clock_gettime(CLOCK_MONOTONIC, &stop);
+    return (double) (stop.tv_sec - start->tv_sec) + (double) (stop.tv_nsec - start->tv_nsec) * 1e-9;
+}

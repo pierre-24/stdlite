@@ -4,7 +4,6 @@
 #include <stdlite/context.h>
 
 #include "app.h"
-#include "timer.h"
 
 #define NDASHES 80
 
