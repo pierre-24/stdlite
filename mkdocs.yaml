@@ -25,6 +25,7 @@ nav:
       - API/app/user_input_handler/index.md
       - API/app/requests/index.md
       - API/app/responses_handler/index.md
+  - contributing.md
 
 theme:
   name: material
