@@ -373,7 +373,7 @@ int stdl_user_input_handler_fill_from_args(stdl_user_input_handler* inp, int arg
     struct arg_end* arg_end_;
     struct arg_file* arg_input, *arg_ctx_source, *arg_data_output;
     struct arg_dbl* arg_ctx_gammaJ, *arg_ctx_gammaK, *arg_ctx_ax;
-    struct arg_str* arg_ctx_source_type, *arg_ctx_ethr, *arg_ctx_e2thr;
+    struct arg_str* arg_ctx_source_type, *arg_ctx_ethr, *arg_ctx_e2thr, *arg_ctx_method;
     struct arg_int* arg_ctx_tda;
 
     int err = STDL_ERR_OK;
@@ -389,6 +389,7 @@ int stdl_user_input_handler_fill_from_args(stdl_user_input_handler* inp, int arg
             arg_ctx_gammaK = arg_dbl0(NULL, "ctx_gammaK", NULL, "gamma_K"),
             arg_ctx_ethr = arg_str0(NULL, "ctx_ethr", "<freq>", "ethr"),
             arg_ctx_e2thr = arg_str0(NULL, "ctx_e2thr", "<freq>", "e2thr"),
+            arg_ctx_method = arg_str0(NULL, "ctx_method", "str", "method"),
             arg_ctx_ax = arg_dbl0(NULL, "ctx_ax", NULL, "HF exchange"),
             arg_ctx_tda = arg_int0(NULL, "ctx_tda", "{0,1}", "use the Tamm-Dancoff approximation"),
             // end0
@@ -475,6 +476,16 @@ int stdl_user_input_handler_fill_from_args(stdl_user_input_handler* inp, int arg
         STDL_ERROR_CODE_HANDLE(err, goto _end);
 
         inp->ctx_e2thr = (float) val;
+    }
+
+    if(arg_ctx_method->count > 0) {
+        if(strcmp(arg_ctx_method->sval[0], "monopole") == 0) {
+            inp->ctx_method = STDL_METHOD_MONOPOLE;
+        } else if(strcmp(arg_ctx_method->sval[0], "monopole_direct") == 0) {
+            inp->ctx_method = STDL_METHOD_MONOPOLE_DIRECT;
+        } else {
+            STDL_ERROR_HANDLE_AND_REPORT(1, err = STDL_ERR_INPUT; goto _end, "unknown method `%s`", arg_ctx_method->sval[0]);
+        }
     }
 
     if(arg_ctx_ax->count > 0)
