@@ -13,6 +13,18 @@ build_args = [
   '-DPROJECT_VERSION="' + meson.project_version() + '"',
 ]
 
+project_info = ''
+date_program = find_program('date', required: false)
+if date_program.found()
+  build_args += '-DPROJECT_BUILD_DATE="' + run_command(date_program).stdout().replace('\n', '') + '"'
+endif
+
+git_program = find_program('git', required: false)
+if git_program.found()
+  build_args += '-DPROJECT_BUILD_COMMIT="' + run_command(git_program, 'rev-parse', 'HEAD').stdout().substring(0, 7) + '"'
+endif
+
+
 libcint_dep = cc.find_library('libcint', required: false)
 if not libcint_dep.found()
   libcint_proj = subproject('libcint', default_options: [])

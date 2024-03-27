@@ -37,11 +37,13 @@ int main(int argc, char* argv[]) {
 
     // scream aloud
     stdl_log_msg(0,
-                 "==========================================\n"
-                 "Running %s\n"
-                 "using %s (version %s)\n"
-                 "==========================================\n",
-                 APP_NAME, stdl_library_name(), stdl_library_version()
+                 "=========================================================\n"
+                 "Program: %s\n"
+                 "Library: %s (version %s)\n"
+                 "Build date: %s\n"
+                 "Build commit: %s\n"
+                 "=========================================================\n",
+                 APP_NAME, stdl_library_name(), stdl_library_version(), stdl_library_build_date(), stdl_library_build_commit()
                  );
 
     // Show what was understood

@@ -12,6 +12,14 @@ char* stdl_library_version()  {
     return PROJECT_VERSION;
 }
 
+char* stdl_library_build_date() {
+    return PROJECT_BUILD_DATE;
+}
+
+char* stdl_library_build_commit() {
+    return PROJECT_BUILD_COMMIT;
+}
+
 int LOG_LVL = 0; // by default, moderate logging
 
 void stdl_set_log_level(const int level) {

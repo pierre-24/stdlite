@@ -6,6 +6,13 @@
 #define PROJECT_VERSION "unknown"
 #endif
 
+#ifndef PROJECT_BUILD_DATE
+#define PROJECT_BUILD_DATE "unknown date"
+#endif
+
+#ifndef PROJECT_BUILD_COMMIT
+#define PROJECT_BUILD_COMMIT "unknown commit"
+#endif
 
 /**
  * Get library name
@@ -20,6 +27,21 @@ char* stdl_library_name();
  * @ingroup logging
  */
 char* stdl_library_version();
+
+/**
+ * Get library build info
+ * @return version
+ * @ingroup logging
+ */
+char* stdl_library_build_date();
+
+
+/**
+ * Get library build commit
+ * @return version
+ * @ingroup logging
+ */
+char* stdl_library_build_commit();
 
 
 /// Handle error (if `assertion` is true) by printing a message and using an action.
