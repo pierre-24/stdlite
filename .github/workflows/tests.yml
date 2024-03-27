@@ -35,7 +35,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get install meson ninja-build valgrind libhdf5-dev
-      - name: add OMP (for clang && openblas)
+      - name: Add OMP (for clang)
         if: ${{ matrix.compiler == 'clang' }}
         run: |
           sudo apt-get install libomp-dev

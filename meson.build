@@ -20,24 +20,22 @@ if not libcint_dep.found()
 endif
 project_dep += libcint_dep
 
+if get_option('openmp')
+  build_args += '-DUSE_OPENMP'
+  project_dep += dependency('openmp')
+endif
+
 # note: cannot use flexiblas at the moment
 # see https://github.com/mpimd-csc/flexiblas/issues/2
-
 la_backend = get_option('la_backend')
 if la_backend == 'openblas' or la_backend == 'default'
   project_dep += cc.find_library('openblas', required : true)
   project_dep += cc.find_library('lapack', required : true)
   project_dep += cc.find_library('lapacke', required : true)
-  if get_option('openmp')
-    build_args += '-DUSE_OPENMP'
-    project_dep += dependency('openmp')
-  endif
   build_args += '-DUSE_OPENBLAS'
 elif la_backend == 'mkl'
   # found using `pkg-config --list-all | grep "mkl"`
   if get_option('openmp')
-    build_args += '-DUSE_OPENMP'
-    build_args += '-fopenmp'
     project_dep += dependency('mkl-dynamic-ilp64-iomp', required: true)
   else
     project_dep += dependency('mkl-dynamic-ilp64-seq', required: true)

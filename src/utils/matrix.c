@@ -310,6 +310,7 @@ int stdl_matrix_ssp_sqrt(size_t n, float *mat) {
     STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
     // eig
+    STDL_DEBUG("sspev");
     int info = LAPACKE_sspev(LAPACK_ROW_MAJOR, 'V', 'L', (int) n, mat, e, w, (int) n);
 
     STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "ssyev() returned %d", info);
@@ -325,6 +326,7 @@ int stdl_matrix_ssp_sqrt(size_t n, float *mat) {
     }
 
     // wcc = w * e * w^T
+    STDL_DEBUG("product");
     #pragma omp parallel for schedule(guided)
     for(size_t i = 0; i < n; i++) {
         for(size_t j=0; j <= i; j++) {
@@ -343,6 +345,8 @@ int stdl_matrix_ssp_sqrt(size_t n, float *mat) {
 
 int stdl_matrix_sge_transpose(size_t nrows, size_t ncols, float* mat) {
     assert(nrows > 0 && ncols > 0 && mat != NULL);
+
+    STDL_DEBUG("transpose");
 
     size_t start, next, i;
     float tmp;
@@ -370,6 +374,8 @@ int stdl_matrix_sge_transpose(size_t nrows, size_t ncols, float* mat) {
 int stdl_matrix_dsp_blowsy(size_t n, char uplo, double *in, double *out) {
     assert(n > 0 && in != NULL && out != NULL && (uplo == 'U' || uplo == 'L'));
 
+    STDL_DEBUG("dsp_blowsy");
+
     LAPACKE_dtpttr(LAPACK_ROW_MAJOR, uplo, (int) n, in, out, (int) n);
 
     return STDL_ERR_OK;
@@ -377,6 +383,8 @@ int stdl_matrix_dsp_blowsy(size_t n, char uplo, double *in, double *out) {
 
 int stdl_matrix_dsp_blowge(int issym, size_t n, double *in, double *out) {
     assert(n > 0 && in != NULL && out != NULL);
+
+    STDL_DEBUG("dsp_blowge");
 
     LAPACKE_dtpttr(LAPACK_ROW_MAJOR, 'L', (int) n, in, out, (int) n);
 
@@ -392,6 +400,8 @@ int stdl_matrix_dsp_blowge(int issym, size_t n, double *in, double *out) {
 int stdl_matrix_ssp_blowsy(size_t n, char uplo, float *in, float *out) {
     assert(n > 0 && in != NULL && out != NULL && (uplo == 'U' || uplo == 'L'));
 
+    STDL_DEBUG("ssp_blowsy");
+
     LAPACKE_stpttr(LAPACK_ROW_MAJOR, uplo, (int) n, in, out, (int) n);
 
     return STDL_ERR_OK;
@@ -399,6 +409,8 @@ int stdl_matrix_ssp_blowsy(size_t n, char uplo, float *in, float *out) {
 
 int stdl_matrix_ssp_blowge(int issym, size_t n, float *in, float *out) {
     assert(n > 0 && in != NULL && out != NULL);
+
+    STDL_DEBUG("ssp_blowge");
 
     LAPACKE_stpttr(LAPACK_ROW_MAJOR, 'L', (int) n, in, out, (int) n);
 
@@ -415,6 +427,8 @@ int stdl_matrix_ssp_blowge(int issym, size_t n, float *in, float *out) {
 int stdl_matrix_dsy_shrinksp(size_t n, char uplo, double *in, double *out) {
     assert(n > 0 && in != NULL && out != NULL && (uplo == 'U' || uplo == 'L'));
 
+    STDL_DEBUG("dsy_shrinksp");
+
     LAPACKE_dtrttp(LAPACK_ROW_MAJOR, uplo, (int) n, in, (int) n, out);
 
     return STDL_ERR_OK;
@@ -422,6 +436,8 @@ int stdl_matrix_dsy_shrinksp(size_t n, char uplo, double *in, double *out) {
 
 int stdl_matrix_ssy_shrinksp(size_t n, char uplo, float *in, float *out) {
     assert(n > 0 && in != NULL && out != NULL && (uplo == 'U' || uplo == 'L'));
+
+    STDL_DEBUG("ssy_shrinksp");
 
     LAPACKE_strttp(LAPACK_ROW_MAJOR, uplo, (int) n, in, (int) n, out);
 
