@@ -11,7 +11,7 @@
       
       
       
-        <link rel="prev" href="../">
+        <link rel="prev" href="../app_main/">
       
       
         <link rel="next" href="../requests/">
@@ -607,6 +607,27 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../app_main/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Miscellaneous
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -756,6 +777,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#stdl_user_input_handler_new_from_args" class="md-nav__link">
+    <span class="md-ellipsis">
+      stdl_user_input_handler_new_from_args
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#stdl_user_input_handler_parse_frequency" class="md-nav__link">
     <span class="md-ellipsis">
       stdl_user_input_handler_parse_frequency
@@ -820,6 +850,27 @@
   
   <span class="md-ellipsis">
     Responses handler
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../log_property/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Print out property
   </span>
   
 
@@ -983,6 +1034,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#stdl_user_input_handler_new_from_args" class="md-nav__link">
+    <span class="md-ellipsis">
+      stdl_user_input_handler_new_from_args
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#stdl_user_input_handler_parse_frequency" class="md-nav__link">
     <span class="md-ellipsis">
       stdl_user_input_handler_parse_frequency
@@ -1092,6 +1152,10 @@
 <td>Create an empty user input structure with default parameters.</td>
 </tr>
 <tr>
+<td><a href="#stdl_user_input_handler_new_from_args">stdl_user_input_handler_new_from_args</a></td>
+<td>Helper function to create user input directly from program input.</td>
+</tr>
+<tr>
 <td><a href="#stdl_user_input_handler_parse_frequency">stdl_user_input_handler_parse_frequency</a></td>
 <td>Parse frequency given a a string of the form <code>NUMBER UNIT</code>, where <code>NUMBER</code> is a valid <code>double</code> and <code>UNIT</code> is either nothing (atomic units are assumed), <code>au</code>, <code>eV</code> or <code>nm</code>.</td>
 </tr>
@@ -1199,6 +1263,21 @@ If the <code>&lt;file&gt;</code> argument is set, this implies a call to <code>s
 <dl>
 <dt><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m22 12-4-4v3h-8v2h8v3m2 2a10 10 0 1 1 0-12h-2.73a8 8 0 1 0 0 12Z"/></svg></span> <strong>Parameter</strong> <code>inp_ptr</code></dt>
 <dd>resulting structure</dd>
+<dt><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 7v4H5.83l3.58-3.59L8 6l-6 6 6 6 1.41-1.42L5.83 13H21V7h-2Z"/></svg></span> <strong>Return</strong></dt>
+<dd>error code</dd>
+</dl>
+</div>
+<h3 id="stdl_user_input_handler_new_from_args">stdl_user_input_handler_new_from_args<a name="stdl_user_input_handler_new_from_args"></a><a class="headerlink" href="#stdl_user_input_handler_new_from_args" title="Permanent link">¤</a></h3>
+<div class="admonition function">
+<p class="admonition-title">int stdl_user_input_handler_new_from_args(int argc, char&#42; argv[], stdl_user_input_handler&#42;&#42; inp)</p>
+<p>Helper function to create user input directly from program input.</p>
+<dl>
+<dt><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14 12-4-4v3H2v2h8v3m12-4a10 10 0 0 1-19.54 3h2.13a8 8 0 1 0 0-6H2.46A10 10 0 0 1 22 12Z"/></svg></span> <strong>Parameter</strong> <code>argc</code></dt>
+<dd>number of arguments</dd>
+<dt><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14 12-4-4v3H2v2h8v3m12-4a10 10 0 0 1-19.54 3h2.13a8 8 0 1 0 0-6H2.46A10 10 0 0 1 22 12Z"/></svg></span> <strong>Parameter</strong> <code>argv</code></dt>
+<dd>arguments</dd>
+<dt><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m22 12-4-4v3h-8v2h8v3m2 2a10 10 0 1 1 0-12h-2.73a8 8 0 1 0 0 12Z"/></svg></span> <strong>Parameter</strong> <code>inp</code></dt>
+<dd></dd>
 <dt><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 7v4H5.83l3.58-3.59L8 6l-6 6 6 6 1.41-1.42L5.83 13H21V7h-2Z"/></svg></span> <strong>Return</strong></dt>
 <dd>error code</dd>
 </dl>
