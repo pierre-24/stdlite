@@ -1,0 +1,1501 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Light-weight sTD-DFT library">
+      
+      
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../build/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.15">
+    
+    
+      
+        <title>Theory - stdlite</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.7e359304.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/doxide.css">
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#introduction" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="stdlite" class="md-header__button md-logo" aria-label="stdlite" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            stdlite
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Theory
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/pierre-24/stdlite" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    pierre-24/stdlite
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="stdlite" class="md-nav__button md-logo" aria-label="stdlite" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    stdlite
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/pierre-24/stdlite" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    pierre-24/stdlite
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Theory
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Theory
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Introduction
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#response-function-theory" class="md-nav__link">
+    <span class="md-ellipsis">
+      Response function theory
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#application-to-dft-td-dft" class="md-nav__link">
+    <span class="md-ellipsis">
+      Application to DFT: TD-DFT
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Application to DFT: TD-DFT">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#linear-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      Linear response
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#excitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Excitations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-simplified-approaches-to-td-dft" class="md-nav__link">
+    <span class="md-ellipsis">
+      The simplified approaches to TD-DFT
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The simplified approaches to TD-DFT">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#truncation-of-the-active-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      Truncation of the active space
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#std-dft-or-the-monopole-approximation" class="md-nav__link">
+    <span class="md-ellipsis">
+      sTD-DFT, or the monopole approximation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#xstd-dft" class="md-nav__link">
+    <span class="md-ellipsis">
+      XsTD-DFT
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#expectation-values-and-others" class="md-nav__link">
+    <span class="md-ellipsis">
+      Expectation values and others
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Expectation values and others">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#density-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      Density matrix
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dipole-moment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dipole moment
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#responses-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Responses (properties)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Responses (properties)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polarizability" class="md-nav__link">
+    <span class="md-ellipsis">
+      Polarizability
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ground-to-excited-transition-dipole-moment-and-oscillator-strength" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ground to excited transition dipole moment (and oscillator strength)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#first-hyperpolarizability" class="md-nav__link">
+    <span class="md-ellipsis">
+      First hyperpolarizability
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#excited-to-excited-transition-dipole-moment-and-oscillator-strength" class="md-nav__link">
+    <span class="md-ellipsis">
+      Excited to excited transition dipole moment (and oscillator strength)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources-and-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sources and references
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Build & install
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tutorial
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../app/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    stdlite_run
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Public API of libstdlite
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Public API of libstdlite
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Public API documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/logging/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Logging and errors
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/wavefunction/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wavefunction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/basis/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Basis set
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/context/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Context handler
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/response/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Response functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/property/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Properties
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/helpers/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Helpers functions and macros
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/utilities/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Utilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    API of stdlite_run
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            API of stdlite_run
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/app/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    The application
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/app/user_input_handler/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    User input handler
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/app/requests/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Requests for response
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/app/responses_handler/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Responses handler
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contribute
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Introduction
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#response-function-theory" class="md-nav__link">
+    <span class="md-ellipsis">
+      Response function theory
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#application-to-dft-td-dft" class="md-nav__link">
+    <span class="md-ellipsis">
+      Application to DFT: TD-DFT
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Application to DFT: TD-DFT">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#linear-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      Linear response
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#excitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Excitations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-simplified-approaches-to-td-dft" class="md-nav__link">
+    <span class="md-ellipsis">
+      The simplified approaches to TD-DFT
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The simplified approaches to TD-DFT">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#truncation-of-the-active-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      Truncation of the active space
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#std-dft-or-the-monopole-approximation" class="md-nav__link">
+    <span class="md-ellipsis">
+      sTD-DFT, or the monopole approximation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#xstd-dft" class="md-nav__link">
+    <span class="md-ellipsis">
+      XsTD-DFT
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#expectation-values-and-others" class="md-nav__link">
+    <span class="md-ellipsis">
+      Expectation values and others
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Expectation values and others">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#density-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      Density matrix
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dipole-moment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dipole moment
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#responses-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Responses (properties)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Responses (properties)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polarizability" class="md-nav__link">
+    <span class="md-ellipsis">
+      Polarizability
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ground-to-excited-transition-dipole-moment-and-oscillator-strength" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ground to excited transition dipole moment (and oscillator strength)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#first-hyperpolarizability" class="md-nav__link">
+    <span class="md-ellipsis">
+      First hyperpolarizability
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#excited-to-excited-transition-dipole-moment-and-oscillator-strength" class="md-nav__link">
+    <span class="md-ellipsis">
+      Excited to excited transition dipole moment (and oscillator strength)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources-and-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sources and references
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+  <h1>Theory</h1>
+
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">¤</a></h2>
+<p>Molecular properties are defined as a response of a (molecular) system to an external perturbation (change of geometry, application of an external electric field, etc).
+The goal of <code>stdlite</code> is to compute properties within the simplified TDA/TD-DFT framework.</p>
+<div class="admonition note">
+<p class="admonition-title">TL;DR:</p>
+<p>The following steps are required to perform a sTD-DFT calculation:</p>
+<ol>
+<li>Extract data (<em>i.e.</em>, the atomic orbitals, as well as the MO energies, <span class="arithmatex">\(\varepsilon\)</span>, and LCAO coefficients, <span class="arithmatex">\(\mathbf C\)</span>) from a QC calculation;</li>
+<li>Select configuration state functions (CSFs, <span class="arithmatex">\(\ket{\Psi_i^a}\)</span>, or singly excited determinants) using <a href="#the-simplified-approaches-to-td-dft">a set of rules</a> and build the corresponding electronic hessian (super-)matrices <span class="arithmatex">\(\mathbf A'\)</span> and <span class="arithmatex">\(\mathbf B'\)</span> (might be zero);</li>
+<li>Using said matrices, compute the <a href="#linear-response">linear response</a> or <a href="#excitations">amplitude</a> vectors. This generally requires to compute extra <a href="#expectation-values-and-others">expectation values</a> matrices in MO basis, such as the <a href="#dipole-moment">dipole moment</a>;</li>
+<li>Use said response/amplitude vectors to compute actual <a href="#properties">properties</a>.</li>
+</ol>
+</div>
+<h2 id="response-function-theory">Response function theory<a class="headerlink" href="#response-function-theory" title="Permanent link">¤</a></h2>
+<p>In the time-independent (or static) case, a general expression for the electronic energy under perturbation is:</p>
+<div class="arithmatex">\[E(\{\kappa_i\}, \lambda) = \Braket{\Psi(\{\kappa_i\}) | \hat H(\lambda) | \Psi(\{\kappa_i\})},\]</div>
+<p>where <span class="arithmatex">\(\{\kappa_i\}\)</span> are the set of parameters that minimize the energy (<em>e.g.</em>, the LCAO coefficients), while <span class="arithmatex">\(\hat H(\lambda) = \hat H_0 + \lambda \hat V\)</span>, where <span class="arithmatex">\(\hat H_0\)</span> is the electronic Hamiltonian (for which solutions are known) and <span class="arithmatex">\(\hat V\)</span> is a perturbation.
+In the framework of the <a href="https://en.wikipedia.org/wiki/Perturbation_theory_(quantum_mechanics)">Rayleigh-Schrödinger perturbation theory</a>, <span class="arithmatex">\(E\)</span> can be expanded in a power series, </p>
+<div class="arithmatex">\[E= E^{(0)} + \lambda\,E^{(1)} + \lambda^2\,E^{(2)}+\ldots,\]</div>
+<p>with:</p>
+<div class="arithmatex">\[E^{(k)} = \frac{1}{k!}\,\left.\frac{d^k E}{d \lambda^k}\right|_{\lambda=0}.\]</div>
+<p>In particular, the first order derivative is:</p>
+<div class="arithmatex">\[\begin{aligned}
+\frac{d E}{d\lambda} &amp;= \frac{\partial E(\{\kappa_i\},\lambda)}{\partial\lambda} + \sum_i \left.\frac{ \partial E(\{\kappa_i \}, \lambda)}{\partial\kappa_i}\right|_{\lambda=0}\,\frac{\partial\kappa_i}{\partial\lambda} \\
+&amp;= \Braket{\Psi(\{\kappa_i \})|\frac{\partial\hat{H}(\lambda)}{\partial \lambda}|\Psi(\{\kappa_i\})},
+\end{aligned}\]</div>
+<p>which is the <a href="https://en.wikipedia.org/wiki/Hellmann%E2%80%93Feynman_theorem">Hellman-Feynman theorem</a>, obtained under the assumption that the <span class="arithmatex">\(\{\kappa_i\}\)</span> were obtained <a href="https://en.wikipedia.org/wiki/Variational_method_(quantum_mechanics)">variationaly</a>, given the stationary principle:</p>
+<div class="arithmatex">\[\forall\kappa_i: \left.\frac{\partial E(\{\kappa_i \}, \lambda)}{\partial\kappa_i}\right|_{\lambda=0} = 0.\]</div>
+<p>The second-order derivative is obtained from differentiating the Hellman-Feynman theorem expression, yielding (under the assumption that the perturbation is linear):</p>
+<div class="arithmatex">\[\tag{1}\frac{d^2 E}{d\lambda^2} =
+\sum_i \left.\frac{\partial^2 E(\{\kappa_i\},\lambda)}{\partial\lambda\partial\kappa_i}\right|_{\lambda=0}\,\frac{\partial\kappa_i}{\partial\lambda} 
+\Leftrightarrow \braket{\braket{\hat V; \hat V}} = (\mathbf\kappa^\lambda)^T\,\eta^\lambda\]</div>
+<p>where <span class="arithmatex">\(\braket{\braket{\hat V; \hat V}}\)</span> is the linear response function, <span class="arithmatex">\(\mathbf\eta^\lambda\)</span> is the perturbed electronic gradient, and <span class="arithmatex">\(\mathbf\kappa^\lambda\)</span>, the first-order response vector to <span class="arithmatex">\(\lambda\)</span>, containing all <span class="arithmatex">\(\partial\kappa_i/\partial\lambda\)</span>.
+<span class="arithmatex">\(\kappa^\lambda\)</span> is computed thanks to the following set of equations (derivative of the stationary condition):</p>
+<div class="arithmatex">\[\tag{2}\sum_j \left.\frac{\partial^2 E(\{\kappa_i\},\lambda)}{\partial\kappa_i\partial\kappa_j}\right|_{\lambda=0}\,\frac{\partial\kappa_j}{\partial\lambda} = -\left.\frac{\partial^2 E(\{\kappa_i\},\lambda)}{\partial\lambda\partial\kappa_i}\right|_{\lambda=0}  \Leftrightarrow \mathbf{E}^\lambda\,\mathbf\kappa^\lambda = -\mathbf\eta^\lambda\]</div>
+<p>where <span class="arithmatex">\(\mathbf E^\lambda\)</span> is the electronic Hessian. Evaluating the elements of <span class="arithmatex">\(\mathbf E^\lambda\)</span> and <span class="arithmatex">\(\mathbf\eta^\lambda\)</span> actually result in new kinds of (bielectronic) integrals to evaluate (<em>vide supra</em>), while <span class="arithmatex">\(\kappa^\lambda\)</span> has to be computed by solving this equation.
+Thanks to the <a href="https://doi.org/10.1007/s10910-008-9497-x">2n+1 rule</a>, the response vector can be used to access the quadratic response function (<em>i.e.</em>, the third derivative of the energy w.r.t. <span class="arithmatex">\(\lambda\)</span>) as well.</p>
+<p>The dynamic case is similar. 
+Assuming a time-dependent perturbed Hamiltonian (<a href="https://en.wikipedia.org/wiki/Heisenberg_picture">Heisenberg picture</a>), <span class="arithmatex">\(\hat H(\lambda,t) = \hat H_0 + \hat V(\lambda, t)\)</span>, its development is governed by the time-dependent (TD) Shrödinger equation.
+Following the <a href="https://en.wikipedia.org/wiki/Floquet_theory">Floquet theory</a>, it is proposed to extract a (position independent) phase factor, <span class="arithmatex">\(F(t)\)</span> from the wavefunction:</p>
+<div class="arithmatex">\[\Psi(\{\kappa_i\},t) = e^{i\,F(t)}\,\tilde\Psi(\{\kappa_i\},t),\]</div>
+<p>where <span class="arithmatex">\(\tilde\Psi\)</span> is the phase isolated wavefunction. Inserting this expression in the TD Shrödinger equation results in:</p>
+<div class="arithmatex">\[\begin{aligned}
+&amp;\left[\hat H(\lambda,t)-i \frac{\partial}{\partial t}\right]\,\tilde\Psi(\{\kappa_i\},t) = Q(t)\,\tilde\Psi(\{\kappa_i\},t),\\
+&amp;\text{ with } Q(t) = \frac{\partial F(t)}{\partial t} = \Braket{\tilde\Psi(\{\kappa_i\},t)|\hat H(\lambda,t)-i \frac{\partial}{\partial t}|\tilde\Psi(\{\kappa_i\},t)}.
+\end{aligned}\]</div>
+<p>As a result, <span class="arithmatex">\(Q(t)\)</span>, a real quantity, is called the TD quasienergy since it reduces to the energy <span class="arithmatex">\(E_0\)</span> in the time-independent case.
+In Floquet theory, the perturbation is assumed to be periodic in time, of frequency <span class="arithmatex">\(\omega\)</span> (and period <span class="arithmatex">\(T\)</span>), which means that <span class="arithmatex">\(\hat V(\lambda,t)\)</span> oscillates at a multiple of the fundamental frequency <span class="arithmatex">\(\omega\)</span>.
+Therefore, the Hamiltonian becomes periodic, which implies that <span class="arithmatex">\(\tilde{\Psi}\)</span> also oscillates with the same period.
+As a consequence one can define the (time-averaged) quasienergy <span class="arithmatex">\(\mathcal{Q}\)</span> is given by:</p>
+<div class="arithmatex">\[\mathcal{Q} = \frac{1}{T}\,\int_0^T dt\,\Braket{\tilde\Psi(\{\kappa_i\},t)|\hat H(\lambda,t)-i \frac{\partial}{\partial t}|\tilde\Psi(\{\kappa_i\},t)}.\]</div>
+<p>The quasienergy <span class="arithmatex">\(\mathcal Q\)</span> acts similarly to <span class="arithmatex">\(E\)</span> in the time-independent case, wich allows to obtain a TD version of the Hellman-Feynman theorem, and of the linear response equations.
+Using a Fourier series of <span class="arithmatex">\(\hat V\)</span>, one can obtain a TD version of the linear response equations [Eqs. (1) and (2)].</p>
+<h2 id="application-to-dft-td-dft">Application to DFT: TD-DFT<a class="headerlink" href="#application-to-dft-td-dft" title="Permanent link">¤</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In the following, <span class="arithmatex">\(p\)</span>, <span class="arithmatex">\(q\)</span>, <span class="arithmatex">\(r\)</span>, <span class="arithmatex">\(s\)</span>,... refer to molecular orbitals (MOs), <span class="arithmatex">\(i\)</span>, <span class="arithmatex">\(j\)</span>, <span class="arithmatex">\(k\)</span>, <span class="arithmatex">\(l\)</span>,... to occupied, <span class="arithmatex">\(a\)</span>, <span class="arithmatex">\(b\)</span>, <span class="arithmatex">\(c\)</span>, <span class="arithmatex">\(d\)</span>,... to unoccupied ones, <span class="arithmatex">\(\ket{m}\)</span>, <span class="arithmatex">\(\ket{n}\)</span>,... to electronic excited states, <span class="arithmatex">\(\mu\)</span>, <span class="arithmatex">\(\nu\)</span>, <span class="arithmatex">\(\xi\)</span>... to atomic orbitals (AOs) and <span class="arithmatex">\(\zeta\)</span>, <span class="arithmatex">\(\sigma\)</span>, <span class="arithmatex">\(\tau\)</span>, <span class="arithmatex">\(\upsilon\)</span>, ... to cartesian direction. 
+All quantities are in <a href="https://en.wikipedia.org/wiki/Atomic_units">atomic units</a>, unless otherwise mentioned.</p>
+</div>
+<h3 id="linear-response">Linear response<a class="headerlink" href="#linear-response" title="Permanent link">¤</a></h3>
+<p>Under the conditions of the <a href="https://en.wikipedia.org/wiki/Runge%E2%80%93Gross_theorem">Runge and Gross theorem</a>, this theory can be applied to DFT.
+For a time-dependent perturbation at frequency <span class="arithmatex">\(\omega\)</span>, and assuming the Hermicity of the different matrices and real orbitals, Eq. (2) can be written (the superscripts <span class="arithmatex">\(\lambda\)</span> have been dropped for clarity):</p>
+<div class="arithmatex">\[\tag{3}\left[\begin{pmatrix}
+\mathbf A &amp; \mathbf B \\
+\mathbf B &amp; \mathbf A
+\end{pmatrix}-\omega\begin{pmatrix}
+\mathbf 1 &amp; \mathbf 0\\
+\mathbf 0 &amp; -\mathbf 1
+\end{pmatrix}\right]\,\begin{pmatrix}
+\mathbf x_\zeta(\omega)\\ \mathbf y_\zeta(\omega)
+\end{pmatrix}=-\begin{pmatrix}
+\mathbf \eta_\zeta\\ \mathbf \eta_\zeta
+\end{pmatrix},\]</div>
+<p>where <span class="arithmatex">\(\mathbf x_\zeta(\omega)\)</span> and <span class="arithmatex">\(\mathbf y_\zeta(\omega)\)</span> are the frequency-dependent linear response vectors (to be determined) in direction <span class="arithmatex">\(\zeta\)</span>.
+The <span class="arithmatex">\(\mathbf A\)</span> and <span class="arithmatex">\(\mathbf B\)</span> are electronic Hessian (super-)matrices (related to orbital rotations).
+The perturbed electronic gradient vector elements <span class="arithmatex">\(\eta_{ia,\zeta} = \braket{i|\hat\eta_\zeta|a}\)</span> are elements of the expectation value matrix corresponding to the perturbation (e.g., when the perturbation is an electric field, <span class="arithmatex">\(\hat\eta\)</span> corresponds to the dipole moment operator).</p>
+<p>To solve this problem, Eq. (3) can be turned into a linear equation of the form:</p>
+<div class="arithmatex">\[[(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}]\,[\mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)] = -2\mathbf\eta_\zeta.\]</div>
+<details class="note">
+<summary>Detailed solution</summary>
+<p>The previous equation is easier seen as a linear system written in the following form:</p>
+<div class="arithmatex">\[\mathbf L(\omega)\,\mathbf u_{\zeta}(\omega) = -2\mathbf\eta_\zeta,\]</div>
+<p>where <span class="arithmatex">\(\mathbf L(\omega) = (\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}\)</span> and <span class="arithmatex">\(\mathbf u_{\zeta}(\omega)  = \mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)\)</span>, and which is solved using any of the usual methods for linear systems (worst case scenario: <span class="arithmatex">\(\mathbf u_\zeta(\omega) = -2\mathbf L^{-1}(\omega)\,\eta_\zeta\)</span>).
+Then, since, from Eq. (3),</p>
+<div class="arithmatex">\[\mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega) = \omega\,(\mathbf A-\mathbf B)^{-1}\,[\mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)],\]</div>
+<p>one can define <span class="arithmatex">\(\mathbf v_{\zeta}(\omega)\)</span> as:</p>
+<div class="arithmatex">\[\mathbf v_{\zeta}(\omega)  =\mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega) =  \omega\,(\mathbf A-\mathbf B)^{-1}\,\mathbf u_{\zeta}(\omega),\]</div>
+<p>the response vector are obtained: <span class="arithmatex">\(\mathbf x_{\zeta}(\omega) = \frac{1}{2}[\mathbf u_{\zeta}(\omega)  + \mathbf v_{\zeta}(\omega)]\)</span> and <span class="arithmatex">\(\mathbf y_{\zeta}(\omega) = \frac{1}{2}[\mathbf u_{\zeta}(\omega)  - \mathbf v_{\zeta}(\omega)]\)</span>.</p>
+</details>
+<p>The <a href="https://doi.org/10.1016/S0009-2614(99)01149-5">Tamm-Dancoff approximation</a> (setting <span class="arithmatex">\(\mathbf B = \mathbf 0\)</span> in all previous equations) can also be used.</p>
+<h3 id="excitations">Excitations<a class="headerlink" href="#excitations" title="Permanent link">¤</a></h3>
+<p>Since the pole of the response function corresponds to the electronic excited states, it is also customary to consider the case when <span class="arithmatex">\(\eta = 0\)</span>, which lead to the following pseudo-hermitian problem:</p>
+<div class="arithmatex">\[\tag{4}\begin{pmatrix}
+\mathbf A &amp; \mathbf B \\
+\mathbf B &amp; \mathbf A
+\end{pmatrix}\,\begin{pmatrix}
+\mathbf x^m\\ \mathbf y^m
+\end{pmatrix}=\omega_m\begin{pmatrix}
+\mathbf 1 &amp; \mathbf 0\\
+\mathbf 0 &amp; -\mathbf 1
+\end{pmatrix}\,\begin{pmatrix}
+\mathbf x^m\\ \mathbf y^m
+\end{pmatrix}\]</div>
+<p>which is generally referred to as the Casida equation. 
+In this case, each <span class="arithmatex">\(\omega_m\)</span> (eigenvalue, corresponding to the transition energy bewteen <span class="arithmatex">\(\ket{0}\)</span> and <span class="arithmatex">\(\ket{m}\)</span>) is associated to one <span class="arithmatex">\(\mathbf x^m\)</span> and one <span class="arithmatex">\(\mathbf y^m\)</span> ("eigenfunction"), might be seen as amplitude vectors associated to excitation and de-excitation, respectively. 
+Solving this problem is done using two approaches.</p>
+<p>On the one hand, Eq. (4) can be rewritten in a true eigenvalue problem, namely:</p>
+<div class="arithmatex">\[(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}+\mathbf{B})\,(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,\mathbf{z}^m = \omega^2\,\mathbf{z}^m, \text{ with } \mathbf{z}^m = (\mathbf{A}-\mathbf{B})^{-\frac{1}{2}} (\mathbf x^m + \mathbf y^m).\]</div>
+<details class="note">
+<summary>Detailed solution</summary>
+<p>In this case, after <span class="arithmatex">\(\mathbf z^m\)</span> have been obtained, one extract using the following procedure. First, from previous expression, one can obtain:</p>
+<div class="arithmatex">\[ \mathbf u^m = \mathbf x^m + \mathbf y^m = \frac{1}{\sqrt\omega}\,(\mathbf A-\mathbf B)^\frac{1}{2}\,\mathbf z^m.\]</div>
+<p>Now, since <span class="arithmatex">\((\mathbf A + \mathbf B)\,(\mathbf x^m+\mathbf y^m) = \omega\,(\mathbf x^m-\mathbf y^m)\)</span> [obtained from Eq. (4)], one has:</p>
+<div class="arithmatex">\[\mathbf v^m = \mathbf x^m-\mathbf y^m = \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,(\mathbf x^m+\mathbf y^m)  = \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,\mathbf u^m,\]</div>
+<p>and therefore the response vector are obtained: <span class="arithmatex">\(\mathbf x^m = \frac{1}{2}(\mathbf u^m + \mathbf v^m)\)</span> and <span class="arithmatex">\(\mathbf y^m = \frac{1}{2}(\mathbf u^m - \mathbf v^m)\)</span>.</p>
+</details>
+<p>On the other hand, the <a href="https://doi.org/10.1016/S0009-2614(99)01149-5">Tamm-Dancoff approximation</a> (<span class="arithmatex">\(\mathbf B = \mathbf 0\)</span> and thus <span class="arithmatex">\(\mathbf y^m = 0\)</span>) simply leads to:</p>
+<div class="arithmatex">\[\mathbf A\,\mathbf x^m = \omega_m\,\mathbf x^m.\]</div>
+<p>In this case, <span class="arithmatex">\(\ket{m} = \sum_{ia}\,x^m_{ia}\,\ket{\Psi_i^a}\)</span>, where <span class="arithmatex">\(\ket{\Psi_i^a}\)</span> is a <strong>configuration state function</strong>, <em>i.e.</em>, a singly-excited determinant where an electron has been moved from <span class="arithmatex">\(i\)</span> to <span class="arithmatex">\(a\)</span>.</p>
+<p>In both cases, these amplitude vectors are linked to their linear response counterparts through the following spectral representation:</p>
+<div class="arithmatex">\[\begin{aligned}
+x_{ia,\zeta}(\omega) &amp;= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,\left[\frac{x_{ia}^{m}}{\omega-\omega_m}-\frac{y_{ia}^{m}}{\omega+\omega_m}\right],\\
+y_{ia,\zeta}(\omega) &amp;= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,\left[\frac{y_{ia}^{m}}{\omega-\omega_m}-\frac{x_{ia}^{m}}{\omega+\omega_m}\right],
+\end{aligned}\]</div>
+<p>where these expression involves a summation over the manifold <span class="arithmatex">\(\{\ket{m}\}\)</span> of excited states (and one can set <span class="arithmatex">\(\mathbf y^m = 0\)</span> to get the TDA version).
+These representations lead to simplification when taking residue of response functions.</p>
+<div class="admonition info">
+<p class="admonition-title">Implications</p>
+<p>From the spectral representations of <span class="arithmatex">\(x_{ia,\zeta}(\omega)\)</span> and <span class="arithmatex">\(y_{ia,\zeta}(\omega)\)</span>, it is easy to see that:</p>
+<div class="arithmatex">\[x_{ia,\zeta}(0) = y_{ia,\zeta}(0),\]</div>
+<p>and:</p>
+<div class="arithmatex">\[x_{ia,\zeta}(-\omega) = y_{ia,\zeta}(\omega) \land y_{ia,\zeta}(-\omega) = x_{ia,\zeta}(\omega).\]</div>
+<p>The latter is usefull to evaluate linear and quadratic response properties at the same time.</p>
+</div>
+<h2 id="the-simplified-approaches-to-td-dft">The simplified approaches to TD-DFT<a class="headerlink" href="#the-simplified-approaches-to-td-dft" title="Permanent link">¤</a></h2>
+<p>In the rest of this development a <strong>global hybrid</strong> density functional is assumed,</p>
+<div class="arithmatex">\[E_{XC}= (1-a_x)\,E_X^{GGA}+a_x\,E_X^{HF}+E_C^{GGA}.\]</div>
+<p>Thanks to the <a href="https://en.wikipedia.org/wiki/Slater%E2%80%93Condon_rules">Slater-Condon rules</a>, one can evaluate the elements of <span class="arithmatex">\(\mathbf A\)</span> and <span class="arithmatex">\(\mathbf B\)</span>, which are:</p>
+<div class="arithmatex">\[\begin{aligned}
+&amp;A_{ia, jb} = \delta_{ij}\delta_{ab} (\varepsilon_a - \varepsilon_i) + 2\,(ia|jb) - a_x\,(ij|ab) + (1-a_x)\,(ia|f_{XC}|jb),\\
+&amp;B_{ia,jb} = 2\,(ia|bj) - a_x\,(ib|aj) + (1-a_x)\,(ia|f_{XC}|bj),
+\end{aligned}\]</div>
+<p>where, <span class="arithmatex">\(\varepsilon_i\)</span> and <span class="arithmatex">\(\varepsilon_a\)</span> are orbital energies, <span class="arithmatex">\(a_x\)</span> is the amount of non-local Fock exchange, <span class="arithmatex">\((ia|jb)\)</span>, <span class="arithmatex">\((ia|bj)\)</span>, and <span class="arithmatex">\((ib|aj)\)</span> are exchange-type and <span class="arithmatex">\((ij|ab)\)</span> Coulomb-type two-electron integrals, <span class="arithmatex">\((ia|f_{XC}|jb)\)</span> and <span class="arithmatex">\((ia|f_{XC}|bj)\)</span> are responses of the exchange-correlation functional.</p>
+<p>The simplified TD-DFT methods root in 3 approximations which simplify the content of <span class="arithmatex">\(\mathbf A\)</span> and <span class="arithmatex">\(\mathbf B\)</span>:</p>
+<ol>
+<li>all integrals involving the XC-functionals are neglected (referred to as the <a href="https://en.wikipedia.org/wiki/Random_phase_approximation">random phase approximation (RPA)</a> approach),</li>
+<li>the singly excited configuration space is truncated (see below), and</li>
+<li>the <a href="https://en.wikipedia.org/wiki/Zero_differential_overlap">zero-differential overlap</a> (ZDO) approximation is used for two-electron integrals which built <span class="arithmatex">\(\mathbf A\)</span> and <span class="arithmatex">\(\mathbf B\)</span>. Different approximations for the remaining integrals define different flavors of simplified TD-DFT (see below).</li>
+</ol>
+<p>Then, using those approximated <span class="arithmatex">\(\mathbf A'\)</span> and <span class="arithmatex">\(\mathbf B'\)</span> matrices, the linear response or Casida equations presented above are solved.</p>
+<h3 id="truncation-of-the-active-space">Truncation of the active space<a class="headerlink" href="#truncation-of-the-active-space" title="Permanent link">¤</a></h3>
+<p>The truncation of the CI space is done in three steps:</p>
+<ol>
+<li>An active MO space is defined by <span class="arithmatex">\(\varepsilon_p \in [\varepsilon_{LUMO}-E_{w}, \varepsilon_{HOMO}+E_{w}]\)</span>, with <span class="arithmatex">\(E_w = 2\,(1+0.8a_x)\,E_{thr}\)</span>.</li>
+<li>From this active space, primary <span class="arithmatex">\(\ket{\Psi_i^a}\)</span> configuration state functions (P-CSFs) are selected, for which <span class="arithmatex">\(A_{ia,ia} &lt; E_{thr}\)</span>.</li>
+<li>Then, from CSFs <span class="arithmatex">\(\ket{\Psi_j^b}\)</span> for which <span class="arithmatex">\(A_{jb,jb} &gt; E_{thr}\)</span>, a set of secondary CSFs (S-CSFs), for which <span class="arithmatex">\(E^{(2)}_{jb} &gt; E^{(2)}_{thr}\)</span> is build (typically, <span class="arithmatex">\(E^{(2)}_{thr} = 10^{-4}\)</span>). Other CSFs are discarded.</li>
+</ol>
+<p>The selection of S-CSFs is based on a perturbative approach, where <span class="arithmatex">\(E^{(2)}_{jb}\)</span> measure the cumulative perturbative contributions of a given S-CSF <span class="arithmatex">\(\ket{\Psi_j^b}\)</span> to all the P-CSFs <span class="arithmatex">\(\ket{\Psi_i^a}\)</span>:</p>
+<div class="arithmatex">\[E^{(2)}_{jb} = \sum_{ia}^{\text{P-CSFs}} \frac{|A_{ia,jb}|^2}{A_{jb,jb}-A_{ia,ia}}.\]</div>
+<h3 id="std-dft-or-the-monopole-approximation">sTD-DFT, or the monopole approximation<a class="headerlink" href="#std-dft-or-the-monopole-approximation" title="Permanent link">¤</a></h3>
+<p>To evaluate the integrals, a formula of the following kind is used:</p>
+<div class="arithmatex">\[(ia|jb) \approx (ia|jb)' = \sum_{AB}^N q_A^{ia}\,q_B^{jb}(AA|BB), \text{ with } q_A^{ia} = \sum_{\mu\in A} (C^{\perp}_{i\mu})^\star\,C^{\perp}_{a\mu},\]</div>
+<p>where the <span class="arithmatex">\(q_{ia}^A\)</span>'s are the transition charges on atom A, computed using Löwdin orthogonalized LCAO coefficients, <span class="arithmatex">\(C^\perp_{i\mu} = \sum_\nu C_{i\nu}\,S^{1/2}_{\nu\mu}\)</span>.</p>
+<details class="note">
+<summary>Details of the application of the ZDO approximation</summary>
+<p>Starting from the definition of a 4-center integral:</p>
+<div class="arithmatex">\[(ia|jb) = \sum_{\mu\nu\alpha\beta} (C_{i\mu})^\star\,C_{a\nu}\,(C_{j\alpha})^\star\,C_{b\beta}\,(\mu\nu|\alpha\beta),\]</div>
+<p>one can instead use Löwdin orthogonalized molecular orbitals, <span class="arithmatex">\(C^\perp = C\,S^{1/2}\)</span>:</p>
+<div class="arithmatex">\[(ia|jb) = \sum_{\mu\nu\alpha\beta} (C^\perp_{i\mu})^\star\,C^\perp_{a\nu}\,(C^\perp_{j\alpha})^\star\,C^\perp_{b\beta}\,(\lambda_\mu\lambda_\nu|\lambda_\alpha\lambda_\beta),\]</div>
+<p>where <span class="arithmatex">\(\lambda_\mu = \sum_\nu S^{-1/2}_{\mu\nu}\,\phi_\nu\)</span>.
+Now, the <a href="https://en.wikipedia.org/wiki/Zero_differential_overlap">ZDO approximation</a> impose that <span class="arithmatex">\(\lambda_\mu\,\lambda_\nu = \delta_{\mu\nu}\lambda_\mu\lambda_\mu\)</span>, so:</p>
+<div class="arithmatex">\[(ia|jb) \approx \sum_{\mu\nu} (C^\perp_{i\mu})^\star\,C^\perp_{a\mu}\,(C^\perp_{j\nu})^\star\,C^\perp_{b\nu}\,(\lambda_\mu\lambda_\mu|\lambda_\nu\lambda_\nu).\]</div>
+<p>Finally, it is assumed that <span class="arithmatex">\(\lambda_\mu\lambda_\mu \approx \mu\mu\)</span>, and therefore:</p>
+<div class="arithmatex">\[(ia|jb) \approx \sum_{\mu\nu} (C^\perp_{i\mu})^\star\,C^\perp_{a\mu}\,(C^\perp_{j\nu})^\star\,C^\perp_{b\nu}\,(\mu\mu|\nu\nu).\]</div>
+<p>A simplification of the notation arise from population analysis, which allows to defines a <em>transition charge</em>:</p>
+<div class="arithmatex">\[q_A^{ia} = \sum_{\mu\in A} (C^{\perp}_{i\mu})^\star\,C^{\perp}_{a\mu},\]</div>
+<p>leading to the final expresssion.</p>
+</details>
+<p>The remaining <span class="arithmatex">\((AA|BB)\)</span> integrals are evaluated with Mataga–Nishimoto–Ohno–Klopman (MNOK) damped Coulomb operators, according to the type of bielectronic integral that they approximate:</p>
+<ul>
+<li>For Coulomb-type integrals, <span class="arithmatex">\((ij|ab)\)</span>,</li>
+</ul>
+<div class="arithmatex">\[(AA|BB)_J = \left[\frac{1}{R_{AB}^{\gamma_J}+\left(a_x\,\eta_{AB}\right)^{-\gamma_J}}\right]^{1/\gamma_J}.\]</div>
+<ul>
+<li>For exchange-type integrals, <span class="arithmatex">\((ia|jb)\)</span>,</li>
+</ul>
+<div class="arithmatex">\[(AA|BB)_K = \left[\frac{1}{R_{AB}^{\gamma_K}+\eta_{AB}^{-\gamma_K}}\right]^{1/\gamma_K}.\]</div>
+<p>In both cases, <span class="arithmatex">\(\eta_{AB} = \frac{1}{2}\,(\eta_A + \eta_B)\)</span> where <span class="arithmatex">\(\eta_A\)</span> is the chemical hardness of A (obtained from <a href="https://dx.doi.org/10.1002/qua.22202">here</a>), while <span class="arithmatex">\(\gamma_J\)</span> and <span class="arithmatex">\(\gamma_K\)</span> are globally fitted parameters.  </p>
+<p>In practice, the remaining elements of the (now approximated) electronic Hessian matrices <span class="arithmatex">\(\mathbf A'\)</span> and <span class="arithmatex">\(\mathbf B'\)</span> are:</p>
+<div class="arithmatex">\[\begin{aligned}
+A'_{ia,jb} =&amp; \delta_{ij}\delta_{ab} (\varepsilon_a - \varepsilon_i) + 2\,(ia|jb)' - (ij|ab)',\\ 
+B'_{ia,jb} =&amp; 2\,(ia|bj)' -a_x\,(ib|aj)'.
+\end{aligned}\]</div>
+<details class="note">
+<summary>Implementation detail</summary>
+<p>In order to be computationally efficient, these element can be evaluated by precomputing three kind of transition charges: <span class="arithmatex">\(q_A^{ij}\)</span>, <span class="arithmatex">\(q_A^{ia}\)</span>, and <span class="arithmatex">\(q_A^{ab}\)</span>, and two intermediates:</p>
+<div class="arithmatex">\[(ij|BB)_J = \sum_A^N q_A^{ij}\,(AA|BB)_J \text{ and } (ia|BB)_K = \sum_A^N q_A^{ia}\,(AA|BB)_K,\]</div>
+<p>so that a scalar product leads to the value of the different integrals. For example,</p>
+<div class="arithmatex">\[(ia|jb)' \approx \sum_{B}^N (ia|BB)_K\,q_B^{jb}.\]</div>
+<p>However, these intermediates have a huge memory cost [<span class="arithmatex">\(\mathcal O (N_{atm}\times N_{MO}^2)\)</span> altogether], so a direct version (integrals are evaluated when requested) is also available.</p>
+</details>
+<h3 id="xstd-dft">XsTD-DFT<a class="headerlink" href="#xstd-dft" title="Permanent link">¤</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The publication describing the XsTD-DFT implementation is not yet available. Thus, this approach is not yet implemented.</p>
+</div>
+<h2 id="expectation-values-and-others">Expectation values and others<a class="headerlink" href="#expectation-values-and-others" title="Permanent link">¤</a></h2>
+<p>Things that can be obtained without solving the linear response equation.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When required, conversion of <span class="arithmatex">\(X\)</span> from the AO to the MO basis is done using:</p>
+<div class="arithmatex">\[X^{MO}_{pq} = \sum^{AO}_{\mu\nu} C_{p\mu} X_{\mu\nu} C_{q\nu}.\]</div>
+</div>
+<h3 id="density-matrix">Density matrix<a class="headerlink" href="#density-matrix" title="Permanent link">¤</a></h3>
+<p>The density matrix elements are defined as:</p>
+<div class="arithmatex">\[P_{\mu\nu} = \sum^{MO}_p n_p\,C^\star_{p\mu}\,C_{p\nu},\]</div>
+<p>where <span class="arithmatex">\(n_p\)</span> is the occupancy of <span class="arithmatex">\(p\)</span>. If this is a closed shell calculation, occupied MO have an occupancy of 2, 0 otherwise.</p>
+<h3 id="dipole-moment">Dipole moment<a class="headerlink" href="#dipole-moment" title="Permanent link">¤</a></h3>
+<p>The total dipole moment is obtained as:</p>
+<div class="arithmatex">\[\vec\mu = \vec\mu_e + \sum^{N_{nuc}}_A Z_A\,\vec r_A,\]</div>
+<p>where <span class="arithmatex">\(Z_A\)</span> and <span class="arithmatex">\(\vec r_A\)</span> are the charge and position of nuclei <span class="arithmatex">\(A\)</span>, respectively.
+The electronic dipole moment, <span class="arithmatex">\(\vec\mu_e\)</span>, is an expectation value of the wavefunction.
+The electric dipole moment matrix elements (in AO basis) are computed as:</p>
+<div class="arithmatex">\[D_{\mu\nu} = \braket{\mu|\hat\mu|\nu} = -\,\braket{\mu|\vec{r}-\vec R_0|\nu},\]</div>
+<p>where the dipole moment integral have been multiplied by the value of the electronic charge (-1 in atomic units) and <span class="arithmatex">\(\vec R_0\)</span> is the origin.
+The electronic dipole moment is computed via:</p>
+<div class="arithmatex">\[\vec\mu_e = \sum^{AO}_{\mu\nu} P_{\mu\nu}\,D_{\nu\mu} = tr(\mathbf P\mathbf D),\]</div>
+<p>where <span class="arithmatex">\(\mathbf P\)</span> is the density matrix. Alternatively, in MO basis:</p>
+<div class="arithmatex">\[\vec\mu_e = \sum^{MO}_p n_p\,\vec\mu_{pp},\]</div>
+<p>where <span class="arithmatex">\(\vec\mu_{pp}\)</span> is a shorthand for <span class="arithmatex">\(D^{MO}_{pp}\)</span>.</p>
+<h2 id="responses-properties">Responses (properties)<a class="headerlink" href="#responses-properties" title="Permanent link">¤</a></h2>
+<p>Things that can be obtained thanks to the amplitude/linear response vectors.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Linear and quadratic response functions are generally noted <span class="arithmatex">\(\braket{\braket{\hat A; \hat B}}_{\omega_B}\)</span> and <span class="arithmatex">\(\braket{\braket{\hat A; \hat B, \hat C}}_{\omega_B,\omega_C}\)</span>, which describes how the expectation value of <span class="arithmatex">\(\hat A\)</span> (at frequency <span class="arithmatex">\(\omega_A = -\omega_B - \omega_C\)</span>) responds to a set of perturbation to first and second order in perturbation.
+Residue of the response functions provide information on the (excited states of the) unperturbed system.</p>
+<p>For example, the linear response function might be extended in the following spectral representation:</p>
+<div class="arithmatex">\[\braket{\braket{\hat A; \hat B}}_{\omega_B} = \sum_{\ket{m}} \frac{\braket{0|\hat A|m}\braket{m|\hat B|0}}{\omega_B-\omega_m} + \frac{\braket{0|\hat B|m}\braket{m|\hat A|0}}{\omega_A+\omega_m},\]</div>
+<p>and a corresponding single residue might be:</p>
+<div class="arithmatex">\[\lim_{\omega_B\to\omega_m} (\omega_B-\omega_m)\,\braket{\braket{\hat A; \hat B}}_{\omega_B} = \braket{0|\hat A|m}\braket{m|\hat B|0},\]</div>
+<p>which provides access to trasition matrix elements <span class="arithmatex">\(\braket{0|\hat A|m}\)</span> between the ground state <span class="arithmatex">\(\ket{0}\)</span> and an excited state <span class="arithmatex">\(\ket{m}\)</span>. 
+In practice, such residues are thus evaluated thanks to amplitude vectors through the spectral representation of linear responses.</p>
+</div>
+<h3 id="polarizability">Polarizability<a class="headerlink" href="#polarizability" title="Permanent link">¤</a></h3>
+<p>The dynamic (electric) polarizability tensor elements are defined:</p>
+<div class="arithmatex">\[\alpha_{\zeta\sigma}(-\omega;\omega) = -\braket{\braket{\hat\mu_\zeta;\hat\mu_\sigma}}_\omega = -2\,\sum_{ia}^{CSF} \mu_{ia,\zeta}\,[x_{ia,\sigma}(\omega)+y_{ia,\sigma}(\omega)].\]</div>
+<h3 id="ground-to-excited-transition-dipole-moment-and-oscillator-strength">Ground to excited transition dipole moment (and oscillator strength)<a class="headerlink" href="#ground-to-excited-transition-dipole-moment-and-oscillator-strength" title="Permanent link">¤</a></h3>
+<p>From the single residue of the electric polarizability, </p>
+<div class="arithmatex">\[\lim_{\omega\to\omega_m} (\omega-\omega_m)\,\braket{\braket{\mu_\zeta;\mu_\sigma}}_\omega =  \braket{0|\hat\mu_\zeta|m}\,\braket{m|\hat\mu_\sigma|0},\]</div>
+<p>the transition dipole moment elements (in the dipole length formalism) between ground <span class="arithmatex">\(\ket{0}\)</span> and excited state <span class="arithmatex">\(\ket{m}\)</span>, associated with energy <span class="arithmatex">\(\omega_{m}\)</span> are given by:</p>
+<div class="arithmatex">\[\mu_{0m,\zeta} = \braket{0|\hat\mu_\zeta|m} =  \sqrt{2}\,\sum_{ia}^{CSF} \vec\mu_{ia,\zeta}\,(x^m_{ia}+y^m_{ia}),\]</div>
+<p>where <span class="arithmatex">\(\zeta\)</span> is a cartesian direction and the <span class="arithmatex">\(\sqrt 2\)</span> factor is required for singlet excitations (it is 0 for triplet).
+The associated <a href="https://en.wikipedia.org/wiki/Oscillator_strength">oscillator strength</a> is defined by:</p>
+<div class="arithmatex">\[f_{0m} = \frac{2}{3}\,\omega_m\,|\vec\mu_{0m}|^2.\]</div>
+<h3 id="first-hyperpolarizability">First hyperpolarizability<a class="headerlink" href="#first-hyperpolarizability" title="Permanent link">¤</a></h3>
+<p>By neglecting the response of the XC kernel and the Hartree XC kernel, the element of the first hyperpolarizability tensor in the sTD-DFT framework are:</p>
+<div class="arithmatex">\[\beta_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) = -\braket{\braket{\hat\mu_\zeta;\hat\mu_\sigma,\hat\mu_\tau}}_{\omega_1,\omega_2} = \mathcal A_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) - \mathcal B_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2),\]</div>
+<p>with <span class="arithmatex">\(\omega_\varsigma = -\omega_1 - \omega_2\)</span>, and:</p>
+<div class="arithmatex">\[\begin{aligned}
+\mathcal A_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) &amp;= \sum_{\mathcal P} \sum_{ia,ja} x_{ia,\zeta}(\omega_\varsigma)\,[-\mu_{ij,\sigma}]\,y_{ja,\tau}(\omega_2), \\
+\mathcal B_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) &amp;= \sum_{\mathcal P} \sum_{ia,ib} x_{ia,\zeta}(\omega_\varsigma)\,[-\mu_{ab,\sigma}]\,y_{ib,\tau}(\omega_2),
+\end{aligned}\]</div>
+<p>where <span class="arithmatex">\(\sum_{\mathcal P}\)</span> is the sum over the sequence of permutations of the pairs of components and energies, <span class="arithmatex">\(\{(\zeta,\omega_\varsigma), (\sigma, \omega_1), (\tau,\omega_2)\}\)</span>.</p>
+<h3 id="excited-to-excited-transition-dipole-moment-and-oscillator-strength">Excited to excited transition dipole moment (and oscillator strength)<a class="headerlink" href="#excited-to-excited-transition-dipole-moment-and-oscillator-strength" title="Permanent link">¤</a></h3>
+<p>From the double residue of the electric first hyperpolarizability:</p>
+<div class="arithmatex">\[\begin{aligned}
+\lim_{\omega_1\to-\omega_m,\omega_2\to\omega_n} &amp;(\omega_1+\omega_m)\,(\omega_2-\omega_n)\,\braket{\braket{\hat\mu_\zeta;\hat\mu_\sigma,\hat\mu_\tau}}_{\omega_1,\omega_2}\\
+&amp;=  \braket{0|\hat\mu_\zeta|m}\,\braket{m|\hat\mu_\sigma - \delta_{mn}\,\braket{0|\hat\mu_\sigma|0}|n}\,\braket{n|\hat\mu_\tau|0},
+\end{aligned}\]</div>
+<p>one extract the (unrelaxed) singlet-to-singlet transition dipole moment from <span class="arithmatex">\(\ket{m}\)</span> to <span class="arithmatex">\(\ket{n}\)</span> (see <a href="https://github.com/pierre-24/stdlite/blob/master/docs/assets/esa.pdf">there</a>):</p>
+<div class="arithmatex">\[\begin{aligned}
+&amp;\braket{m|\hat\mu_\zeta - \delta_{mn}\,\braket{0|\hat\mu_\zeta|0}|n}\\
+&amp;\hspace{2em}= \frac{1}{2}\left\{ \sum_{ia,ib} \mu_{ab,\zeta}\,[x^n_{ia}\,x^m_{ib} + y^m_{ia}\,y^n_{ib}]  - \sum_{ia,ja} \mu_{ij,\zeta}\,[x^n_{ia}\,x^m_{ja} + y^m_{ia}\,y^n_{ja}] \right\}.
+\end{aligned}\]</div>
+<p>which is equal to the fluctuation operator if <span class="arithmatex">\(m = n\)</span>.
+The corresponding oscillator strength is given by:</p>
+<div class="arithmatex">\[f_{mn} = \frac{2}{3}\,(\omega_n-\omega_m)\,(\vec\mu_{mn}\cdot\vec\mu_{nm}).\]</div>
+<h2 id="sources-and-references">Sources and references<a class="headerlink" href="#sources-and-references" title="Permanent link">¤</a></h2>
+<ul>
+<li>J. Toulouse, <a href="https://www.lct.jussieu.fr/pagesperso/toulouse/enseignement/molecular_properties.pdf">Introduction to the calculation of molecular properties by response theory</a> (last consultation: January 2023). </li>
+<li>E. Fromager, <a href="https://quantique.u-strasbg.fr/lib/exe/fetch.php?media=fr:pageperso:ef:lecture_rctf_tddft_e_fromager.pdf">Linear response time-dependent density functional theory</a>  (last consultation: January 2023).</li>
+<li>G. P. Chen, V. K. Voora, M. M. Agee, S. G. Balasubramani, and F. Furche, Random-Phase Approximation Methods. <em>Annu. Rev. Phys. Chem.</em> <strong>2017</strong>, 68, 421 (<a href="https://doi.org/10.1146/annurev-physchem-040215-112308">10.1146/annurev-physchem-040215-112308</a>)</li>
+<li>M. E. Casida, Time-Dependent Density Functional Response Theory for Molecules. In D. E. Chong (ed.), <em>Recent Advances in Density Functional Methods</em>. World Scientific, <strong>1995</strong> (<a href="https://doi.org/10.1142/9789812830586_0005">10.1142/9789812830586_0005</a>).</li>
+<li>S. Hirata, M. Head-Gordon, Time-dependent density functional theory within the Tamm–Dancoff approximation. <em>Chem. Phys. Lett.</em>, <strong>1999</strong>, 314, 291 (<a href="https://doi.org/10.1016/S0009-2614(99)01149-5">10.1016/S0009-2614(99)01149-5</a>)</li>
+<li>S. Löffelsender, P. Beaujean, M. de Wergifosse, Simplified quantum chemistry methods to evaluate non-linear optical properties of large systems. <em>WIREs Comput. Mol. Sci.</em> <strong>2023</strong>, 2023, e1695 (<a href="https://dx.doi.org/10.1002/wcms.1695">10.1002/wcms.1695</a>) [and references therein]. </li>
+<li>S. Grimme, A simplified Tamm-Dancoff density functional approach for the electronic excitation spectra of very large molecules. <em>J Chem Phys.</em> <strong>2013</strong>, 138, 244104 (<a href="https://doi.org/10.1063/1.4811331">10.1063/1.4811331</a>).</li>
+<li>C. Bannwarth, S. Grimme, A simplified time-dependent density functional theory approach for electronic ultraviolet and circular dichroism spectra of very large molecules. <em>Comput Theor Chem.</em> <strong>2014</strong>, 1040, 45 (<a href="https://doi.org/10.1016/j.comptc.2014.02.023">10.1016/j.comptc.2014.02.023</a>).</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://doxide.org" target="_blank" rel="noopener">
+      Doxide
+    </a>
+    and
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.bd41221c.min.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="../javascripts/katex.js"></script>
+      
+    
+  </body>
+</html>

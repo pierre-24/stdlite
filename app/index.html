@@ -1,0 +1,1201 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Light-weight sTD-DFT library">
+      
+      
+      
+      
+        <link rel="prev" href="../tutorial/">
+      
+      
+        <link rel="next" href="../API/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.15">
+    
+    
+      
+        <title>stdlite_run - stdlite</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.7e359304.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/doxide.css">
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#stdlite_run" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="stdlite" class="md-header__button md-logo" aria-label="stdlite" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            stdlite
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              stdlite_run
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/pierre-24/stdlite" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    pierre-24/stdlite
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="stdlite" class="md-nav__button md-logo" aria-label="stdlite" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    stdlite
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/pierre-24/stdlite" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    pierre-24/stdlite
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../theory/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Theory
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Build & install
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tutorial
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    stdlite_run
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    stdlite_run
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#calling-stlite_run" class="md-nav__link">
+    <span class="md-ellipsis">
+      Calling stlite_run
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      Environment variables
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Inputs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Inputs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#general" class="md-nav__link">
+    <span class="md-ellipsis">
+      General
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#context-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      Context ([context])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#responses-responses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Responses ([responses])
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Outputs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Outputs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Public API of libstdlite
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Public API of libstdlite
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Public API documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/logging/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Logging and errors
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/wavefunction/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wavefunction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/basis/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Basis set
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/context/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Context handler
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/response/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Response functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/property/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Properties
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/helpers/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Helpers functions and macros
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/utilities/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Utilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    API of stdlite_run
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            API of stdlite_run
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/app/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    The application
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/app/user_input_handler/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    User input handler
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/app/requests/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Requests for response
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API/app/responses_handler/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Responses handler
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contribute
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#calling-stlite_run" class="md-nav__link">
+    <span class="md-ellipsis">
+      Calling stlite_run
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      Environment variables
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Inputs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Inputs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#general" class="md-nav__link">
+    <span class="md-ellipsis">
+      General
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#context-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      Context ([context])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#responses-responses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Responses ([responses])
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Outputs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Outputs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="stdlite_run"><code>stdlite_run</code><a class="headerlink" href="#stdlite_run" title="Permanent link">¤</a></h1>
+<p>This page describe in details the usage of <code>stdlite_run</code>.</p>
+<h2 id="calling-stlite_run">Calling <code>stlite_run</code><a class="headerlink" href="#calling-stlite_run" title="Permanent link">¤</a></h2>
+<p>The utility <code>stdlite_run</code> primarily read an input file written in the <a href="https://toml.io/">TOML format</a>, described below.</p>
+<p>A typical way to call the utility is to use:</p>
+<div class="highlight"><pre><span></span><code>stdlite_run<span class="w"> </span>input.toml
+</code></pre></div>
+<p>Command line options, described below can also be given:</p>
+<div class="highlight"><pre><span></span><code>stdlite_run<span class="w"> </span>input.toml<span class="w"> </span>--ctx_ax<span class="o">=</span><span class="s2">&quot;0.7&quot;</span>
+</code></pre></div>
+<p>Note that a command line option, when it exists, have precedence over the input file.</p>
+<h2 id="environment-variables">Environment variables<a class="headerlink" href="#environment-variables" title="Permanent link">¤</a></h2>
+<p>If the application is built to do so (which is the default), one can control the number of processors used by <a href="https://openmp.llvm.org/">OpenMP</a> to accelerate the program:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">OMP_NUM_THREADS</span><span class="o">=</span><span class="m">4</span>
+</code></pre></div>
+<p>Eventually, the verbosity level can be adjusted through environment variables:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">STDL_LOG_LEVEL</span><span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="c1"># default is 0, set to -1 to silence the program</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">STDL_DEBUG_LEVEL</span><span class="o">=</span><span class="m">3</span><span class="w"> </span><span class="c1"># default is 1, set to -1 to silence the program</span>
+</code></pre></div>
+<h2 id="inputs">Inputs<a class="headerlink" href="#inputs" title="Permanent link">¤</a></h2>
+<p>In the following, "Keyword" refers to keywords that can be put in the TOML input.</p>
+<p>When a keyword type is "<code>str</code>/<code>float</code> (energy)", the energy is to be given in the format <code>"xxxYY"</code>, where <code>xxx</code> is a number, and <code>YY</code> is a unit.
+Currently, 3 units are supported: <code>au</code> (<a href="https://en.wikipedia.org/wiki/Atomic_units">atomic units</a>), <code>eV</code> (<a href="https://en.wikipedia.org/wiki/Electronvolt">electronvolts</a>), and <code>nm</code> (nanometers).
+If no unit are given, atomic units are assumed.
+Valid inputs are, <em>e.g.</em>, <code>"8.5eV"</code>, <code>"1200nm"</code>, <code>"0.25au"</code>, <code>1.25</code>, etc.</p>
+<h3 id="general">General<a class="headerlink" href="#general" title="Permanent link">¤</a></h3>
+<div class="admonition abstract">
+<p class="admonition-title">Title</p>
+<p><strong>Type</strong>: <code>str</code>
+<strong>Keyword</strong>: <code>title</code>
+<strong>Default</strong>: None</p>
+<p>Title of the calculation, in free format.
+It is there for documentation/archiving purposes, and will never be parsed.</p>
+</div>
+<div class="admonition abstract">
+<p class="admonition-title">Output</p>
+<p><strong>Type</strong>: <code>str</code> (path)
+<strong>Keyword</strong>: <code>data_output</code>
+<strong>Command line option</strong>: <code>--data_output</code>
+<strong>Default</strong>: <code>"stdlite_calculation.h5"</code></p>
+<p>Path where the data of the calculation will be stored, in <a href="https://en.wikipedia.org/wiki/Hierarchical_Data_Format">HDF5</a>.</p>
+</div>
+<h3 id="context-context">Context (<code>[context]</code>)<a class="headerlink" href="#context-context" title="Permanent link">¤</a></h3>
+<p>These are the keywords related to the creation of the context, <em>i.e.</em>, the selection of the CSFs and the creation of the <span class="arithmatex">\(\mathbf A'\)</span> and <span class="arithmatex">\(\mathbf B'\)</span> super-matrices. </p>
+<div class="admonition abstract">
+<p class="admonition-title">Source</p>
+<p><strong>Type</strong>: <code>str</code> (path)
+<strong>Keyword</strong>: <code>source</code>
+<strong>Command line option</strong>: <code>--ctx_source</code></p>
+<p>Path to a QM file containing at least a wavefunction and a corresponding basis set. 
+This is the only <strong>mandatory</strong> keyword.</p>
+</div>
+<div class="admonition abstract">
+<p class="admonition-title">Source type</p>
+<p><strong>Type</strong>: <code>str</code>
+<strong>Keyword</strong>: <code>source_type</code>
+<strong>Command line option</strong>: <code>--ctx_source_type</code>
+<strong>Default</strong>: <code>"FCHK"</code></p>
+<p>Type of source. Currently the possible values are:</p>
+<ul>
+<li><code>"MOLDEN"</code> (Molden file), </li>
+<li><code>"FCHK"</code> (Gaussian FCHK), </li>
+<li><code>"STDL_CTX"</code> (context from a previous calculation), and </li>
+<li><code>"STDL_CTX_WB"</code> (context from a previous calculation, but only the wavefunction and basis are used).</li>
+</ul>
+<p>Note that <code>"STDL_CTX"</code> implies that exactly the same context, <em>i.e.</em>, the same CSFs and the same <span class="arithmatex">\(\mathbf A'\)</span> and <span class="arithmatex">\(\mathbf B'\)</span> super-matrices are used, so it totally skips the context creation.
+If you want to re-create a new context, use <code>"STDL_CTX_WB"</code>.</p>
+</div>
+<div class="admonition abstract">
+<p class="admonition-title">Energy threshold</p>
+<p><strong>Type</strong>: <code>str</code>/<code>float</code> (energy)
+<strong>Keyword</strong>: <code>ethr</code>
+<strong>Command line option</strong>: <code>--ctx_ethr</code>
+<strong>Default</strong>: <code>"7eV"</code></p>
+<p>Energy threshold for the <a href="../theory/#truncation-of-the-active-space">truncation of the CI space</a>.</p>
+</div>
+<div class="admonition abstract">
+<p class="admonition-title">Perturbation energy threshold</p>
+<p><strong>Type</strong>: <code>str</code>/<code>float</code> (energy)
+<strong>Keyword</strong>: <code>e2thr</code>
+<strong>Command line option</strong>: <code>--ctx_e2thr</code>
+<strong>Default</strong>: <code>"1e-4au"</code></p>
+<p>Perturbation energy threshold for the selection of secondary CSFs in the <a href="../theory/#truncation-of-the-active-space">truncation of the CI space</a>.</p>
+</div>
+<div class="admonition abstract">
+<p class="admonition-title">Method for the creation of context</p>
+<p><strong>Type</strong>: <code>str</code>
+<strong>Keyword</strong>: <code>method</code>
+<strong>Command line option</strong>: <code>--ctx_method</code>
+<strong>Default</strong>: <code>"monopole"</code></p>
+<p>Method for the calculation of the elements of the  <span class="arithmatex">\(\mathbf A'\)</span> and <span class="arithmatex">\(\mathbf B'\)</span> super-matrices. 
+Currently the possible values are:</p>
+<ul>
+<li><code>"monopole"</code> (<a href="../theory/#std-dft-or-the-monopole-approximation">default sTD-DFT procedure</a>, <em>i.e.</em>, the monopole approximation), </li>
+<li><code>"monopole_direct"</code> (same as default, but the integrals are evaluated on demand).</li>
+</ul>
+<p>The <code>"xxx_direct"</code> version requires less memory.</p>
+</div>
+<div class="admonition abstract">
+<p class="admonition-title">Tamm-Dancoff approximation</p>
+<p><strong>Type</strong>: <code>int</code>
+<strong>Keyword</strong>: <code>tda</code>
+<strong>Command line option</strong>: <code>--ctx_tda</code>
+<strong>Default</strong>: <code>1</code></p>
+<p>If different from 0, use the <a href="../theory/#application-to-dft-td-dft">Tamm-Dancoff approximation</a>.</p>
+</div>
+<div class="admonition abstract">
+<p class="admonition-title">Parameter for Coulomb integrals</p>
+<p><strong>Type</strong>: <code>float</code>
+<strong>Keyword</strong>: <code>gammaJ</code>
+<strong>Command line option</strong>: <code>--ctx_gammaJ</code>
+<strong>Default</strong>: <code>4.0</code></p>
+<p>Parameters for the Coulomb integral, <span class="arithmatex">\(\gamma_J\)</span>, in the <a href="../theory/#std-dft-or-the-monopole-approximation">monopole approximation</a>.</p>
+</div>
+<div class="admonition abstract">
+<p class="admonition-title">Parameter for exchange integrals</p>
+<p><strong>Type</strong>: <code>float</code>
+<strong>Keyword</strong>: <code>gammaK</code>
+<strong>Command line option</strong>: <code>--ctx_gammaK</code>
+<strong>Default</strong>: <code>2.0</code></p>
+<p>Parameters for the exchange integral, <span class="arithmatex">\(\gamma_K\)</span>, in the <a href="../theory/#std-dft-or-the-monopole-approximation">monopole approximation</a>.</p>
+</div>
+<div class="admonition abstract">
+<p class="admonition-title">Hartree-Fock exchange percentage</p>
+<p><strong>Type</strong>: <code>float</code>
+<strong>Keyword</strong>: <code>ax</code>
+<strong>Command line option</strong>: <code>--ctx_ax</code>
+<strong>Default</strong>: <code>0.5</code></p>
+<p>Assuming a global hybrid, amount of Hartree-Fock exchange, between 0 and 1.</p>
+</div>
+<h3 id="responses-responses">Responses (<code>[responses]</code>)<a class="headerlink" href="#responses-responses" title="Permanent link">¤</a></h3>
+<p>These are the keywords related to the calculation of responses, their residues, and the related properties.</p>
+<p>In the following, <code>wX</code> is a frequency, thus following the syntax for energy mentioned in the preamble. <code>opX</code> is an operator, which should be one of:</p>
+<ul>
+<li><code>"dipl"</code>: dipole length operator;</li>
+</ul>
+<p>Other operators will be added in the future.</p>
+<div class="admonition abstract">
+<p class="admonition-title">Linear reponses</p>
+<p><strong>Type</strong>: <code>list</code>
+<strong>Keyword</strong>: <code>linear</code>
+<strong>Default</strong>: <code>[]</code></p>
+<p>List the linear reponses to compute. 
+Each linear response <span class="arithmatex">\(\braket{\braket{\hat A;\hat B}}_\omega\)</span> is to be given as: <code>{opA = "A", opB = "B", wB="w"}</code>.</p>
+<p>For example, the following input will compute the electric polarizability at 512 and 1064nm:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[responses]</span>
+<span class="n">linear</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="n">opA</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s1">&#39;dipl&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">opB</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s1">&#39;dipl&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">wB</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s1">&#39;512nm&#39;</span><span class="p">}</span>
+<span class="w">    </span><span class="p">{</span><span class="n">opA</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s1">&#39;dipl&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">opB</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s1">&#39;dipl&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">wB</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s1">&#39;1064nm&#39;</span><span class="p">},</span><span class="w"> </span>
+<span class="p">]</span>
+</code></pre></div>
+</div>
+<div class="admonition abstract">
+<p class="admonition-title">Single residue of the linear response</p>
+<p><strong>Type</strong>: <code>list</code>
+<strong>Keyword</strong>: <code>linear_sr</code>
+<strong>Default</strong>: <code>[]</code></p>
+<p>List the ground-to-excited states properties to compute.
+Each request for <span class="arithmatex">\(\braket{0|\hat A|m}\)</span> is to be given as: <code>{opA = "A", root = N}</code>.
+<code>N</code> is the number of excited states, <code>\ket{m}</code>, to consider.
+If <code>N</code> &lt; 0, all possible excited states (<em>i.e.</em>, corresponding to the number of CSFs) are computed.</p>
+<p>For example, the following input will compute the transition dipole moments for the 15 first excited states:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[responses]</span>
+<span class="n">linear_sr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="n">opA</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s1">&#39;dipl&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">root</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="mi">15</span><span class="p">}</span>
+<span class="p">]</span>
+</code></pre></div>
+</div>
+<div class="admonition abstract">
+<p class="admonition-title">Quadratic responses</p>
+<p><strong>Type</strong>: <code>list</code>
+<strong>Keyword</strong>: <code>quadratic</code>
+<strong>Default</strong>: <code>[]</code></p>
+<p>List the quadratic reponses to compute. 
+Each quadratic response <span class="arithmatex">\(\braket{\braket{\hat A;\hat B, \hat C}}_{\omega_1,\omega_2}\)</span> is to be given as: <code>{opA = "A", opB = "B", opC = "C", wB = "w1", wC = "w2"}</code>.</p>
+<p>For example, the following input  will compute the SHG first hyperpolarizability at 1064nm:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[responses]</span>
+<span class="n">quadratic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="n">opA</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s1">&#39;dipl&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">opB</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s1">&#39;dipl&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">opC</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s1">&#39;dipl&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">wB</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s1">&#39;1064nm&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">wC</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s1">&#39;1064nm&#39;</span><span class="p">},</span><span class="w"> </span>
+<span class="p">]</span>
+</code></pre></div>
+</div>
+<h2 id="outputs">Outputs<a class="headerlink" href="#outputs" title="Permanent link">¤</a></h2>
+<p>Log messages are written in <code>stdout</code>, while errors are given in <code>stderr</code>.</p>
+<h3 id="data">Data<a class="headerlink" href="#data" title="Permanent link">¤</a></h3>
+<p>After run, all data are saved in a <a href="https://en.wikipedia.org/wiki/Hierarchical_Data_Format">HDF5 file</a> (by default, <code>stdlite_calculation.h5</code>).</p>
+<p>You can re-use the context (e.g., to compute other responses) with:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[context]</span>
+<span class="n">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;stdlite_calculation.h5&quot;</span>
+<span class="n">source_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;STDL_CTX&quot;</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://doxide.org" target="_blank" rel="noopener">
+      Doxide
+    </a>
+    and
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.bd41221c.min.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="../javascripts/katex.js"></script>
+      
+    
+  </body>
+</html>

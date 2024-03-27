@@ -1,0 +1,1131 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Object for the configuration and storage of intermediates of a sTD-DFT calculation.">
+      
+      
+      
+      
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.15">
+    
+    
+      
+        <title>stdlite_context_ - stdlite</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.7e359304.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/doxide.css">
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#stdlite_context_" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="stdlite" class="md-header__button md-logo" aria-label="stdlite" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            stdlite
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              stdlite_context_
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/pierre-24/stdlite" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    pierre-24/stdlite
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="stdlite" class="md-nav__button md-logo" aria-label="stdlite" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    stdlite
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/pierre-24/stdlite" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    pierre-24/stdlite
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../theory/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Theory
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../build/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Build & install
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorial/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tutorial
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../app/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    stdlite_run
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Public API of libstdlite
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Public API of libstdlite
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Public API documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../logging/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Logging and errors
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../wavefunction/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wavefunction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../basis/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Basis set
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Context handler
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../response/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Response functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../property/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Properties
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../helpers/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Helpers functions and macros
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../utilities/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Utilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    API of stdlite_run
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            API of stdlite_run
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../app/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    The application
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../app/user_input_handler/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    User input handler
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../app/requests/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Requests for response
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../app/responses_handler/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Responses handler
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contribute
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variables
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variable-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variable Details
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Variable Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a" class="md-nav__link">
+    <span class="md-ellipsis">
+      A
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b" class="md-nav__link">
+    <span class="md-ellipsis">
+      B
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c" class="md-nav__link">
+    <span class="md-ellipsis">
+      C
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c_ptr" class="md-nav__link">
+    <span class="md-ellipsis">
+      C_ptr
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ax" class="md-nav__link">
+    <span class="md-ellipsis">
+      ax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bs" class="md-nav__link">
+    <span class="md-ellipsis">
+      bs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#csfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      csfs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e2thr" class="md-nav__link">
+    <span class="md-ellipsis">
+      e2thr
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e_ptr" class="md-nav__link">
+    <span class="md-ellipsis">
+      e_ptr
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ethr" class="md-nav__link">
+    <span class="md-ellipsis">
+      ethr
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gammaj" class="md-nav__link">
+    <span class="md-ellipsis">
+      gammaJ
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gammak" class="md-nav__link">
+    <span class="md-ellipsis">
+      gammaK
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ncsfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      ncsfs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nmo" class="md-nav__link">
+    <span class="md-ellipsis">
+      nmo
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nocc" class="md-nav__link">
+    <span class="md-ellipsis">
+      nocc
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#original_wf" class="md-nav__link">
+    <span class="md-ellipsis">
+      original_wf
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="stdlite_context_">stdlite_context_<a class="headerlink" href="#stdlite_context_" title="Permanent link">¤</a></h1>
+<p><strong>struct stdlite_context_</strong></p>
+<p>Object for the configuration and storage of intermediates of a sTD-DFT calculation.
+Contains a subset of MOs from <code>original_wf</code>.</p>
+<h2 id="variables">Variables<a class="headerlink" href="#variables" title="Permanent link">¤</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#original_wf">original_wf</a></td>
+<td>Input wavefunction</td>
+</tr>
+<tr>
+<td><a href="#bs">bs</a></td>
+<td>Input basis set</td>
+</tr>
+<tr>
+<td><a href="#gammaJ">gammaJ</a></td>
+<td>Parameter for the method: <span class="arithmatex">\(\gamma_J\)</span>.</td>
+</tr>
+<tr>
+<td><a href="#gammaK">gammaK</a></td>
+<td>Parameter for the method: <span class="arithmatex">\(\gamma_K\)</span>.</td>
+</tr>
+<tr>
+<td><a href="#ethr">ethr</a></td>
+<td>Parameter for the method: <span class="arithmatex">\(E_{thr}\)</span>, the threshold for selecting MOs and primary CSFs.</td>
+</tr>
+<tr>
+<td><a href="#e2thr">e2thr</a></td>
+<td>Parameter for the method: <span class="arithmatex">\(E^{(2)}_{thr}\)</span>, the threshold for (perturbatively) selecting secondary CSFs.</td>
+</tr>
+<tr>
+<td><a href="#ax">ax</a></td>
+<td>Parameter for the method: <span class="arithmatex">\(a_x\)</span>, the amount of HF exchange.</td>
+</tr>
+<tr>
+<td><a href="#nmo">nmo</a></td>
+<td>Number of MO considered in the calculation, so that <code>nmo &lt;= original_wf-&gt;nmo &amp;&amp; nocc + nvirt == nmo</code>.</td>
+</tr>
+<tr>
+<td><a href="#nocc">nocc</a></td>
+<td>Number of occupied MO considered in the calculation, with <code>nocc &lt; nmo &amp;&amp; nocc + nvirt == nmo</code></td>
+</tr>
+<tr>
+<td><a href="#e_ptr">e_ptr</a></td>
+<td>pointer to the energies for the selected MOs</td>
+</tr>
+<tr>
+<td><a href="#C_ptr">C_ptr</a></td>
+<td>pointer to the (non orthogonal) MO coefficient for the selected MO</td>
+</tr>
+<tr>
+<td><a href="#C">C</a></td>
+<td><code>double[nmo*original_wf-&gt;nao]</code> <strong>orthogonal</strong> MO coefficients for the selected MO.</td>
+</tr>
+<tr>
+<td><a href="#ncsfs">ncsfs</a></td>
+<td>number of CSFs selected by a given scheme (monopole, .</td>
+</tr>
+<tr>
+<td><a href="#csfs">csfs</a></td>
+<td><code>size_t[ncsfs]</code>, the indices (<code>kia = i * nvirt + a - nocc</code>) of each selected CSF <code>i→a</code> (as <code>i = csfs[kia] / nvirt; a = csfs[kia] % nvirt + nocc</code>).</td>
+</tr>
+<tr>
+<td><a href="#A">A</a></td>
+<td><code>float[STDL_MATRIX_SP_SIZE(ncfs)]</code>, part of the electronic Hessian matrix.</td>
+</tr>
+<tr>
+<td><a href="#B">B</a></td>
+<td><code>float[STDL_MATRIX_SP_SIZE(ncfs)]</code>, part of the electronic Hessian matrix.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="variable-details">Variable Details<a class="headerlink" href="#variable-details" title="Permanent link">¤</a></h2>
+<h3 id="a">A<a name="A"></a><a class="headerlink" href="#a" title="Permanent link">¤</a></h3>
+<div class="admonition variable">
+<p class="admonition-title">float&#42; A</p>
+<p><code>float[STDL_MATRIX_SP_SIZE(ncfs)]</code>, part of the electronic Hessian matrix. <code>NULL</code> as long as no CSFs has been selected.</p>
+</div>
+<h3 id="b">B<a name="B"></a><a class="headerlink" href="#b" title="Permanent link">¤</a></h3>
+<div class="admonition variable">
+<p class="admonition-title">float&#42; B</p>
+<p><code>float[STDL_MATRIX_SP_SIZE(ncfs)]</code>, part of the electronic Hessian matrix. Might be <code>NULL</code> if only <code>A</code> is required.</p>
+</div>
+<h3 id="c">C<a name="C"></a><a class="headerlink" href="#c" title="Permanent link">¤</a></h3>
+<div class="admonition variable">
+<p class="admonition-title">double&#42; C</p>
+<p><code>double[nmo*original_wf-&gt;nao]</code> <strong>orthogonal</strong> MO coefficients for the selected MO.</p>
+</div>
+<h3 id="c_ptr">C_ptr<a name="C_ptr"></a><a class="headerlink" href="#c_ptr" title="Permanent link">¤</a></h3>
+<div class="admonition variable">
+<p class="admonition-title">double&#42; C_ptr</p>
+<p>pointer to the (non orthogonal) MO coefficient for the selected MO</p>
+</div>
+<h3 id="ax">ax<a name="ax"></a><a class="headerlink" href="#ax" title="Permanent link">¤</a></h3>
+<div class="admonition variable">
+<p class="admonition-title">float ax</p>
+<p>Parameter for the method: <span class="arithmatex">\(a_x\)</span>, the amount of HF exchange.</p>
+</div>
+<h3 id="bs">bs<a name="bs"></a><a class="headerlink" href="#bs" title="Permanent link">¤</a></h3>
+<div class="admonition variable">
+<p class="admonition-title">stdl_basis&#42; bs</p>
+<p>Input basis set</p>
+</div>
+<h3 id="csfs">csfs<a name="csfs"></a><a class="headerlink" href="#csfs" title="Permanent link">¤</a></h3>
+<div class="admonition variable">
+<p class="admonition-title">size_t&#42; csfs</p>
+<p><code>size_t[ncsfs]</code>, the indices (<code>kia = i * nvirt + a - nocc</code>) of each selected CSF <code>i→a</code> (as <code>i = csfs[kia] / nvirt; a = csfs[kia] % nvirt + nocc</code>).
+ They are given in increasing energy order, the energy being available at <code>ecsfs[kia]</code>.
+ <code>NULL</code> as long as no CSFs has been selected.</p>
+</div>
+<h3 id="e2thr">e2thr<a name="e2thr"></a><a class="headerlink" href="#e2thr" title="Permanent link">¤</a></h3>
+<div class="admonition variable">
+<p class="admonition-title">float e2thr</p>
+<p>Parameter for the method: <span class="arithmatex">\(E^{(2)}_{thr}\)</span>, the threshold for (perturbatively) selecting secondary CSFs.</p>
+</div>
+<h3 id="e_ptr">e_ptr<a name="e_ptr"></a><a class="headerlink" href="#e_ptr" title="Permanent link">¤</a></h3>
+<div class="admonition variable">
+<p class="admonition-title">double&#42; e_ptr</p>
+<p>pointer to the energies for the selected MOs</p>
+</div>
+<h3 id="ethr">ethr<a name="ethr"></a><a class="headerlink" href="#ethr" title="Permanent link">¤</a></h3>
+<div class="admonition variable">
+<p class="admonition-title">float ethr</p>
+<p>Parameter for the method: <span class="arithmatex">\(E_{thr}\)</span>, the threshold for selecting MOs and primary CSFs.</p>
+</div>
+<h3 id="gammaj">gammaJ<a name="gammaJ"></a><a class="headerlink" href="#gammaj" title="Permanent link">¤</a></h3>
+<div class="admonition variable">
+<p class="admonition-title">float gammaJ</p>
+<p>Parameter for the method: <span class="arithmatex">\(\gamma_J\)</span>.</p>
+</div>
+<h3 id="gammak">gammaK<a name="gammaK"></a><a class="headerlink" href="#gammak" title="Permanent link">¤</a></h3>
+<div class="admonition variable">
+<p class="admonition-title">float gammaK</p>
+<p>Parameter for the method: <span class="arithmatex">\(\gamma_K\)</span>.</p>
+</div>
+<h3 id="ncsfs">ncsfs<a name="ncsfs"></a><a class="headerlink" href="#ncsfs" title="Permanent link">¤</a></h3>
+<div class="admonition variable">
+<p class="admonition-title">size_t ncsfs</p>
+<p>number of CSFs selected by a given scheme (monopole, ...). Zero as long as no CSFs has been selected.</p>
+</div>
+<h3 id="nmo">nmo<a name="nmo"></a><a class="headerlink" href="#nmo" title="Permanent link">¤</a></h3>
+<div class="admonition variable">
+<p class="admonition-title">size_t nmo</p>
+<p>Number of MO considered in the calculation, so that <code>nmo &lt;= original_wf-&gt;nmo &amp;&amp; nocc + nvirt == nmo</code>.</p>
+</div>
+<h3 id="nocc">nocc<a name="nocc"></a><a class="headerlink" href="#nocc" title="Permanent link">¤</a></h3>
+<div class="admonition variable">
+<p class="admonition-title">size_t nocc</p>
+<p>Number of occupied MO considered in the calculation, with <code>nocc &lt; nmo &amp;&amp; nocc + nvirt == nmo</code></p>
+</div>
+<h3 id="original_wf">original_wf<a name="original_wf"></a><a class="headerlink" href="#original_wf" title="Permanent link">¤</a></h3>
+<div class="admonition variable">
+<p class="admonition-title">stdl_wavefunction&#42; original_wf</p>
+<p>Input wavefunction</p>
+</div>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://doxide.org" target="_blank" rel="noopener">
+      Doxide
+    </a>
+    and
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.bd41221c.min.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="../../../javascripts/katex.js"></script>
+      
+    
+  </body>
+</html>

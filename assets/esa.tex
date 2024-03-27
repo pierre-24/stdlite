@@ -1,0 +1,79 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[left=2cm, right=2cm, top=2cm, bottom=2cm]{geometry}
+
+\usepackage{amsmath}
+\usepackage{braket}
+
+\title{Excited-to-excited transition dipoles}
+\author{Pierre Beaujean}
+
+\begin{document}
+\maketitle
+
+By neglecting the response of the XC kernel and the Hartree XC kernel, the element of the first hyperpolarizability tensor in the sTD-DFT framework are: \cite{deWergifosse2018NLObeta}
+\begin{equation}
+\beta_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) = -\braket{\braket{\hat\mu_\zeta;\hat\mu_\sigma,\hat\mu_\tau}}_{\omega_1,\omega_2} = \mathcal A_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) - \mathcal B_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2), \label{eq:beta}
+\end{equation}
+with $\omega_\varsigma = -\omega_1 - \omega_2$, and:
+\begin{align}
+	\mathcal A_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) &= \sum_{\mathcal P} \sum_{ia,ja} x_{ia,\zeta}(\omega_\varsigma)\,[-\mu_{ij,\sigma}]\,y_{ja,\tau}(\omega_2), \label{eq:A}\\
+	\mathcal B_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) &= \sum_{\mathcal P} \sum_{ia,ib} x_{ia,\zeta}(\omega_\varsigma)\,[-\mu_{ab,\sigma}]\,y_{ib,\tau}(\omega_2), \label{eq:B}
+\end{align}
+where $\sum_{\mathcal P}$ is the sum over the sequence of permutations of the pairs of components and energies, $\{(\zeta,\omega_\varsigma), (\sigma, \omega_1), (\tau,\omega_2)\}$. For example,
+	\begin{align*}
+	\mathcal A_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) = \sum_{ia,ja}& \left\{\begin{array}{l}
+		x_{ia,\zeta}(\omega_\varsigma)\,[-\mu_{ij,\sigma}]\,y_{ja,\tau}(\omega_2) + x_{ia,\zeta}(\omega_\varsigma)\,[-\mu_{ij,\tau}]\,y_{ja,\sigma}(\omega_1)\\
+		+x_{ia,\sigma}(\omega_1)\,[-\mu_{ij,\zeta}]\,y_{ja,\tau}(\omega_2) + x_{ia,\sigma}(\omega_1)\,[-\mu_{ij,\tau}]\,y_{ja,\zeta}(\omega_\varsigma) \\
+		+x_{ia,\tau}(\omega_2)\,[-\mu_{ij,\zeta}]\,y_{ja,\sigma}(\omega_1) + x_{ia,\tau}(\omega_2)\,[-\mu_{ij,\sigma}]\,y_{ja,\zeta}(\omega_\varsigma)\\
+	\end{array}\right\},
+\end{align*}
+and the same goes for $\mathcal B$.
+
+The spectra representation of linear response vectors $\mathbf x_\zeta(\omega)$ and $\mathbf y_\zeta(\omega)$ is given by: \cite{dewergifosseNonlinearresponsePropertiesSimplified2019}\begin{align*}
+	x_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \mu_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,\left[\frac{x_{ia}^{m}}{\omega-\omega_m}-\frac{y_{ia}^{m}}{\omega+\omega_m}\right],\\
+	y_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \mu_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,\left[\frac{y_{ia}^{m}}{\omega-\omega_m}-\frac{x_{ia}^{m}}{\omega+\omega_m}\right],
+\end{align*}
+where $\mathbf x^m$ and $\mathbf y^m$ are the amplitude vectors associated to excited state $\ket{m}$.  
+Thus, the ``residue'' of the linear response vectors are:\begin{align*}
+	&\lim_{\omega_1\to-\omega_m}\,(\omega_1+\omega_m)\,	x_{ia,\zeta}(\omega_1) =  \mu_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,(-y_{ia}^m), \\
+	&\lim_{\omega_1\to-\omega_m}\,(\omega_1+\omega_m)\,	y_{ia,\zeta}(\omega_1) =  \mu_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,(-x_{ia}^m), \\
+	&\lim_{\omega_2\to\omega_n}\,(\omega_2-\omega_n)\,	x_{ia,\zeta}(\omega_2) =  \mu_{ia,\zeta}\,(x^{n}_{ia} + y^{n}_{ia})\,(x_{ia}^n), \\
+	&\lim_{\omega_2\to\omega_n}\,(\omega_2-\omega_n)\,y_{ia,\zeta}(\omega_2) =  \mu_{ia,\zeta}\,(x^{n}_{ia} + y^{n}_{ia})\,(y_{ia}^n).
+\end{align*}
+
+Following Ref.~\cite{dewergifosseNonlinearresponsePropertiesSimplified2019}, the double residue of the quadratic response function is:\begin{align}
+		\lim_{\omega_1\to-\omega_m}\,&\lim_{\omega_2\to\omega_n}\,	(\omega_1+\omega_m)\,(\omega_2-\omega_n) \braket{\braket{\hat\mu_\zeta;\hat\mu_\sigma,\hat\mu_\tau}}_{\omega_1,\omega_2}\nonumber\\
+		&= \braket{0|\hat\mu_\zeta|m}\,\braket{m|\hat\mu_\sigma - \delta_{mn}\,\braket{0|\hat\mu_\sigma|0}|n}\,\braket{n|\hat\mu_\tau|0} \label{eq:res1} \\
+		&= 	\lim_{\omega_1\to-\omega_m}\,\lim_{\omega_2\to\omega_n}\,	(\omega_1+\omega_m)\,(\omega_2-\omega_n)\,[\mathcal B_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) - \mathcal A_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2)] \label{eq:res2}.
+\end{align}
+In particular, from Eq.~\eqref{eq:A}:\begin{align*}
+	\lim_{\omega_1\to-\omega_m}\,&\lim_{\omega_2\to\omega_n}\,	(\omega_1+\omega_m)\,(\omega_2-\omega_n)\,\mathcal A_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) \\
+	&= \sum_{ia,ja} \left\{
+	\begin{array}{l}
+		\mu_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,(-y_{ia}^m)\,[-\mu_{ij,\zeta}]\,\mu_{ja,\tau}\,(x^{n}_{ja} + y^{n}_{ja})\,(y_{ja}^n) \\
+		+\mu_{ia,\tau}\,(x^{n}_{ia} + y^{n}_{ia})\,(x_{ia}^n)\,[-\mu_{ij,\zeta}]\,\mu_{ja,\zeta}\,(x^{m}_{ja} + y^{m}_{ja})\,(-x_{ja}^m)
+	\end{array}
+	\right\},
+\end{align*}
+and, from Eq.~\eqref{eq:B},
+\begin{align*}
+	\lim_{\omega_1\to-\omega_m}\,&\lim_{\omega_2\to\omega_n}\,	(\omega_1+\omega_m)\,(\omega_2-\omega_n)\,\mathcal B_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) \\
+	&= \sum_{ia,ib} \left\{
+	\begin{array}{l}
+		\mu_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,(-y_{ia}^m)\,[-\mu_{ab,\zeta}]\,\mu_{ib,\tau}\,(x^{n}_{ib} + y^{n}_{ib})\,(y_{ib}^n) \\
+		+\mu_{ia,\tau}\,(x^{n}_{ia} + y^{n}_{ia})\,(x_{ia}^n)\,[-\mu_{ab,\zeta}]\,\mu_{ib,\zeta}\,(x^{m}_{ib} + y^{m}_{ib})\,(-x_{ib}^m)
+	\end{array}
+	\right\}.
+\end{align*}
+Since,\begin{equation*}
+	\braket{0|\hat\mu_\zeta|m} =  \sqrt{2}\,\sum_{ia} \vec\mu_{ia,\zeta}\,(x^m_{ia}+y^m_{ia}),
+\end{equation*}
+equating Eqs.~\eqref{eq:res1} and \eqref{eq:res2} results in: \cite{dewergifosseNonlinearresponsePropertiesSimplified2019,dewergifossePerspectiveSimplifiedQuantum2021}\begin{equation}
+	\braket{m|\hat\mu_\zeta- \delta_{mn}\,\braket{0|\hat\mu_\zeta|0}|n} = \frac{1}{2}\left\{ \sum_{ia,ib} \mu_{ab,\zeta}\,[x^n_{ia}\,x^m_{ib} + y^m_{ia}\,y^n_{ib}]  - \sum_{ia,ja} \mu_{ij,\zeta}\,[x^n_{ia}\,x^m_{ja} + y^m_{ia}\,y^n_{ja}] \right\}.
+\end{equation}
+	
+\bibliography{biblio}
+\bibliographystyle{unsrt}	
+
+\end{document}

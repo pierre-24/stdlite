@@ -1,0 +1,20 @@
+title = "Calculation of excitation energies of water (TDA)"
+
+[context]
+# source of the wavefunction and basis set:
+source = "water.molden"
+source_type = "MOLDEN"
+
+# parameters:
+gammaJ = 1.0
+gammaK = 0.5
+ax = 1.0
+ethr = '20eV'
+tda = 1 # use Tamm-Dancoff approximation
+
+[responses]
+
+# compute the 10 first excitation energies
+linear_sr = [
+    {opA = 'dipl', nroots = 10},  # transition dipole
+]
