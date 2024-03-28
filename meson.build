@@ -48,11 +48,27 @@ if la_backend == 'openblas' or la_backend == 'default'
 elif la_backend == 'mkl'
   # found using `pkg-config --list-all | grep "mkl"`
   if get_option('openmp')
-    project_dep += dependency('mkl-dynamic-ilp64-iomp', required: true)
+    dep_mkl = dependency('mkl-dynamic-ilp64-iomp', required: false)
+    if dep_mkl.found()
+      project_dep += dep_mkl
+    else
+      project_dep += cc.find_library('mkl_core')
+      project_dep += cc.find_library('mkl_intel_ilp64')
+      project_dep += cc.find_library('mkl_intel_thread')
+      project_dep += cc.find_library('iomp5')
+    endif
   else
-    project_dep += dependency('mkl-dynamic-ilp64-seq', required: true)
+    dep_mkl = dependency('mkl-dynamic-ilp64-seq', required: false)
+    if dep_mkl.found()
+      project_dep += dep_mkl
+    else
+      project_dep += cc.find_library('mkl_core')
+      project_dep += cc.find_library('mkl_intel_ilp64')
+      project_dep += cc.find_library('mkl_sequential')
+    endif
   endif
   build_args += '-DUSE_MKL'
+  build_args += '-DMKL_ILP64'
 endif
 
 h5noserial = cc.find_library('hdf5', required: false)
@@ -88,4 +104,6 @@ stdlite_lib_dep = declare_dependency(
 subdir('app')
 
 # tests
-subdir('tests')
+if get_option('tests')
+  subdir('tests')
+endif

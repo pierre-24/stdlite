@@ -9,7 +9,6 @@
 
 #ifndef APP_NAME
 #define APP_NAME "stdlite_app"
-#define APP_VERSION "unknown"
 #endif
 
 /**
