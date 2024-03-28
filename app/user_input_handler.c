@@ -579,7 +579,7 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
                 break;
         }
 
-        stdl_log_msg(0, "tda = %s\n", inp->ctx_tda ? "true" : "false");
+        stdl_log_msg(0, "tda = %d\n", inp->ctx_tda);
         stdl_log_msg(0, "gammaJ = %f\ngammaK = %f\nax = %f\n", inp->ctx_gammaJ, inp->ctx_gammaK, inp->ctx_ax);
         stdl_log_msg(0, "ethr = %f # au\ne2thr = %e # au\n", inp->ctx_ethr, inp->ctx_e2thr);
     } else {
