@@ -85,4 +85,21 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
 int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, float *egrad, float *X, float *Y);
 
 
+/**
+ * Compute the linear response function $\pm\braket{\braket{\hat A; \hat B}}_\omega$ tensor elements.
+ * Assume that $\hat A$ is Hermitian.
+ *
+ * @param ctx a valid context, with `ctx->ncsfs > 0`.
+ * @param dims `size_t[2]` dimensionality of $\hat A$ and $\hat B$
+ * @param A_elmt_MO `float[dims[0],STDL_MATRIX_SP_SIZE(ctx->nmo)]`, elements of $\braket{p|\hat A|q}$
+ * @param X `float[ncsfs,dims[1]]` linear response vector $\mathbf x(\omega)$ for $\hat B$
+ * @param Y `float[ncsfs,dims[1]]` linear response vector $\mathbf y(\omega)$ for $\hat B$
+ * @param get_rf if `0`, the tensor element are $-\braket{\braket{\hat A; \hat B}}_\omega$, the sign is reversed otherwise
+ * @param[out] tensor`float[dims[0], dims[1]]` the resulting tensor
+ * @return error code
+ * @ingroup response
+ */
+int stdl_response_lr_tensor(stdl_context *ctx, size_t dims[2], double *A_elmt_MO, float *X, float *Y, int get_rf, float *tensor);
+
+
 #endif //STDLITE_RESPONSE_H

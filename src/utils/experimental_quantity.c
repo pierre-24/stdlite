@@ -15,10 +15,10 @@ int stdl_qexp_polarizability(float * alpha, float* iso, float* aniso)  {
     *aniso = .0f;
 
     for (int i = 0; i < 3; ++i) {
-        *iso += alpha[STDL_MATRIX_SP_IDX(i, i)];
+        *iso += alpha[i * 3 + i];
 
         for (int j = 0; j < 3; ++j) {
-            *aniso += 3 * powf(alpha[STDL_MATRIX_SP_IDX(i, j)], 2) - alpha[STDL_MATRIX_SP_IDX(i, i)] * alpha[STDL_MATRIX_SP_IDX(j, j)];
+            *aniso += 3 * powf(alpha[i * 3 + j], 2) - alpha[i * 3 + i] * alpha[j * 3 + j];
         }
     }
 

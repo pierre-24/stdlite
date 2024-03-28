@@ -8,6 +8,7 @@
 #include <stdlite/utils/fchk_parser.h>
 #include <stdlite/utils/molden_parser.h>
 #include <stdlite/property.h>
+#include <stdlite/response.h>
 #include <stdlite/utils/matrix.h>
 #include <stdlite/utils/experimental_quantity.h>
 
@@ -933,6 +934,8 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl
 int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, stdl_context* ctx, stdl_responses_handler* rh) {
     assert(inp != NULL && ctx != NULL && rh != NULL);
 
+    int err;
+
     stdl_response_request* req = inp->res_resreqs;
     while (req != NULL) {
 
@@ -941,18 +944,23 @@ int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, std
             stdl_operator_dim(req->lrvreqs[0]->op, &dim0);
             stdl_operator_dim(req->lrvreqs[1]->op, &dim1);
 
-            // TODO: it should be more general than that!
-            float alpha[6];
-            stdl_property_polarizability(
+            float* tensor = malloc(dim0 * dim1 * sizeof(float ));
+            STDL_ERROR_HANDLE_AND_REPORT(tensor == NULL, return STDL_ERR_MALLOC, "malloc");
+
+            err = stdl_response_lr_tensor(
                     ctx,
+                    (size_t[]) {dim0, dim1},
                     req->lrvreqs[0]->eta_MO,
                     req->lrvreqs[1]->X + req->wpos[1] * dim1 * ctx->ncsfs,
                     req->lrvreqs[1]->Y + req->wpos[1] * dim1 * ctx->ncsfs,
-                    alpha
-                    );
+                    0, tensor
+            );
+            STDL_ERROR_CODE_HANDLE(err, free(tensor); return err);
 
             if(req->ops[0] == STDL_OP_DIPL && req->ops[1] == STDL_OP_DIPL)
-                stdl_log_property_polarizability(req, alpha);
+                stdl_log_property_polarizability(req, tensor);
+
+            free(tensor);
 
         } else if(req->resp_order == 2 && req->res_order == 0) { // quadratic
             size_t dim0 = 3, dim1 = 3, dim2 = 3;

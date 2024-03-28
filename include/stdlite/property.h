@@ -18,19 +18,6 @@
 int stdl_property_transition_dipoles(stdl_context *ctx, size_t nexci, double* dips_MO, float* X, float* Y, float * tdips);
 
 /**
- * Compute the polarizability $\alpha(-\omega;\omega)$ tensor elements.
- *
- * @param ctx a valid context, with `ctx->ncsfs > 0`.
- * @param dips_MO `float[3,STDL_MATRIX_SP_SIZE(ctx->nmo)]`, the dipole moment matrix, **in MO basis**.
- * @param X `float[ncsfs,3]` linear response vector
- * @param Y `float[ncsfs,3]` linear response vector.
- * @param[out] alpha `float[STDL_MATRIX_SP_SIZE(3)]` the polarizability tensor
- * @return error code
- * @ingroup property
- */
-int stdl_property_polarizability(stdl_context* ctx, double* dips_MO, float* X, float* Y, float* alpha);
-
-/**
  * Compute the hyperpolarizability $\beta(-\omega_\sigma;\omega_1,\omega_2)$ tensor elements.
  * Use intrinsic permutations to alleviate some costs if possible.
  *

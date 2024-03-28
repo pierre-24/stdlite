@@ -26,7 +26,7 @@ int stdl_log_property_polarizability(stdl_response_request* req, float* alpha) {
                 break;
         }
         for (size_t sigma = 0; sigma < 3; ++sigma) {
-            stdl_log_msg(0, " % 12.5f", alpha[STDL_MATRIX_SP_IDX(zeta, sigma)]);
+            stdl_log_msg(0, " % 12.5f", alpha[zeta * 3 + sigma]);
         }
         stdl_log_msg(0, "\n");
     }
