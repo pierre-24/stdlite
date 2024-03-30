@@ -243,8 +243,8 @@ int _basis_info_new(size_t iatm, char* btype, size_t nprim, struct _basis_info_*
     return STDL_ERR_OK;
 }
 
-int stdl_molden_parser_read_gto_section(stdl_lexer *lx, size_t natm, int use_spherical, stdl_basis_data **dt_ptr) {
-    assert(lx != NULL && natm > 0 && dt_ptr != NULL);
+int stdl_molden_parser_read_gto_section(stdl_lexer *lx, int use_spherical, stdl_basis_data **dt_ptr) {
+    assert(lx != NULL && dt_ptr != NULL);
 
     STDL_DEBUG("Read [GTO] section");
 
@@ -566,7 +566,7 @@ int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction** wf_ptr, stdl_
         if(strcmp(title, "Atoms") == 0) {
             err = stdl_molden_parser_read_atoms_section(lx, &natm, &atm);
         } else if(strcmp(title, "GTO") == 0) {
-            err = stdl_molden_parser_read_gto_section(lx, natm, use_spherical, &dt) || stdl_basis_data_count_nao(dt, &nao);
+            err = stdl_molden_parser_read_gto_section(lx, use_spherical, &dt) || stdl_basis_data_count_nao(dt, &nao);
         } else if(strcmp(title, "MO") == 0) {
             err = stdl_molden_parser_read_mo_section(lx, nao, &nmo, &nocc, &e, &C);
         } else if(strcmp(title, "5D") == 0 || strcmp(title, "5D7F") == 0) {
