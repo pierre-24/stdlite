@@ -45,7 +45,7 @@ int stdl_molden_parser_read_atoms_section(stdl_lexer* lx, size_t* natm, double**
  * @return error code
  * @ingroup molden_parser
  */
-int stdl_molden_parser_read_gto_section(stdl_lexer *lx, size_t natm, int use_spherical, stdl_basis_data **dt_ptr);
+int stdl_molden_parser_read_gto_section(stdl_lexer *lx, int use_spherical, stdl_basis_data **dt_ptr);
 
 /**
  * Read `[MO]` section content. Expects `]`. Ends on `[`.

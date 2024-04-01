@@ -134,6 +134,13 @@ int stdl_molden_parser_read_atoms_section(stdl_lexer* lx, size_t* natm, double**
         STDL_ERROR_CODE_HANDLE(err, _atom_info_delete(inf); _atom_info_delete(first); return err);
         free(tmp);
 
+        // skip _xx added by dalton
+        if(lx->current_tk_value == '_') {
+            err = stdl_lexer_advance(lx, 1)
+                    || stdl_lexer_skip(lx, isalnum);
+            STDL_ERROR_CODE_HANDLE(err, _atom_info_delete(inf); _atom_info_delete(first); return err);
+        }
+
         long n;
         err = stdl_lexer_skip(lx, isblank)
                 || stdl_parser_get_integer(lx, &n);
@@ -243,8 +250,8 @@ int _basis_info_new(size_t iatm, char* btype, size_t nprim, struct _basis_info_*
     return STDL_ERR_OK;
 }
 
-int stdl_molden_parser_read_gto_section(stdl_lexer *lx, size_t natm, int use_spherical, stdl_basis_data **dt_ptr) {
-    assert(lx != NULL && natm > 0 && dt_ptr != NULL);
+int stdl_molden_parser_read_gto_section(stdl_lexer *lx, int use_spherical, stdl_basis_data **dt_ptr) {
+    assert(lx != NULL && dt_ptr != NULL);
 
     STDL_DEBUG("Read [GTO] section");
 
@@ -403,6 +410,29 @@ int _mo_info_new(size_t nao, struct _mo_info_** inf_ptr) {
     return STDL_ERR_OK;
 }
 
+// Insertion sort, from https://en.wikipedia.org/wiki/Insertion_sort
+// TODO: O(N²)
+void _mo_info_sort(struct _mo_info_** first) {
+    if((*first)->next == NULL)
+        return;
+
+    struct _mo_info_* list = *first, *sorted = NULL;
+
+    while (list != NULL) { // build a new list based on the existing one
+        struct _mo_info_* head = list; // `head` is the head element of the existing list
+        list = list->next;
+
+        struct _mo_info_** trail = &sorted; // trail iterate over the sorted list and find the position of `head` in the new list
+        while (!(*trail == NULL || head->e < (*trail)->e))
+            trail = &((*trail)->next);
+
+        head->next = *trail;
+        *trail = head;
+    }
+
+    *first = sorted;
+}
+
 int stdl_molden_parser_read_mo_section(stdl_lexer *lx, size_t nao, size_t *nmo, size_t *nocc, double **e, double **C) {
     assert(lx != NULL && nao > 0 && nmo != NULL && e != NULL && C != NULL);
 
@@ -503,6 +533,10 @@ int stdl_molden_parser_read_mo_section(stdl_lexer *lx, size_t nao, size_t *nmo, 
     STDL_ERROR_HANDLE_AND_REPORT(*nmo > nao, _mo_info_delete(first); return STDL_ERR_UTIL_MOLDEN, "found %ld MOs, which is larger than the number of AO (%ld)", *nmo, nao);
     STDL_DEBUG("Found %ld MOs", *nmo);
 
+
+    STDL_DEBUG("Sort MO");
+    _mo_info_sort(&first);
+
     *e = malloc(*nmo * sizeof(double ));
     *C = malloc(*nmo * nao * sizeof(double ));
     STDL_ERROR_HANDLE_AND_REPORT(*e == NULL || *C == NULL, _mo_info_delete(first); return STDL_ERR_MALLOC, "malloc");
@@ -566,7 +600,7 @@ int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction** wf_ptr, stdl_
         if(strcmp(title, "Atoms") == 0) {
             err = stdl_molden_parser_read_atoms_section(lx, &natm, &atm);
         } else if(strcmp(title, "GTO") == 0) {
-            err = stdl_molden_parser_read_gto_section(lx, natm, use_spherical, &dt) || stdl_basis_data_count_nao(dt, &nao);
+            err = stdl_molden_parser_read_gto_section(lx, use_spherical, &dt) || stdl_basis_data_count_nao(dt, &nao);
         } else if(strcmp(title, "MO") == 0) {
             err = stdl_molden_parser_read_mo_section(lx, nao, &nmo, &nocc, &e, &C);
         } else if(strcmp(title, "5D") == 0 || strcmp(title, "5D7F") == 0) {
