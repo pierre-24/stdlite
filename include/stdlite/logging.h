@@ -191,7 +191,7 @@ void stdl_warning_msg(char *file, int line, char *format, ...);
  * @param ... extra parameters
  * @ingroup logging
  */
-void stdl_error_msg(char *file, int line, char *format, ...) ;
+void stdl_error_msg(char *file, int line, char *format, ...);
 
 
 #endif //STDL_LOGGING_H

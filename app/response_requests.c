@@ -167,3 +167,28 @@ int stdl_lrv_request_dump_h5(stdl_lrv_request *req, stdl_context *ctx, hid_t gro
     H5Gclose(lrv_group_id);
     return STDL_ERR_OK;
 }
+
+int stdl_lrv_request_approximate_size(stdl_lrv_request *req, size_t ncsfs, size_t *sz) {
+    assert(req != NULL && sz != NULL);
+
+    *sz = sizeof(stdl_lrv_request)
+            + (req->nw * (1 + 3 * ncsfs * req->dim)) * sizeof(float );
+
+    return STDL_ERR_OK;
+}
+
+int stdl_response_request_approximate_size(stdl_response_request *req, size_t *sz) {
+    assert(req != NULL && sz != NULL);
+
+    size_t nops = req->resp_order-req->res_order+1, nw = (req->resp_order == req->res_order)? 0: req->resp_order-req->res_order+1, next_sz = 0;
+
+    if(req->next != NULL)
+        stdl_response_request_approximate_size(req->next, &next_sz);
+
+    *sz = sizeof(stdl_response_request)
+            + nops * sizeof(size_t)
+            + nw * (sizeof(float ) + sizeof(size_t) + sizeof(stdl_lrv_request*))
+            + next_sz;
+
+    return STDL_ERR_OK;
+}

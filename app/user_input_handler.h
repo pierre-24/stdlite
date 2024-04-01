@@ -195,4 +195,13 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl
  */
 int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, stdl_context* ctx, stdl_responses_handler* rh);
 
+/**
+ * Get the approximate space in memory
+ * @param inp a valid user input
+ * @param[out] sz the total size
+ * @return error code
+ * @ingroup user_input_handler
+ */
+int stdl_user_input_handler_approximate_size(stdl_user_input_handler *inp, size_t *sz, size_t *respreq_sz);
+
 #endif //STDLITE_USER_INPUT_HANDLER_H

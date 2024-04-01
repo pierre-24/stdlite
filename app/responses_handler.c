@@ -26,7 +26,7 @@ int stdl_responses_handler_new(size_t nops, size_t nlrvreqs, size_t nexci, char 
     (*rh_ptr)->Yamp = NULL;
 
     (*rh_ptr)->ops = malloc(nops * sizeof(stdl_operator));
-    (*rh_ptr)->ev_matrices =calloc(nops, sizeof(double*));
+    (*rh_ptr)->ev_matrices = calloc(nops, sizeof(double*));
     (*rh_ptr)->lrvreqs = calloc(nops, sizeof(stdl_lrv_request*));
 
     STDL_ERROR_HANDLE_AND_REPORT((*rh_ptr)->ops == NULL || (*rh_ptr)->ev_matrices == NULL || (*rh_ptr)->lrvreqs == NULL, stdl_responses_handler_delete(*rh_ptr); return STDL_ERR_MALLOC, "malloc");
@@ -116,7 +116,13 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
         err = stdl_operator_dim(rh->ops[iop], &dim);
         STDL_ERROR_CODE_HANDLE(err, goto _end);
 
-        double* op_AO = malloc(dim * STDL_MATRIX_SP_SIZE(ctx->original_wf->nao) * sizeof(double ));
+        size_t op_AO_sz = dim * STDL_MATRIX_SP_SIZE(ctx->original_wf->nao) * sizeof(double );
+        double op_AO_asz;
+        char* op_AO_usz;
+        stdl_convert_size(op_AO_sz, &op_AO_asz, &op_AO_usz);
+        stdl_log_msg(0, "Memory required for AO: %.1f%s\n", op_AO_asz, op_AO_usz);
+
+        double* op_AO = malloc(op_AO_sz);
         STDL_ERROR_HANDLE_AND_REPORT(op_AO == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
 
         if(rh->ops[iop] == STDL_OP_DIPL) {
@@ -192,4 +198,32 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
     H5Fclose(file_id);
 
     return err;
+}
+
+int stdl_responses_handler_approximate_size(stdl_responses_handler *rh, size_t nmo, size_t ncsfs, size_t *sz, size_t *ev_sz, size_t *lrv_sz, size_t *amp_sz) {
+    assert(rh != NULL && sz != NULL && ev_sz != NULL && lrv_sz != NULL && amp_sz != NULL);
+
+    *ev_sz = 0;
+    for (size_t iop = 0; iop < rh->nops; ++iop) {
+        size_t dim;
+        stdl_operator_dim(rh->ops[iop], &dim);
+        *ev_sz += dim * STDL_MATRIX_SP_SIZE(nmo);
+    }
+
+    *lrv_sz = 0;
+    for (size_t ilrv = 0; ilrv < rh->nlrvreqs; ++ilrv) {
+        size_t tsz;
+        stdl_lrv_request_approximate_size(rh->lrvreqs[ilrv], ncsfs, &tsz);
+        *lrv_sz += tsz;
+    }
+
+    *amp_sz = rh->nexci * (1 + (rh->Yamp == NULL? 1 : 2) * ncsfs) * sizeof(float);
+
+    *sz = sizeof(stdl_responses_handler)
+            + *ev_sz
+            + *lrv_sz
+            + *amp_sz
+            + rh->nops * (sizeof(stdl_operator) + sizeof(stdl_lrv_request*) + sizeof(double*));
+
+    return STDL_ERR_OK;
 }

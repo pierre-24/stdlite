@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include <stdlite/context.h>
+#include <stdlite/helpers.h>
 
 #include "app.h"
 
@@ -101,6 +102,59 @@ int main(int argc, char* argv[]) {
     _end:
     if(err < STDL_ERR_LAST) {
         title("End");
+    }
+
+    if(err == STDL_ERR_OK) {
+        // report memory usage
+
+        size_t user_input_sz, resreq_sz;
+        stdl_user_input_handler_approximate_size(input, &user_input_sz, &resreq_sz);
+
+        double user_input_asz, resreq_asz;
+        char* user_input_usz, *resreq_usz;
+        stdl_convert_size(user_input_sz - resreq_sz, &user_input_asz, &user_input_usz);
+        stdl_convert_size(resreq_sz, &resreq_asz, &resreq_usz);
+
+        size_t ctx_sz, wf_sz, bs_sz;
+        stdl_context_approximate_size(ctx, &ctx_sz, &bs_sz, &wf_sz);
+
+        double ctx_asz, wf_asz, bs_asz;
+        char* ctx_usz, *wf_usz, *bs_usz;
+
+        stdl_convert_size(ctx_sz - wf_sz - bs_sz, &ctx_asz, &ctx_usz);
+        stdl_convert_size(wf_sz, &wf_asz, &wf_usz);
+        stdl_convert_size(bs_sz, &bs_asz, &bs_usz);
+
+        size_t res_sz, ev_sz, lrv_sz, amp_sz;
+        stdl_responses_handler_approximate_size(rh, ctx->nmo, ctx->ncsfs, &res_sz, &ev_sz, &lrv_sz, &amp_sz);
+
+        double res_asz, ev_asz, lrv_asz, amp_asz;
+        char* res_usz, *ev_usz, *lrv_usz, *amp_usz;
+
+        stdl_convert_size(res_sz - ev_sz - lrv_sz - amp_sz, &res_asz, &res_usz);
+        stdl_convert_size(ev_sz, &ev_asz, &ev_usz);
+        stdl_convert_size(lrv_sz, &lrv_asz, &lrv_usz);
+        stdl_convert_size(amp_sz, &amp_asz, &amp_usz);
+
+        double tot_asz;
+        char* tot_usz;
+        stdl_convert_size(user_input_sz + ctx_sz + res_sz, &tot_asz, &tot_usz);
+
+        stdl_log_msg(0, "** Approximate memory usage ---\n");
+        stdl_log_msg(0, "User input      REQ %8.1f%s\n", resreq_asz, resreq_usz);
+        stdl_log_msg(0, "                OTH %8.1f%s\n", user_input_asz, user_input_usz);
+        stdl_log_msg(0, "--------------  --- -----------\n");
+        stdl_log_msg(0, "Context         WF  %8.1f%s\n", wf_asz, wf_usz);
+        stdl_log_msg(0, "                BS  %8.1f%s\n", bs_asz, bs_usz);
+        stdl_log_msg(0, "                OTH %8.1f%s\n", ctx_asz, ctx_usz);
+        stdl_log_msg(0, "--------------  --- -----------\n");
+        stdl_log_msg(0, "Responses       EV  %8.1f%s\n", ev_asz, ev_usz);
+        stdl_log_msg(0, "                LRV %8.1f%s\n", lrv_asz, lrv_usz);
+        stdl_log_msg(0, "                AMP %8.1f%s\n", amp_asz, amp_usz);
+        stdl_log_msg(0, "                OTH %8.1f%s\n", res_asz, res_usz);
+        stdl_log_msg(0, "--------------  --- -----------\n", res_asz, res_usz);
+        stdl_log_msg(0, "Total               %8.1f%s\n", tot_asz, tot_usz);
+
     }
 
     if(input != NULL)

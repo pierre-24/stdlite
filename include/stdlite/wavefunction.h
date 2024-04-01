@@ -18,8 +18,6 @@
  * Thus, it contains geometrical information, as well as the `S` (overlap), `C` (LCAO coefficients), and `e` (MO energies) matrices.
  * It is assumed that the MO are ordered in increasing energy values, and thus that electrons sits on the lower levels.
  *
- * Note: this structure takes about `(3 * natm + nmo + nao * (nao + nmo)) * sizeof(double) + nao * sizeof(size_t)` bytes of space when correctly allocated.
- *
  * @ingroup wavefunction
  */
 struct stdl_wavefunction_ {
@@ -155,6 +153,16 @@ int stdl_wavefunction_dump_h5(stdl_wavefunction* wf, hid_t file_id);
  * @ingroup wavefunction
  */
 int stdl_wavefunction_load_h5(hid_t file_id, stdl_wavefunction **wf_ptr);
+
+/**
+ * Get the approximate space in memory
+ *
+ * @param wf the wavefunction
+ * @param[out] sz an approximate size (in bytes)
+ * @return error code
+ * @ingroup wavefunction
+ */
+int stdl_wavefunction_approximate_size(stdl_wavefunction* wf, size_t* sz);
 
 
 #endif //STDLITE_WAVEFUNCTION_H

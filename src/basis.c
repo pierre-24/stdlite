@@ -384,3 +384,13 @@ int stdl_basis_load_h5(hid_t file_id, stdl_basis **bs_ptr) {
     return err;
 }
 
+int stdl_basis_approximate_size(stdl_basis *bs, size_t *sz) {
+    assert(bs != NULL && sz != NULL);
+
+    *sz = sizeof(stdl_basis)
+            + (bs->natm * 6 + bs->natm * 8) * sizeof(int)
+            + bs->env_size * sizeof(double);
+
+    return STDL_ERR_OK;
+}
+

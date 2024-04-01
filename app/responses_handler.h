@@ -73,5 +73,14 @@ int stdl_responses_handler_delete(stdl_responses_handler* rh);
  */
 int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx);
 
+/**
+ * Get the approximate space in memory
+ * @param rh a valid responses handler
+ * @param[out] sz the total size
+ * @return error code
+ * @ingroup responses_handler
+ */
+int stdl_responses_handler_approximate_size(stdl_responses_handler *rh, size_t nmo, size_t ncsfs, size_t *sz, size_t *ev_sz, size_t *lrv_sz, size_t *amp_sz);
+
 
 #endif //STDLITE_RESPONSES_HANDLER_H

@@ -2,6 +2,7 @@
 #define STDLITE_HELPERS_H
 
 #include <math.h>
+#include <stddef.h>
 
 /**
  * Apply a function on a list of objects.
@@ -51,6 +52,19 @@
 
 static inline int stdl_float_equals(float a, float b, float epsilon) {
     return (fabsf(a - b) <= epsilon * MX(fabsf(a), fabsf(b)));
+}
+
+static inline void stdl_convert_size(size_t nbytes, double* val, char** unit) {
+    if (nbytes < 1 << 2 * 10) {
+        *val = (double) nbytes / (1 << 1 * 10);
+        *unit = "KiB";
+    } else if (nbytes < 1 << 3 * 10) {
+        *val = (double) nbytes / (1 << 2 * 10);
+        *unit = "MiB";
+    } else {
+        *val = (double) nbytes / (1 << 3 * 10);
+        *unit = "GiB";
+    }
 }
 
 #endif //STDLITE_HELPERS_H

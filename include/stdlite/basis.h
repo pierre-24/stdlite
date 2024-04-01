@@ -55,7 +55,7 @@ struct stdl_basis_ {
      */
     int* bas;
 
-    // size of ´env´, in byte. Must be larger than `3*natm + PTR_ENV_START`
+    /// size of ´env´, in byte. Must be larger than `3*natm + PTR_ENV_START`
     size_t env_size;
 
     /**
@@ -151,5 +151,14 @@ int stdl_basis_dump_h5(stdl_basis *bs, hid_t file_id);
  * @ingroup basis
  */
 int stdl_basis_load_h5(hid_t file_id, stdl_basis **bs_ptr);
+
+/**
+ * Get the approximate space in memory
+ * @param bs a valid basis set
+ * @param[out] sz the size
+ * @return error code
+ * @ingroup basis
+ */
+int stdl_basis_approximate_size(stdl_basis *bs, size_t *sz);
 
 #endif //STDLITE_BASIS_H

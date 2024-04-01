@@ -249,3 +249,13 @@ int stdl_wavefunction_load_h5(hid_t file_id, stdl_wavefunction **wf_ptr) {
 
     return err;
 }
+
+int stdl_wavefunction_approximate_size(stdl_wavefunction *wf, size_t *sz) {
+    assert(wf != NULL && sz != NULL);
+
+    *sz = sizeof(stdl_wavefunction)
+            + (wf->natm * 4 + wf->nao + STDL_MATRIX_SP_SIZE(wf->nao)
+            + wf->nao * wf->nmo + wf->nmo) * sizeof(double );
+
+    return STDL_ERR_OK;
+}

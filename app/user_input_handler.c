@@ -989,13 +989,24 @@ int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, std
             // TODO: it should be more general than that!
             stdl_property_transition_dipoles(ctx, rh->nexci, rh->ev_matrices[0] /* <- !!!! */, rh->Xamp, rh->Yamp, tdips);
 
-            stdl_log_property_g2e_dipoles(rh, ctx, tdips, 1e-3f);
+            stdl_log_property_g2e_dipoles(rh, ctx, tdips, 5e-3f);
 
             STDL_FREE_IF_USED(tdips);
         }
 
         req = req->next;
     }
+
+    return STDL_ERR_OK;
+}
+
+int stdl_user_input_handler_approximate_size(stdl_user_input_handler *inp, size_t *sz, size_t *respreq_sz) {
+    assert(inp != NULL && sz != NULL);
+
+    stdl_response_request_approximate_size(inp->res_resreqs, respreq_sz);
+
+    *sz = sizeof(stdl_user_input_handler)
+            + *respreq_sz;
 
     return STDL_ERR_OK;
 }

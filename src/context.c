@@ -224,15 +224,22 @@ int stdl_context_delete(stdl_context* ctx) {
 int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     assert(ctx != NULL && ctx->ncsfs == 0);
 
-    stdl_log_msg(1, "+ ");
-    stdl_log_msg(0, "Select CSFs (monopole approximation) >");
-    stdl_log_msg(1, "\n  | Build (AA|BB)_J and (AA|BB)_K ");
-
     size_t natm = ctx->original_wf->natm,
             nvirt = ctx->nmo - ctx->nocc,
             nexci_ij = STDL_MATRIX_SP_SIZE(ctx->nocc),
             nexci_ab = STDL_MATRIX_SP_SIZE(nvirt),
             nexci_ia = ctx->nocc * nvirt;
+
+    size_t env_size = natm * (2 * natm + STDL_MATRIX_SP_SIZE(ctx->nmo) + nexci_ij + nexci_ia) * sizeof(float);
+
+    double sval;
+    char* sunit;
+    stdl_convert_size(env_size, &sval, &sunit);
+    stdl_log_msg(0, "Memory required for environment: %.1f%s\n", sval, sunit);
+
+    stdl_log_msg(1, "+ ");
+    stdl_log_msg(0, "Select CSFs (monopole approximation) >");
+    stdl_log_msg(1, "\n  | Build (AA|BB)_J and (AA|BB)_K ");
 
     /*
      * 1) Prepare charges and intermediates, as one big block of (continuous) memory.
@@ -258,8 +265,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
      */
 
     double* atm = ctx->original_wf->atm;
-
-    float* env = malloc(natm * (2 * natm + STDL_MATRIX_SP_SIZE(ctx->nmo) + nexci_ij + nexci_ia) * sizeof(float));
+    float* env = malloc(env_size);
     STDL_ERROR_HANDLE_AND_REPORT(env == NULL, return STDL_ERR_MALLOC, "malloc");
 
     // Coulomb and exchange-like integrals (AA|BB), `float[natm * natm]`
@@ -1020,4 +1026,20 @@ int stdl_context_load_h5(hid_t file_id, stdl_context** ctx_ptr) {
     }
 
     return err;
+}
+
+int stdl_context_approximate_size(stdl_context *ctx, size_t *sz, size_t *bs_sz, size_t *wf_sz) {
+    assert(ctx != NULL && sz != NULL && bs_sz != NULL && wf_sz != NULL);
+
+    stdl_wavefunction_approximate_size(ctx->original_wf, wf_sz);
+    stdl_basis_approximate_size(ctx->bs, bs_sz);
+
+    *sz = sizeof(stdl_context)
+            + *wf_sz
+            + *bs_sz
+            + (ctx->nmo * ctx->original_wf->nao * sizeof(double ))
+            + ctx->ncsfs * sizeof(size_t)
+            + (ctx->B == NULL ? 1 : 2 ) * STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float);
+
+    return STDL_ERR_OK;
 }

@@ -91,6 +91,25 @@ int stdl_lrv_request_compute(stdl_lrv_request *lrvreq, stdl_context *ctx);
 int stdl_lrv_request_delete(stdl_lrv_request* req);
 
 /**
+ * Dump a LRV request.
+ *
+ * @param req a valid request
+ * @param group_id a valid H5 group
+ * @return error code
+ * @ingroup requests
+ */
+int stdl_lrv_request_dump_h5(stdl_lrv_request *req, stdl_context *ctx, hid_t group_id);
+
+/**
+ * Get the approximate space in memory
+ * @param req a valid request
+ * @param[out] sz the total size
+ * @return error code
+ * @ingroup requests
+ */
+int stdl_lrv_request_approximate_size(stdl_lrv_request *req, size_t ncsfs, size_t *sz);
+
+/**
  * Any response request from the TOML file. It is a chained list.
  *
  * @ingroup requests
@@ -147,14 +166,13 @@ int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator
 int stdl_response_request_delete(stdl_response_request* req);
 
 /**
- * Dump a LRV request.
- *
+ * Get the approximate space in memory
  * @param req a valid request
- * @param group_id a valid H5 group
+ * @param[out] sz the total size
  * @return error code
  * @ingroup requests
  */
-int stdl_lrv_request_dump_h5(stdl_lrv_request *req, stdl_context *ctx, hid_t group_id);
+int stdl_response_request_approximate_size(stdl_response_request* req, size_t* sz);
 
 
 #endif //STDLITE_RESPONSE_REQUESTS_H

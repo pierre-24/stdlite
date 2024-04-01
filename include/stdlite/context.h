@@ -139,5 +139,16 @@ int stdl_context_dump_h5(stdl_context* ctx, hid_t file_id);
  */
 int stdl_context_load_h5(hid_t file_id, stdl_context** ctx_ptr);
 
+/**
+ * Get the approximate space in memory
+ * @param ctx a valid context
+ * @param[out] sz the total size (including basis set and wavefunction)
+ * @param[out] bs_sz the size of the contained basis set
+ * @param[out] wf_sz the size of the contained wavefunction
+ * @return error code
+ * @ingroup context
+ */
+int stdl_context_approximate_size(stdl_context* ctx, size_t* sz, size_t* bs_sz, size_t* wf_sz);
+
 
 #endif //STDLITE_CONTEXT_H

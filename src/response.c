@@ -16,13 +16,19 @@
 int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X) {
     assert(ctx != NULL && ctx->ncsfs > 0 && nexci > 0 && nexci <= ctx->ncsfs && e != NULL && X != NULL);
 
+    size_t wrk_sz = STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float );
+    double wrk_asz;
+    char* wrk_usz;
+    stdl_convert_size(wrk_sz, &wrk_asz, &wrk_usz);
+    stdl_log_msg(0, "Memory required for work: %.1f%s\n", wrk_asz, wrk_usz);
+
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute %ld excitation amplitude vectors (TDA-DFT) >", nexci);
     stdl_log_msg(1, "\n  | ");
 
     int err;
 
-    float * wrk = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float ));
+    float * wrk = malloc(wrk_sz);
     STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
     memcpy(wrk, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float ));
@@ -72,12 +78,18 @@ int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
 int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X, float* Y) {
     assert(ctx != NULL && ctx->ncsfs > 0 && nexci <= ctx->ncsfs && ctx->B != NULL && e != NULL && X != NULL && Y != NULL);
 
+    size_t sz = ctx->ncsfs * ctx->ncsfs;
+    size_t wrk_sz = (3 * sz + 2 * STDL_MATRIX_SP_SIZE(ctx->ncsfs)) * sizeof(float);
+    double wrk_asz;
+    char* wrk_usz;
+    stdl_convert_size(wrk_sz, &wrk_asz, &wrk_usz);
+    stdl_log_msg(0, "Memory required for work: %.1f%s\n", wrk_asz, wrk_usz);
+
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute %ld excitation amplitude vectors (TD-DFT) >", nexci);
     stdl_log_msg(1, "\n  | Make A+B and A-B ");
 
-    size_t sz = ctx->ncsfs * ctx->ncsfs;
-    float * wrk = malloc((3 * sz + 2 * STDL_MATRIX_SP_SIZE(ctx->ncsfs)) * sizeof(float));
+    float * wrk = malloc(wrk_sz);
     STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
     float *U = wrk, *V = wrk + sz, *W = wrk + 2 * sz, *ApB = wrk + 3 * sz, *AmB = wrk + 3 * sz + STDL_MATRIX_SP_SIZE(ctx->ncsfs);
@@ -237,13 +249,19 @@ int stdl_response_perturbed_gradient(stdl_context* ctx, size_t dim, double* eta_
 int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, float *egrad, float *X, float *Y) {
     assert(ctx != NULL && ctx->ncsfs > 0 && nw > 0 && ndim > 0 && ctx->B != NULL && egrad != NULL && X != NULL && Y != NULL);
 
+    size_t wrk_sz = 3 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float);
+    double wrk_asz;
+    char* wrk_usz;
+    stdl_convert_size(wrk_sz, &wrk_asz, &wrk_usz);
+    stdl_log_msg(0, "Memory required for work: %.1f%s\n", wrk_asz, wrk_usz);
+
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute %ld linear response vectors (TD-DFT) >", nw);
     stdl_log_msg(1, "\n  | Make A+B and (A-B)⁻¹ ");
 
     size_t szXY = ctx->ncsfs * ndim;
 
-    float * wrk = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+    float * wrk = malloc(wrk_sz);
     STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
     float *ApB = wrk, *AmB = wrk + STDL_MATRIX_SP_SIZE(ctx->ncsfs), *L = wrk + 2 *STDL_MATRIX_SP_SIZE(ctx->ncsfs);
@@ -337,6 +355,12 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
 int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, float *egrad, float *X, float *Y) {
     assert(ctx != NULL && ctx->ncsfs > 0 && nw > 0 && ndim > 0 && egrad != NULL && X != NULL && Y != NULL);
 
+    size_t wrk_sz = 2 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float);
+    double wrk_asz;
+    char* wrk_usz;
+    stdl_convert_size(wrk_sz, &wrk_asz, &wrk_usz);
+    stdl_log_msg(0, "Memory required for work: %.1f%s\n", wrk_asz, wrk_usz);
+
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute %ld linear response vectors (TDA-DFT) >", nw);
     stdl_log_msg(1, "\n  | Invert A ");
@@ -345,7 +369,7 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
     int err;
 
     // allocate space
-    float* wrk = malloc(2 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+    float* wrk = malloc(wrk_sz);
     STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
     float* L = wrk, *Ai = wrk + STDL_MATRIX_SP_SIZE(ctx->ncsfs);
