@@ -7,7 +7,7 @@
 #include "tests_suite.h"
 
 void setUp(void) {
-    stdl_set_debug_level(-1);
+    stdl_set_debug_level(1);
     stdl_set_log_level(0);
 }
 
@@ -137,6 +137,23 @@ void test_molden_sph() {
     ASSERT_STDL_OK(stdl_basis_delete(bs));
 
     compute_population_and_check(wf, 0, 1e-6);
+
+    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
+}
+
+void test_molden_dalton() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_molden("../tests/test_files/water_sto3g_dalton.molden", &wf, &bs);
+    ASSERT_STDL_OK(stdl_basis_delete(bs));
+
+    // check that energies are sorted
+    for (size_t p = 1; p < wf->nmo; ++p) {
+        TEST_ASSERT_TRUE(wf->e[p-1] <= wf->e[p]);
+    }
+
+    // check population
+    compute_population_and_check(wf, 0, 1e-4);
 
     ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
 }

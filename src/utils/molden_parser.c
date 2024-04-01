@@ -134,6 +134,13 @@ int stdl_molden_parser_read_atoms_section(stdl_lexer* lx, size_t* natm, double**
         STDL_ERROR_CODE_HANDLE(err, _atom_info_delete(inf); _atom_info_delete(first); return err);
         free(tmp);
 
+        // skip _xx added by dalton
+        if(lx->current_tk_value == '_') {
+            err = stdl_lexer_advance(lx, 1)
+                    || stdl_lexer_skip(lx, isalnum);
+            STDL_ERROR_CODE_HANDLE(err, _atom_info_delete(inf); _atom_info_delete(first); return err);
+        }
+
         long n;
         err = stdl_lexer_skip(lx, isblank)
                 || stdl_parser_get_integer(lx, &n);
@@ -403,6 +410,29 @@ int _mo_info_new(size_t nao, struct _mo_info_** inf_ptr) {
     return STDL_ERR_OK;
 }
 
+// Insertion sort, from https://en.wikipedia.org/wiki/Insertion_sort
+// TODO: O(N²)
+void _mo_info_sort(struct _mo_info_** first) {
+    if((*first)->next == NULL)
+        return;
+
+    struct _mo_info_* list = *first, *sorted = NULL;
+
+    while (list != NULL) { // build a new list based on the existing one
+        struct _mo_info_* head = list; // `head` is the head element of the existing list
+        list = list->next;
+
+        struct _mo_info_** trail = &sorted; // trail iterate over the sorted list and find the position of `head` in the new list
+        while (!(*trail == NULL || head->e < (*trail)->e))
+            trail = &((*trail)->next);
+
+        head->next = *trail;
+        *trail = head;
+    }
+
+    *first = sorted;
+}
+
 int stdl_molden_parser_read_mo_section(stdl_lexer *lx, size_t nao, size_t *nmo, size_t *nocc, double **e, double **C) {
     assert(lx != NULL && nao > 0 && nmo != NULL && e != NULL && C != NULL);
 
@@ -502,6 +532,10 @@ int stdl_molden_parser_read_mo_section(stdl_lexer *lx, size_t nao, size_t *nmo, 
 
     STDL_ERROR_HANDLE_AND_REPORT(*nmo > nao, _mo_info_delete(first); return STDL_ERR_UTIL_MOLDEN, "found %ld MOs, which is larger than the number of AO (%ld)", *nmo, nao);
     STDL_DEBUG("Found %ld MOs", *nmo);
+
+
+    STDL_DEBUG("Sort MO");
+    _mo_info_sort(&first);
 
     *e = malloc(*nmo * sizeof(double ));
     *C = malloc(*nmo * nao * sizeof(double ));
