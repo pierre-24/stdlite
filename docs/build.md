@@ -6,9 +6,8 @@ To build `stdlite` from its sources, you'll need:
 
 1. A C compiler. Currently, both GCC and [clang](https://clang.llvm.org/) are supported.
 2. The [Meson build system](https://github.com/mesonbuild/meson), with a backend (generally [ninja](https://github.com/ninja-build/ninja)). This is probably available in you package manager.
-3. A linear algebra backend which provides CBLAS and [LAPACKe](https://netlib.org/lapack/lapacke.html) interfaces for C. Currently, either [openblas](https://www.openblas.net/)+netlib Lapack(e) or [Intel MKL](https://en.wikipedia.org/wiki/Math_Kernel_Library) are supported. To install MKL, which seems to provide better performances, see, *e.g.*, [this link](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl-download.html). Since [LAPACKe is not yet suported by flexiblas](https://github.com/mpimd-csc/flexiblas/issues/2), this option is not available at the moment.
+3. A linear algebra backend which provides CBLAS and [LAPACKe](https://netlib.org/lapack/lapacke.html) interfaces for C. Currently, either [openblas64](https://www.openblas.net/)+Lapack(e) or [Intel MKL](https://en.wikipedia.org/wiki/Math_Kernel_Library) are supported. To install MKL, which seems to provide better performances, see, *e.g.*, [this link](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl-download.html). Since [LAPACKe is not yet suported by flexiblas](https://github.com/mpimd-csc/flexiblas/issues/2), this option is not available at the moment. While not supported yet, Scalapack might also be an option, [see below](#custom-build).
 4. The [HDF5 library](https://github.com/HDFGroup/hdf5) (and its headers), which is most probably available in your favorite distribution package manager.
-
 
 ??? note "Optional dependencies"
 
@@ -56,7 +55,7 @@ cd stdlite
 meson setup _build --buildtype=release
 ```
 
-The default build instruction use OpenBLAS and OpenMP. To change this, use:
+The default build instruction use OpenBLAS (and default integers) and OpenMP. To change this, use:
 ```bash
 # to use MKL (this will probably improve performances)
 meson configure _build -Dla_backend=mkl
@@ -90,3 +89,12 @@ meson install -C _build
 ```
 
 Depending on the installation prefix and your user rights, root access might be required to perform this last action.
+
+## Custom build
+
+Successful build and run have also been achieved with:
+
++ OpenBLAS+ScaLAPACK: `-Dla_backend=custom -Dblas_vendor=openblas -Dlapack_vendor=scalpack`
++ OpenBLAS+LAPACK: `-Dla_backend=openblas+lapack`
+
+... But this has not been thoroughly tested yet.

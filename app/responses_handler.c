@@ -120,7 +120,7 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
         double op_AO_asz;
         char* op_AO_usz;
         stdl_convert_size(op_AO_sz, &op_AO_asz, &op_AO_usz);
-        stdl_log_msg(0, "Memory required for AO: %.1f%s\n", op_AO_asz, op_AO_usz);
+        stdl_log_msg(0, "Memory required for EV in AO basis: %.1f%s\n", op_AO_asz, op_AO_usz);
 
         double* op_AO = malloc(op_AO_sz);
         STDL_ERROR_HANDLE_AND_REPORT(op_AO == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
