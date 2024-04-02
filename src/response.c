@@ -65,6 +65,8 @@ int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
 
     stdl_log_msg(0, "< done\n");
 
+    stdl_matrix_sge_print(nexci, ctx->ncsfs, X, "Amplitude X");
+
     return STDL_ERR_OK;
 }
 
@@ -207,6 +209,9 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
 
     stdl_log_msg(0, "< done\n");
 
+    stdl_matrix_sge_print(nexci, ctx->ncsfs, X, "Amplitude X");
+    stdl_matrix_sge_print(nexci, ctx->ncsfs, Y, "Amplitude Y");
+
     STDL_FREE_ALL(wrk);
 
     return STDL_ERR_OK;
@@ -324,10 +329,11 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
                 Yi[kia * ndim + cpt] = .5f * (u - v);
             }
         }
-    }
 
-    // stdl_matrix_sge_print(nw * ctx->ncsfs, ndim, X, "X");
-    // stdl_matrix_sge_print(nw * ctx->ncsfs, ndim, Y, "Y");
+        stdl_log_msg(2, "\n");
+        stdl_matrix_sge_print(ctx->ncsfs, ndim, Xi, "x(w)");
+        stdl_matrix_sge_print(ctx->ncsfs, ndim, Xi, "y(w)");
+    }
 
     stdl_log_msg(0, "< done\n");
 
@@ -416,6 +422,10 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
                 Yi[kia * ndim + cpt] = .5f * (u - v);
             }
         }
+
+        stdl_log_msg(2, "\n");
+        stdl_matrix_sge_print(ctx->ncsfs, ndim, Xi, "x(w)");
+        stdl_matrix_sge_print(ctx->ncsfs, ndim, Xi, "y(w)");
     }
 
     stdl_log_msg(0, "< done\n");

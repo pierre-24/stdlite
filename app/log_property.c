@@ -115,10 +115,10 @@ int stdl_log_property_g2e_dipoles(stdl_responses_handler *rh, stdl_context *ctx,
     float s2o2 = sqrtf(2) / 2;
     size_t nvirt = ctx->nmo - ctx->nocc;
 
-    stdl_log_msg(0, "**   -- E --- ------- Contributions -------\n");
+    stdl_log_msg(1, "**   -- E --- ---- Contributions (H=%4ld) ---\n", ctx->nocc);
     for (size_t iexci = 0; iexci < rh->nexci; ++iexci) {
         // print energies
-        stdl_log_msg(0, "%4ld %8.5f", iexci + 1, rh->eexci[iexci]);
+        stdl_log_msg(1, "%4ld %8.5f", iexci + 1, rh->eexci[iexci]);
 
         // print contributions
         size_t printed = 0;
@@ -132,24 +132,26 @@ int stdl_log_property_g2e_dipoles(stdl_responses_handler *rh, stdl_context *ctx,
                 size_t i = ctx->csfs[kia] / nvirt, a = ctx->csfs[kia] % nvirt, hi = ctx->nocc - i - 1;
 
                 if(printed > 0)
-                    stdl_log_msg(0, "             ");
+                    stdl_log_msg(1, "             ");
 
-                stdl_log_msg(0, " %5.1f%% (% 6.4f) H", c * 100, rh->Xamp[iexci * ctx->ncsfs + kia] * s2o2);
+                stdl_log_msg(1, " %5.1f%% (% 6.4f) H", c * 100, rh->Xamp[iexci * ctx->ncsfs + kia] * s2o2);
 
                 if(hi > 0)
-                    stdl_log_msg(0, "-%ld", hi);
-                stdl_log_msg(0, "→L");
+                    stdl_log_msg(1, "-%ld", hi);
+                stdl_log_msg(1, "→L");
                 if (a > 0)
-                    stdl_log_msg(0, "+%ld", a);
+                    stdl_log_msg(1, "+%ld", a);
 
-                stdl_log_msg(0, "\n");
+                stdl_log_msg(1, " (%ld→%ld)", i + 1, ctx->nocc + a + 1);
+
+                stdl_log_msg(1, "\n");
 
                 printed += 1;
             }
         }
 
         if(iexci < rh->nexci -1)
-            stdl_log_msg(0, "     -------- -----------------------------\n");
+            stdl_log_msg(1, "     -------- -------------------------------\n");
     }
 
     return STDL_ERR_OK;

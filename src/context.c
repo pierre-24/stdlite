@@ -196,6 +196,8 @@ int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float 
 
     stdl_log_msg(0, "Resulting partition: [%d\\%d|%d/%d] (active space of %d MOs, %.2f%% of total)\n", omin, (*ctx_ptr)->nocc, nvirt, wf->nmo - omax - 1, (*ctx_ptr)->nmo, (double) (*ctx_ptr)->nmo / (double) wf->nmo * 100);
 
+    stdl_matrix_dge_print((*ctx_ptr)->nmo, wf->nao, (*ctx_ptr)->C, "orthogonal C");
+
     return STDL_ERR_OK;
 }
 
@@ -517,11 +519,15 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
 
     // store index in order
     size_t lia = 0;
+    stdl_log_msg(2, "\n  |  Note: Selected CSFs (HOMO=%ld)\n", ctx->nocc);
     for(size_t kia_=0; kia_ < nexci_ia; kia_++) {
         size_t kia = csfs_sorted_indices[kia_]; // corresponding index
         if(csfs_ensemble[kia] > 0) {
             ctx->csfs[lia] = kia;
             ecsfs[lia] = A_diag[kia];
+
+            size_t a = kia % nvirt, i = kia / nvirt;
+            stdl_log_msg(2, "  |  - %ld→%ld (E=%.5f Eh)\n", i + 1, ctx->nocc + a + 1, ecsfs[lia]);
             lia++;
         }
     }
@@ -562,6 +568,10 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
 
     stdl_log_msg(0, "< done\n");
     stdl_log_msg(0, "Selected %ld CSFs (%.2f%% of %ld CSFs)\n", ctx->ncsfs, (float) ctx->ncsfs / (float) nexci_ia * 100, nexci_ia);
+
+    stdl_matrix_ssp_print(ctx->ncsfs, ctx->A, "A");
+    if(ctx->B != NULL)
+        stdl_matrix_ssp_print(ctx->ncsfs, ctx->B, "B");
 
     STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices);
 

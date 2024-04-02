@@ -18,7 +18,7 @@ int stdl_matrix_dge_print(size_t rows, size_t columns, double *matrix, char *tit
         columns = rows;
 
     if(title != NULL)
-        printf(" %s\n\n", title);
+        stdl_log_msg(2, " %s\n\n", title);
 
     while (i < columns) {
         // header
@@ -29,18 +29,18 @@ int stdl_matrix_dge_print(size_t rows, size_t columns, double *matrix, char *tit
             printf("    %6ld    ", c);
             j++;
         }
-        printf("\n");
+        stdl_log_msg(2, "\n");
 
         // content
         for(size_t r = (is_symmetric? i:0); r < rows; r++) {
-            printf("%4ld", r);
+            stdl_log_msg(2, "%4ld", r);
             j = 0;
             while (j < STDL_MATRIX_MAX_COLS && i + j < columns && ((is_symmetric && i + j <= r) || !is_symmetric)){
                 c = i + j;
-                printf(" % .6e", matrix[r * columns + c]);
+                stdl_log_msg(2, " % .6e", matrix[r * columns + c]);
                 j++;
             }
-            printf("\n");
+            stdl_log_msg(2, "\n");
         }
 
 
@@ -60,29 +60,29 @@ int stdl_matrix_sge_print(size_t rows, size_t columns, float *matrix, char *titl
         columns = rows;
 
     if(title != NULL)
-        printf(" %s\n\n", title);
+        stdl_log_msg(2, " %s\n\n", title);
 
     while (i < columns) {
         // header
         j = 0;
-        printf("    ");
+        stdl_log_msg(2, "    ");
         while (j < STDL_MATRIX_MAX_COLS && (i + j) < columns){
             c = i + j;
-            printf("    %6ld    ", c);
+            stdl_log_msg(2, "    %6ld    ", c);
             j++;
         }
-        printf("\n");
+        stdl_log_msg(2, "\n");
 
         // content
         for(size_t r = (is_symmetric? i:0); r < rows; r++) {
-            printf("%4ld", r);
+            stdl_log_msg(2, "%4ld", r);
             j = 0;
             while (j < STDL_MATRIX_MAX_COLS && i + j < columns && ((is_symmetric && i + j <= r) || !is_symmetric)){
                 c = i + j;
-                printf(" % .6e", matrix[r * columns + c]);
+                stdl_log_msg(2, " % .6e", matrix[r * columns + c]);
                 j++;
             }
-            printf("\n");
+            stdl_log_msg(2, "\n");
         }
 
 
@@ -96,30 +96,30 @@ int stdl_matrix_dsp_print(size_t n, double *matrix, char *title) {
     assert(n > 0 && matrix != NULL && matrix != NULL);
 
     if(title != NULL)
-        printf(" %s\n\n", title);
+        stdl_log_msg(2, " %s\n\n", title);
 
     size_t i = 0, j, c;
     while (i < n) {
         // header
         j = 0;
-        printf("    ");
+        stdl_log_msg(2, "    ");
         while (j < STDL_MATRIX_MAX_COLS && (i + j) < n){
             c = i + j;
-            printf("    %6ld    ", c);
+            stdl_log_msg(2, "    %6ld    ", c);
             j++;
         }
-        printf("\n");
+        stdl_log_msg(2, "\n");
 
         // content
         for(size_t r = i; r < n; r++) {
-            printf("%4ld", r);
+            stdl_log_msg(2, "%4ld", r);
             j = 0;
             while (j < STDL_MATRIX_MAX_COLS && i + j < n && i + j <= r){
                 c = i + j;
-                printf(" % .6e", matrix[STDL_MATRIX_SP_IDX(r, c)]);
+                stdl_log_msg(2, " % .6e", matrix[STDL_MATRIX_SP_IDX(r, c)]);
                 j++;
             }
-            printf("\n");
+            stdl_log_msg(2, "\n");
         }
 
         i += STDL_MATRIX_MAX_COLS;
@@ -133,30 +133,30 @@ int stdl_matrix_ssp_print(size_t n, float *matrix, char *title) {
     assert(n > 0 && matrix != NULL && matrix != NULL);
 
     if(title != NULL)
-        printf(" %s\n\n", title);
+        stdl_log_msg(2, " %s\n\n", title);
 
     size_t i = 0, j, c;
     while (i < n) {
         // header
         j = 0;
-        printf("    ");
+        stdl_log_msg(2, "    ");
         while (j < STDL_MATRIX_MAX_COLS && (i + j) < n){
             c = i + j;
-            printf("    %6ld    ", c);
+            stdl_log_msg(2, "    %6ld    ", c);
             j++;
         }
-        printf("\n");
+        stdl_log_msg(2, "\n");
 
         // content
         for(size_t r = i; r < n; r++) {
-            printf("%4ld", r);
+            stdl_log_msg(2, "%4ld", r);
             j = 0;
             while (j < STDL_MATRIX_MAX_COLS && i + j < n && i + j <= r){
                 c = i + j;
-                printf(" % .6e", matrix[STDL_MATRIX_SP_IDX(r, c)]);
+                stdl_log_msg(2, " % .6e", matrix[STDL_MATRIX_SP_IDX(r, c)]);
                 j++;
             }
-            printf("\n");
+            stdl_log_msg(2, "\n");
         }
 
         i += STDL_MATRIX_MAX_COLS;

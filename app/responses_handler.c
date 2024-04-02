@@ -133,6 +133,12 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
             goto _end;
         }
 
+        for (size_t cpt = 0; cpt < dim; ++cpt) {
+            char buff[128];
+            sprintf(buff, "Component %ld", cpt);
+            stdl_matrix_dsp_print(ctx->nmo, op_AO + cpt * STDL_MATRIX_SP_SIZE(ctx->original_wf->nao), buff);
+        }
+
         // AO to MO
         rh->ev_matrices[iop] = malloc(dim * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
 
@@ -154,6 +160,12 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
 
 
         stdl_log_msg(0, "< done\n");
+
+        for (size_t cpt = 0; cpt < dim; ++cpt) {
+            char buff[128];
+            sprintf(buff, "Component %ld", cpt);
+            stdl_matrix_dsp_print(ctx->nmo, rh->ev_matrices[iop] + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo), buff);
+        }
 
         STDL_FREE_IF_USED(op_AO);
     }
