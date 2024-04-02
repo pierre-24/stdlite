@@ -173,14 +173,13 @@ int stdl_matrix_dsp_sqrt_sy(size_t n, double *mat, double* matsy) {
     memcpy(matsy, mat, STDL_MATRIX_SP_SIZE(n) * sizeof(double));
 
     // make space
-    double* wrk = malloc(n * (n+1) * sizeof(double));
-    double *e = wrk, *w = wrk + n;
+    double* wrk = malloc(n * (n+4) * sizeof(double));
+    double *e = wrk, *w = wrk + n, *lapack_wrk = wrk + n * (n + 1);
     STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
     // eig
     STDL_DEBUG("dspev");
-    int info = LAPACKE_dspev(LAPACK_ROW_MAJOR, 'V', 'L', (STDL_LA_INT) n, matsy, e, w, (STDL_LA_INT) n);
-
+    STDL_LA_INT info = LAPACKE_dspev_work(LAPACK_ROW_MAJOR, 'V', 'L', (STDL_LA_INT) n, matsy, e, w, (STDL_LA_INT) n, lapack_wrk);
     STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "dsyev() returned %d", info);
 
     // compute the square root of eigenvalues
@@ -214,13 +213,13 @@ int stdl_matrix_dsp_sqrt(size_t n, double *mat) {
     assert(mat != NULL && mat != NULL && n > 0);
 
     // make space
-    double* wrk = malloc(n * (n+1) * sizeof(double));
-    double *e = wrk, *w = wrk + n;
+    double* wrk = malloc(n * (n+4) * sizeof(double));
+    double *e = wrk, *w = wrk + n, *lapack_wrk = wrk + n * (n+1);
     STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
     // eig
     STDL_DEBUG("dspev");
-    int info = LAPACKE_dspev(LAPACK_ROW_MAJOR, 'V', 'L', (STDL_LA_INT) n, mat, e, w, (STDL_LA_INT) n);
+    int info = LAPACKE_dspev_work(LAPACK_ROW_MAJOR, 'V', 'L', (STDL_LA_INT) n, mat, e, w, (STDL_LA_INT) n, lapack_wrk);
 
     STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "dsyev() returned %d", info);
 
@@ -258,13 +257,13 @@ int stdl_matrix_ssp_sqrt_sy(size_t n, float *mat, float * matsy) {
     memcpy(matsy, mat, STDL_MATRIX_SP_SIZE(n) * sizeof(float ));
 
     // make space
-    float * wrk = malloc(n * (n+1) * sizeof(float ));
-    float *e = wrk, *w = wrk + n;
+    float * wrk = malloc(n * (n+4) * sizeof(float ));
+    float *e = wrk, *w = wrk + n, *lapack_wrk = wrk + n * (n+1);
     STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
     // eig
     STDL_DEBUG("sspev");
-    int info = LAPACKE_sspev(LAPACK_ROW_MAJOR, 'V', 'L', (STDL_LA_INT) n, matsy, e, w, (STDL_LA_INT) n);
+    int info = LAPACKE_sspev_work(LAPACK_ROW_MAJOR, 'V', 'L', (STDL_LA_INT) n, matsy, e, w, (STDL_LA_INT) n, lapack_wrk);
 
     STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "ssyev() returned %d", info);
 
@@ -300,13 +299,13 @@ int stdl_matrix_ssp_sqrt(size_t n, float *mat) {
     assert(mat != NULL && mat != NULL && n > 0);
 
     // make space
-    float * wrk = malloc(n * (n+1) * sizeof(float ));
-    float *e = wrk, *w = wrk + n;
+    float * wrk = malloc(n * (n+4) * sizeof(float ));
+    float *e = wrk, *w = wrk + n, *lapack_wrk = wrk + n * (n+1);
     STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
     // eig
     STDL_DEBUG("sspev");
-    int info = LAPACKE_sspev(LAPACK_ROW_MAJOR, 'V', 'L', (STDL_LA_INT) n, mat, e, w, (STDL_LA_INT) n);
+    int info = LAPACKE_sspev_work(LAPACK_ROW_MAJOR, 'V', 'L', (STDL_LA_INT) n, mat, e, w, (STDL_LA_INT) n, lapack_wrk);
 
     STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "ssyev() returned %d", info);
 
@@ -381,7 +380,7 @@ int stdl_matrix_dsp_blowge(int issym, size_t n, double *in, double *out) {
 
     STDL_DEBUG("dsp_blowge");
 
-    LAPACKE_dtpttr(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) n, in, out, (STDL_LA_INT) n);
+    LAPACKE_dtpttr_work(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) n, in, out, (STDL_LA_INT) n);
 
     for (size_t i = 0; i < n; ++i) {
         for(size_t j = i + 1; j < n; ++j) {
@@ -397,7 +396,7 @@ int stdl_matrix_ssp_blowsy(size_t n, char uplo, float *in, float *out) {
 
     STDL_DEBUG("ssp_blowsy");
 
-    LAPACKE_stpttr(LAPACK_ROW_MAJOR, uplo, (STDL_LA_INT) n, in, out, (STDL_LA_INT) n);
+    LAPACKE_stpttr_work(LAPACK_ROW_MAJOR, uplo, (STDL_LA_INT) n, in, out, (STDL_LA_INT) n);
 
     return STDL_ERR_OK;
 }
@@ -424,7 +423,7 @@ int stdl_matrix_dsy_shrinksp(size_t n, char uplo, double *in, double *out) {
 
     STDL_DEBUG("dsy_shrinksp");
 
-    LAPACKE_dtrttp(LAPACK_ROW_MAJOR, uplo, (STDL_LA_INT) n, in, (STDL_LA_INT) n, out);
+    LAPACKE_dtrttp_work(LAPACK_ROW_MAJOR, uplo, (STDL_LA_INT) n, in, (STDL_LA_INT) n, out);
 
     return STDL_ERR_OK;
 }
@@ -434,7 +433,7 @@ int stdl_matrix_ssy_shrinksp(size_t n, char uplo, float *in, float *out) {
 
     STDL_DEBUG("ssy_shrinksp");
 
-    LAPACKE_strttp(LAPACK_ROW_MAJOR, uplo, (STDL_LA_INT) n, in, (STDL_LA_INT) n, out);
+    LAPACKE_strttp_work(LAPACK_ROW_MAJOR, uplo, (STDL_LA_INT) n, in, (STDL_LA_INT) n, out);
 
     return STDL_ERR_OK;
 }

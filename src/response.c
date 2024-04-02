@@ -10,52 +10,56 @@
 int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X) {
     assert(ctx != NULL && ctx->ncsfs > 0 && nexci > 0 && nexci <= ctx->ncsfs && e != NULL && X != NULL);
 
-    size_t wrk_sz = STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float );
+    size_t wrk_sz = (STDL_MATRIX_SP_SIZE(ctx->ncsfs) + 8 * ctx->ncsfs) * sizeof(float ), iwrk_sz = 6 * ctx->ncsfs * sizeof(STDL_LA_INT);
     double wrk_asz;
     char* wrk_usz;
-    stdl_convert_size(wrk_sz, &wrk_asz, &wrk_usz);
+    stdl_convert_size(wrk_sz + (nexci < ctx->ncsfs? iwrk_sz : 0), &wrk_asz, &wrk_usz);
     stdl_log_msg(0, "Memory required for work: %.1f%s\n", wrk_asz, wrk_usz);
 
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute %ld excitation amplitude vectors (TDA-DFT) >", nexci);
     stdl_log_msg(1, "\n  | ");
 
-    int err;
+    STDL_LA_INT lapack_err;
 
     float * wrk = malloc(wrk_sz);
     STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
     memcpy(wrk, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float ));
+    float* lapack_wrk = wrk + STDL_MATRIX_SP_SIZE(ctx->ncsfs);
 
     if (nexci < ctx->ncsfs) {
         stdl_log_msg(1, "use sspevx ");
 
         STDL_LA_INT found = 0;
-        STDL_LA_INT* ifail = malloc(ctx->ncsfs * sizeof(STDL_LA_INT));
-        STDL_ERROR_HANDLE_AND_REPORT(ifail == NULL, free(wrk); return STDL_ERR_MALLOC, "malloc");
+        STDL_LA_INT* iwrk = malloc(iwrk_sz);
+        STDL_ERROR_HANDLE_AND_REPORT(iwrk == NULL, free(wrk); return STDL_ERR_MALLOC, "malloc");
 
-        err = LAPACKE_sspevx(
+        STDL_LA_INT* ifail = iwrk, *lapack_iwrk = iwrk + ctx->ncsfs;
+
+        lapack_err = LAPACKE_sspevx_work(
                 LAPACK_ROW_MAJOR, 'V', 'I', 'L',
                 (STDL_LA_INT) ctx->ncsfs, wrk,
                 .0f, .0f,
                 1 /* even though we are in C, it starts at 1 */, (STDL_LA_INT) nexci, STDL_RESPONSE_EIGV_ABSTOL,
-                &found, e, X, (STDL_LA_INT) nexci, ifail
+                &found, e, X, (STDL_LA_INT) nexci, lapack_wrk, lapack_iwrk, ifail
         );
 
-        STDL_FREE_ALL(ifail);
+        STDL_FREE_ALL(iwrk);
     } else {
         stdl_log_msg(1, "use sspev ");
-        err = LAPACKE_sspev(
+        lapack_err = LAPACKE_sspev_work(
                 LAPACK_ROW_MAJOR, 'V', 'L',
                 (STDL_LA_INT) ctx->ncsfs, wrk,
-                e, X, (STDL_LA_INT) ctx->ncsfs
+                e, X, (STDL_LA_INT) ctx->ncsfs,
+                lapack_wrk
         );
     }
 
-    STDL_ERROR_HANDLE_AND_REPORT(err != 0, free(wrk); return STDL_ERR_RESPONSE, "error while sspevx(): %d", err);
+    STDL_ERROR_HANDLE_AND_REPORT(lapack_err != 0, free(wrk); return STDL_ERR_RESPONSE, "error while sspevx(): %d", lapack_err);
 
-    err = stdl_matrix_sge_transpose(ctx->ncsfs, nexci, X);
-    STDL_ERROR_CODE_HANDLE(err, free(wrk); return err);
+    int err = stdl_matrix_sge_transpose(ctx->ncsfs, nexci, X);
+    STDL_ERROR_CODE_HANDLE(err, free(wrk); return lapack_err);
 
     STDL_FREE_ALL(wrk);
 
@@ -68,10 +72,10 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
     assert(ctx != NULL && ctx->ncsfs > 0 && nexci <= ctx->ncsfs && ctx->B != NULL && e != NULL && X != NULL && Y != NULL);
 
     size_t sz = ctx->ncsfs * ctx->ncsfs;
-    size_t wrk_sz = (3 * sz + 2 * STDL_MATRIX_SP_SIZE(ctx->ncsfs)) * sizeof(float);
+    size_t wrk_sz = (3 * sz + 2 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) + 8 * ctx->ncsfs) * sizeof(float), iwrk_sz = 6 * ctx->ncsfs * sizeof(STDL_LA_INT);
     double wrk_asz;
     char* wrk_usz;
-    stdl_convert_size(wrk_sz, &wrk_asz, &wrk_usz);
+    stdl_convert_size(wrk_sz + (nexci < ctx->ncsfs? iwrk_sz : 0), &wrk_asz, &wrk_usz);
     stdl_log_msg(0, "Memory required for work: %.1f%s\n", wrk_asz, wrk_usz);
 
     stdl_log_msg(1, "+ ");
@@ -81,7 +85,7 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
     float * wrk = malloc(wrk_sz);
     STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
-    float *U = wrk, *V = wrk + sz, *W = wrk + 2 * sz, *ApB = wrk + 3 * sz, *AmB = wrk + 3 * sz + STDL_MATRIX_SP_SIZE(ctx->ncsfs);
+    float *U = wrk, *V = wrk + sz, *W = wrk + 2 * sz, *ApB = wrk + 3 * sz, *AmB = wrk + 3 * sz + STDL_MATRIX_SP_SIZE(ctx->ncsfs), *lapack_wrk = wrk + 3 * sz + 2 * STDL_MATRIX_SP_SIZE(ctx->ncsfs);
 
     // compute A+B and A-B
     #pragma omp parallel for schedule(guided)
@@ -124,43 +128,44 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
     stdl_log_msg(0, "-");
     stdl_log_msg(1, "\n  | ");
 
-    int err;
+    STDL_LA_INT lapack_err;
 
     if (nexci < ctx->ncsfs) {
         stdl_log_msg(1, "use ssyevx ");
 
         STDL_LA_INT found = 0;
-        STDL_LA_INT* ifail = malloc(ctx->ncsfs * sizeof(STDL_LA_INT));
-        STDL_ERROR_HANDLE_AND_REPORT(ifail == NULL, return STDL_ERR_MALLOC, "malloc");
+        STDL_LA_INT* iwrk = malloc(iwrk_sz);
+        STDL_ERROR_HANDLE_AND_REPORT(iwrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
-        err = LAPACKE_ssyevx(
+        STDL_LA_INT* ifail = iwrk, *lapack_iwrk = iwrk + ctx->ncsfs;
+
+        lapack_err = LAPACKE_ssyevx_work(
                 LAPACK_ROW_MAJOR, 'V', 'I', 'L',
                 (STDL_LA_INT) ctx->ncsfs, U, (STDL_LA_INT) ctx->ncsfs,
                 .0f, .0f,
                 1 /* even though we are in C, it starts at 1 */, (STDL_LA_INT) nexci, STDL_RESPONSE_EIGV_ABSTOL,
-                &found, e, X, (STDL_LA_INT) nexci, ifail
+                &found, e, X, (STDL_LA_INT) nexci, lapack_wrk, (STDL_LA_INT) 8 * ctx->ncsfs, lapack_iwrk, ifail
         );
 
         STDL_FREE_ALL(ifail);
     } else {
         stdl_log_msg(1, "use ssyev ");
-        err = LAPACKE_ssyev(
+        lapack_err = LAPACKE_ssyev_work(
                 LAPACK_ROW_MAJOR, 'V', 'L',
                 (STDL_LA_INT) ctx->ncsfs, U, (STDL_LA_INT) ctx->ncsfs,
-                e
+                e, lapack_wrk, (STDL_LA_INT) 8 * ctx->ncsfs
         );
 
         memcpy(X, U, sz * sizeof(float));
     }
 
-    STDL_ERROR_HANDLE_AND_REPORT(err != 0, free(wrk); return STDL_ERR_RESPONSE, "error while ssyevx(): %d", err);
+    STDL_ERROR_HANDLE_AND_REPORT(lapack_err != 0, free(wrk); return STDL_ERR_RESPONSE, "error while ssyevx(): %d", lapack_err);
 
     stdl_log_msg(0, "-");
     stdl_log_msg(1, "\n  | Transpose ");
 
-    err = stdl_matrix_sge_transpose(ctx->ncsfs, nexci, X); // Now, X' = (A-B)^(-1/2)*(X+Y).
-
-    STDL_ERROR_CODE_HANDLE(err, free(wrk); return err);
+    int err = stdl_matrix_sge_transpose(ctx->ncsfs, nexci, X); // Now, X' = (A-B)^(-1/2)*(X+Y).
+    STDL_ERROR_CODE_HANDLE(err, free(wrk); return lapack_err);
 
     // stdl_matrix_sge_print(nexci, ctx->ncsfs, X, "Z");
 
@@ -233,10 +238,11 @@ int stdl_response_perturbed_gradient(stdl_context* ctx, size_t dim, double* eta_
 int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, float *egrad, float *X, float *Y) {
     assert(ctx != NULL && ctx->ncsfs > 0 && nw > 0 && ndim > 0 && ctx->B != NULL && egrad != NULL && X != NULL && Y != NULL);
 
-    size_t wrk_sz = 3 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float);
+    size_t wrk_sz = (3 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) + ctx->ncsfs) * sizeof(float), iwrk_sz = ctx->ncsfs * sizeof(STDL_LA_INT);
+
     double wrk_asz;
     char* wrk_usz;
-    stdl_convert_size(wrk_sz, &wrk_asz, &wrk_usz);
+    stdl_convert_size(wrk_sz + iwrk_sz, &wrk_asz, &wrk_usz);
     stdl_log_msg(0, "Memory required for work: %.1f%s\n", wrk_asz, wrk_usz);
 
     stdl_log_msg(1, "+ ");
@@ -248,7 +254,7 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
     float * wrk = malloc(wrk_sz);
     STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
-    float *ApB = wrk, *AmB = wrk + STDL_MATRIX_SP_SIZE(ctx->ncsfs), *L = wrk + 2 *STDL_MATRIX_SP_SIZE(ctx->ncsfs);
+    float *ApB = wrk, *AmB = wrk + STDL_MATRIX_SP_SIZE(ctx->ncsfs), *L = wrk + 2 *STDL_MATRIX_SP_SIZE(ctx->ncsfs), *lapack_wrk = wrk + 3 * STDL_MATRIX_SP_SIZE(ctx->ncsfs);
 
     // compute A+B and A-B
     #pragma omp parallel for schedule(guided)
@@ -261,14 +267,14 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
     }
 
     // invert A-B, taking advantage of its `sp` storage
-    STDL_LA_INT* ipiv = malloc(ctx->ncsfs * sizeof(STDL_LA_INT));
+    STDL_LA_INT* ipiv = malloc(iwrk_sz);
     STDL_ERROR_HANDLE_AND_REPORT(ipiv == NULL, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "malloc");
 
-    int err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, AmB, ipiv);
-    STDL_ERROR_HANDLE_AND_REPORT(err != 0,  STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", err);
+    STDL_LA_INT lapack_err = LAPACKE_ssptrf_work(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, AmB, ipiv);
+    STDL_ERROR_HANDLE_AND_REPORT(lapack_err != 0, STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", lapack_err);
 
-    err = LAPACKE_ssptri(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, AmB, ipiv);
-    STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptri(): %d", err);
+    lapack_err = LAPACKE_ssptri_work(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, AmB, ipiv, lapack_wrk);
+    STDL_ERROR_HANDLE_AND_REPORT(lapack_err != 0, STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptri(): %d", lapack_err);
     // now, AmB contains (A-B)^(-1)
 
     for (size_t iw = 0; iw < nw; ++iw) {
@@ -288,11 +294,11 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
         memcpy(Xi, egrad, ctx->ncsfs * ndim * sizeof(float ));
 
         // solve the problem
-        err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, L, ipiv);
-        STDL_ERROR_HANDLE_AND_REPORT(err != 0,  STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", err);
+        lapack_err = LAPACKE_ssptrf_work(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, L, ipiv);
+        STDL_ERROR_HANDLE_AND_REPORT(lapack_err != 0, STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", lapack_err);
 
-        err = LAPACKE_ssptrs(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, (STDL_LA_INT) ndim, L, ipiv, Xi, (STDL_LA_INT) ndim);
-        STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptrs(): %d", err);
+        lapack_err = LAPACKE_ssptrs_work(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, (STDL_LA_INT) ndim, L, ipiv, Xi, (STDL_LA_INT) ndim);
+        STDL_ERROR_HANDLE_AND_REPORT(lapack_err != 0, STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptrs(): %d", lapack_err);
 
         // stdl_matrix_sge_print(ctx->ncsfs, ndim, Xi, "X'");
 
@@ -334,10 +340,10 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
 int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, float *egrad, float *X, float *Y) {
     assert(ctx != NULL && ctx->ncsfs > 0 && nw > 0 && ndim > 0 && egrad != NULL && X != NULL && Y != NULL);
 
-    size_t wrk_sz = 2 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float);
+    size_t wrk_sz = (2 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) + ctx->ncsfs)* sizeof(float), iwrk_sz = ctx->ncsfs * sizeof(STDL_LA_INT);
     double wrk_asz;
     char* wrk_usz;
-    stdl_convert_size(wrk_sz, &wrk_asz, &wrk_usz);
+    stdl_convert_size(wrk_sz + iwrk_sz, &wrk_asz, &wrk_usz);
     stdl_log_msg(0, "Memory required for work: %.1f%s\n", wrk_asz, wrk_usz);
 
     stdl_log_msg(1, "+ ");
@@ -345,25 +351,25 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
     stdl_log_msg(1, "\n  | Invert A ");
 
     size_t szXY = ctx->ncsfs * ndim;
-    int err;
+    STDL_LA_INT lapack_err;
 
     // allocate space
     float* wrk = malloc(wrk_sz);
     STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
-    float* L = wrk, *Ai = wrk + STDL_MATRIX_SP_SIZE(ctx->ncsfs);
+    float* L = wrk, *Ai = wrk + STDL_MATRIX_SP_SIZE(ctx->ncsfs), *lapack_wrk = wrk + 2 *STDL_MATRIX_SP_SIZE(ctx->ncsfs);
 
     // invert A
     memcpy(Ai, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
 
-    STDL_LA_INT* ipiv = malloc(ctx->ncsfs * sizeof(STDL_LA_INT));
+    STDL_LA_INT* ipiv = malloc(iwrk_sz);
     STDL_ERROR_HANDLE_AND_REPORT(ipiv == NULL, STDL_FREE_ALL(L); return STDL_ERR_MALLOC, "malloc");
 
-    err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, Ai, ipiv);
-    STDL_ERROR_HANDLE_AND_REPORT(err != 0,  STDL_FREE_ALL(L, ipiv, Ai); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", err);
+    lapack_err = LAPACKE_ssptrf_work(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, Ai, ipiv);
+    STDL_ERROR_HANDLE_AND_REPORT(lapack_err != 0, STDL_FREE_ALL(L, ipiv, Ai); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", lapack_err);
 
-    err = LAPACKE_ssptri(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, Ai, ipiv);
-    STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(L, ipiv, Ai); return STDL_ERR_RESPONSE, "error while ssptri(): %d", err);
+    lapack_err = LAPACKE_ssptri_work(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, Ai, ipiv, lapack_wrk);
+    STDL_ERROR_HANDLE_AND_REPORT(lapack_err != 0, STDL_FREE_ALL(L, ipiv, Ai); return STDL_ERR_RESPONSE, "error while ssptri(): %d", lapack_err);
 
     for (size_t iw = 0; iw < nw; ++iw) {
         stdl_log_msg(0, "-");
@@ -382,11 +388,11 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
         memcpy(Xi, egrad, ctx->ncsfs * ndim * sizeof(float ));
 
         // solve the problem
-        err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, L, ipiv);
-        STDL_ERROR_HANDLE_AND_REPORT(err != 0,  STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", err);
+        lapack_err = LAPACKE_ssptrf_work(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, L, ipiv);
+        STDL_ERROR_HANDLE_AND_REPORT(lapack_err != 0, STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", lapack_err);
 
-        err = LAPACKE_ssptrs(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, (STDL_LA_INT) ndim, L, ipiv, Xi, (STDL_LA_INT) ndim);
-        STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptrs(): %d", err);
+        lapack_err = LAPACKE_ssptrs_work(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, (STDL_LA_INT) ndim, L, ipiv, Xi, (STDL_LA_INT) ndim);
+        STDL_ERROR_HANDLE_AND_REPORT(lapack_err != 0, STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptrs(): %d", lapack_err);
 
         // separate X and Y
         // Yi' = w*A^(-1)*Xi'

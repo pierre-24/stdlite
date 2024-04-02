@@ -106,7 +106,6 @@ int main(int argc, char* argv[]) {
 
     if(err == STDL_ERR_OK) {
         // report memory usage
-
         size_t user_input_sz = 0, ctx_sz = 0, res_sz = 0;
 
         if(input != NULL) {
