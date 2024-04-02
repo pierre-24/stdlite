@@ -144,7 +144,7 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
                 (STDL_LA_INT) ctx->ncsfs, U, (STDL_LA_INT) ctx->ncsfs,
                 .0f, .0f,
                 1 /* even though we are in C, it starts at 1 */, (STDL_LA_INT) nexci, STDL_RESPONSE_EIGV_ABSTOL,
-                &found, e, X, (STDL_LA_INT) nexci, lapack_wrk, (STDL_LA_INT) 8 * ctx->ncsfs, lapack_iwrk, ifail
+                &found, e, X, (STDL_LA_INT) nexci, lapack_wrk, 8 * (STDL_LA_INT) ctx->ncsfs, lapack_iwrk, ifail
         );
 
         STDL_FREE_ALL(ifail);
@@ -153,7 +153,7 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
         lapack_err = LAPACKE_ssyev_work(
                 LAPACK_ROW_MAJOR, 'V', 'L',
                 (STDL_LA_INT) ctx->ncsfs, U, (STDL_LA_INT) ctx->ncsfs,
-                e, lapack_wrk, (STDL_LA_INT) 8 * ctx->ncsfs
+                e, lapack_wrk,  8 * (STDL_LA_INT) ctx->ncsfs
         );
 
         memcpy(X, U, sz * sizeof(float));
