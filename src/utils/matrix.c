@@ -3,15 +3,10 @@
 #include <math.h>
 #include <assert.h>
 
-#ifdef USE_MKL
-#include <mkl.h>
-#else
-#include <lapacke.h>
-#endif
-
 #include "include/stdlite/utils/matrix.h"
 #include "stdlite/logging.h"
 #include "stdlite/helpers.h"
+#include "stdlite/linear_algebra.h"
 
 int stdl_matrix_dge_print(size_t rows, size_t columns, double *matrix, char *title) {
     assert(rows > 0 && matrix != NULL);
@@ -184,7 +179,7 @@ int stdl_matrix_dsp_sqrt_sy(size_t n, double *mat, double* matsy) {
 
     // eig
     STDL_DEBUG("dspev");
-    int info = LAPACKE_dspev(LAPACK_ROW_MAJOR, 'V', 'L', (int) n, matsy, e, w, (int) n);
+    int info = LAPACKE_dspev(LAPACK_ROW_MAJOR, 'V', 'L', (STDL_LA_INT) n, matsy, e, w, (STDL_LA_INT) n);
 
     STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "dsyev() returned %d", info);
 
@@ -225,7 +220,7 @@ int stdl_matrix_dsp_sqrt(size_t n, double *mat) {
 
     // eig
     STDL_DEBUG("dspev");
-    int info = LAPACKE_dspev(LAPACK_ROW_MAJOR, 'V', 'L', (int) n, mat, e, w, (int) n);
+    int info = LAPACKE_dspev(LAPACK_ROW_MAJOR, 'V', 'L', (STDL_LA_INT) n, mat, e, w, (STDL_LA_INT) n);
 
     STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "dsyev() returned %d", info);
 
@@ -269,7 +264,7 @@ int stdl_matrix_ssp_sqrt_sy(size_t n, float *mat, float * matsy) {
 
     // eig
     STDL_DEBUG("sspev");
-    int info = LAPACKE_sspev(LAPACK_ROW_MAJOR, 'V', 'L', (int) n, matsy, e, w, (int) n);
+    int info = LAPACKE_sspev(LAPACK_ROW_MAJOR, 'V', 'L', (STDL_LA_INT) n, matsy, e, w, (STDL_LA_INT) n);
 
     STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "ssyev() returned %d", info);
 
@@ -311,7 +306,7 @@ int stdl_matrix_ssp_sqrt(size_t n, float *mat) {
 
     // eig
     STDL_DEBUG("sspev");
-    int info = LAPACKE_sspev(LAPACK_ROW_MAJOR, 'V', 'L', (int) n, mat, e, w, (int) n);
+    int info = LAPACKE_sspev(LAPACK_ROW_MAJOR, 'V', 'L', (STDL_LA_INT) n, mat, e, w, (STDL_LA_INT) n);
 
     STDL_ERROR_HANDLE_AND_REPORT(info != 0, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "ssyev() returned %d", info);
 
@@ -376,7 +371,7 @@ int stdl_matrix_dsp_blowsy(size_t n, char uplo, double *in, double *out) {
 
     STDL_DEBUG("dsp_blowsy");
 
-    LAPACKE_dtpttr(LAPACK_ROW_MAJOR, uplo, (int) n, in, out, (int) n);
+    LAPACKE_dtpttr(LAPACK_ROW_MAJOR, uplo, (STDL_LA_INT) n, in, out, (STDL_LA_INT) n);
 
     return STDL_ERR_OK;
 }
@@ -386,7 +381,7 @@ int stdl_matrix_dsp_blowge(int issym, size_t n, double *in, double *out) {
 
     STDL_DEBUG("dsp_blowge");
 
-    LAPACKE_dtpttr(LAPACK_ROW_MAJOR, 'L', (int) n, in, out, (int) n);
+    LAPACKE_dtpttr(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) n, in, out, (STDL_LA_INT) n);
 
     for (size_t i = 0; i < n; ++i) {
         for(size_t j = i + 1; j < n; ++j) {
@@ -402,7 +397,7 @@ int stdl_matrix_ssp_blowsy(size_t n, char uplo, float *in, float *out) {
 
     STDL_DEBUG("ssp_blowsy");
 
-    LAPACKE_stpttr(LAPACK_ROW_MAJOR, uplo, (int) n, in, out, (int) n);
+    LAPACKE_stpttr(LAPACK_ROW_MAJOR, uplo, (STDL_LA_INT) n, in, out, (STDL_LA_INT) n);
 
     return STDL_ERR_OK;
 }
@@ -412,7 +407,7 @@ int stdl_matrix_ssp_blowge(int issym, size_t n, float *in, float *out) {
 
     STDL_DEBUG("ssp_blowge");
 
-    LAPACKE_stpttr(LAPACK_ROW_MAJOR, 'L', (int) n, in, out, (int) n);
+    LAPACKE_stpttr(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) n, in, out, (STDL_LA_INT) n);
 
     #pragma omp parallel for
     for (size_t i = 0; i < n; ++i) {
@@ -429,7 +424,7 @@ int stdl_matrix_dsy_shrinksp(size_t n, char uplo, double *in, double *out) {
 
     STDL_DEBUG("dsy_shrinksp");
 
-    LAPACKE_dtrttp(LAPACK_ROW_MAJOR, uplo, (int) n, in, (int) n, out);
+    LAPACKE_dtrttp(LAPACK_ROW_MAJOR, uplo, (STDL_LA_INT) n, in, (STDL_LA_INT) n, out);
 
     return STDL_ERR_OK;
 }
@@ -439,7 +434,7 @@ int stdl_matrix_ssy_shrinksp(size_t n, char uplo, float *in, float *out) {
 
     STDL_DEBUG("ssy_shrinksp");
 
-    LAPACKE_strttp(LAPACK_ROW_MAJOR, uplo, (int) n, in, (int) n, out);
+    LAPACKE_strttp(LAPACK_ROW_MAJOR, uplo, (STDL_LA_INT) n, in, (STDL_LA_INT) n, out);
 
     return STDL_ERR_OK;
 }

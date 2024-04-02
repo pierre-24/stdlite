@@ -142,10 +142,10 @@ void test_dipole() {
     TEST_ASSERT_NOT_NULL(result);
 
     cblas_dsymm(CblasRowMajor, CblasRight, CblasLower,
-                (int) wf->nao, (int) wf->nao,
-                1.f, dipole_z_ge, (int) wf->nao,
-                Pge, (int) wf->nao,
-                .0, result, (int) wf->nao
+                (STDL_LA_INT) wf->nao, (STDL_LA_INT) wf->nao,
+                1.f, dipole_z_ge, (STDL_LA_INT) wf->nao,
+                Pge, (STDL_LA_INT) wf->nao,
+                .0, result, (STDL_LA_INT) wf->nao
     );
 
     double dipz2 = .0;

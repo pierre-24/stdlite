@@ -1,16 +1,11 @@
 #include <assert.h>
 #include <string.h>
 
-#ifdef USE_MKL
-#include <mkl.h>
-#else
-#include <cblas.h>
-#endif
-
 #include "stdlite/wavefunction.h"
 #include "stdlite/logging.h"
 #include "stdlite/helpers.h"
 #include "stdlite/utils/matrix.h"
+#include "stdlite/linear_algebra.h"
 
 int stdl_wavefunction_new(size_t natm, size_t nocc, size_t nao, size_t nmo, stdl_wavefunction **wf_ptr) {
     assert(wf_ptr != NULL && natm > 0 && nao > 0 && nmo > 0 && nmo <= nao && nmo >= nocc);
@@ -73,10 +68,10 @@ int stdl_wavefunction_orthogonalize_C_dge(size_t nmo, size_t nao, double *S, dou
     STDL_ERROR_HANDLE_AND_REPORT(tmp == NULL, STDL_FREE_ALL(sqrtS); return STDL_ERR_MALLOC, "malloc");
 
     cblas_dsymm(CblasRowMajor, CblasRight, CblasLower,
-                (int) nmo, (int) nao,
-                1.f, sqrtS, (int) nao,
-                C, (int) nao,
-                .0, tmp, (int) nao
+                (STDL_LA_INT) nmo, (STDL_LA_INT) nao,
+                1.f, sqrtS, (STDL_LA_INT) nao,
+                C, (STDL_LA_INT) nao,
+                .0, tmp, (STDL_LA_INT) nao
     );
 
     memcpy(C, tmp, nmo * nao * sizeof(double));

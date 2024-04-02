@@ -2,17 +2,11 @@
 #include <string.h>
 #include <math.h>
 
-#ifdef USE_MKL
-#include <mkl.h>
-#else
-#include <cblas.h>
-#include <lapacke.h>
-#endif
-
 #include "stdlite/context.h"
 #include "stdlite/logging.h"
 #include "stdlite/helpers.h"
 #include "stdlite/utils/matrix.h"
+#include "stdlite/linear_algebra.h"
 
 // Chemical hardness (in Eh), from 10.1002/qua.22202
 float eta[] = {

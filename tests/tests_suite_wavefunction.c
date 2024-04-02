@@ -45,10 +45,10 @@ void compute_population_and_check(stdl_wavefunction *wf, int sym, double prec) {
         TEST_ASSERT_NOT_NULL(tmp);
 
         cblas_dsymm(CblasRowMajor, CblasRight, CblasLower,
-                    (int) wf->nao, (int) wf->nao,
-                    1.f, Ssy, (int) wf->nao,
-                    Pge, (int) wf->nao,
-                    .0, tmp, (int) wf->nao
+                    (STDL_LA_INT) wf->nao, (STDL_LA_INT) wf->nao,
+                    1.f, Ssy, (STDL_LA_INT) wf->nao,
+                    Pge, (STDL_LA_INT) wf->nao,
+                    .0, tmp, (STDL_LA_INT) wf->nao
         );
 
         // `1/2*(P*S+S*P) = 1/2*(P*S+S^T*P^T) = 1/2*(P*S+(P*S)^T)`
@@ -189,9 +189,9 @@ void test_sqrtS_ok() {
     TEST_ASSERT_NOT_NULL(reS);
 
     cblas_dsymm(CblasRowMajor, CblasLeft, CblasLower,
-                (int) wf->nao, (int) wf->nao, 1.0, sqrtS, (int) wf->nao,
-                sqrtS, (int) wf->nao,
-                .0, reS, (int) wf->nao
+                (STDL_LA_INT) wf->nao, (STDL_LA_INT) wf->nao, 1.0, sqrtS, (STDL_LA_INT) wf->nao,
+                sqrtS, (STDL_LA_INT) wf->nao,
+                .0, reS, (STDL_LA_INT) wf->nao
                 );
 
     for(size_t i = 0; i < wf->nao; i++) {
@@ -357,10 +357,10 @@ void test_dipole() {
     TEST_ASSERT_NOT_NULL(result);
 
     cblas_dsymm(CblasRowMajor, CblasRight, CblasLower,
-                (int) wf->nao, (int) wf->nao,
-                1.f, dipole_z_ge, (int) wf->nao,
-                Pge, (int) wf->nao,
-                .0, result, (int) wf->nao
+                (STDL_LA_INT) wf->nao, (STDL_LA_INT) wf->nao,
+                1.f, dipole_z_ge, (STDL_LA_INT) wf->nao,
+                Pge, (STDL_LA_INT) wf->nao,
+                .0, result, (STDL_LA_INT) wf->nao
     );
 
     double dipz2 = .0;

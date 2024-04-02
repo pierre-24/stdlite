@@ -1,17 +1,11 @@
 #include <assert.h>
 #include <string.h>
 
-#ifdef USE_MKL
-#include <mkl.h>
-#else
-#include <cblas.h>
-#include <lapacke.h>
-#endif
-
 #include "stdlite/response.h"
 #include "stdlite/logging.h"
 #include "stdlite/helpers.h"
 #include "stdlite/utils/matrix.h"
+#include "stdlite/linear_algebra.h"
 
 int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X) {
     assert(ctx != NULL && ctx->ncsfs > 0 && nexci > 0 && nexci <= ctx->ncsfs && e != NULL && X != NULL);
@@ -36,21 +30,16 @@ int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
     if (nexci < ctx->ncsfs) {
         stdl_log_msg(1, "use sspevx ");
 
-#ifdef USE_MKL
-        MKL_INT found = 0;
-        MKL_INT* ifail = malloc(ctx->ncsfs * sizeof(MKL_INT));
-#else
-        int found = 0;
-        int* ifail = malloc(ctx->ncsfs * sizeof(int));
-#endif
+        STDL_LA_INT found = 0;
+        STDL_LA_INT* ifail = malloc(ctx->ncsfs * sizeof(STDL_LA_INT));
         STDL_ERROR_HANDLE_AND_REPORT(ifail == NULL, free(wrk); return STDL_ERR_MALLOC, "malloc");
 
         err = LAPACKE_sspevx(
                 LAPACK_ROW_MAJOR, 'V', 'I', 'L',
-                (int) ctx->ncsfs, wrk,
+                (STDL_LA_INT) ctx->ncsfs, wrk,
                 .0f, .0f,
-                1 /* even though we are in C, it starts at 1 */, (int) nexci, STDL_RESPONSE_EIGV_ABSTOL,
-                &found, e, X, (int) nexci, ifail
+                1 /* even though we are in C, it starts at 1 */, (STDL_LA_INT) nexci, STDL_RESPONSE_EIGV_ABSTOL,
+                &found, e, X, (STDL_LA_INT) nexci, ifail
         );
 
         STDL_FREE_ALL(ifail);
@@ -58,8 +47,8 @@ int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
         stdl_log_msg(1, "use sspev ");
         err = LAPACKE_sspev(
                 LAPACK_ROW_MAJOR, 'V', 'L',
-                (int) ctx->ncsfs, wrk,
-                e, X, (int) ctx->ncsfs
+                (STDL_LA_INT) ctx->ncsfs, wrk,
+                e, X, (STDL_LA_INT) ctx->ncsfs
         );
     }
 
@@ -118,18 +107,18 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
 
     // W = (A+B)*(A-B)^1/2 = U*V
     cblas_ssymm(CblasRowMajor, CblasRight, CblasLower,
-                (int) ctx->ncsfs, (int)  ctx->ncsfs,
-                1.f, U, (int)  ctx->ncsfs,
-                V, (int) ctx->ncsfs,
-                .0f, W, (int) ctx->ncsfs
+                (STDL_LA_INT) ctx->ncsfs, (STDL_LA_INT)  ctx->ncsfs,
+                1.f, U, (STDL_LA_INT)  ctx->ncsfs,
+                V, (STDL_LA_INT) ctx->ncsfs,
+                .0f, W, (STDL_LA_INT) ctx->ncsfs
     );
 
     // U = (A-B)^1/2*(A+B)*(A-B)^1/2 = V*W
     cblas_ssymm(CblasRowMajor, CblasRight, CblasLower,
-                (int) ctx->ncsfs, (int)  ctx->ncsfs,
-                1.f, V, (int)  ctx->ncsfs,
-                W, (int) ctx->ncsfs,
-                .0f, U, (int) ctx->ncsfs
+                (STDL_LA_INT) ctx->ncsfs, (STDL_LA_INT)  ctx->ncsfs,
+                1.f, V, (STDL_LA_INT)  ctx->ncsfs,
+                W, (STDL_LA_INT) ctx->ncsfs,
+                .0f, U, (STDL_LA_INT) ctx->ncsfs
     );
 
     stdl_log_msg(0, "-");
@@ -140,21 +129,16 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
     if (nexci < ctx->ncsfs) {
         stdl_log_msg(1, "use ssyevx ");
 
-#ifdef USE_MKL
-        MKL_INT found = 0;
-        MKL_INT* ifail = malloc(ctx->ncsfs * sizeof(MKL_INT));
-#else
-        int found = 0;
-        int* ifail = malloc(ctx->ncsfs * sizeof(int));
-#endif
+        STDL_LA_INT found = 0;
+        STDL_LA_INT* ifail = malloc(ctx->ncsfs * sizeof(STDL_LA_INT));
         STDL_ERROR_HANDLE_AND_REPORT(ifail == NULL, return STDL_ERR_MALLOC, "malloc");
 
         err = LAPACKE_ssyevx(
                 LAPACK_ROW_MAJOR, 'V', 'I', 'L',
-                (int) ctx->ncsfs, U, (int) ctx->ncsfs,
+                (STDL_LA_INT) ctx->ncsfs, U, (STDL_LA_INT) ctx->ncsfs,
                 .0f, .0f,
-                1 /* even though we are in C, it starts at 1 */, (int) nexci, STDL_RESPONSE_EIGV_ABSTOL,
-                &found, e, X, (int) nexci, ifail
+                1 /* even though we are in C, it starts at 1 */, (STDL_LA_INT) nexci, STDL_RESPONSE_EIGV_ABSTOL,
+                &found, e, X, (STDL_LA_INT) nexci, ifail
         );
 
         STDL_FREE_ALL(ifail);
@@ -162,7 +146,7 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
         stdl_log_msg(1, "use ssyev ");
         err = LAPACKE_ssyev(
                 LAPACK_ROW_MAJOR, 'V', 'L',
-                (int) ctx->ncsfs, U, (int) ctx->ncsfs,
+                (STDL_LA_INT) ctx->ncsfs, U, (STDL_LA_INT) ctx->ncsfs,
                 e
         );
 
@@ -277,18 +261,13 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
     }
 
     // invert A-B, taking advantage of its `sp` storage
-#ifdef USE_MKL
-    MKL_INT* ipiv = malloc(ctx->ncsfs * sizeof(MKL_INT));
-#else
-    int* ipiv = malloc(ctx->ncsfs * sizeof(int));
-#endif
-
+    STDL_LA_INT* ipiv = malloc(ctx->ncsfs * sizeof(STDL_LA_INT));
     STDL_ERROR_HANDLE_AND_REPORT(ipiv == NULL, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "malloc");
 
-    int err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, AmB, ipiv);
+    int err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, AmB, ipiv);
     STDL_ERROR_HANDLE_AND_REPORT(err != 0,  STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", err);
 
-    err = LAPACKE_ssptri(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, AmB, ipiv);
+    err = LAPACKE_ssptri(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, AmB, ipiv);
     STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptri(): %d", err);
     // now, AmB contains (A-B)^(-1)
 
@@ -309,10 +288,10 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
         memcpy(Xi, egrad, ctx->ncsfs * ndim * sizeof(float ));
 
         // solve the problem
-        err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, L, ipiv);
+        err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, L, ipiv);
         STDL_ERROR_HANDLE_AND_REPORT(err != 0,  STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", err);
 
-        err = LAPACKE_ssptrs(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, (int) ndim, L, ipiv, Xi, (int) ndim);
+        err = LAPACKE_ssptrs(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, (STDL_LA_INT) ndim, L, ipiv, Xi, (STDL_LA_INT) ndim);
         STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptrs(): %d", err);
 
         // stdl_matrix_sge_print(ctx->ncsfs, ndim, Xi, "X'");
@@ -377,17 +356,13 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
     // invert A
     memcpy(Ai, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
 
-#ifdef USE_MKL
-    MKL_INT* ipiv = malloc(ctx->ncsfs * sizeof(MKL_INT));
-#else
-    int* ipiv = malloc(ctx->ncsfs * sizeof(int));
-#endif
+    STDL_LA_INT* ipiv = malloc(ctx->ncsfs * sizeof(STDL_LA_INT));
     STDL_ERROR_HANDLE_AND_REPORT(ipiv == NULL, STDL_FREE_ALL(L); return STDL_ERR_MALLOC, "malloc");
 
-    err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, Ai, ipiv);
+    err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, Ai, ipiv);
     STDL_ERROR_HANDLE_AND_REPORT(err != 0,  STDL_FREE_ALL(L, ipiv, Ai); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", err);
 
-    err = LAPACKE_ssptri(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, Ai, ipiv);
+    err = LAPACKE_ssptri(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, Ai, ipiv);
     STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(L, ipiv, Ai); return STDL_ERR_RESPONSE, "error while ssptri(): %d", err);
 
     for (size_t iw = 0; iw < nw; ++iw) {
@@ -407,10 +382,10 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
         memcpy(Xi, egrad, ctx->ncsfs * ndim * sizeof(float ));
 
         // solve the problem
-        err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, L, ipiv);
+        err = LAPACKE_ssptrf(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, L, ipiv);
         STDL_ERROR_HANDLE_AND_REPORT(err != 0,  STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", err);
 
-        err = LAPACKE_ssptrs(LAPACK_ROW_MAJOR, 'L', (int) ctx->ncsfs, (int) ndim, L, ipiv, Xi, (int) ndim);
+        err = LAPACKE_ssptrs(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, (STDL_LA_INT) ndim, L, ipiv, Xi, (STDL_LA_INT) ndim);
         STDL_ERROR_HANDLE_AND_REPORT(err != 0, STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptrs(): %d", err);
 
         // separate X and Y
