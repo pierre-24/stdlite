@@ -3,7 +3,7 @@ option(
     'la_backend',
     type: 'combo',
     value: 'default',
-    choices: ['default', 'openblas', 'mkl'],
+    choices: ['default', 'openblas', 'mkl', 'custom'],
     description : 'linear algebra backend'
 )
 
@@ -12,6 +12,24 @@ option(
     type: 'boolean',
     value: true,
     description: 'Use OpenMP',
+)
+
+option(
+    'blas_vendor',
+    type: 'string',
+    description : 'BLAS library to be used if `la_backend=custom`'
+)
+
+option(
+    'lapack_vendor',
+    type: 'string',
+    description : 'LAPACK library to be used if `la_backend=custom`'
+)
+
+option(
+    'lapacke_vendor',
+    type: 'string',
+    description : 'LAPACKe library to be used if `la_backend=custom`'
 )
 
 option(

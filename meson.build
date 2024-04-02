@@ -69,6 +69,17 @@ elif la_backend == 'mkl'
   endif
   build_args += '-DUSE_MKL'
   build_args += '-DMKL_ILP64'
+elif la_backend == 'custom'
+  if get_option('blas_vendor') != ''
+    project_dep += cc.find_library(get_option('blas_vendor'), required : true)
+  endif
+  if get_option('lapack_vendor') != ''
+    project_dep += cc.find_library(get_option('lapack_vendor'), required : true)
+  endif
+  if get_option('lapacke_vendor') != ''
+    project_dep += cc.find_library(get_option('lapacke_vendor'), required : true)
+  endif
+  build_args += '-DUSE_LA_CUSTOM'
 endif
 
 h5noserial = cc.find_library('hdf5', required: false)
