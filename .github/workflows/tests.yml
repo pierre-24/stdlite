@@ -42,7 +42,7 @@ jobs:
       - name: Install OpenBLAS & Lapack(e) & configure
         if: ${{ matrix.la_backend == 'openblas64' }}
         run: |
-          sudo apt-get install libopenblas64-dev liblapack64-dev liblapacke64-dev
+          sudo apt-get install libopenblas-dev liblapack-dev liblapacke-dev
           meson setup ${{ env.BUILD_DIR }} -Dla_backend=openblas64+lapack64 --buildtype=debug
       - name: Install MKL & configure
         if: ${{ matrix.la_backend == 'mkl' }}

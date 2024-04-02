@@ -40,16 +40,16 @@ endif
 # note: cannot use flexiblas at the moment
 # see https://github.com/mpimd-csc/flexiblas/issues/2
 la_backend = get_option('la_backend')
-if la_backend == 'openblas+lapack'
+if la_backend == 'openblas+lapack' or la_backend == 'openblas64+lapack64' or la_backend == 'default'
   project_dep += cc.find_library('openblas', required : true)
   project_dep += cc.find_library('lapack', required : true)
   project_dep += cc.find_library('lapacke', required : false)
-  build_args += '-DUSE_OPENBLAS'
-elif la_backend == 'openblas64+lapack64' or la_backend == 'default'
-  project_dep += cc.find_library('openblas64', required : true)
-  project_dep += cc.find_library('lapack64', required : true)
-  project_dep += cc.find_library('lapacke64', required : false)
-  build_args += '-DUSE_OPENBLAS64'
+  if la_backend == 'openblas64+lapack64' or la_backend == 'default'
+    build_args += '-DUSE_OPENBLAS64'
+    build_args += '-DLAPACK_ILP64'
+  else
+    build_args += '-DUSE_OPENBLAS'
+  endif
 elif la_backend == 'mkl'
   # found using `pkg-config --list-all | grep "mkl"`
   if get_option('openmp')
@@ -92,7 +92,7 @@ if not h5noserial.found()
   project_dep += [cc.find_library('hdf5_serial', required: true), cc.find_library('hdf5_serial_hl', required: true)]
   build_args += ['-DUSE_HDF5_SERIAL']
 else
-  project_dep += [cc.find_library('hdf5', required: true), cc.find_library('hdf5_hl', required: true)]
+  project_dep += [h5noserial, cc.find_library('hdf5_hl', required: true)]
 endif
 
 # fetch sources and includes
