@@ -39,8 +39,30 @@ endif
 # note: cannot use flexiblas at the moment
 # see https://github.com/mpimd-csc/flexiblas/issues/2
 la_backend = get_option('la_backend')
-if la_backend == 'openblas64+lapack64' or la_backend == 'default'
+if la_backend == 'openblas+lapack' or la_backend == 'default'
+  openblas_dep = dependency('openblas', required: false)
+  if openblas_dep.found()
+    project_dep += openblas_dep
+  else
+    project_dep += cc.find_library('openblas', required : true)
+    build_args += '-DUSE_OPENBLAS_INC'
+  endif
 
+  lapack_dep = dependency('lapack', required: false)
+  if lapack_dep.found()
+    project_dep += lapack_dep
+  else
+    project_dep += cc.find_library('lapack', required : true)
+  endif
+
+  lapacke_dep = dependency('lapacke', required: false)
+  if lapacke_dep.found()
+    project_dep += lapacke_dep
+  else
+    project_dep += cc.find_library('lapacke', required : false)
+  endif
+  build_args += '-DUSE_OPENBLAS'
+elif la_backend == 'openblas64+lapack64'
   openblas64_dep = dependency('openblas64', required: false)
   if openblas64_dep.found()
     project_dep += openblas64_dep
@@ -66,28 +88,6 @@ if la_backend == 'openblas64+lapack64' or la_backend == 'default'
   build_args += '-DLAPACK_ILP64'
   build_args += '-DOPENBLAS_USE64BITINT'
   build_args += '-DUSE_OPENBLAS64'
-elif la_backend == 'openblas+lapack'
-  openblas_dep = dependency('openblas', required: false)
-  if openblas_dep.found()
-    project_dep += openblas_dep
-  else
-    project_dep += cc.find_library('openblas', required : true)
-  endif
-
-  lapack_dep = dependency('lapack', required: false)
-  if lapack_dep.found()
-    project_dep += lapack_dep
-  else
-    project_dep += cc.find_library('lapack', required : true)
-  endif
-
-  lapacke_dep = dependency('lapacke', required: false)
-  if lapacke_dep.found()
-    project_dep += lapacke_dep
-  else
-    project_dep += cc.find_library('lapacke', required : false)
-  endif
-  build_args += '-DUSE_OPENBLAS'
 elif la_backend == 'mkl'
   # found using `pkg-config --list-all | grep "mkl"`
   if get_option('openmp')

@@ -55,10 +55,10 @@ cd stdlite
 meson setup _build --buildtype=release
 ```
 
-The default build instruction use OpenBLAS+LAPACK (with `ILP64` enabled) and OpenMP. To change this, use:
+The default build instruction use OpenBLAS+LAPACK (without `ILP64`) and OpenMP. To change this, use:
 
 ```bash
-# to use MKL (this will probably improve performances)
+# to use MKL with ILP64 (this will probably improve performances)
 meson configure _build -Dla_backend=mkl
 
 # to disable OpenMP (not recommended)
@@ -93,9 +93,9 @@ Depending on the installation prefix and your user rights, root access might be 
 
 ## Custom build
 
-Successful build and run have also been achieved with:
+Successful build and run have also been achieved on some machines with:
 
 + OpenBLAS+ScaLAPACK: `-Dla_backend=custom -Dblas_vendor=openblas -Dlapack_vendor=scalpack`. Since [version 2.2.0](https://netlib.org/scalapack/scalapack-2.2.0.html), `ILP64` is supported, so `-Dc_args="-DInt=long -DSTDL_LA_INT=long"` should use 8-bytes integers.
-+ OpenBLAS+LAPACK (no `ILP64`, so default integers): `-Dla_backend=openblas+lapack`
++ OpenBLAS64+LAPACK64 (with `ILP64`): `-Dla_backend=openblas64+lapack64`
 
 ... But this has not been thoroughly tested yet.

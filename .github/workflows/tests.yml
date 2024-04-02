@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         compiler: [gcc, clang]
-        la_backend: [openblas64, mkl]
+        la_backend: [openblas, mkl]
     env:
       CC: ${{ matrix.compiler == 'clang' && 'clang' || 'gcc' }}
 
@@ -40,10 +40,10 @@ jobs:
         run: |
           sudo apt-get install libomp-dev
       - name: Install OpenBLAS & Lapack(e) & configure
-        if: ${{ matrix.la_backend == 'openblas64' }}
+        if: ${{ matrix.la_backend == 'openblas' }}
         run: |
-          sudo apt-get install libopenblas64-openmp-dev liblapack64-dev liblapacke-dev liblapacke64-dev
-          meson setup ${{ env.BUILD_DIR }} -Dla_backend=openblas64+lapack64 --buildtype=debug
+          sudo apt-get install libopenblas-openmp-dev liblapack-dev liblapacke-dev
+          meson setup ${{ env.BUILD_DIR }} -Dla_backend=openblas+lapack --buildtype=debug
       - name: Install MKL & configure
         if: ${{ matrix.la_backend == 'mkl' }}
         run: |
