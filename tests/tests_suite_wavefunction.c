@@ -145,7 +145,6 @@ void test_molden_dalton() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_molden("../tests/test_files/water_sto3g_dalton.molden", &wf, &bs);
-    ASSERT_STDL_OK(stdl_basis_delete(bs));
 
     // check that energies are sorted
     for (size_t p = 1; p < wf->nmo; ++p) {
@@ -155,6 +154,26 @@ void test_molden_dalton() {
     // check population
     compute_population_and_check(wf, 0, 1e-4);
 
+    double* dipoles_sp = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipoles_sp);
+
+    // compute dipole integrals
+    ASSERT_STDL_OK(stdl_basis_dsp_dipole(bs, dipoles_sp));
+
+    // compute explicitly the electronic dipole moment along z
+    double dipz1 = .0;
+    for (size_t p = 0; p < wf->nocc; ++p) {
+        for (size_t mu = 0; mu < wf->nao; ++mu) {
+            for (size_t nu = 0; nu < wf->nao; ++nu) {
+                dipz1 += 2 * wf->C[p * wf->nao + mu] * wf->C[p * wf->nao + nu] * dipoles_sp[2 * STDL_MATRIX_SP_SIZE(wf->nao) + STDL_MATRIX_SP_IDX(mu, nu)];
+            }
+        }
+    }
+
+    TEST_ASSERT_DOUBLE_WITHIN(1e-6, -0.67508, dipz1);
+    STDL_FREE_ALL(dipoles_sp);
+
+    ASSERT_STDL_OK(stdl_basis_delete(bs));
     ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
 }
 
