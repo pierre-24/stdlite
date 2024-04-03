@@ -1,0 +1,103 @@
+[Molden Format]
+[GTO]
+    1 0
+ s   1 1.00
+       1.0000000    1.0000000000
+ p   1 1.00
+       1.0000000    1.0000000000
+ d   1 1.00
+       2.0620000    1.0000000000
+ f   1 1.00
+       1.3970000    1.0000000000
+
+[SCFCONV]
+scf-first  1  THROUGH   1
+       -2.2546973193
+[TITLE]
+*** Dalton interface to Molden, wave function type : HF             3Apr24   16:
+[Atoms] AU
+He         1     2         0.0000000000         0.0000000000         0.000000000
+[5D7F]
+[9G]
+[MO]
+Sym= A
+Ene=   -0.5632
+Spin= Alpha
+Occup=  2.0000
+    1        1.000000
+Sym= A
+Ene=    2.0649
+Spin= Alpha
+Occup=  0.0000
+    2        1.000000
+Sym= A
+Ene=    2.0649
+Spin= Alpha
+Occup=  0.0000
+    3        1.000000
+Sym= A
+Ene=    2.0649
+Spin= Alpha
+Occup=  0.0000
+    4        1.000000
+Sym= A
+Ene=    6.1777
+Spin= Alpha
+Occup=  0.0000
+   11        1.000000
+Sym= A
+Ene=    6.1777
+Spin= Alpha
+Occup=  0.0000
+   15        1.000000
+Sym= A
+Ene=    6.1777
+Spin= Alpha
+Occup=  0.0000
+   13        1.000000
+Sym= A
+Ene=    6.1777
+Spin= Alpha
+Occup=  0.0000
+   12        1.000000
+Sym= A
+Ene=    6.1777
+Spin= Alpha
+Occup=  0.0000
+   10        1.000000
+Sym= A
+Ene=    6.1777
+Spin= Alpha
+Occup=  0.0000
+   14        1.000000
+Sym= A
+Ene=    6.1777
+Spin= Alpha
+Occup=  0.0000
+   16        1.000000
+Sym= A
+Ene=    6.7730
+Spin= Alpha
+Occup=  0.0000
+    8        1.000000
+Sym= A
+Ene=    6.7730
+Spin= Alpha
+Occup=  0.0000
+    9        1.000000
+Sym= A
+Ene=    6.7730
+Spin= Alpha
+Occup=  0.0000
+    7        1.000000
+Sym= A
+Ene=    6.7730
+Spin= Alpha
+Occup=  0.0000
+    6        1.000000
+Sym= A
+Ene=    6.7730
+Spin= Alpha
+Occup=  0.0000
+    5        1.000000
+[End of Molden output from Dalton]

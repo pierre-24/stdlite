@@ -127,11 +127,21 @@ int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S);
 /**
  * Compute the electronic dipole matrix in AO basis, $D_{\mu\nu} = \braket{\mu|e\,(\hat r - R_0)|\nu}$.
  * @param bs a valid basis set
- * @param[out] dipoles `float[3, STDL_MATRIX_SP_SIZE(nao)]` the resulting dipole matrix. The component of the dipole is thus the slowest varying index.
+ * @param[out] dipoles `double[3, STDL_MATRIX_SP_SIZE(nao)]` the resulting dipole matrix.
  * @return error code.
  * @ingroup basis
  */
 int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles);
+
+/**
+ * Compute the angular momentum matrix in AO basis, $M_{\mu\nu} = i\,\braket{\mu|(\hat r - R_0)\times\vec\nabla|\nu}$.
+ * @warning this property is antisymmetric!
+ * @param bs a valid basis set
+ * @param[out] angmoms `double[3, STDL_MATRIX_SP_SIZE(nao)]` the resulting angular moments matrix.
+ * @return error code.
+ * @ingroup basis
+ */
+int stdl_basis_dsp_angmom(stdl_basis *bs, double *angmoms);
 
 /**
  * Dump a basis in a H5 file

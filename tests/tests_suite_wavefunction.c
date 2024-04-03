@@ -7,7 +7,7 @@
 #include "tests_suite.h"
 
 void setUp(void) {
-    stdl_set_debug_level(1);
+    stdl_set_debug_level(0);
     stdl_set_log_level(0);
 }
 
@@ -172,6 +172,23 @@ void test_molden_dalton() {
 
     TEST_ASSERT_DOUBLE_WITHIN(1e-6, -0.67508, dipz1);
     STDL_FREE_ALL(dipoles_sp);
+
+    ASSERT_STDL_OK(stdl_basis_delete(bs));
+    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
+}
+
+void test_molden_He() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+
+    // in this test, [5D7F] comes after [GTO], so one needs to recount the number of AOs.
+    read_molden("../tests/test_files/He.molden", &wf, &bs);
+
+    // check that it has 16 AOs (and not 19)
+    TEST_ASSERT_EQUAL(16, wf->nao);
+
+    // check population
+    compute_population_and_check(wf, 0, 1e-4);
 
     ASSERT_STDL_OK(stdl_basis_delete(bs));
     ASSERT_STDL_OK(stdl_wavefunction_delete(wf));

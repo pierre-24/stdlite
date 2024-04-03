@@ -610,6 +610,7 @@ int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction** wf_ptr, stdl_
             } else {
                 STDL_DEBUG("switching to spherical basis functions");
                 _use_spherical(dt);
+                stdl_basis_data_count_nao(dt, &nao); // recount NAO
             }
 
             err = stdl_molden_parser_skip_section(lx);

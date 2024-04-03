@@ -711,7 +711,7 @@ int stdl_user_input_handler_make_context(stdl_user_input_handler* inp, stdl_cont
 
         // create context
         err = stdl_context_new(wf, bs, inp->ctx_gammaJ, inp->ctx_gammaK, inp->ctx_ethr, inp->ctx_e2thr, inp->ctx_ax, ctx_ptr);
-        STDL_ERROR_CODE_HANDLE(err, stdl_basis_delete(bs); stdl_wavefunction_delete(wf); return err);
+        STDL_ERROR_CODE_HANDLE(err, *ctx_ptr = NULL; return err);
 
         // select and build A' and B'
         if(inp->ctx_method == STDL_METHOD_MONOPOLE)

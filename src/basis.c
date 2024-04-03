@@ -257,6 +257,68 @@ int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles) {
     return STDL_ERR_OK;
 }
 
+int stdl_basis_dsp_angmom(stdl_basis *bs, double *angmoms) {
+    assert(bs != NULL && angmoms != NULL);
+
+    stdl_log_msg(0, "Computing <µ|r⨉∇|ν> elements >");
+
+    size_t nao = 0;
+    for(int ibas=0; ibas < bs->nbas; ibas++) {
+        if (bs->use_spherical)
+            nao += CINTcgto_spheric(ibas, bs->bas);
+        else
+            nao += CINTcgtos_cart(ibas, bs->bas);
+    }
+
+    int si, sj, ioffset=0, joffset;
+
+    double buff[3 * CART_MAX * CART_MAX];
+    double* renorm = malloc(nao * sizeof(double));
+    STDL_ERROR_HANDLE_AND_REPORT(renorm == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    _compute_renormalization(bs, renorm, buff);
+
+    size_t ndips = STDL_MATRIX_SP_SIZE(nao);
+
+    for(int ibas=0; ibas < bs->nbas; ibas++) {
+        if(bs->use_spherical)
+            si = CINTcgto_spheric(ibas, bs->bas);
+        else
+            si = CINTcgtos_cart(ibas, bs->bas);
+
+        joffset = 0;
+
+        for(int jbas=0; jbas <= ibas; jbas++) {
+            if(bs->use_spherical) {
+                sj = CINTcgto_spheric(jbas, bs->bas);
+                int1e_cg_irxp_sph(buff, NULL, (int[]) {ibas, jbas}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
+            }
+            else {
+                sj = CINTcgtos_cart(jbas, bs->bas);
+                int1e_cg_irxp_cart(buff, NULL, (int[]) {ibas, jbas}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
+            }
+
+            for(int iprim=0; iprim < si; iprim++) {
+                for(int jprim=0; jprim < sj && joffset + jprim <= ioffset + iprim; jprim++) {
+                    angmoms[0 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = buff[0 * si * sj + jprim * si + iprim] * renorm[ioffset + iprim] * renorm[joffset + jprim];
+                    angmoms[1 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = buff[1 * si * sj + jprim * si + iprim] * renorm[ioffset + iprim] * renorm[joffset + jprim];
+                    angmoms[2 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = buff[2 * si * sj + jprim * si + iprim] * renorm[ioffset + iprim] * renorm[joffset + jprim];
+                }
+            }
+
+            joffset += sj;
+        }
+
+        ioffset += si;
+    }
+
+    free(renorm);
+
+    stdl_log_msg(0, "< done\n");
+
+    return STDL_ERR_OK;
+}
+
 
 
 int stdl_basis_reorder_C(size_t nmo, size_t nao, double *C, stdl_basis *bs, size_t maxshell, int **transpose) {

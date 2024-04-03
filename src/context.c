@@ -157,21 +157,35 @@ int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float 
 
     STDL_DEBUG("Resulting MO cutoff: %f Eh (%.3f eV) -- %f Eh (%.3f eV)", emin, emin * STDL_CONST_AU_TO_EV, emax, emax * STDL_CONST_AU_TO_EV);
 
+    if(wf->e[0] < emin) {
+        for (size_t i = wf->nocc; i != 0; i--) {
+            if (wf->e[i] >= emin)
+                omin = i;
+            else
+                break;
+        }
+    }
+
     for(size_t i=0; i < wf->nmo; i++) {
-        if(wf->e[i] >= emin && omin == 0)
-            omin = (int) i;
 
         if(wf->e[i] <= emax)
-            omax = (int) i;
+            omax = i;
         else
             break;
     }
+
+    STDL_DEBUG("omin=%d, omax=%d\n", omin, omax);
 
     stdl_log_msg(0, "-");
     stdl_log_msg(1, "\n  | Copy LCAO coefficients ");
 
     (*ctx_ptr)->nmo = omax - omin + 1;
     (*ctx_ptr)->nocc = ohomo - omin + 1;
+
+    STDL_ERROR_HANDLE_AND_REPORT((*ctx_ptr)->nmo == 0, stdl_context_delete(*ctx_ptr); return STDL_ERR_CONTEXT, "no MO selected, increase threshold");
+    STDL_ERROR_HANDLE_AND_REPORT((*ctx_ptr)->nocc == 0, stdl_context_delete(*ctx_ptr); return STDL_ERR_CONTEXT, "no occupied MO selected, increase threshold");
+    STDL_ERROR_HANDLE_AND_REPORT((*ctx_ptr)->nocc == (*ctx_ptr)->nmo , stdl_context_delete(*ctx_ptr); return STDL_ERR_CONTEXT, "no virtual MO selected, increase threshold");
+
     size_t nvirt = omax - ohomo;
     (*ctx_ptr)->C_ptr = wf->C + omin * wf->nao;
     (*ctx_ptr)->e_ptr = wf->e + omin;
@@ -187,8 +201,6 @@ int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float 
     stdl_log_msg(0, "-");
     stdl_log_msg(1, "\n  | Orthogonalize MO ");
 
-    STDL_DEBUG("Orthogonalize MOs");
-
     int error = stdl_wavefunction_orthogonalize_C_dge((*ctx_ptr)->nmo, wf->nao, wf->S, (*ctx_ptr)->C);
     STDL_ERROR_CODE_HANDLE(error, stdl_context_delete(*ctx_ptr); return error);
 
@@ -196,6 +208,7 @@ int stdl_context_new(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, float 
 
     stdl_log_msg(0, "Resulting partition: [%d\\%d|%d/%d] (active space of %d MOs, %.2f%% of total)\n", omin, (*ctx_ptr)->nocc, nvirt, wf->nmo - omax - 1, (*ctx_ptr)->nmo, (double) (*ctx_ptr)->nmo / (double) wf->nmo * 100);
 
+    stdl_matrix_dsp_print(wf->nao, wf->S, "S");
     stdl_matrix_dge_print((*ctx_ptr)->nmo, wf->nao, (*ctx_ptr)->C, "orthogonal C");
 
     return STDL_ERR_OK;
