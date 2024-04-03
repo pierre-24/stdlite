@@ -126,7 +126,7 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
         STDL_ERROR_HANDLE_AND_REPORT(op_AO == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
 
         if(rh->ops[iop] == STDL_OP_DIPL) {
-            err = stdl_basis_dsp_dipole(ctx->bs, op_AO);
+            err = stdl_basis_dsp_diplen(ctx->bs, op_AO);
             STDL_ERROR_CODE_HANDLE(err, free(op_AO); goto _end);
         } else {
             err = STDL_ERR_INPUT;

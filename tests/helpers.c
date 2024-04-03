@@ -42,7 +42,7 @@ void make_dipoles_MO(stdl_wavefunction* wf, stdl_basis* bs, stdl_context* ctx, d
     double* dipoles_sp_AO = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_sp_AO);
 
-    ASSERT_STDL_OK(stdl_basis_dsp_dipole(bs, dipoles_sp_AO));
+    ASSERT_STDL_OK(stdl_basis_dsp_diplen(bs, dipoles_sp_AO));
 
     for (int cpt = 0; cpt < 3; ++cpt)
         ASSERT_STDL_OK(stdl_wavefunction_dsp_ao_to_dsp_mo(

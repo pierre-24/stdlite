@@ -125,13 +125,13 @@ int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S);
 
 
 /**
- * Compute the electronic dipole matrix in AO basis, $D_{\mu\nu} = \braket{\mu|e\,(\hat r - R_0)|\nu}$.
+ * Compute the dipole matrix (in the dipole length formalism) in AO basis, $D_{\mu\nu} = \braket{\mu|e\,(\hat r - R_0)|\nu}$.
  * @param bs a valid basis set
  * @param[out] dipoles `double[3, STDL_MATRIX_SP_SIZE(nao)]` the resulting dipole matrix.
  * @return error code.
  * @ingroup basis
  */
-int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles);
+int stdl_basis_dsp_diplen(stdl_basis *bs, double *dipoles);
 
 /**
  * Compute the angular momentum matrix in AO basis, $M_{\mu\nu} = i\,\braket{\mu|(\hat r - R_0)\times\vec\nabla|\nu}$.
@@ -142,6 +142,17 @@ int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles);
  * @ingroup basis
  */
 int stdl_basis_dsp_angmom(stdl_basis *bs, double *angmoms);
+
+/**
+ * Compute the dipole velocity matrix in AO basis, $V_{\mu\nu} = \braket{\mu|\vec\nabla|\nu}$.
+ * @warning this property is antisymmetric!
+ * @param bs a valid basis set
+ * @param[out] dipvels `double[3, STDL_MATRIX_SP_SIZE(nao)]` the resulting dipole velocity matrix.
+ * @return error code.
+ * @ingroup basis
+ */
+int stdl_basis_dsp_dipvel(stdl_basis *bs, double *dipvels);
+
 
 /**
  * Dump a basis in a H5 file
