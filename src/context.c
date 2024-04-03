@@ -231,7 +231,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     double sval;
     char* sunit;
     stdl_convert_size(env_size, &sval, &sunit);
-    stdl_log_msg(0, "Memory required for environment: %.1f%s\n", sval, sunit);
+    stdl_log_msg(0, "Extra memory required: %.1f%s\n", sval, sunit);
 
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Select CSFs (monopole approximation) >");

@@ -136,7 +136,7 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
         for (size_t cpt = 0; cpt < dim; ++cpt) {
             char buff[128];
             sprintf(buff, "Component %ld", cpt);
-            stdl_matrix_dsp_print(ctx->nmo, op_AO + cpt * STDL_MATRIX_SP_SIZE(ctx->original_wf->nao), buff);
+            stdl_matrix_dsp_print(ctx->original_wf->nao, op_AO + cpt * STDL_MATRIX_SP_SIZE(ctx->original_wf->nao), buff);
         }
 
         // AO to MO

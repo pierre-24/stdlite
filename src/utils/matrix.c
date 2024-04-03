@@ -23,10 +23,10 @@ int stdl_matrix_dge_print(size_t rows, size_t columns, double *matrix, char *tit
     while (i < columns) {
         // header
         j = 0;
-        printf("    ");
+        stdl_log_msg(2, "    ");
         while (j < STDL_MATRIX_MAX_COLS && (i + j) < columns){
             c = i + j;
-            printf("    %6ld    ", c);
+            stdl_log_msg(2, "    %6ld    ", c);
             j++;
         }
         stdl_log_msg(2, "\n");
@@ -406,7 +406,7 @@ int stdl_matrix_ssp_blowge(int issym, size_t n, float *in, float *out) {
 
     STDL_DEBUG("ssp_blowge");
 
-    LAPACKE_stpttr(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) n, in, out, (STDL_LA_INT) n);
+    LAPACKE_stpttr_work(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) n, in, out, (STDL_LA_INT) n);
 
     #pragma omp parallel for
     for (size_t i = 0; i < n; ++i) {

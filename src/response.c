@@ -7,14 +7,18 @@
 #include "stdlite/utils/matrix.h"
 #include "stdlite/linear_algebra.h"
 
+void _log_memory(size_t sz) {
+    double wrk_asz;
+    char* wrk_usz;
+    stdl_convert_size(sz, &wrk_asz, &wrk_usz);
+    stdl_log_msg(0, "Extra memory required: %.1f%s\n", wrk_asz, wrk_usz);
+}
+
 int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X) {
     assert(ctx != NULL && ctx->ncsfs > 0 && nexci > 0 && nexci <= ctx->ncsfs && e != NULL && X != NULL);
 
     size_t wrk_sz = (STDL_MATRIX_SP_SIZE(ctx->ncsfs) + 8 * ctx->ncsfs) * sizeof(float ), iwrk_sz = 6 * ctx->ncsfs * sizeof(STDL_LA_INT);
-    double wrk_asz;
-    char* wrk_usz;
-    stdl_convert_size(wrk_sz + (nexci < ctx->ncsfs? iwrk_sz : 0), &wrk_asz, &wrk_usz);
-    stdl_log_msg(0, "Memory required for work: %.1f%s\n", wrk_asz, wrk_usz);
+    _log_memory(wrk_sz + (nexci < ctx->ncsfs? iwrk_sz : 0));
 
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute %ld excitation amplitude vectors (TDA-DFT) >", nexci);
@@ -75,10 +79,7 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
 
     size_t sz = ctx->ncsfs * ctx->ncsfs;
     size_t wrk_sz = (3 * sz + 2 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) + 8 * ctx->ncsfs) * sizeof(float), iwrk_sz = 6 * ctx->ncsfs * sizeof(STDL_LA_INT);
-    double wrk_asz;
-    char* wrk_usz;
-    stdl_convert_size(wrk_sz + (nexci < ctx->ncsfs? iwrk_sz : 0), &wrk_asz, &wrk_usz);
-    stdl_log_msg(0, "Memory required for work: %.1f%s\n", wrk_asz, wrk_usz);
+    _log_memory(wrk_sz + (nexci < ctx->ncsfs? iwrk_sz : 0) + (ctx->ncsfs * (ctx->ncsfs + 4)) * sizeof(float ) /* <- stdl_matrix_ssp_sqrt_sy */);
 
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute %ld excitation amplitude vectors (TD-DFT) >", nexci);
@@ -244,11 +245,7 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
     assert(ctx != NULL && ctx->ncsfs > 0 && nw > 0 && ndim > 0 && ctx->B != NULL && egrad != NULL && X != NULL && Y != NULL);
 
     size_t wrk_sz = (3 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) + ctx->ncsfs) * sizeof(float), iwrk_sz = ctx->ncsfs * sizeof(STDL_LA_INT);
-
-    double wrk_asz;
-    char* wrk_usz;
-    stdl_convert_size(wrk_sz + iwrk_sz, &wrk_asz, &wrk_usz);
-    stdl_log_msg(0, "Memory required for work: %.1f%s\n", wrk_asz, wrk_usz);
+    _log_memory(wrk_sz + iwrk_sz);
 
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute %ld linear response vectors (TD-DFT) >", nw);
@@ -347,10 +344,7 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
     assert(ctx != NULL && ctx->ncsfs > 0 && nw > 0 && ndim > 0 && egrad != NULL && X != NULL && Y != NULL);
 
     size_t wrk_sz = (2 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) + ctx->ncsfs)* sizeof(float), iwrk_sz = ctx->ncsfs * sizeof(STDL_LA_INT);
-    double wrk_asz;
-    char* wrk_usz;
-    stdl_convert_size(wrk_sz + iwrk_sz, &wrk_asz, &wrk_usz);
-    stdl_log_msg(0, "Memory required for work: %.1f%s\n", wrk_asz, wrk_usz);
+    _log_memory(wrk_sz + iwrk_sz);
 
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute %ld linear response vectors (TDA-DFT) >", nw);

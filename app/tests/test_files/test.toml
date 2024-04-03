@@ -29,9 +29,9 @@ linear_sr = [
     {opA = 'dipl', nroots = 5},  # transition dipole
 ]
 
-#quadratic_dr = [
-#    {op = 'dipl', root = -1}  # e2e transition dipoles
-#]
+quadratic_dr = [
+    {op = 'dipl', root = -1}  # e2e transition dipoles
+]
 
 # [analyses]
 # sos_linear = true
