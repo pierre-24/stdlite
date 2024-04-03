@@ -122,10 +122,7 @@ These are the keywords related to the creation of the context, *i.e.*, the selec
     Method for the calculation of the elements of the  $\mathbf A'$ and $\mathbf B'$ super-matrices. 
     Currently the possible values are:
 
-    + `"monopole"` ([default sTD-DFT procedure](theory.md#std-dft-or-the-monopole-approximation), *i.e.*, the monopole approximation), 
-    + `"monopole_direct"` (same as default, but the integrals are evaluated on demand).
-
-    The `"xxx_direct"` version requires less memory.
+    + `"monopole"` ([default sTD-DFT procedure](theory.md#std-dft-or-the-monopole-approximation), *i.e.*, the monopole approximation).
 
 !!! abstract "Tamm-Dancoff approximation"
 

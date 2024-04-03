@@ -289,8 +289,6 @@ B'_{ia,jb} =& 2\,(ia|bj)' -a_x\,(ib|aj)'.
     so that a scalar product leads to the value of the different integrals. For example,
     
     $$(ia|jb)' \approx \sum_{B}^N (ia|BB)_K\,q_B^{jb}.$$
-    
-    However, these intermediates have a huge memory cost [$\mathcal O (N_{atm}\times N_{MO}^2)$ altogether], so a direct version (integrals are evaluated when requested) is also available.
 
 
 ### XsTD-DFT

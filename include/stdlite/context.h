@@ -103,23 +103,6 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B);
 
 
 /**
- * Select CSFs and build the $\mathbf A$ and $\mathbf B$ matrices, using the monopole approximation (original sTD-DFT).
- * If `B` is set to `NULL`, then only $\mathbf A$ is filled (Tamm-Dancoff approximation).
- * Use less memory but takes more time than the non-direct version.
- *
- * @param ctx a valid context
- * @param[out] nselected number of CSFs that were selected. If equals to 0, then `csfs` and `A` are not initialized.
- * @param[out] csfs `size_t[nselected]`, the indices (`i*ctx->nvirt + a`) of each selected CSF `i→a`, as `i = csfs[k] / ctx->nvirt; a = csfs[k] % ctx->nvirt`.
- *             They are sorted in increasing energy order, the energy being available at `A[k * nselected + k]`.
- * @param[out] A `float[STDL_MATRIX_SP_SIZE(nslected)]`, part of the electronic Hessian matrix, in `sp` format, to be created. Caller is responsible for free'ing it.
- * @param[out] B `float[STDL_MATRIX_SP_SIZE(nslected)]`, part of the electronic Hessian matrix, in `sp` format, to be created. Might be `NULL` if only `A` is required. If not, caller is responsible for free'ing it.
- * @return error code
- * @ingroup context
- */
-int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B);
-
-
-/**
  * Dump a context in a H5 file
  *
  * @param ctx a valid context

@@ -27,7 +27,6 @@ void test_user_input_context_fill_from_toml_ok() {
           "[context]\n"
           "source = \"../tests/test_files/water_631g.fchk\"\n"
           "source_type = \"FCHK\"\n"
-          "method = \"monopole_direct\"\n"
           "tda = 0\n"
           "ethr = '12eV'\n"
           "e2thr=1e-3\n"
@@ -44,7 +43,7 @@ void test_user_input_context_fill_from_toml_ok() {
     TEST_ASSERT_EQUAL_STRING("water_631g.h5", inp->data_output);
     TEST_ASSERT_EQUAL_STRING("../tests/test_files/water_631g.fchk", inp->ctx_source);
     TEST_ASSERT_EQUAL(STDL_SRC_FCHK, inp->ctx_source_type);
-    TEST_ASSERT_EQUAL(STDL_METHOD_MONOPOLE_DIRECT, inp->ctx_method);
+    TEST_ASSERT_EQUAL(STDL_METHOD_MONOPOLE, inp->ctx_method);
     TEST_ASSERT_EQUAL(0, inp->ctx_tda);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 12.f / STDL_CONST_AU_TO_EV, inp->ctx_ethr);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 1e-3, inp->ctx_e2thr);

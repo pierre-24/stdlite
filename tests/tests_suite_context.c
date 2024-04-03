@@ -207,36 +207,6 @@ void test_context_select_csfs_ok() {
 }
 
 
-void test_context_select_csfs_direct_ok() {
-    stdl_wavefunction * wf1 = NULL;
-    stdl_basis * bs1 = NULL;
-    read_fchk("../tests/test_files/water_631g.fchk", &wf1, &bs1);
-
-    stdl_context* ctx1 = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf1, bs1, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx1));
-    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx1, 1));
-
-    stdl_wavefunction * wf2 = NULL;
-    stdl_basis * bs2 = NULL;
-    read_fchk("../tests/test_files/water_631g.fchk", &wf2, &bs2);
-
-    stdl_context* ctx2 = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf2, bs2, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx2));
-    ASSERT_STDL_OK(stdl_context_select_csfs_monopole_direct(ctx2, 1));
-
-    // check that both matrix are identical
-    for (size_t kia = 0; kia < ctx1->ncsfs; ++kia) {
-        for (size_t kjb = 0; kjb < ctx1->ncsfs; ++kjb) {
-            TEST_ASSERT_FLOAT_WITHIN(1e-6, ctx1->A[STDL_MATRIX_SP_IDX(kia, kjb)], ctx2->A[STDL_MATRIX_SP_IDX(kia, kjb)]);
-            TEST_ASSERT_FLOAT_WITHIN(1e-6, ctx1->B[STDL_MATRIX_SP_IDX(kia, kjb)], ctx2->B[STDL_MATRIX_SP_IDX(kia, kjb)]);
-        }
-    }
-
-    ASSERT_STDL_OK(stdl_context_delete(ctx1));
-    ASSERT_STDL_OK(stdl_context_delete(ctx2));
-}
-
-
 void test_context_dump_load_h5_ok() {
     stdl_wavefunction * wf1 = NULL;
     stdl_basis * bs1 = NULL;

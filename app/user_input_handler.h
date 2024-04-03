@@ -30,9 +30,6 @@ typedef enum stdl_source_type_ stdl_source_type;
 enum stdl_method_ {
     /// Monopole approximation
     STDL_METHOD_MONOPOLE,
-
-    /// Monopole approximation, direct calculation
-    STDL_METHOD_MONOPOLE_DIRECT,
 };
 
 typedef enum stdl_method_ stdl_method;

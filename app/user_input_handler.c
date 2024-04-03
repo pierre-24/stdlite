@@ -167,8 +167,6 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
             STDL_DEBUG("- method");
             if(strcmp(ctx_method.u.s, "monopole") == 0) {
                 inp->ctx_method = STDL_METHOD_MONOPOLE;
-            } else if(strcmp(ctx_method.u.s, "monopole_direct") == 0) {
-                inp->ctx_method = STDL_METHOD_MONOPOLE_DIRECT;
             } else {
                 STDL_ERROR_HANDLE_AND_REPORT(1, free(ctx_method.u.s); goto _end, "unknown value for `context.method`");
             }
@@ -482,8 +480,6 @@ int stdl_user_input_handler_fill_from_args(stdl_user_input_handler* inp, int arg
     if(arg_ctx_method->count > 0) {
         if(strcmp(arg_ctx_method->sval[0], "monopole") == 0) {
             inp->ctx_method = STDL_METHOD_MONOPOLE;
-        } else if(strcmp(arg_ctx_method->sval[0], "monopole_direct") == 0) {
-            inp->ctx_method = STDL_METHOD_MONOPOLE_DIRECT;
         } else {
             STDL_ERROR_HANDLE_AND_REPORT(1, err = STDL_ERR_INPUT; goto _end, "unknown method `%s`", arg_ctx_method->sval[0]);
         }
@@ -574,9 +570,6 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
         switch (inp->ctx_method) {
             case STDL_METHOD_MONOPOLE:
                 stdl_log_msg(0, "method = \"monopole\"\n");
-                break;
-            case STDL_METHOD_MONOPOLE_DIRECT:
-                stdl_log_msg(0, "method = \"monopole_direct\"\n");
                 break;
         }
 
@@ -723,8 +716,6 @@ int stdl_user_input_handler_make_context(stdl_user_input_handler* inp, stdl_cont
         // select and build A' and B'
         if(inp->ctx_method == STDL_METHOD_MONOPOLE)
             err = stdl_context_select_csfs_monopole(*ctx_ptr, !inp->ctx_tda);
-        else if(inp->ctx_method == STDL_METHOD_MONOPOLE_DIRECT)
-            err = stdl_context_select_csfs_monopole_direct(*ctx_ptr, !inp->ctx_tda);
 
         STDL_ERROR_CODE_HANDLE(err, return err);
 
