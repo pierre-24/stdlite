@@ -35,7 +35,7 @@ groups:
     title: Basis set
     description: |
       Describe a set of basis functions, centered on atoms.
-      Also provide functions that computes expectation values (integrals) in AO basis.
+      Also provide functions to compute AO integrals.
       
       ```c
       #include <stdlite/basis.h>

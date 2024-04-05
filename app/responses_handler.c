@@ -26,10 +26,10 @@ int stdl_responses_handler_new(size_t nops, size_t nlrvreqs, size_t nexci, char 
     (*rh_ptr)->Yamp = NULL;
 
     (*rh_ptr)->ops = malloc(nops * sizeof(stdl_operator));
-    (*rh_ptr)->ev_matrices = calloc(nops, sizeof(double*));
+    (*rh_ptr)->integrals = calloc(nops, sizeof(double*));
     (*rh_ptr)->lrvreqs = calloc(nops, sizeof(stdl_lrv_request*));
 
-    STDL_ERROR_HANDLE_AND_REPORT((*rh_ptr)->ops == NULL || (*rh_ptr)->ev_matrices == NULL || (*rh_ptr)->lrvreqs == NULL, stdl_responses_handler_delete(*rh_ptr); return STDL_ERR_MALLOC, "malloc");
+    STDL_ERROR_HANDLE_AND_REPORT((*rh_ptr)->ops == NULL || (*rh_ptr)->integrals == NULL || (*rh_ptr)->lrvreqs == NULL, stdl_responses_handler_delete(*rh_ptr); return STDL_ERR_MALLOC, "malloc");
 
     if(nexci > 0) {
         (*rh_ptr)->eexci = malloc(nexci * sizeof(float ));
@@ -58,10 +58,10 @@ int stdl_responses_handler_delete(stdl_responses_handler* rh) {
     }
 
     for (size_t i = 0; i < rh->nops; ++i) {
-        STDL_FREE_IF_USED(rh->ev_matrices[i]);
+        STDL_FREE_IF_USED(rh->integrals[i]);
     }
 
-    STDL_FREE_ALL(rh->ops, rh->ev_matrices, rh->lrvreqs, rh->eexci, rh->Xamp, rh->Yamp, rh);
+    STDL_FREE_ALL(rh->ops, rh->integrals, rh->lrvreqs, rh->eexci, rh->Xamp, rh->Yamp, rh);
 
     return STDL_ERR_OK;
 }
@@ -109,25 +109,25 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
     hid_t res_group_id = H5Gcreate(file_id, "responses", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     STDL_ERROR_HANDLE_AND_REPORT(res_group_id == H5I_INVALID_HID, return STDL_ERR_WRITE, "cannot create group");
 
-    stdl_log_msg(0, "~~ Compute EV matrices in MO basis\n");
+    stdl_log_msg(0, "~~ Compute integrals in MO basis\n");
 
     for (size_t iop = 0; iop < rh->nops; ++iop) {
         size_t dim;
         err = stdl_operator_dim(rh->ops[iop], &dim);
         STDL_ERROR_CODE_HANDLE(err, goto _end);
 
-        size_t op_AO_sz = dim * STDL_MATRIX_SP_SIZE(ctx->original_wf->nao) * sizeof(double );
-        double op_AO_asz;
-        char* op_AO_usz;
-        stdl_convert_size(op_AO_sz, &op_AO_asz, &op_AO_usz);
-        stdl_log_msg(0, "Memory required for EV in AO basis: %.1f%s\n", op_AO_asz, op_AO_usz);
+        size_t ints_AO_sz = dim * STDL_MATRIX_SP_SIZE(ctx->original_wf->nao) * sizeof(double );
+        double ints_AO_asz;
+        char* ints_AO_usz;
+        stdl_convert_size(ints_AO_sz, &ints_AO_asz, &ints_AO_usz);
+        stdl_log_msg(0, "Memory required for integrals: %.1f%s\n", ints_AO_asz, ints_AO_usz);
 
-        double* op_AO = malloc(op_AO_sz);
-        STDL_ERROR_HANDLE_AND_REPORT(op_AO == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
+        double* ints_AO = malloc(ints_AO_sz);
+        STDL_ERROR_HANDLE_AND_REPORT(ints_AO == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
 
         if(rh->ops[iop] == STDL_OP_DIPL) {
-            err = stdl_basis_dsp_diplen(ctx->bs, op_AO);
-            STDL_ERROR_CODE_HANDLE(err, free(op_AO); goto _end);
+            err = stdl_basis_dsp_diplen(ctx->bs, ints_AO);
+            STDL_ERROR_CODE_HANDLE(err, free(ints_AO); goto _end);
         } else {
             err = STDL_ERR_INPUT;
             goto _end;
@@ -136,14 +136,14 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
         for (size_t cpt = 0; cpt < dim; ++cpt) {
             char buff[128];
             sprintf(buff, "Component %ld", cpt);
-            stdl_matrix_dsp_print(ctx->original_wf->nao, op_AO + cpt * STDL_MATRIX_SP_SIZE(ctx->original_wf->nao), buff);
+            stdl_matrix_dsp_print(ctx->original_wf->nao, ints_AO + cpt * STDL_MATRIX_SP_SIZE(ctx->original_wf->nao), buff);
         }
 
         // AO to MO
-        rh->ev_matrices[iop] = malloc(dim * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
+        rh->integrals[iop] = malloc(dim * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
 
         stdl_log_msg(1, "+ ");
-        stdl_log_msg(0, "Converting from AO basis to MO basis (dim=%ld) >", dim);
+        stdl_log_msg(0, "Converting integrals from AO basis to MO basis (dim=%ld) >", dim);
 
         for (size_t cpt = 0; cpt < dim; ++cpt) {
             stdl_log_msg(1, "\n  | component %ld ", cpt);
@@ -151,10 +151,10 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
                     ctx->original_wf->nao,
                     ctx->nmo,
                     ctx->C_ptr,
-                    op_AO + cpt * STDL_MATRIX_SP_SIZE(ctx->original_wf->nao),
-                    rh->ev_matrices[iop] + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo)
+                    ints_AO + cpt * STDL_MATRIX_SP_SIZE(ctx->original_wf->nao),
+                    rh->integrals[iop] + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo)
             );
-            STDL_ERROR_CODE_HANDLE(err, free(op_AO); goto _end);
+            STDL_ERROR_CODE_HANDLE(err, free(ints_AO); goto _end);
             stdl_log_msg(0, "-");
         }
 
@@ -164,10 +164,10 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
         for (size_t cpt = 0; cpt < dim; ++cpt) {
             char buff[128];
             sprintf(buff, "Component %ld", cpt);
-            stdl_matrix_dsp_print(ctx->nmo, rh->ev_matrices[iop] + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo), buff);
+            stdl_matrix_dsp_print(ctx->nmo, rh->integrals[iop] + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo), buff);
         }
 
-        STDL_FREE_IF_USED(op_AO);
+        STDL_FREE_IF_USED(ints_AO);
     }
 
     if(rh->nlrvreqs > 0) {
@@ -179,7 +179,7 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
             // find the correct operator
             for (size_t iop = 0; iop < rh->nops; ++iop) {
                 if (rh->ops[iop] == lrvreq->op) {
-                    lrvreq->eta_MO = rh->ev_matrices[iop];
+                    lrvreq->eta_MO = rh->integrals[iop];
                     break;
                 }
             }

@@ -152,7 +152,7 @@ int main(int argc, char* argv[]) {
             stdl_convert_size(amp_sz, &amp_asz, &amp_usz);
 
             stdl_log_msg(0, "--------------  --- -----------\n");
-            stdl_log_msg(0, "Responses       EV  %8.1f%s\n", ev_asz, ev_usz);
+            stdl_log_msg(0, "Responses       INT %8.1f%s\n", ev_asz, ev_usz);
             stdl_log_msg(0, "                LRV %8.1f%s\n", lrv_asz, lrv_usz);
             stdl_log_msg(0, "                AMP %8.1f%s\n", amp_asz, amp_usz);
             stdl_log_msg(0, "                OTH %8.1f%s\n", res_asz, res_usz);

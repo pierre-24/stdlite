@@ -978,7 +978,7 @@ int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, std
             STDL_ERROR_HANDLE_AND_REPORT(tdips == NULL, return STDL_ERR_MALLOC, "malloc");
 
             // TODO: it should be more general than that!
-            stdl_property_transition_dipoles(ctx, rh->nexci, rh->ev_matrices[0] /* <- !!!! */, rh->Xamp, rh->Yamp, tdips);
+            stdl_property_transition_dipoles(ctx, rh->nexci, rh->integrals[0] /* <- !!!! */, rh->Xamp, rh->Yamp, tdips);
 
             stdl_log_property_g2e_dipoles(rh, ctx, tdips, 5e-3f);
 

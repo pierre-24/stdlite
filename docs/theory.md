@@ -11,7 +11,7 @@ The goal of `stdlite` is to compute properties within the simplified TDA/TD-DFT 
     
     1. Extract data (*i.e.*, the atomic orbitals, as well as the MO energies, $\varepsilon$, and LCAO coefficients, $\mathbf C$) from a QC calculation;
     2. Select configuration state functions (CSFs, $\ket{\Psi_i^a}$, or singly excited determinants) using [a set of rules](#the-simplified-approaches-to-td-dft) and build the corresponding electronic hessian (super-)matrices $\mathbf A'$ and $\mathbf B'$ (might be zero);
-    3. Using said matrices, compute the [linear response](#linear-response) or [amplitude](#excitations) vectors. This generally requires to compute extra [expectation values](#expectation-values-and-others) matrices in MO basis, such as the [dipole moment](#dipole-moment);
+    3. Using said matrices, compute the [linear response](#linear-response) or [amplitude](#excitations) vectors. This generally requires to compute extra [AO integrals](#ao-integrals);
     4. Use said response/amplitude vectors to compute actual [properties](#properties).
 
 
@@ -105,7 +105,7 @@ $$\tag{3}\left[\begin{pmatrix}
 
 where $\mathbf x_\zeta(\omega)$ and $\mathbf y_\zeta(\omega)$ are the frequency-dependent linear response vectors (to be determined) in direction $\zeta$.
 The $\mathbf A$ and $\mathbf B$ are electronic Hessian (super-)matrices (related to orbital rotations).
-The perturbed electronic gradient vector elements $\eta_{ia,\zeta} = \braket{i|\hat\eta_\zeta|a}$ are elements of the expectation value matrix corresponding to the perturbation (e.g., when the perturbation is an electric field, $\hat\eta$ corresponds to the dipole moment operator).
+The perturbed electronic gradient vector elements $\eta_{ia,\zeta} = \braket{i|\hat\eta_\zeta|a}$ are MO integral elements of the operator corresponding to the perturbation (e.g., when the perturbation is an electric field, $\hat\eta$ corresponds to the dipole moment operator, $\hat\mu$).
 
 To solve this problem, Eq. (3) can be turned into a linear equation of the form:
     
@@ -297,123 +297,44 @@ B'_{ia,jb} =& 2\,(ia|bj)' -a_x\,(ib|aj)'.
     
     The publication describing the XsTD-DFT implementation is not yet available. Thus, this approach is not yet implemented.
 
-## Expectation values and others
 
-Things that can be obtained without solving the linear response equation.
+## Properties
 
-!!! note
-    
-    When required, conversion of $X$ from the AO to the MO basis is done using:
+### AO integrals
 
-    $$X^{MO}_{pq} = \sum^{AO}_{\mu\nu} C_{p\mu} X_{\mu\nu} C_{q\nu}.$$
+The AO integral elements of an operator, $\hat O$, are denoted $O_{\mu\nu} = \braket{\mu|\hat O|\nu}$.
+Operator are either hermitian (which results in a [symmetric](https://en.wikipedia.org/wiki/Symmetric_matrix) matrix, $O_{\mu\nu} = O_{\nu\mu}$) or anti-hermitian (which results in a [skew-symmetric](https://en.wikipedia.org/wiki/Skew-Hermitian_matrix) matrix, $O_{\mu\nu} = -O_{\nu\mu}^\star$).
 
-### Density matrix
+For the moment, the following operators are handled by `stdlite`:
 
-The density matrix elements are defined as:
+| Operator                    | Expression                                | Dimensionality | Symmetry       |
+|-----------------------------|-------------------------------------------|----------------|----------------|
+| Dipole length (`diplen`)    | $\hat\mu^L = e\,(\hat r - R_0)$           | 3 (x, y, z)    | Hermitian      |
+| Dipole velocity (`dipvel`)  | $\hat\mu^V = \hat\nabla$                  | 3 (x, y, z)    | Anti-hermitian |
+| Angular momentum (`angmom`) | $\hat m = (\hat r - R_0)\times\vec\nabla$ | 3 (x, y, z)    | Anti-hermitian |
 
-$$P_{\mu\nu} = \sum^{MO}_p n_p\,C^\star_{p\mu}\,C_{p\nu},$$
+A conversion of $A$ from the AO to the MO basis is done using:
 
-where $n_p$ is the occupancy of $p$. If this is a closed shell calculation, occupied MO have an occupancy of 2, 0 otherwise.
+$$O_{pq} = \sum^{AO}_{\mu\nu} C_{p\mu} O_{\mu\nu} C_{q\nu}.$$
 
-### Dipole moment
+### Linear and quadratic response functions
 
-The total dipole moment is obtained as:
+Linear and quadratic response functions are generally noted $\braket{\braket{\hat A; \hat B}}_{\omega_B}$ and $\braket{\braket{\hat A; \hat B, \hat C}}_{\omega_B,\omega_C}$, which describes how the expectation value of $\hat A$ (at frequency $\omega_A = -\omega_B - \omega_C$) responds to a set of perturbation to first and second order in perturbation.
 
-$$\vec\mu = \vec\mu_e + \sum^{N_{nuc}}_A Z_A\,\vec r_A,$$
+Linear responses result in a rank-2 tensors, while a rank-3 tensor is the result of a quadratic response function.
 
-where $Z_A$ and $\vec r_A$ are the charge and position of nuclei $A$, respectively.
-The electronic dipole moment, $\vec\mu_e$, is an expectation value of the wavefunction.
-The electric dipole moment matrix elements (in AO basis) are computed as:
+Residue of the response functions provide information on the (excited states of the) unperturbed system.
+For example, the linear response function might be extended in the following spectral representation:
 
-$$D_{\mu\nu} = \braket{\mu|\hat\mu|\nu} = -\,\braket{\mu|\vec{r}-\vec R_0|\nu},$$
+$$\braket{\braket{\hat A; \hat B}}_{\omega_B} = \sum_{\ket{m}} \frac{\braket{0|\hat A|m}\braket{m|\hat B|0}}{\omega_B-\omega_m} + \frac{\braket{0|\hat B|m}\braket{m|\hat A|0}}{\omega_A+\omega_m},$$
 
-where the dipole moment integral have been multiplied by the value of the electronic charge (-1 in atomic units) and $\vec R_0$ is the origin.
-The electronic dipole moment is computed via:
+and a corresponding single residue might be:
 
-$$\vec\mu_e = \sum^{AO}_{\mu\nu} P_{\mu\nu}\,D_{\nu\mu} = tr(\mathbf P\mathbf D),$$
+$$\lim_{\omega_B\to\omega_m} (\omega_B-\omega_m)\,\braket{\braket{\hat A; \hat B}}_{\omega_B} = \braket{0|\hat A|m}\braket{m|\hat B|0},$$
 
-where $\mathbf P$ is the density matrix. Alternatively, in MO basis:
+which provides access to transition matrix elements $\braket{0|\hat A|m}$ between the ground state $\ket{0}$ and an excited state $\ket{m}$. 
+In practice, such residues are thus evaluated thanks to amplitude vectors through the spectral representation of linear responses.
 
-$$\vec\mu_e = \sum^{MO}_p n_p\,\vec\mu_{pp},$$
-
-where $\vec\mu_{pp}$ is a shorthand for $D^{MO}_{pp}$.
-
-## Responses (properties)
-
-Things that can be obtained thanks to the amplitude/linear response vectors.
-
-!!! note
-    
-    Linear and quadratic response functions are generally noted $\braket{\braket{\hat A; \hat B}}_{\omega_B}$ and $\braket{\braket{\hat A; \hat B, \hat C}}_{\omega_B,\omega_C}$, which describes how the expectation value of $\hat A$ (at frequency $\omega_A = -\omega_B - \omega_C$) responds to a set of perturbation to first and second order in perturbation.
-    Residue of the response functions provide information on the (excited states of the) unperturbed system.
-
-    For example, the linear response function might be extended in the following spectral representation:
-
-    $$\braket{\braket{\hat A; \hat B}}_{\omega_B} = \sum_{\ket{m}} \frac{\braket{0|\hat A|m}\braket{m|\hat B|0}}{\omega_B-\omega_m} + \frac{\braket{0|\hat B|m}\braket{m|\hat A|0}}{\omega_A+\omega_m},$$
-
-    and a corresponding single residue might be:
-
-    $$\lim_{\omega_B\to\omega_m} (\omega_B-\omega_m)\,\braket{\braket{\hat A; \hat B}}_{\omega_B} = \braket{0|\hat A|m}\braket{m|\hat B|0},$$
-
-    which provides access to trasition matrix elements $\braket{0|\hat A|m}$ between the ground state $\ket{0}$ and an excited state $\ket{m}$. 
-    In practice, such residues are thus evaluated thanks to amplitude vectors through the spectral representation of linear responses.
-
-### Polarizability
-
-The dynamic (electric) polarizability tensor elements are defined:
-
-$$\alpha_{\zeta\sigma}(-\omega;\omega) = -\braket{\braket{\hat\mu_\zeta;\hat\mu_\sigma}}_\omega = -2\,\sum_{ia}^{CSF} \mu_{ia,\zeta}\,[x_{ia,\sigma}(\omega)+y_{ia,\sigma}(\omega)].$$
-
-### Ground to excited transition dipole moment (and oscillator strength)
-
-From the single residue of the electric polarizability, 
-
-$$\lim_{\omega\to\omega_m} (\omega-\omega_m)\,\braket{\braket{\mu_\zeta;\mu_\sigma}}_\omega =  \braket{0|\hat\mu_\zeta|m}\,\braket{m|\hat\mu_\sigma|0},$$
-
-the transition dipole moment elements (in the dipole length formalism) between ground $\ket{0}$ and excited state $\ket{m}$, associated with energy $\omega_{m}$ are given by:
-
-$$\mu_{0m,\zeta} = \braket{0|\hat\mu_\zeta|m} =  \sqrt{2}\,\sum_{ia}^{CSF} \vec\mu_{ia,\zeta}\,(x^m_{ia}+y^m_{ia}),$$
-
-where $\zeta$ is a cartesian direction and the $\sqrt 2$ factor is required for singlet excitations (it is 0 for triplet).
-The associated [oscillator strength](https://en.wikipedia.org/wiki/Oscillator_strength) is defined by:
-
-$$f_{0m} = \frac{2}{3}\,\omega_m\,|\vec\mu_{0m}|^2.$$
-
-### First hyperpolarizability
-
-By neglecting the response of the XC kernel and the Hartree XC kernel, the element of the first hyperpolarizability tensor in the sTD-DFT framework are:
-
-$$\beta_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) = -\braket{\braket{\hat\mu_\zeta;\hat\mu_\sigma,\hat\mu_\tau}}_{\omega_1,\omega_2} = \mathcal A_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) - \mathcal B_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2),$$
-
-with $\omega_\varsigma = -\omega_1 - \omega_2$, and:
-
-$$\begin{aligned}
-\mathcal A_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) &= \sum_{\mathcal P} \sum_{ia,ja} x_{ia,\zeta}(\omega_\varsigma)\,[-\mu_{ij,\sigma}]\,y_{ja,\tau}(\omega_2), \\
-\mathcal B_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) &= \sum_{\mathcal P} \sum_{ia,ib} x_{ia,\zeta}(\omega_\varsigma)\,[-\mu_{ab,\sigma}]\,y_{ib,\tau}(\omega_2),
-\end{aligned}$$
-
-where $\sum_{\mathcal P}$ is the sum over the sequence of permutations of the pairs of components and energies, $\{(\zeta,\omega_\varsigma), (\sigma, \omega_1), (\tau,\omega_2)\}$.
-
-### Excited to excited transition dipole moment (and oscillator strength)
-
-From the double residue of the electric first hyperpolarizability:
-
-$$\begin{aligned}
-\lim_{\omega_1\to-\omega_m,\omega_2\to\omega_n} &(\omega_1+\omega_m)\,(\omega_2-\omega_n)\,\braket{\braket{\hat\mu_\zeta;\hat\mu_\sigma,\hat\mu_\tau}}_{\omega_1,\omega_2}\\
-&=  \braket{0|\hat\mu_\zeta|m}\,\braket{m|\hat\mu_\sigma - \delta_{mn}\,\braket{0|\hat\mu_\sigma|0}|n}\,\braket{n|\hat\mu_\tau|0},
-\end{aligned}$$
-
-one extract the (unrelaxed) singlet-to-singlet transition dipole moment from $\ket{m}$ to $\ket{n}$ (see [there](https://github.com/pierre-24/stdlite/blob/master/docs/assets/esa.pdf)):
-
-$$\begin{aligned}
-&\braket{m|\hat\mu_\zeta - \delta_{mn}\,\braket{0|\hat\mu_\zeta|0}|n}\\
-&\hspace{2em}= \frac{1}{2}\left\{ \sum_{ia,ib} \mu_{ab,\zeta}\,[x^n_{ia}\,x^m_{ib} + y^m_{ia}\,y^n_{ib}]  - \sum_{ia,ja} \mu_{ij,\zeta}\,[x^n_{ia}\,x^m_{ja} + y^m_{ia}\,y^n_{ja}] \right\}.
-\end{aligned}$$
-
-which is equal to the fluctuation operator if $m = n$.
-The corresponding oscillator strength is given by:
-
-$$f_{mn} = \frac{2}{3}\,(\omega_n-\omega_m)\,(\vec\mu_{mn}\cdot\vec\mu_{nm}).$$
 
 ## Sources and references
 

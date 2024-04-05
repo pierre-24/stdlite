@@ -91,7 +91,7 @@ int stdl_wavefunction_delete(stdl_wavefunction* wf);
 int stdl_wavefunction_orthogonalize_C_dge(size_t nmo, size_t nao, double *S, double *C);
 
 /**
- * Compute the density matrix (`sy` format).
+ * Compute the density matrix.
  *
  * $$P_{\mu\nu} = \sum_r^{MO} n_r\,C_{r\mu}\,C_{r\nu},$$
  *
@@ -109,7 +109,7 @@ int stdl_wavefunction_compute_density_dsp(size_t nocc, size_t nmo, size_t nao, d
 
 
 /**
- * Convert $X$ expressed from AO to MO basis. Assume a **symmetric** property (i.e., `X_AO[i,j] = X_AO[j,i]`).
+ * Convert $X$ expressed in AO basis to MO basis. Assume a **symmetric** property (i.e., `X_AO[i,j] = X_AO[j,i]`).
  *
  * @param nao number of AO, must be >0.
  * @param nmo number of MO, must be `0 < nmo <= nao`.

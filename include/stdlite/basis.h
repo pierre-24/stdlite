@@ -123,9 +123,8 @@ int stdl_basis_reorder_C(size_t nmo, size_t nao, double *C, stdl_basis *bs, size
  */
 int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S);
 
-
 /**
- * Compute the dipole matrix (in the dipole length formalism) in AO basis, $D_{\mu\nu} = \braket{\mu|e\,(\hat r - R_0)|\nu}$.
+ * Compute the dipole (in the dipole length formalism) AO integrals, $\braket{\mu|e\,(\hat r - R_0)|\nu}$.
  * @param bs a valid basis set
  * @param[out] dipoles `double[3, STDL_MATRIX_SP_SIZE(nao)]` the resulting dipole matrix.
  * @return error code.
@@ -134,20 +133,20 @@ int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S);
 int stdl_basis_dsp_diplen(stdl_basis *bs, double *dipoles);
 
 /**
- * Compute the angular momentum matrix in AO basis, $M_{\mu\nu} = i\,\braket{\mu|(\hat r - R_0)\times\vec\nabla|\nu}$.
+ * Compute the angular momentum AO integrals, $i\,\braket{\mu|(\hat r - R_0)\times\vec\nabla|\nu}$.
  * @warning this property is antisymmetric!
  * @param bs a valid basis set
- * @param[out] angmoms `double[3, STDL_MATRIX_SP_SIZE(nao)]` the resulting angular moments matrix.
+ * @param[out] angmoms `double[3, STDL_MATRIX_SP_SIZE(nao)]` the resulting angular integrals.
  * @return error code.
  * @ingroup basis
  */
 int stdl_basis_dsp_angmom(stdl_basis *bs, double *angmoms);
 
 /**
- * Compute the dipole velocity matrix in AO basis, $V_{\mu\nu} = \braket{\mu|\vec\nabla|\nu}$.
+ * Compute the dipole velocity AO integrals, $\braket{\mu|\vec\nabla|\nu}$.
  * @warning this property is antisymmetric!
  * @param bs a valid basis set
- * @param[out] dipvels `double[3, STDL_MATRIX_SP_SIZE(nao)]` the resulting dipole velocity matrix.
+ * @param[out] dipvels `double[3, STDL_MATRIX_SP_SIZE(nao)]` the resulting dipole velocity integrals.
  * @return error code.
  * @ingroup basis
  */

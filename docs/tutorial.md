@@ -157,7 +157,7 @@ This time, once the wavefunction is extracted and $\mathbf A'$ is built, the amp
  
 ### Analysis of the output
 
-The result list each excitation energies with its corresponding transition dipole moment, and the resulting oscillator strength (`fL`).
+The result list each excitation energies with its corresponding transition dipole moment (in the dipole-length formalism), and the resulting oscillator strength (`fL`).
 
 ```text
 --- Properties -----------------------------------------------------------------
