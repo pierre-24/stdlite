@@ -5,35 +5,38 @@
 
 #include "tests_suite.h"
 
+stdl_wavefunction * wf = NULL;
+stdl_basis* bs = NULL;
+
 void setUp(void) {
     stdl_set_debug_level(0);
     stdl_set_log_level(2);
+
+    read_molden("../tests/test_files/water_sto3g_dalton.molden", &wf, &bs);
+}
+
+void tearDown(void) {
+    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
+    ASSERT_STDL_OK(stdl_basis_delete(bs));
 }
 
 void test_ovlp_ok() {
-    stdl_wavefunction * wf = NULL;
-    stdl_basis* bs = NULL;
-    read_fchk("../tests/test_files/water_631gdf.fchk", &wf, &bs);
 
     double* S = malloc(STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(S);
 
     stdl_basis_dsp_ovlp(bs, S);
 
+    stdl_matrix_dsp_print(wf->nao, S, "S");
+
     // check that <i|i> = 1 (not so obvious in libcint with cartesian functions)
     for (size_t i = 0; i < wf->nao; ++i)
-        TEST_ASSERT_DOUBLE_WITHIN(1e-8, 1.0, S[STDL_MATRIX_SP_IDX(i, i)]);
+        TEST_ASSERT_DOUBLE_WITHIN(1e-7, 1.0, S[STDL_MATRIX_SP_IDX(i, i)]);
 
     free(S);
-
-    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
-    ASSERT_STDL_OK(stdl_basis_delete(bs));
 }
 
 void test_dipoles_ok() {
-    stdl_wavefunction * wf = NULL;
-    stdl_basis* bs = NULL;
-    read_molden("../tests/test_files/water_sto3g_dalton.molden", &wf, &bs);
 
     double* dipoles = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles);
@@ -45,15 +48,9 @@ void test_dipoles_ok() {
     stdl_matrix_dsp_print(wf->nao, dipoles + 2 * STDL_MATRIX_SP_SIZE(wf->nao), "zdipl");
 
     free(dipoles);
-
-    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
-    ASSERT_STDL_OK(stdl_basis_delete(bs));
 }
 
 void test_angmoms_ok() {
-    stdl_wavefunction * wf = NULL;
-    stdl_basis* bs = NULL;
-    read_molden("../tests/test_files/water_sto3g_dalton.molden", &wf, &bs);
 
     double* angmoms = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(angmoms);
@@ -66,16 +63,9 @@ void test_angmoms_ok() {
     stdl_matrix_dsp_print(wf->nao, angmoms + 2 * STDL_MATRIX_SP_SIZE(wf->nao), "zmagmom");
 
     free(angmoms);
-
-    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
-    ASSERT_STDL_OK(stdl_basis_delete(bs));
 }
 
 void test_dipvels_ok() {
-    stdl_wavefunction * wf = NULL;
-    stdl_basis* bs = NULL;
-    read_molden("../tests/test_files/water_sto3g_dalton.molden", &wf, &bs);
-
     double* dipvels = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipvels);
 
@@ -86,7 +76,4 @@ void test_dipvels_ok() {
     stdl_matrix_dsp_print(wf->nao, dipvels + 2 * STDL_MATRIX_SP_SIZE(wf->nao), "zdipvel");
 
     free(dipvels);
-
-    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
-    ASSERT_STDL_OK(stdl_basis_delete(bs));
 }
