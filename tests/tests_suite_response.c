@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "tests_suite.h"
+#include "stdlite/integrals.h"
 
 void setUp() {
     stdl_set_debug_level(-1);
@@ -56,7 +57,7 @@ void test_response_TDA_ok() {
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_mat);
 
-    make_dipoles_MO(wf, bs, ctx, dipoles_mat);
+    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_mat);
 
     // build egrad
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
@@ -165,7 +166,7 @@ void test_response_TD_ok() {
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_mat);
 
-    make_dipoles_MO(wf, bs, ctx, dipoles_mat);
+    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_mat);
 
     // build egrad
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
@@ -227,7 +228,7 @@ void test_response_polarizability_TD_ok() {
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_mat);
 
-    make_dipoles_MO(wf, bs, ctx, dipoles_mat);
+    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_mat);
 
     // build egrad
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
@@ -282,7 +283,7 @@ void test_property_polarizability_TD_fchk_vs_molden_ok() {
     double* dipoles_mat_fchk = malloc(3 * STDL_MATRIX_SP_SIZE(ctx_fchk->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_mat_fchk);
 
-    make_dipoles_MO(wf_fchk, bs_fchk, ctx_fchk, dipoles_mat_fchk);
+    make_int1e_MO(wf_fchk, bs_fchk, STDL_OP_DIPL, -1., ctx_fchk, dipoles_mat_fchk);
 
     float* egrad_fchk = malloc(3 * ctx_fchk->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(egrad_fchk);
@@ -312,7 +313,7 @@ void test_property_polarizability_TD_fchk_vs_molden_ok() {
     double* dipoles_mat_molden = malloc(3 * STDL_MATRIX_SP_SIZE(ctx_molden->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_mat_molden);
 
-    make_dipoles_MO(wf_molden, bs_molden, ctx_molden, dipoles_mat_molden);
+    make_int1e_MO(wf_molden, bs_molden, STDL_OP_DIPL, -1., ctx_molden, dipoles_mat_molden);
 
     float* egrad_molden = malloc(3 * ctx_molden->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(egrad_molden);
@@ -377,7 +378,7 @@ void test_response_polarizability_TDA_ok() {
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_mat);
 
-    make_dipoles_MO(wf, bs, ctx, dipoles_mat);
+    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_mat);
 
     // build egrad
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));

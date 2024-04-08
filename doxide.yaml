@@ -35,13 +35,36 @@ groups:
     title: Basis set
     description: |
       Describe a set of basis functions, centered on atoms.
-      Also provide functions to compute AO integrals.
       
       ```c
       #include <stdlite/basis.h>
       ```
   
       --8<-- "docs/includes/basis.md"
+  - name: wavefunction
+    title: Wavefunction
+    description: |
+      Store the result of a QC calculation, which is the input for subsequent (s)TD-DFT calculations.
+      
+      ```c
+      #include <stdlite/wavefunction.h>
+      ```
+  - name: integrals
+    title: 1-electron integrals
+    description: |
+      Provide functions to compute AO integrals.
+      
+      ```c
+      #include <stdlite/integrals.h>
+      ```
+      
+      !!! warning
+
+          According to [this comment](https://github.com/sunqm/libcint/issues/22#issuecomment-333268020), cartesian Gaussians are not (correctly) normalized by libcint.
+          Thus every integral $\braket{\mu|\hat A|\nu}$ between $\mu$ and $\nu$ (cartesian AOs) should be multiplied by a (re)normalization constant $N'_{\mu\nu} = N'_\mu\,N'_\nu$ with:
+
+          $$N'_\mu = \frac{1}{\sqrt{\braket{\mu|\mu}}}.$$
+
   - name: context
     title: Context handler
     description: |

@@ -307,11 +307,11 @@ Operator are either hermitian (which results in a [symmetric](https://en.wikiped
 
 For the moment, the following operators are handled by `stdlite`:
 
-| Operator                    | Expression                                | Dimensionality | Symmetry       |
-|-----------------------------|-------------------------------------------|----------------|----------------|
-| Dipole length (`diplen`)    | $\hat\mu^L = e\,(\hat r - R_0)$           | 3 (x, y, z)    | Hermitian      |
-| Dipole velocity (`dipvel`)  | $\hat\mu^V = \hat\nabla$                  | 3 (x, y, z)    | Anti-hermitian |
-| Angular momentum (`angmom`) | $\hat m = (\hat r - R_0)\times\vec\nabla$ | 3 (x, y, z)    | Anti-hermitian |
+| Operator                  | Expression                                | Dimensionality | Symmetry       |
+|---------------------------|-------------------------------------------|----------------|----------------|
+| Dipole length (`dipl`)    | $\hat\mu^L = e\,(\hat r - R_0)$           | 3 (x, y, z)    | Hermitian      |
+| Dipole velocity (`dipv`)  | $\hat\mu^V = \hat\nabla$                  | 3 (x, y, z)    | Anti-hermitian |
+| Angular momentum (`angm`) | $\hat m = (\hat r - R_0)\times\vec\nabla$ | 3 (x, y, z)    | Anti-hermitian |
 
 A conversion of $A$ from the AO to the MO basis is done using:
 

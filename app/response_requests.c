@@ -6,20 +6,6 @@
 
 #include "response_requests.h"
 
-int stdl_operator_dim(stdl_operator op, size_t* dim) {
-    assert(op < STDL_OP_COUNT && dim != NULL);
-
-    switch (op) {
-        case STDL_OP_DIPL:
-            *dim = 3;
-            break;
-        default:
-            *dim = 1;
-    }
-
-    return STDL_ERR_OK;
-}
-
 int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator* ops, float* w, int nroots, stdl_response_request** req_ptr) {
     assert(req_ptr != NULL && resp_order > 0);
 
@@ -81,9 +67,7 @@ int stdl_lrv_request_new(stdl_operator op, size_t nw, size_t ncsfs, stdl_lrv_req
 
     (*req_ptr)->op = op;
     (*req_ptr)->nw = nw;
-
-    int err = stdl_operator_dim(op, &((*req_ptr)->dim));
-    STDL_ERROR_HANDLE(err, stdl_lrv_request_delete(*req_ptr); return err);
+    (*req_ptr)->dim = STDL_OPERATOR_DIM[op];
 
     (*req_ptr)->w = malloc(nw * sizeof(float ));
     (*req_ptr)->egrad = malloc((*req_ptr)->dim * ncsfs * sizeof(float ));

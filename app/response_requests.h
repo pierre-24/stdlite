@@ -3,30 +3,7 @@
 
 
 #include <stdlite/context.h>
-
-/**
- * Operators for the linear responses
- * @ingroup requests
- */
-enum stdl_operator_ {
-    /// Dipole length operator
-    STDL_OP_DIPL,
-
-    STDL_OP_COUNT
-};
-
-typedef enum stdl_operator_ stdl_operator;
-
-/**
- * Get the dimension of a given operator
- *
- * @param op the operator
- * @param[out] dim its dimension
- * @return error code
- * @ingroup requests
- */
-int stdl_operator_dim(stdl_operator op, size_t* dim);
-
+#include <stdlite/integrals.h>
 
 /**
  * Linear response vectors (LRV) requests, in an orderly manner. Also store linear vectors when computed.

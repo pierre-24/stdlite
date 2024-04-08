@@ -158,7 +158,7 @@ void test_molden_dalton() {
     TEST_ASSERT_NOT_NULL(dipoles_sp);
 
     // compute dipole integrals
-    ASSERT_STDL_OK(stdl_basis_dsp_diplen(bs, dipoles_sp));
+    ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_DIPL, -1, dipoles_sp));
 
     // compute explicitly the electronic dipole moment along z
     double dipz1 = .0;
@@ -357,7 +357,7 @@ void test_dipole() {
     TEST_ASSERT_NOT_NULL(dipoles_sp);
 
     // compute dipole integrals
-    ASSERT_STDL_OK(stdl_basis_dsp_diplen(bs, dipoles_sp));
+    ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_DIPL, -1, dipoles_sp));
 
     // compute explicitly the electronic dipole moment along z
     double dipz1 = .0;

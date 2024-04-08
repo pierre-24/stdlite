@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "tests_suite.h"
+#include "stdlite/integrals.h"
 
 void setUp() {
     stdl_set_debug_level(-1);
@@ -39,7 +40,7 @@ void test_property_polarizability_TD_SOS_ok() {
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_mat);
 
-    make_dipoles_MO(wf, bs, ctx, dipoles_mat);
+    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_mat);
 
     // get transition dipoles
     float* tdipstd = malloc(ctx->ncsfs * 3 * sizeof(float ));
@@ -104,7 +105,7 @@ void test_property_first_hyperpolarizability_TD_ok() {
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_mat);
 
-    make_dipoles_MO(wf, bs, ctx, dipoles_mat);
+    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_mat);
 
     // build egrad
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
@@ -187,7 +188,7 @@ void test_property_polarizability_TDA_SOS_ok() {
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_mat);
 
-    make_dipoles_MO(wf, bs, ctx, dipoles_mat);
+    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_mat);
 
     // build egrad
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
@@ -267,7 +268,7 @@ void test_property_e2e_transition_dipoles_ok() {
     double* dipoles_sp_MO = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_sp_MO);
 
-    make_dipoles_MO(wf, bs, ctx, dipoles_sp_MO);
+    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_sp_MO);
 
     // request all excitations
     size_t nrequested = 4;
@@ -323,7 +324,7 @@ void test_property_first_hyperpolarizability_TD_SOS_ok() {
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_mat);
 
-    make_dipoles_MO(wf, bs, ctx, dipoles_mat);
+    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_mat);
 
     // get 0→m transition dipoles
     float* t0mdipstd = malloc(ctx->ncsfs * 3 * sizeof(float ));
@@ -431,7 +432,7 @@ void test_property_first_hyperpolarizability_TDA_SOS_ok() {
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_mat);
 
-    make_dipoles_MO(wf, bs, ctx, dipoles_mat);
+    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_mat);
 
     // get 0→m transition dipoles
     float* t0mdipstda = malloc(ctx->ncsfs * 3 * sizeof(float ));

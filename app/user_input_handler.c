@@ -917,7 +917,7 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl
     }
 
     stdl_log_msg(0, "< done\n");
-    stdl_log_msg(0, "Will compute %ld EV matrix(ces), %ld response vector(s), and %ld amplitude vector(s)\n", (*rh_ptr)->nops, totnw, (*rh_ptr)->nexci);
+    stdl_log_msg(0, "Will compute %ld matrix(ces) of integrals, %ld response vector(s), and %ld amplitude vector(s)\n", (*rh_ptr)->nops, totnw, (*rh_ptr)->nexci);
 
     return STDL_ERR_OK;
 }
@@ -931,9 +931,7 @@ int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, std
     while (req != NULL) {
 
         if(req->resp_order == 1 && req->res_order == 0) { // linear
-            size_t dim0 = 1, dim1 = 1;
-            stdl_operator_dim(req->lrvreqs[0]->op, &dim0);
-            stdl_operator_dim(req->lrvreqs[1]->op, &dim1);
+            size_t dim0 = STDL_OPERATOR_DIM[req->lrvreqs[0]->op], dim1 = STDL_OPERATOR_DIM[req->lrvreqs[1]->op];
 
             float* tensor = malloc(dim0 * dim1 * sizeof(float ));
             STDL_ERROR_HANDLE_AND_REPORT(tensor == NULL, return STDL_ERR_MALLOC, "malloc");
@@ -954,10 +952,9 @@ int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, std
             free(tensor);
 
         } else if(req->resp_order == 2 && req->res_order == 0) { // quadratic
-            size_t dim0 = 3, dim1 = 3, dim2 = 3;
-            stdl_operator_dim(req->lrvreqs[0]->op, &dim0);
-            stdl_operator_dim(req->lrvreqs[1]->op, &dim1);
-            stdl_operator_dim(req->lrvreqs[2]->op, &dim2);
+            size_t dim0 = STDL_OPERATOR_DIM[req->lrvreqs[0]->op],
+                    dim1 = STDL_OPERATOR_DIM[req->lrvreqs[1]->op],
+                    dim2 = STDL_OPERATOR_DIM[req->lrvreqs[2]->op];
 
             // TODO: it should be more general than that!
             float beta[3][3][3];

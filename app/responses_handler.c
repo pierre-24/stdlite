@@ -112,9 +112,7 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
     stdl_log_msg(0, "~~ Compute integrals in MO basis\n");
 
     for (size_t iop = 0; iop < rh->nops; ++iop) {
-        size_t dim;
-        err = stdl_operator_dim(rh->ops[iop], &dim);
-        STDL_ERROR_CODE_HANDLE(err, goto _end);
+        size_t dim = STDL_OPERATOR_DIM[rh->ops[iop]];
 
         size_t ints_AO_sz = dim * STDL_MATRIX_SP_SIZE(ctx->original_wf->nao) * sizeof(double );
         double ints_AO_asz;
@@ -126,7 +124,7 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
         STDL_ERROR_HANDLE_AND_REPORT(ints_AO == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
 
         if(rh->ops[iop] == STDL_OP_DIPL) {
-            err = stdl_basis_dsp_diplen(ctx->bs, ints_AO);
+            err = stdl_operator_int1e_dsp(ctx->bs, STDL_OP_DIPL, -1., ints_AO);
             STDL_ERROR_CODE_HANDLE(err, free(ints_AO); goto _end);
         } else {
             err = STDL_ERR_INPUT;
@@ -217,8 +215,7 @@ int stdl_responses_handler_approximate_size(stdl_responses_handler *rh, size_t n
 
     *ev_sz = 0;
     for (size_t iop = 0; iop < rh->nops; ++iop) {
-        size_t dim;
-        stdl_operator_dim(rh->ops[iop], &dim);
+        size_t dim = STDL_OPERATOR_DIM[rh->ops[iop]];
         *ev_sz += dim * STDL_MATRIX_SP_SIZE(nmo);
     }
 

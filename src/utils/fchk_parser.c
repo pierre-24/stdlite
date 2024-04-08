@@ -7,6 +7,7 @@
 #include "stdlite/utils/fchk_parser.h"
 #include "stdlite/basis.h"
 #include "stdlite/helpers.h"
+#include "stdlite/integrals.h"
 
 int stdl_fchk_parser_get_section_info(stdl_lexer* lx, char** name, char* type, int* is_scalar) {
     assert(lx != NULL && name != NULL && type != NULL && is_scalar != NULL);
@@ -775,15 +776,14 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
         transpose = STDL_G16_TRANSPOSE_SPH;
 
     stdl_basis_reorder_C(nmo, nao, (*wf_ptr)->C, *bs_ptr, 4, transpose);
-
-    stdl_log_msg(0, "-");
-    stdl_log_msg(1, "\n  | create S ");
-
-    // create the S matrix
-    error = stdl_basis_dsp_ovlp((*bs_ptr), (*wf_ptr)->S);
     STDL_ERROR_CODE_HANDLE(error, goto _end);
 
     stdl_log_msg(0, "< done\n");
+
+    // create the S matrix
+    error = stdl_operator_int1e_dsp((*bs_ptr), STDL_OP_OVLP, 1., (*wf_ptr)->S);
+
+    // and done!
     stdl_log_msg(0, "Got %d atoms, %d AOs (%d primitives in %d basis functions), and %d MOs\n", natm, nao, nprim, (*bs_ptr)->nbas, nmo);
 
     // clean up stuffs

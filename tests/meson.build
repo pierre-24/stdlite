@@ -18,8 +18,8 @@ tests_dep += unity_dep
 
 # create tests
 tests_to_run = [
-    'basis',
     'context',
+    'integrals',
     'utils_lexer',
     'response',
     'utils_base_parser',

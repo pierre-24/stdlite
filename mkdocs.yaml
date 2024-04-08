@@ -15,6 +15,7 @@ nav:
     - API/logging/index.md
     - API/wavefunction/index.md
     - API/basis/index.md
+    - API/integrals/index.md
     - API/context/index.md
     - API/response/index.md
     - API/property/index.md
