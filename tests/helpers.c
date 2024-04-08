@@ -47,7 +47,7 @@ void make_int1e_MO(stdl_wavefunction *wf, stdl_basis *bs, stdl_operator op, doub
     for (int cpt = 0; cpt < 3; ++cpt)
         ASSERT_STDL_OK(stdl_wavefunction_dsp_ao_to_dsp_mo(
                 wf->nao,
-                ctx->nmo,
+                ctx->nmo, 1,
                 ctx->C_ptr,
                 dipoles_sp_AO + cpt * STDL_MATRIX_SP_SIZE(wf->nao),
                 dipoles_sp_MO + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo))

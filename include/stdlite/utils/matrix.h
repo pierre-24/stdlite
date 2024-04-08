@@ -168,7 +168,7 @@ int stdl_matrix_dsp_blowsy(size_t n, char uplo, double *in, double *out);
  * @return error code
  * @ingroup matrix
  */
-int stdl_matrix_dsp_blowge(int issym, size_t n, double *in, double *out);
+int stdl_matrix_dsp_blowge(size_t n, int issym, double *in, double *out);
 
 /**
  * Blow a (single-precision) symmetry packed matrix (`in`) into a full storage (symmetric, `sy`) matrix (`out`).

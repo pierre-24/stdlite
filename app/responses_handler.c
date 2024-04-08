@@ -123,13 +123,8 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
         double* ints_AO = malloc(ints_AO_sz);
         STDL_ERROR_HANDLE_AND_REPORT(ints_AO == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
 
-        if(rh->ops[iop] == STDL_OP_DIPL) {
-            err = stdl_operator_int1e_dsp(ctx->bs, STDL_OP_DIPL, -1., ints_AO);
-            STDL_ERROR_CODE_HANDLE(err, free(ints_AO); goto _end);
-        } else {
-            err = STDL_ERR_INPUT;
-            goto _end;
-        }
+        err = stdl_operator_int1e_dsp(ctx->bs, STDL_OP_DIPL,  (rh->ops[iop] == STDL_OP_DIPL? -1. :1.), ints_AO);
+        STDL_ERROR_CODE_HANDLE(err, free(ints_AO); goto _end);
 
         for (size_t cpt = 0; cpt < dim; ++cpt) {
             char buff[128];
@@ -148,10 +143,10 @@ int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx
             err = stdl_wavefunction_dsp_ao_to_dsp_mo(
                     ctx->original_wf->nao,
                     ctx->nmo,
+                    STDL_OPERATOR_HERMITIAN[rh->ops[iop]],
                     ctx->C_ptr,
                     ints_AO + cpt * STDL_MATRIX_SP_SIZE(ctx->original_wf->nao),
-                    rh->integrals[iop] + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo)
-            );
+                    rh->integrals[iop] + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo));
             STDL_ERROR_CODE_HANDLE(err, free(ints_AO); goto _end);
             stdl_log_msg(0, "-");
         }

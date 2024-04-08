@@ -8,7 +8,7 @@
 
 void setUp(void) {
     stdl_set_debug_level(0);
-    stdl_set_log_level(0);
+    stdl_set_log_level(2);
 }
 
 // check that the data are correct by computing the Mulliken population.
@@ -39,7 +39,7 @@ void compute_population_and_check(stdl_wavefunction *wf, int sym, double prec) {
         double* Pge = malloc(wf->nao * wf->nao * sizeof(double));
         TEST_ASSERT_NOT_NULL(Pge);
 
-        stdl_matrix_dsp_blowge(1, wf->nao, P, Pge);
+        stdl_matrix_dsp_blowge(wf->nao, 1, P, Pge);
 
         double* tmp = malloc(wf->nao * wf->nao * sizeof(double));
         TEST_ASSERT_NOT_NULL(tmp);
@@ -294,35 +294,32 @@ void test_remove_mo_ok() {
     ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
 }
 
-void test_ao_to_mo() {
+void test_ao_to_mo_hermitian() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
 
-    double* prop_ao_sp = malloc(STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
+    double* prop_ao_sp = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(prop_ao_sp);
 
-    for (size_t mu = 0; mu < wf->nao; ++mu) {
-        for (size_t nu = 0; nu < wf->nao; ++nu) {
-            prop_ao_sp[STDL_MATRIX_SP_IDX(mu, nu)] = (double) mu;
-        }
-    }
+    stdl_operator_int1e_dsp(bs, STDL_OP_DIPL, -1, prop_ao_sp);
 
+    // only use xdipl (it should be the same for the others)
     double* prop_mo_sp = malloc(STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(prop_mo_sp);
 
-    ASSERT_STDL_OK(stdl_wavefunction_dsp_ao_to_dsp_mo(wf->nao, wf->nmo, wf->C, prop_ao_sp, prop_mo_sp));
+    ASSERT_STDL_OK(stdl_wavefunction_dsp_ao_to_dsp_mo(wf->nao, wf->nmo, 1, wf->C, prop_ao_sp, prop_mo_sp));
 
     double* prop_ao_ge = malloc(wf->nao * wf->nao * sizeof(double ));
     TEST_ASSERT_NOT_NULL(prop_ao_ge);
 
-    stdl_matrix_dsp_blowge(1, wf->nao, prop_ao_sp, prop_ao_ge);
+    stdl_matrix_dsp_blowge(wf->nao, 1, prop_ao_sp, prop_ao_ge);
 
     // test that prop in AO basis are the same
     for (size_t mu = 0; mu < wf->nao; ++mu) {
-        for (size_t nu = 0; nu < wf->nao; ++nu) {
+        for (size_t nu = 0; nu <= mu; ++nu) {
             TEST_ASSERT_EQUAL_DOUBLE(prop_ao_sp[STDL_MATRIX_SP_IDX(mu, nu)], prop_ao_ge[mu * wf->nao + nu]);
-            TEST_ASSERT_EQUAL_DOUBLE(prop_ao_sp[STDL_MATRIX_SP_IDX(mu, nu)], prop_ao_ge[nu * wf->nao + mu]);
+            TEST_ASSERT_EQUAL_DOUBLE(prop_ao_sp[STDL_MATRIX_SP_IDX(mu, nu)], prop_ao_ge[nu * wf->nao + mu]); // hermitian
         }
     }
 
@@ -331,14 +328,64 @@ void test_ao_to_mo() {
 
     ASSERT_STDL_OK(stdl_wavefunction_dge_ao_to_dge_mo(wf->nao, wf->nmo, wf->C, prop_ao_ge, prop_mo_ge));
 
-    // stdl_matrix_dsp_print(wf->nmo, prop_mo_sp, "P");
-    // stdl_matrix_dge_print(wf->nmo, wf->nmo, prop_mo_ge, "P'");
+    stdl_matrix_dsp_print(wf->nmo, prop_mo_sp, "P");
+    stdl_matrix_dge_print(wf->nmo, wf->nmo, prop_mo_ge, "P'");
 
     // test that prop in MO basis are the same
     for (size_t p = 0; p < wf->nmo; ++p) {
-        for (size_t q = 0; q < wf->nmo; ++q) {
+        for (size_t q = 0; q <= p; ++q) {
             TEST_ASSERT_EQUAL_DOUBLE(prop_mo_sp[STDL_MATRIX_SP_IDX(p, q)], prop_mo_ge[p * wf->nmo + q]);
-            TEST_ASSERT_EQUAL_DOUBLE(prop_mo_sp[STDL_MATRIX_SP_IDX(p, q)], prop_mo_ge[q * wf->nmo + p]);
+            TEST_ASSERT_EQUAL_DOUBLE(prop_mo_sp[STDL_MATRIX_SP_IDX(p, q)], prop_mo_ge[q * wf->nmo + p]); // hermitian
+        }
+    }
+
+    STDL_FREE_ALL(prop_ao_sp, prop_mo_sp, prop_ao_ge, prop_mo_ge);
+
+    ASSERT_STDL_OK(stdl_basis_delete(bs));
+    ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
+}
+
+void test_ao_to_mo_anti_hermitian() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
+
+    double* prop_ao_sp = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(prop_ao_sp);
+
+    stdl_operator_int1e_dsp(bs, STDL_OP_DIPV, 1, prop_ao_sp);
+
+    // only use xdipv
+    double* prop_mo_sp = malloc(STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(prop_mo_sp);
+
+    double* prop_ao_ge = malloc(wf->nao * wf->nao * sizeof(double ));
+    TEST_ASSERT_NOT_NULL(prop_ao_ge);
+
+    stdl_matrix_dsp_blowge(wf->nao, 0, prop_ao_sp, prop_ao_ge);
+
+    // test that prop in AO basis are the same
+    for (size_t mu = 0; mu < wf->nao; ++mu) {
+        for (size_t nu = 0; nu <= mu; ++nu) {
+            TEST_ASSERT_EQUAL_DOUBLE(prop_ao_sp[STDL_MATRIX_SP_IDX(mu, nu)], prop_ao_ge[mu * wf->nao + nu]);
+            TEST_ASSERT_EQUAL_DOUBLE(prop_ao_sp[STDL_MATRIX_SP_IDX(mu, nu)], -prop_ao_ge[nu * wf->nao + mu]); // antihermitian
+        }
+    }
+
+    double* prop_mo_ge = malloc(wf->nmo * wf->nmo * sizeof(double ));
+    TEST_ASSERT_NOT_NULL(prop_mo_ge);
+
+    ASSERT_STDL_OK(stdl_wavefunction_dsp_ao_to_dsp_mo(wf->nao, wf->nmo, 0, wf->C, prop_ao_sp, prop_mo_sp));
+    ASSERT_STDL_OK(stdl_wavefunction_dge_ao_to_dge_mo(wf->nao, wf->nmo, wf->C, prop_ao_ge, prop_mo_ge));
+
+    stdl_matrix_dsp_print(wf->nmo, prop_mo_sp, "P (MO)");
+    stdl_matrix_dge_print(wf->nmo, wf->nmo, prop_mo_ge, "P' (MO)");
+
+    // test that prop in MO basis are the same
+    for (size_t p = 0; p < wf->nmo; ++p) {
+        for (size_t q = 0; q <= p; ++q) {
+            TEST_ASSERT_FLOAT_WITHIN(1e-8, prop_mo_sp[STDL_MATRIX_SP_IDX(p, q)], prop_mo_ge[p * wf->nmo + q]);
+            TEST_ASSERT_FLOAT_WITHIN(1e-8, prop_mo_sp[STDL_MATRIX_SP_IDX(p, q)], -prop_mo_ge[q * wf->nmo + p]); // antihermitian as well
         }
     }
 
@@ -375,7 +422,7 @@ void test_dipole() {
     double* dipole_z_ge = malloc(wf->nao * wf->nao * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipole_z_ge);
 
-    stdl_matrix_dsp_blowge(1, wf->nao, dipoles_sp + 2 * STDL_MATRIX_SP_SIZE(wf->nao), dipole_z_ge);
+    stdl_matrix_dsp_blowge(wf->nao, 1, dipoles_sp + 2 * STDL_MATRIX_SP_SIZE(wf->nao), dipole_z_ge);
 
     // compute through density
     // dipz = sum_mu (P * D)_mu,mu
@@ -387,7 +434,7 @@ void test_dipole() {
     double* Pge = malloc(wf->nao * wf->nao * sizeof(double ));
     TEST_ASSERT_NOT_NULL(Pge);
 
-    stdl_matrix_dsp_blowge(1, wf->nao, P, Pge);
+    stdl_matrix_dsp_blowge(wf->nao, 1, P, Pge);
 
     double* result = malloc(wf->nao * wf->nao * sizeof(double ));
     TEST_ASSERT_NOT_NULL(result);
@@ -411,7 +458,8 @@ void test_dipole() {
     double* dipole_z_mo_sp = malloc(STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipole_z_mo_sp);
 
-    ASSERT_STDL_OK(stdl_wavefunction_dsp_ao_to_dsp_mo(wf->nao, wf->nmo, wf->C, dipoles_sp + 2 * STDL_MATRIX_SP_SIZE(wf->nao), dipole_z_mo_sp));
+    ASSERT_STDL_OK(stdl_wavefunction_dsp_ao_to_dsp_mo(wf->nao, wf->nmo, 1, wf->C,
+                                                      dipoles_sp + 2 * STDL_MATRIX_SP_SIZE(wf->nao), dipole_z_mo_sp));
 
     double dipz3 = .0;
     for (size_t p = 0; p < wf->nocc; ++p) {

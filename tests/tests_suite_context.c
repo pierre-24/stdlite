@@ -124,7 +124,7 @@ void test_dipole() {
     double* dipole_z_ge = malloc(wf->nao * wf->nao * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipole_z_ge);
 
-    stdl_matrix_dsp_blowge(1, wf->nao, dipoles_sp + 2 * STDL_MATRIX_SP_SIZE(wf->nao), dipole_z_ge);
+    stdl_matrix_dsp_blowge(wf->nao, 1, dipoles_sp + 2 * STDL_MATRIX_SP_SIZE(wf->nao), dipole_z_ge);
 
     // compute through density
     // dipz = tr(P*D)
@@ -136,7 +136,7 @@ void test_dipole() {
     double* Pge = malloc(wf->nao * wf->nao * sizeof(double ));
     TEST_ASSERT_NOT_NULL(Pge);
 
-    stdl_matrix_dsp_blowge(1, wf->nao, P, Pge);
+    stdl_matrix_dsp_blowge(wf->nao, 1, P, Pge);
 
     double* result = malloc(wf->nao * wf->nao * sizeof(double ));
     TEST_ASSERT_NOT_NULL(result);
@@ -161,7 +161,8 @@ void test_dipole() {
     TEST_ASSERT_NOT_NULL(dipole_z_mo);
 
     // only use occupied MOs!
-    ASSERT_STDL_OK(stdl_wavefunction_dsp_ao_to_dsp_mo(wf->nao, ctx->nocc, ctx->C_ptr, dipoles_sp + 2 * STDL_MATRIX_SP_SIZE(wf->nao), dipole_z_mo));
+    ASSERT_STDL_OK(stdl_wavefunction_dsp_ao_to_dsp_mo(wf->nao, ctx->nocc, 1, ctx->C_ptr,
+                                                      dipoles_sp + 2 * STDL_MATRIX_SP_SIZE(wf->nao), dipole_z_mo));
 
     double dipz3 = .0;
     for (size_t p = 0; p < ctx->nocc; ++p) {

@@ -375,7 +375,7 @@ int stdl_matrix_dsp_blowsy(size_t n, char uplo, double *in, double *out) {
     return STDL_ERR_OK;
 }
 
-int stdl_matrix_dsp_blowge(int issym, size_t n, double *in, double *out) {
+int stdl_matrix_dsp_blowge(size_t n, int issym, double *in, double *out) {
     assert(n > 0 && in != NULL && out != NULL);
 
     STDL_DEBUG("dsp_blowge");

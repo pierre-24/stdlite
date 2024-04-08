@@ -101,7 +101,7 @@ int stdl_wavefunction_compute_density_dsp(size_t nocc, size_t nmo, size_t nao, d
     return STDL_ERR_OK;
 }
 
-int stdl_wavefunction_dsp_ao_to_dsp_mo(size_t nao, size_t nmo, double* C, double* X_AO, double* X_MO) {
+int stdl_wavefunction_dsp_ao_to_dsp_mo(size_t nao, size_t nmo, int issym, double *C, double *X_AO, double *X_MO) {
     assert(C != NULL && X_AO != NULL && nmo > 0 && nao > 0 && X_MO != NULL);
 
     STDL_DEBUG("AO to MO");
@@ -112,7 +112,7 @@ int stdl_wavefunction_dsp_ao_to_dsp_mo(size_t nao, size_t nmo, double* C, double
             double sum = 0;
             for (size_t mu = 0; mu < nao; ++mu) {
                 for (size_t nu = 0; nu < nao; ++nu) {
-                    sum += C[p * nao + mu] * X_AO[STDL_MATRIX_SP_IDX(mu, nu)] * C[q * nao + nu];
+                    sum += (!issym && mu < nu ? -1:1) * C[p * nao + mu] * X_AO[STDL_MATRIX_SP_IDX(mu, nu)] * C[q * nao + nu];
                 }
             }
 
