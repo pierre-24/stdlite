@@ -1,7 +1,7 @@
 [wrap-file]
-source_url = https://github.com/pierre-24/libcint-meson/releases/download/v0.1.1/libcint_v6.1.2.tar.gz
+source_url = https://github.com/pierre-24/libcint-meson/releases/download/v0.3.0/libcint_v6.1.2.tar.gz
 source_filename = libcint_v6.1.2.tar.gz
-source_hash = f9926cb0bc8a97bfab995e365fceb3091accb3c65762b69c1f3934d8daac665b
+source_hash = e5e14786bc9d145279eacf0dd70dc774d148452a2a5df73f873ef031b9091dbd
 
 lead_directory_missing = libcint
 
