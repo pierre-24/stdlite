@@ -67,8 +67,8 @@ typedef struct stdlite_context_ stdl_context;
  * Create a new context.
  * Based on the information provided as input, a subset of MO from the wavefunction is selected, following the selection rules of sTD-DFT.
  * @param wf A valid wavefunction.
- * @param gammaJ parameter for Coulomb ops_integrals approximation
- * @param gammaK parameter for exchange ops_integrals approximation
+ * @param gammaJ parameter for Coulomb integrals approximation
+ * @param gammaK parameter for exchange integrals approximation
  * @param ethr energy threshold for primary CSFs, must be >0
  * @param e2thr energy threshold for secondary CSFs (selected pertubatively), must be >0
  * @param ax amount of HF exchange

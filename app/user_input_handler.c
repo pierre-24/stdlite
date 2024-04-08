@@ -917,7 +917,7 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl
     }
 
     stdl_log_msg(0, "< done\n");
-    stdl_log_msg(0, "Will compute %ld matrix(ces) of ops_integrals, %ld response vector(s), and %ld amplitude vector(s)\n", (*rh_ptr)->nops, totnw, (*rh_ptr)->nexci);
+    stdl_log_msg(0, "Will compute %ld matrix(ces) of MO integrals, %ld response vector(s), and %ld amplitude vector(s)\n", (*rh_ptr)->nops, totnw, (*rh_ptr)->nexci);
 
     return STDL_ERR_OK;
 }
