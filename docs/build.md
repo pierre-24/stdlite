@@ -95,7 +95,7 @@ Depending on the installation prefix and your user rights, root access might be 
 
 Successful build and run have also been achieved on some machines with:
 
-+ OpenBLAS+ScaLAPACK: `-Dla_backend=custom -Dblas_vendor=openblas -Dlapack_vendor=scalpack`. Since [version 2.2.0](https://netlib.org/scalapack/scalapack-2.2.0.html), `ILP64` is supported, so `-Dc_args="-DInt=long -DSTDL_LA_INT=long"` should use 8-bytes integers.
++ OpenBLAS+ScaLAPACK: `-Dla_backend=custom -Dla_libraries=openblas,scalapack,lapacke`. Since [version 2.2.0](https://netlib.org/scalapack/scalapack-2.2.0.html), `ILP64` is supported, so `-Dc_args="-DInt=long -DSTDL_LA_INT=long"` should use 8-bytes integers.
 + OpenBLAS64+LAPACK64 (with `ILP64`): `-Dla_backend=openblas64+lapack64`
 
 ... But this has not been thoroughly tested yet.

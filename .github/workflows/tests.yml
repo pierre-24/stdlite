@@ -43,7 +43,7 @@ jobs:
         if: ${{ matrix.la_backend == 'openblas' }}
         run: |
           sudo apt-get install libopenblas-openmp-dev liblapack-dev liblapacke-dev
-          meson setup ${{ env.BUILD_DIR }} -Dla_backend=openblas+lapack --buildtype=debug
+          meson setup ${{ env.BUILD_DIR }} -Dla_backend=openblas+netlib --buildtype=debug
       - name: Install MKL & configure
         if: ${{ matrix.la_backend == 'mkl' }}
         run: |
