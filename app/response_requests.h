@@ -13,9 +13,6 @@ struct stdl_lrv_request_ {
     /// Operator
     stdl_operator op;
 
-    /// Dimensionality of `op`
-    size_t dim;
-
     /// pointer to the MO representation of `op`
     double* op_integrals;
 
