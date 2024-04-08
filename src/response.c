@@ -218,8 +218,8 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
     return STDL_ERR_OK;
 }
 
-int stdl_response_perturbed_gradient(stdl_context* ctx, size_t dim, double* eta_MO, float *egrad) {
-    assert(ctx != NULL && dim > 0 && eta_MO != NULL && egrad != NULL);
+int stdl_response_perturbed_gradient(stdl_context *ctx, size_t dim, int issym, double *op_ints_MO, float *egrad) {
+    assert(ctx != NULL && dim > 0 && op_ints_MO != NULL && egrad != NULL);
 
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute perturbed gradient >");
@@ -231,7 +231,7 @@ int stdl_response_perturbed_gradient(stdl_context* ctx, size_t dim, double* eta_
     for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
         size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
         for (size_t cpt = 0; cpt < dim; ++cpt) {
-            egrad[lia * dim + cpt] = -2.f * (float) eta_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)];
+            egrad[lia * dim + cpt] = (!issym? 2.f : -2.f) * (float) op_ints_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)];
         }
     }
 

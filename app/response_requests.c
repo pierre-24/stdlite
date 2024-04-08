@@ -92,7 +92,7 @@ int stdl_lrv_request_compute(stdl_lrv_request *lrvreq, stdl_context *ctx) {
     assert(lrvreq != NULL && ctx != NULL && lrvreq->op_integrals != NULL);
 
     // get perturbed gradient
-    int err = stdl_response_perturbed_gradient(ctx, lrvreq->dim, lrvreq->op_integrals, lrvreq->egrad);
+    int err = stdl_response_perturbed_gradient(ctx, lrvreq->dim, STDL_OPERATOR_HERMITIAN[lrvreq->op], lrvreq->op_integrals, lrvreq->egrad);
     STDL_ERROR_CODE_HANDLE(err, return err);
 
     // compute response vectors

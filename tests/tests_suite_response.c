@@ -43,6 +43,56 @@ void _make_response_vector(stdl_context* ctx, float w, double* dipoles, float* e
     }
 }
 
+void test_response_egrad_non_hermitian_ok() {
+    stdl_wavefunction *wf = NULL;
+    stdl_basis *bs = NULL;
+    read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
+
+    stdl_context *ctx = NULL;
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 20. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
+
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
+
+    // compute integrals and convert to MO
+    double *op_mat_sp = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(op_mat_sp);
+
+    make_int1e_MO(wf, bs, STDL_OP_DIPV, 1., ctx, op_mat_sp);
+
+    // build egrad
+    float *egrad = malloc(3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(egrad);
+
+    stdl_response_perturbed_gradient(ctx, 3, 0, op_mat_sp, egrad);
+
+    // blow and re-build egrad
+    double *op_mat_ge = malloc(3 * ctx->nmo * ctx->nmo * sizeof(double));
+    TEST_ASSERT_NOT_NULL(op_mat_ge);
+
+    for (int cpt = 0; cpt < 3; ++cpt)
+        ASSERT_STDL_OK(stdl_matrix_dsp_blowge(ctx->nmo, 0, op_mat_sp + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo), op_mat_ge + cpt * ctx->nmo * ctx->nmo));
+
+    float *egrad_from_ge = malloc(3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(egrad_from_ge);
+
+    size_t nvirt = ctx->nmo - ctx->nocc;
+    for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
+        size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
+        for (size_t cpt = 0; cpt < 3; ++cpt) {
+            egrad_from_ge[lia * 3 + cpt] = -2.f * (float) op_mat_ge[cpt * ctx->nmo * ctx->nmo + i * ctx->nmo + a];
+        }
+    }
+
+    stdl_matrix_sge_print(ctx->nmo, 3, egrad, "egrad");
+    stdl_matrix_sge_print(ctx->nmo, 3, egrad_from_ge, "egrad'");
+
+    // check if equivalent
+    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, egrad, egrad_from_ge, 3 * ctx->ncsfs);
+
+    STDL_FREE_ALL(op_mat_sp, op_mat_ge, egrad, egrad_from_ge);
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
+}
+
 void test_response_TDA_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
@@ -63,7 +113,7 @@ void test_response_TDA_ok() {
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(egrad);
 
-    stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
+    stdl_response_perturbed_gradient(ctx, 3, 1, dipoles_mat, egrad);
 
     // fetch all excitations
     float* etda = malloc(ctx->ncsfs * sizeof(float ));
@@ -172,7 +222,7 @@ void test_response_TD_ok() {
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(egrad);
 
-    stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
+    stdl_response_perturbed_gradient(ctx, 3, 1, dipoles_mat, egrad);
 
     // solve linear response
     size_t nw = 4;
@@ -234,7 +284,7 @@ void test_response_polarizability_TD_ok() {
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(egrad);
 
-    stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
+    stdl_response_perturbed_gradient(ctx, 3, 1, dipoles_mat, egrad);
 
     // solve response
     size_t nw = 3;
@@ -288,7 +338,7 @@ void test_property_polarizability_TD_fchk_vs_molden_ok() {
     float* egrad_fchk = malloc(3 * ctx_fchk->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(egrad_fchk);
 
-    stdl_response_perturbed_gradient(ctx_fchk, 3, dipoles_mat_fchk, egrad_fchk);
+    stdl_response_perturbed_gradient(ctx_fchk, 3, 1, dipoles_mat_fchk, egrad_fchk);
 
     size_t nw = 3;
     float w[] = {0, 4.282270E-2f, 2 * 4.282270E-2f};
@@ -318,7 +368,7 @@ void test_property_polarizability_TD_fchk_vs_molden_ok() {
     float* egrad_molden = malloc(3 * ctx_molden->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(egrad_molden);
 
-    stdl_response_perturbed_gradient(ctx_molden, 3, dipoles_mat_molden, egrad_molden);
+    stdl_response_perturbed_gradient(ctx_molden, 3, 1, dipoles_mat_molden, egrad_molden);
 
     float* X_molden = malloc(nw * 3 * ctx_molden->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(X_molden);
@@ -364,7 +414,6 @@ void test_property_polarizability_TD_fchk_vs_molden_ok() {
 }
 
 
-
 void test_response_polarizability_TDA_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
@@ -384,7 +433,7 @@ void test_response_polarizability_TDA_ok() {
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(egrad);
 
-    stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
+    stdl_response_perturbed_gradient(ctx, 3, 1, dipoles_mat, egrad);
 
     // solve response
     size_t nw = 3;

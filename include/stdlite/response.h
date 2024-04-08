@@ -46,12 +46,13 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
  *
  * @param ctx a valid context, with `ctx->ncsfs > 0`.
  * @param dim dimension of the corresponding operator
- * @param eta_MO `double[dim,ctx->nmo,ctx->nmo]`, the value of $\eta$ in MO basis
+ * @param issym whether the operator is symmetric
+ * @param op_ints_MO `double[dim,ctx->nmo,ctx->nmo]`, the value of $\eta$ in MO basis
  * @param[out] egrad `float[ctx->ncsfs,dim]` $-2\eta$, the resulting perturbed electronic gradient
  * @return error code
  * @ingroup response
  */
-int stdl_response_perturbed_gradient(stdl_context* ctx, size_t dim, double* eta_MO, float *egrad);
+int stdl_response_perturbed_gradient(stdl_context *ctx, size_t dim, int issym, double *op_ints_MO, float *egrad);
 
 
 /**

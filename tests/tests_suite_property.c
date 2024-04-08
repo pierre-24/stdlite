@@ -50,7 +50,7 @@ void test_property_polarizability_TD_SOS_ok() {
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(egrad);
 
-    stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
+    stdl_response_perturbed_gradient(ctx, 3, 1, dipoles_mat, egrad);
 
     // solve linear response
     size_t nw = 3;
@@ -111,7 +111,7 @@ void test_property_first_hyperpolarizability_TD_ok() {
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(egrad);
 
-    stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
+    stdl_response_perturbed_gradient(ctx, 3, 1, dipoles_mat, egrad);
 
     // solve response
     size_t nw = 4;
@@ -194,7 +194,7 @@ void test_property_polarizability_TDA_SOS_ok() {
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(egrad);
 
-    stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
+    stdl_response_perturbed_gradient(ctx, 3, 1, dipoles_mat, egrad);
 
     // fetch all excitations
     float* etda = malloc(ctx->ncsfs * sizeof(float ));
@@ -340,7 +340,7 @@ void test_property_first_hyperpolarizability_TD_SOS_ok() {
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(egrad);
 
-    stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
+    stdl_response_perturbed_gradient(ctx, 3, 1, dipoles_mat, egrad);
 
     // solve linear response
     size_t nw = 3;
@@ -448,7 +448,7 @@ void test_property_first_hyperpolarizability_TDA_SOS_ok() {
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(egrad);
 
-    stdl_response_perturbed_gradient(ctx, 3, dipoles_mat, egrad);
+    stdl_response_perturbed_gradient(ctx, 3, 1, dipoles_mat, egrad);
 
     // solve linear response
     size_t nw = 3;
