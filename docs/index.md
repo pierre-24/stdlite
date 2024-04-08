@@ -22,7 +22,7 @@ Contributions are welcomed, as described on [this page](contributing.md).
 
 ## How
 
-Rather than Fortran, this library is developed in C, with [libcint](https://github.com/sunqm/libcint) (used by [pycsf](https://pyscf.org/)) to evaluate the integrals. 
+Rather than Fortran, this library is developed in C, with [libcint](https://github.com/sunqm/libcint) (used by [pycsf](https://pyscf.org/)) to evaluate the ops_integrals. 
 
 ## Who?
 

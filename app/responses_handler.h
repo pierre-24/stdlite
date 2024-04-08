@@ -15,7 +15,7 @@ struct stdl_responses_handler_ {
     stdl_operator* ops;
 
     /// `double[nops]`, <r|op|s> (in MO basis)
-    double** integrals;
+    double** ops_integrals;
 
     /// Number of LRV requests
     size_t nlrvreqs;

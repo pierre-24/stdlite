@@ -11,7 +11,7 @@ The goal of `stdlite` is to compute properties within the simplified TDA/TD-DFT 
     
     1. Extract data (*i.e.*, the atomic orbitals, as well as the MO energies, $\varepsilon$, and LCAO coefficients, $\mathbf C$) from a QC calculation;
     2. Select configuration state functions (CSFs, $\ket{\Psi_i^a}$, or singly excited determinants) using [a set of rules](#the-simplified-approaches-to-td-dft) and build the corresponding electronic hessian (super-)matrices $\mathbf A'$ and $\mathbf B'$ (might be zero);
-    3. Using said matrices, compute the [linear response](#linear-response) or [amplitude](#excitations) vectors. This generally requires to compute extra [AO integrals](#ao-integrals);
+    3. Using said matrices, compute the [linear response](#linear-response) or [amplitude](#excitations) vectors. This generally requires to compute extra [AO ops_integrals](#ao-ops_integrals);
     4. Use said response/amplitude vectors to compute actual [properties](#properties).
 
 
@@ -52,7 +52,7 @@ $\kappa^\lambda$ is computed thanks to the following set of equations (derivativ
 
 $$\tag{2}\sum_j \left.\frac{\partial^2 E(\{\kappa_i\},\lambda)}{\partial\kappa_i\partial\kappa_j}\right|_{\lambda=0}\,\frac{\partial\kappa_j}{\partial\lambda} = -\left.\frac{\partial^2 E(\{\kappa_i\},\lambda)}{\partial\lambda\partial\kappa_i}\right|_{\lambda=0}  \Leftrightarrow \mathbf{E}^\lambda\,\mathbf\kappa^\lambda = -\mathbf\eta^\lambda$$
  
-where $\mathbf E^\lambda$ is the electronic Hessian. Evaluating the elements of $\mathbf E^\lambda$ and $\mathbf\eta^\lambda$ actually result in new kinds of (bielectronic) integrals to evaluate (*vide supra*), while $\kappa^\lambda$ has to be computed by solving this equation.
+where $\mathbf E^\lambda$ is the electronic Hessian. Evaluating the elements of $\mathbf E^\lambda$ and $\mathbf\eta^\lambda$ actually result in new kinds of (bielectronic) ops_integrals to evaluate (*vide supra*), while $\kappa^\lambda$ has to be computed by solving this equation.
 Thanks to the [2n+1 rule](https://doi.org/10.1007/s10910-008-9497-x), the response vector can be used to access the quadratic response function (*i.e.*, the third derivative of the energy w.r.t. $\lambda$) as well.
 
 The dynamic case is similar. 
@@ -207,13 +207,13 @@ $$\begin{aligned}
 &B_{ia,jb} = 2\,(ia|bj) - a_x\,(ib|aj) + (1-a_x)\,(ia|f_{XC}|bj),
 \end{aligned}$$
 
-where, $\varepsilon_i$ and $\varepsilon_a$ are orbital energies, $a_x$ is the amount of non-local Fock exchange, $(ia|jb)$, $(ia|bj)$, and $(ib|aj)$ are exchange-type and $(ij|ab)$ Coulomb-type two-electron integrals, $(ia|f_{XC}|jb)$ and $(ia|f_{XC}|bj)$ are responses of the exchange-correlation functional.
+where, $\varepsilon_i$ and $\varepsilon_a$ are orbital energies, $a_x$ is the amount of non-local Fock exchange, $(ia|jb)$, $(ia|bj)$, and $(ib|aj)$ are exchange-type and $(ij|ab)$ Coulomb-type two-electron ops_integrals, $(ia|f_{XC}|jb)$ and $(ia|f_{XC}|bj)$ are responses of the exchange-correlation functional.
 
 The simplified TD-DFT methods root in 3 approximations which simplify the content of $\mathbf A$ and $\mathbf B$:
 
-1. all integrals involving the XC-functionals are neglected (referred to as the [random phase approximation (RPA)](https://en.wikipedia.org/wiki/Random_phase_approximation) approach),
+1. all ops_integrals involving the XC-functionals are neglected (referred to as the [random phase approximation (RPA)](https://en.wikipedia.org/wiki/Random_phase_approximation) approach),
 2. the singly excited configuration space is truncated (see below), and
-3. the [zero-differential overlap](https://en.wikipedia.org/wiki/Zero_differential_overlap) (ZDO) approximation is used for two-electron integrals which built $\mathbf A$ and $\mathbf B$. Different approximations for the remaining integrals define different flavors of simplified TD-DFT (see below).
+3. the [zero-differential overlap](https://en.wikipedia.org/wiki/Zero_differential_overlap) (ZDO) approximation is used for two-electron ops_integrals which built $\mathbf A$ and $\mathbf B$. Different approximations for the remaining ops_integrals define different flavors of simplified TD-DFT (see below).
 
 Then, using those approximated $\mathbf A'$ and $\mathbf B'$ matrices, the linear response or Casida equations presented above are solved.
 
@@ -231,7 +231,7 @@ $$E^{(2)}_{jb} = \sum_{ia}^{\text{P-CSFs}} \frac{|A_{ia,jb}|^2}{A_{jb,jb}-A_{ia,
 
 ### sTD-DFT, or the monopole approximation
 
-To evaluate the integrals, a formula of the following kind is used:
+To evaluate the ops_integrals, a formula of the following kind is used:
 
 $$(ia|jb) \approx (ia|jb)' = \sum_{AB}^N q_A^{ia}\,q_B^{jb}(AA|BB), \text{ with } q_A^{ia} = \sum_{\mu\in A} (C^{\perp}_{i\mu})^\star\,C^{\perp}_{a\mu},$$
 
@@ -262,13 +262,13 @@ where the $q_{ia}^A$'s are the transition charges on atom A, computed using Löw
 
     leading to the final expresssion.
 
-The remaining $(AA|BB)$ integrals are evaluated with Mataga–Nishimoto–Ohno–Klopman (MNOK) damped Coulomb operators, according to the type of bielectronic integral that they approximate:
+The remaining $(AA|BB)$ ops_integrals are evaluated with Mataga–Nishimoto–Ohno–Klopman (MNOK) damped Coulomb operators, according to the type of bielectronic integral that they approximate:
 
-+ For Coulomb-type integrals, $(ij|ab)$,
++ For Coulomb-type ops_integrals, $(ij|ab)$,
   
 $$(AA|BB)_J = \left[\frac{1}{R_{AB}^{\gamma_J}+\left(a_x\,\eta_{AB}\right)^{-\gamma_J}}\right]^{1/\gamma_J}.$$
 
-+ For exchange-type integrals, $(ia|jb)$,
++ For exchange-type ops_integrals, $(ia|jb)$,
 
 $$(AA|BB)_K = \left[\frac{1}{R_{AB}^{\gamma_K}+\eta_{AB}^{-\gamma_K}}\right]^{1/\gamma_K}.$$
 
@@ -286,7 +286,7 @@ B'_{ia,jb} =& 2\,(ia|bj)' -a_x\,(ib|aj)'.
     
     $$(ij|BB)_J = \sum_A^N q_A^{ij}\,(AA|BB)_J \text{ and } (ia|BB)_K = \sum_A^N q_A^{ia}\,(AA|BB)_K,$$
     
-    so that a scalar product leads to the value of the different integrals. For example,
+    so that a scalar product leads to the value of the different ops_integrals. For example,
     
     $$(ia|jb)' \approx \sum_{B}^N (ia|BB)_K\,q_B^{jb}.$$
 
@@ -300,7 +300,7 @@ B'_{ia,jb} =& 2\,(ia|bj)' -a_x\,(ib|aj)'.
 
 ## Properties
 
-### AO integrals
+### AO ops_integrals
 
 The AO integral elements of an operator, $\hat O$, are denoted $O_{\mu\nu} = \braket{\mu|\hat O|\nu}$.
 Operator are either hermitian (which results in a [symmetric](https://en.wikipedia.org/wiki/Symmetric_matrix) matrix, $O_{\mu\nu} = O_{\nu\mu}$) or anti-hermitian (which results in a [skew-symmetric](https://en.wikipedia.org/wiki/Skew-Hermitian_matrix) matrix, $O_{\mu\nu} = -O_{\nu\mu}^\star$).

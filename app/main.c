@@ -108,6 +108,9 @@ int main(int argc, char* argv[]) {
         // report memory usage
         size_t user_input_sz = 0, ctx_sz = 0, res_sz = 0;
 
+        stdl_log_msg(0, "Note: temporary memory allocated during run\n (including by linear algebra libraries)\n is not reported in the table below.\n RSS will be larger.\n");
+        stdl_log_msg(0, "** Approximate memory usage ---\n");
+
         if(input != NULL) {
             size_t  resreq_sz;
             stdl_user_input_handler_approximate_size(input, &user_input_sz, &resreq_sz);
@@ -116,8 +119,6 @@ int main(int argc, char* argv[]) {
             char* user_input_usz, *resreq_usz;
             stdl_convert_size(user_input_sz - resreq_sz, &user_input_asz, &user_input_usz);
             stdl_convert_size(resreq_sz, &resreq_asz, &resreq_usz);
-
-            stdl_log_msg(0, "** Approximate memory usage ---\n");
             stdl_log_msg(0, "User input      REQ %8.1f%s\n", resreq_asz, resreq_usz);
             stdl_log_msg(0, "                OTH %8.1f%s\n", user_input_asz, user_input_usz);
         }

@@ -53,7 +53,7 @@ void test_response_TDA_ok() {
 
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
 
-    // compute dipole integrals and convert to MO
+    // compute dipole ops_integrals and convert to MO
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_mat);
 
@@ -162,7 +162,7 @@ void test_response_TD_ok() {
         TEST_ASSERT_FLOAT_WITHIN(1e-4, 1.0f, sum);
     }
 
-    // compute dipole integrals and convert to MO
+    // compute dipole ops_integrals and convert to MO
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_mat);
 
@@ -224,7 +224,7 @@ void test_response_polarizability_TD_ok() {
     ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
 
-    // compute dipole integrals and convert to MO
+    // compute dipole ops_integrals and convert to MO
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_mat);
 
@@ -374,7 +374,7 @@ void test_response_polarizability_TDA_ok() {
     ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
 
-    // compute dipole integrals and convert to MO
+    // compute dipole ops_integrals and convert to MO
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_mat);
 

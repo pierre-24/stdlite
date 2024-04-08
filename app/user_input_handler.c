@@ -917,7 +917,7 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl
     }
 
     stdl_log_msg(0, "< done\n");
-    stdl_log_msg(0, "Will compute %ld matrix(ces) of integrals, %ld response vector(s), and %ld amplitude vector(s)\n", (*rh_ptr)->nops, totnw, (*rh_ptr)->nexci);
+    stdl_log_msg(0, "Will compute %ld matrix(ces) of ops_integrals, %ld response vector(s), and %ld amplitude vector(s)\n", (*rh_ptr)->nops, totnw, (*rh_ptr)->nexci);
 
     return STDL_ERR_OK;
 }
@@ -939,7 +939,7 @@ int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, std
             err = stdl_response_lr_tensor(
                     ctx,
                     (size_t[]) {dim0, dim1},
-                    req->lrvreqs[0]->eta_MO,
+                    req->lrvreqs[0]->op_integrals,
                     req->lrvreqs[1]->X + req->wpos[1] * dim1 * ctx->ncsfs,
                     req->lrvreqs[1]->Y + req->wpos[1] * dim1 * ctx->ncsfs,
                     0, tensor
@@ -960,7 +960,7 @@ int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, std
             float beta[3][3][3];
             stdl_property_first_hyperpolarizability(
                     ctx,
-                    req->lrvreqs[1]->eta_MO,
+                    req->lrvreqs[1]->op_integrals,
                     (float*[]) {req->lrvreqs[0]->Y + req->wpos[0] * dim0 * ctx->ncsfs, req->lrvreqs[1]->X + req->wpos[1] * dim1 * ctx->ncsfs,req->lrvreqs[2]->X + req->wpos[2] * dim2 * ctx->ncsfs},
                     (float*[]) {req->lrvreqs[0]->X + req->wpos[0] * dim0 * ctx->ncsfs, req->lrvreqs[1]->Y + req->wpos[1] * dim1 * ctx->ncsfs,req->lrvreqs[2]->Y + req->wpos[2] * dim2 * ctx->ncsfs},
                     beta
@@ -975,7 +975,7 @@ int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, std
             STDL_ERROR_HANDLE_AND_REPORT(tdips == NULL, return STDL_ERR_MALLOC, "malloc");
 
             // TODO: it should be more general than that!
-            stdl_property_transition_dipoles(ctx, rh->nexci, rh->integrals[0] /* <- !!!! */, rh->Xamp, rh->Yamp, tdips);
+            stdl_property_transition_dipoles(ctx, rh->nexci, rh->ops_integrals[0] /* <- !!!! */, rh->Xamp, rh->Yamp, tdips);
 
             stdl_log_property_g2e_dipoles(rh, ctx, tdips, 5e-3f);
 

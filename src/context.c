@@ -244,7 +244,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     double sval;
     char* sunit;
     stdl_convert_size(env_size, &sval, &sunit);
-    stdl_log_msg(0, "Extra memory required: %.1f%s\n", sval, sunit);
+    stdl_log_msg(0, "Extra memory required (Q and (ip|BB) matrices): %.1f%s\n", sval, sunit);
 
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Select CSFs (monopole approximation) >");
@@ -277,7 +277,7 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     float* env = malloc(env_size);
     STDL_ERROR_HANDLE_AND_REPORT(env == NULL, return STDL_ERR_MALLOC, "malloc");
 
-    // Coulomb and exchange-like integrals (AA|BB), `float[natm * natm]`
+    // Coulomb and exchange-like ops_integrals (AA|BB), `float[natm * natm]`
     float * AABB_J = env;
     float * AABB_K = env + natm * natm;
 
@@ -636,7 +636,7 @@ int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
     float* env = malloc((2 * STDL_MATRIX_SP_SIZE(natm)) * sizeof(float));
     STDL_ERROR_HANDLE_AND_REPORT(env == NULL, return STDL_ERR_MALLOC, "malloc");
 
-    // Coulomb and exchange-like integrals (AA|BB), `float[natm * natm]`
+    // Coulomb and exchange-like ops_integrals (AA|BB), `float[natm * natm]`
     float * AABB_J = env;
     float * AABB_K = env + STDL_MATRIX_SP_SIZE(natm);
     float* wrk;

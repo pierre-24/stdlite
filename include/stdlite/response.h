@@ -45,7 +45,7 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
  * Create $-2\eta$, the perturbed electronic gradient matrix to be used in linear response equation (`stdl_response_TD_linear()`).
  *
  * @param ctx a valid context, with `ctx->ncsfs > 0`.
- * @param dim dimension of the expectation value `eta_MO`
+ * @param dim dimension of the expectation value `ops_integrals`
  * @param eta_MO `double[dim,ctx->nmo,ctx->nmo]`, the value of $\eta$ in MO basis
  * @param[out] egrad `float[ctx->ncsfs,dim]` $-2\eta$, the resulting perturbed electronic gradient
  * @return error code

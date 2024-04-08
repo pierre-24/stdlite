@@ -38,7 +38,7 @@ void read_molden(char* molden_path, stdl_wavefunction** wf, stdl_basis** bs) {
 }
 
 void make_int1e_MO(stdl_wavefunction *wf, stdl_basis *bs, stdl_operator op, double fac, stdl_context *ctx, double *dipoles_sp_MO) {
-    // compute dipole integrals and convert to MO
+    // compute dipole ops_integrals and convert to MO
     double* dipoles_sp_AO = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_sp_AO);
 

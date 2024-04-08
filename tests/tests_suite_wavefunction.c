@@ -157,7 +157,7 @@ void test_molden_dalton() {
     double* dipoles_sp = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_sp);
 
-    // compute dipole integrals
+    // compute dipole ops_integrals
     ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_DIPL, -1, dipoles_sp));
 
     // compute explicitly the electronic dipole moment along z
@@ -403,7 +403,7 @@ void test_dipole() {
     double* dipoles_sp = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_sp);
 
-    // compute dipole integrals
+    // compute dipole ops_integrals
     ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_DIPL, -1, dipoles_sp));
 
     // compute explicitly the electronic dipole moment along z

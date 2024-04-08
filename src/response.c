@@ -11,7 +11,7 @@ void _log_memory(size_t sz) {
     double wrk_asz;
     char* wrk_usz;
     stdl_convert_size(sz, &wrk_asz, &wrk_usz);
-    stdl_log_msg(0, "Extra memory required: %.1f%s\n", wrk_asz, wrk_usz);
+    stdl_log_msg(0, "Extra memory required (temporary matrices): %.1f%s\n", wrk_asz, wrk_usz);
 }
 
 int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X) {

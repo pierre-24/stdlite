@@ -133,7 +133,7 @@ These are the keywords related to the creation of the context, *i.e.*, the selec
 
     If different from 0, use the [Tamm-Dancoff approximation](theory.md#application-to-dft-td-dft).
 
-!!! abstract "Parameter for Coulomb integrals"
+!!! abstract "Parameter for Coulomb ops_integrals"
 
     **Type**: `float`
     **Keyword**: `gammaJ`
@@ -142,7 +142,7 @@ These are the keywords related to the creation of the context, *i.e.*, the selec
 
     Parameters for the Coulomb integral, $\gamma_J$, in the [monopole approximation](theory.md#std-dft-or-the-monopole-approximation).
 
-!!! abstract "Parameter for exchange integrals"
+!!! abstract "Parameter for exchange ops_integrals"
 
     **Type**: `float`
     **Keyword**: `gammaK`

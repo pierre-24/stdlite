@@ -17,7 +17,7 @@ struct stdl_lrv_request_ {
     size_t dim;
 
     /// pointer to the MO representation of `op`
-    double* eta_MO;
+    double* op_integrals;
 
     /// `float[]` perturbed gradient
     float* egrad;

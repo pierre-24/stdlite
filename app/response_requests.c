@@ -89,10 +89,10 @@ int stdl_lrv_request_delete(stdl_lrv_request* req) {
 }
 
 int stdl_lrv_request_compute(stdl_lrv_request *lrvreq, stdl_context *ctx) {
-    assert(lrvreq != NULL && ctx != NULL && lrvreq->eta_MO != NULL);
+    assert(lrvreq != NULL && ctx != NULL && lrvreq->op_integrals != NULL);
 
     // get perturbed gradient
-    int err = stdl_response_perturbed_gradient(ctx, lrvreq->dim, lrvreq->eta_MO, lrvreq->egrad);
+    int err = stdl_response_perturbed_gradient(ctx, lrvreq->dim, lrvreq->op_integrals, lrvreq->egrad);
     STDL_ERROR_CODE_HANDLE(err, return err);
 
     // compute response vectors
@@ -135,6 +135,9 @@ int stdl_lrv_request_dump_h5(stdl_lrv_request *req, stdl_context *ctx, hid_t gro
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", lrv_group_id);
 
     status = H5LTmake_dataset(lrv_group_id, "w", 1, (hsize_t[]) {req->nw}, H5T_NATIVE_FLOAT, req->w);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", lrv_group_id);
+
+    status = H5LTmake_dataset(lrv_group_id, "ops_integrals", 2, (hsize_t[]) {ctx->nmo, ctx->nmo}, H5T_NATIVE_DOUBLE, req->op_integrals);
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", lrv_group_id);
 
     status = H5LTmake_dataset(lrv_group_id, "egrad", 2, (hsize_t[]) {ctx->ncsfs, req->dim}, H5T_NATIVE_FLOAT, req->egrad);
