@@ -2,9 +2,15 @@
 option(
     'la_backend',
     type: 'combo',
-    value: 'default',
-    choices: ['default', 'openblas+lapack', 'openblas64+lapack64', 'mkl', 'custom'],
+    value: 'openblas+netlib',
+    choices: ['openblas+netlib', 'openblas64+netlib64', 'netlib', 'mkl', 'custom'],
     description : 'linear algebra backend'
+)
+
+option(
+    'la_libraries',
+    type: 'array',
+    description : 'Custom libraries to be used if `la_backend=custom`'
 )
 
 option(
@@ -12,24 +18,6 @@ option(
     type: 'boolean',
     value: true,
     description: 'Use OpenMP',
-)
-
-option(
-    'blas_vendor',
-    type: 'string',
-    description : 'BLAS library to be used if `la_backend=custom`'
-)
-
-option(
-    'lapack_vendor',
-    type: 'string',
-    description : 'LAPACK library to be used if `la_backend=custom`'
-)
-
-option(
-    'lapacke_vendor',
-    type: 'string',
-    description : 'LAPACKe library to be used if `la_backend=custom`'
 )
 
 option(
