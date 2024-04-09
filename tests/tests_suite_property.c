@@ -62,7 +62,7 @@ void test_property_polarizability_TD_SOS_ok() {
     float* Ytd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Ytd);
 
-    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, egrad, Xtd, Ytd));
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 1, egrad, Xtd, Ytd));
 
     // compute polarizabilities
     float alpha[9], alpha_zz;
@@ -123,7 +123,7 @@ void test_property_first_hyperpolarizability_TD_ok() {
     float* Y = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Y);
 
-    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, egrad, X, Y));
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 1, egrad, X, Y));
 
     // compute beta
     float beta[3][3][3], beta2_ZZZ, beta2_ZXX;
@@ -215,7 +215,7 @@ void test_property_polarizability_TDA_SOS_ok() {
     float* Ytda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(Ytda);
 
-    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, egrad, Xtda, Ytda));
+    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, 1, egrad, Xtda, Ytda));
 
     // compute polarizabilities
     float alpha[9], alpha_zz;
@@ -352,7 +352,7 @@ void test_property_first_hyperpolarizability_TD_SOS_ok() {
     float* Ytd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Ytd);
 
-    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, egrad, Xtd, Ytd));
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 1, egrad, Xtd, Ytd));
 
     // compute hyperpolarizabilities
     float beta[3][3][3], beta_component;
@@ -460,7 +460,7 @@ void test_property_first_hyperpolarizability_TDA_SOS_ok() {
     float* Ytda = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Ytda);
 
-    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, egrad, Xtda, Ytda));
+    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, 1, egrad, Xtda, Ytda));
 
     // compute hyperpolarizabilities
     float beta[3][3][3], beta_component;

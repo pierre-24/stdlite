@@ -218,7 +218,7 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
     return STDL_ERR_OK;
 }
 
-int stdl_response_perturbed_gradient(stdl_context *ctx, size_t dim, int issym, double *op_ints_MO, float *egrad) {
+int stdl_response_perturbed_gradient(stdl_context *ctx, size_t dim, int is_hermitian, double *op_ints_MO, float *egrad) {
     assert(ctx != NULL && dim > 0 && op_ints_MO != NULL && egrad != NULL);
 
     stdl_log_msg(1, "+ ");
@@ -231,7 +231,7 @@ int stdl_response_perturbed_gradient(stdl_context *ctx, size_t dim, int issym, d
     for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
         size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
         for (size_t cpt = 0; cpt < dim; ++cpt) {
-            egrad[lia * dim + cpt] = (!issym? 2.f : -2.f) * (float) op_ints_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)];
+            egrad[lia * dim + cpt] = (!is_hermitian ? 2.f : -2.f) * (float) op_ints_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)];
         }
     }
 
@@ -241,7 +241,7 @@ int stdl_response_perturbed_gradient(stdl_context *ctx, size_t dim, int issym, d
 }
 
 
-int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, float *egrad, float *X, float *Y) {
+int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, int is_hermitian, float *egrad, float *X, float *Y) {
     assert(ctx != NULL && ctx->ncsfs > 0 && nw > 0 && ndim > 0 && ctx->B != NULL && egrad != NULL && X != NULL && Y != NULL);
 
     size_t wrk_sz = (3 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) + ctx->ncsfs) * sizeof(float), iwrk_sz = ctx->ncsfs * sizeof(STDL_LA_INT);
@@ -268,26 +268,26 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
         }
     }
 
-    // invert A-B, taking advantage of its `sp` storage
+    // invert A-B [hermitian] or A+B [non-hermitian], taking advantage of its `sp` storage
     STDL_LA_INT* ipiv = malloc(iwrk_sz);
     STDL_ERROR_HANDLE_AND_REPORT(ipiv == NULL, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "malloc");
 
-    STDL_LA_INT lapack_err = LAPACKE_ssptrf_work(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, AmB, ipiv);
+    STDL_LA_INT lapack_err = LAPACKE_ssptrf_work(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, is_hermitian ? AmB : ApB, ipiv);
     STDL_ERROR_HANDLE_AND_REPORT(lapack_err != 0, STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", lapack_err);
 
-    lapack_err = LAPACKE_ssptri_work(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, AmB, ipiv, lapack_wrk);
+    lapack_err = LAPACKE_ssptri_work(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, is_hermitian ? AmB : ApB, ipiv, lapack_wrk);
     STDL_ERROR_HANDLE_AND_REPORT(lapack_err != 0, STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptri(): %d", lapack_err);
-    // now, AmB contains (A-B)^(-1)
+    // now, AmB/ApB contains its inverse
 
     for (size_t iw = 0; iw < nw; ++iw) {
         stdl_log_msg(0, "-");
         stdl_log_msg(1, "\n  | Compute linear response vector for w=%f ", w[iw]);
 
-        // make left side: L = (A+B)-w^2*(A-B)^(-1)
+        // make left side: L = (A+B)-w^2*(A-B)^(-1) [hermitian] (A-B)-w^2*(A+B)^(-1) [non-hermitian]
         #pragma omp parallel for schedule(guided)
         for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
             for(size_t kjb = 0; kjb <= kia; ++kjb)
-                L[STDL_MATRIX_SP_IDX(kia, kjb)] = ApB[STDL_MATRIX_SP_IDX(kia, kjb)] - powf(w[iw], 2) * AmB[STDL_MATRIX_SP_IDX(kia, kjb)];
+                L[STDL_MATRIX_SP_IDX(kia, kjb)] = (is_hermitian? ApB : AmB)[STDL_MATRIX_SP_IDX(kia, kjb)] - powf(w[iw], 2) * (is_hermitian? AmB : ApB)[STDL_MATRIX_SP_IDX(kia, kjb)];
         }
 
         float *Xi = X + iw * szXY, *Yi = Y + iw * szXY;
@@ -302,34 +302,35 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
         lapack_err = LAPACKE_ssptrs_work(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, (STDL_LA_INT) ndim, L, ipiv, Xi, (STDL_LA_INT) ndim);
         STDL_ERROR_HANDLE_AND_REPORT(lapack_err != 0, STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptrs(): %d", lapack_err);
 
-        // stdl_matrix_sge_print(ctx->ncsfs, ndim, Xi, "X'");
+        stdl_matrix_sge_print(ctx->ncsfs, ndim, Xi, "X'");
 
         // separate X and Y
-        // Yi' = w*(A-B)^(-1)*Xi'
+        // Xi' = Xi + Yi [hermitian] or Xi - Yi [non-hermitian]
+        // Yi' = w*(A-B)^(-1)*Xi' = Xi - Yi [hermitian] or w*(A+B)^(-1)*Xi' = Xi + Yi [non-hermitian]
         #pragma omp parallel for
         for(size_t kia = 0; kia < ctx->ncsfs; kia++) {
             for(size_t cpt = 0; cpt < ndim; cpt++) {
                 float sum = .0f;
                 for (size_t kjb = 0; kjb < ctx->ncsfs; kjb++)
-                    sum += AmB[STDL_MATRIX_SP_IDX(kia, kjb)] * w[iw] * Xi[kia * ndim + cpt];
+                    sum += (is_hermitian? AmB : ApB)[STDL_MATRIX_SP_IDX(kia, kjb)] * w[iw] * Xi[kia * ndim + cpt];
 
                 Yi[kia * ndim + cpt] = sum;
             }
         }
 
-        // Xi = 1/2*(Xi' + Yi') && Yi = 1/2*(Xi' - Yi')
+        // Xi = 1/2*(Xi' + Yi') && Yi = 1/2*(Xi' - Yi') [hermitian] or 1/2*(Yi-Xi) [non-hermitian]
         #pragma omp parallel for
         for(size_t kia = 0; kia < ctx->ncsfs; kia++) {
             for(size_t cpt = 0; cpt < ndim; cpt++) {
                 float u = Xi[kia * ndim + cpt], v = Yi[kia * ndim + cpt];
                 Xi[kia * ndim + cpt] = .5f * (u + v);
-                Yi[kia * ndim + cpt] = .5f * (u - v);
+                Yi[kia * ndim + cpt] = .5f * (is_hermitian? (u - v) : (v - u));
             }
         }
 
         stdl_log_msg(2, "\n");
         stdl_matrix_sge_print(ctx->ncsfs, ndim, Xi, "x(w)");
-        stdl_matrix_sge_print(ctx->ncsfs, ndim, Xi, "y(w)");
+        stdl_matrix_sge_print(ctx->ncsfs, ndim, Yi, "y(w)");
     }
 
     stdl_log_msg(0, "< done\n");
@@ -340,7 +341,7 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
 }
 
 
-int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, float *egrad, float *X, float *Y) {
+int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, int is_hermitian, float *egrad, float *X, float *Y) {
     assert(ctx != NULL && ctx->ncsfs > 0 && nw > 0 && ndim > 0 && egrad != NULL && X != NULL && Y != NULL);
 
     size_t wrk_sz = (2 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) + ctx->ncsfs)* sizeof(float), iwrk_sz = ctx->ncsfs * sizeof(STDL_LA_INT);

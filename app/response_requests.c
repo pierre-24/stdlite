@@ -97,9 +97,11 @@ int stdl_lrv_request_compute(stdl_lrv_request *lrvreq, stdl_context *ctx) {
 
     // compute response vectors
     if(ctx->B == NULL)
-        err = stdl_response_TDA_linear(ctx, lrvreq->nw, lrvreq->w, STDL_OPERATOR_DIM[lrvreq->op], lrvreq->egrad, lrvreq->X, lrvreq->Y);
+        err = stdl_response_TDA_linear(ctx, lrvreq->nw, lrvreq->w, STDL_OPERATOR_DIM[lrvreq->op], 1, lrvreq->egrad,
+                                       lrvreq->X, lrvreq->Y);
     else
-        err = stdl_response_TD_linear(ctx, lrvreq->nw, lrvreq->w, STDL_OPERATOR_DIM[lrvreq->op], lrvreq->egrad, lrvreq->X, lrvreq->Y);
+        err = stdl_response_TD_linear(ctx, lrvreq->nw, lrvreq->w, STDL_OPERATOR_DIM[lrvreq->op], 1, lrvreq->egrad,
+                                      lrvreq->X, lrvreq->Y);
 
 
     return err;

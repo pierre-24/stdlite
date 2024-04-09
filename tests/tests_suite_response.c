@@ -14,7 +14,7 @@ void setUp() {
 }
 
 // Use the spectral representation of a linear response vector to re-create Wlin, which is either X(w) or Y(w) depending on `getX`
-void _make_response_vector(stdl_context* ctx, float w, double* dipoles, float* e, float* Xamp, float* Yamp, int getX, float* Wlin) {
+void _make_response_vector(stdl_context *ctx, float w, int is_hermitian, double *ints_MO, float *e, float *Xamp, float *Yamp, int getX, float *Wlin) {
     size_t nvirt = ctx->nmo - ctx->nocc;
 
     float mu_ia, x_ia, y_ia;
@@ -29,7 +29,7 @@ void _make_response_vector(stdl_context* ctx, float w, double* dipoles, float* e
             for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
                 size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
 
-                mu_ia = (float) dipoles[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)];
+                mu_ia = (!is_hermitian ? -1.f : 1.f) * (float) ints_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)];
 
                 x_ia = Xamp[iexci * ctx->ncsfs + lia];
                 if (Yamp != NULL)
@@ -143,7 +143,7 @@ void test_response_TDA_ok() {
     float* Ytda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(Ytda);
 
-    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, egrad, Xtda, Ytda));
+    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, 1, egrad, Xtda, Ytda));
 
     // check that static X and Y are equals
     TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, Xtda, Ytda,  3 * ctx->ncsfs);
@@ -161,8 +161,8 @@ void test_response_TDA_ok() {
     TEST_ASSERT_NOT_NULL(reYtda);
 
     for (size_t iexci = 0; iexci < nw; ++iexci) {
-        _make_response_vector(ctx, w[iexci], dipoles_mat, etda, Xamptda, NULL, 1, reXtda);
-        _make_response_vector(ctx, w[iexci], dipoles_mat, etda, Xamptda, NULL, 0, reYtda);
+        _make_response_vector(ctx, w[iexci], 1, dipoles_mat, etda, Xamptda, NULL, 1, reXtda);
+        _make_response_vector(ctx, w[iexci], 1, dipoles_mat, etda, Xamptda, NULL, 0, reYtda);
 
         TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, Xtda + iexci * 3 * ctx->ncsfs, reXtda,  3 * ctx->ncsfs);
         TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, Ytda + iexci * 3 * ctx->ncsfs, reYtda,  3 * ctx->ncsfs);
@@ -234,7 +234,7 @@ void test_response_TD_ok() {
     float* Ytd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Ytd);
 
-    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, egrad, Xtd, Ytd));
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 1, egrad, Xtd, Ytd));
 
     // check that static X and Y are equals
     TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, Xtd, Ytd,  3 * ctx->ncsfs);
@@ -243,9 +243,6 @@ void test_response_TD_ok() {
     TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, Xtd + 2 * 3 * ctx->ncsfs, Ytd + 3 * 3 * ctx->ncsfs,  3 * ctx->ncsfs);
     TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, Ytd + 2 * 3 * ctx->ncsfs, Xtd + 3 * 3 * ctx->ncsfs,  3 * ctx->ncsfs);
 
-    // stdl_matrix_sge_print(ctx->ncsfs, 3, Xtd + 1 * 3 * ctx->ncsfs, "X");
-    // stdl_matrix_sge_print(ctx->ncsfs, 3, Ytd + 1 * 3 * ctx->ncsfs, "Y");
-
     float* reXtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(reXtd);
 
@@ -253,14 +250,79 @@ void test_response_TD_ok() {
     TEST_ASSERT_NOT_NULL(reYtd);
 
     for (size_t iexci = 0; iexci < nw; ++iexci) {
-        _make_response_vector(ctx, w[iexci], dipoles_mat, etd, Xamptd, Yamptd, 1, reXtd);
-        _make_response_vector(ctx, w[iexci], dipoles_mat, etd, Xamptd, Yamptd, 0, reYtd);
+        _make_response_vector(ctx, w[iexci], 1, dipoles_mat, etd, Xamptd, Yamptd, 1, reXtd);
+        _make_response_vector(ctx, w[iexci], 1, dipoles_mat, etd, Xamptd, Yamptd, 0, reYtd);
 
         TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, Xtd + iexci * 3 * ctx->ncsfs, reXtd,  3 * ctx->ncsfs);
         TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, Ytd + iexci * 3 * ctx->ncsfs, reYtd,  3 * ctx->ncsfs);
     }
 
     STDL_FREE_ALL(etd, Xamptd, Yamptd, dipoles_mat, egrad, Xtd, Ytd, reXtd, reYtd);
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
+}
+
+void test_response_TD_nonhermitian_ok() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
+
+    stdl_context* ctx = NULL;
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 20. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
+
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
+
+    // fetch excitations
+    float* etd = malloc(ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(etd);
+
+    float* Xamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(Xamptd);
+
+    float* Yamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(Yamptd);
+
+    ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, etd, Xamptd, Yamptd));
+
+    // compute dipole integrals and convert to MO
+    double* op_ints_MO = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(op_ints_MO);
+
+    make_int1e_MO(wf, bs, STDL_OP_ANGM, 1., ctx, op_ints_MO);
+
+    // build egrad
+    float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(egrad);
+
+    stdl_response_perturbed_gradient(ctx, 3, 0, op_ints_MO, egrad);
+
+    // solve linear response
+    size_t nw = 3;
+    float w[] = {0, STDL_CONST_HC / 1064.f, STDL_CONST_HC / 532.f};
+
+    float* Xtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(Xtd);
+
+    float* Ytd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(Ytd);
+
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 0, egrad, Xtd, Ytd));
+
+    float* reXtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(reXtd);
+
+    float* reYtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(reYtd);
+
+    // compare to spectral representation
+    for (size_t iexci = 0; iexci < nw; ++iexci) {
+        _make_response_vector(ctx, w[iexci], 0, op_ints_MO, etd, Xamptd, Yamptd, 1, reXtd);
+        _make_response_vector(ctx, w[iexci], 0, op_ints_MO, etd, Xamptd, Yamptd, 0, reYtd);
+
+        TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, Xtd + iexci * 3 * ctx->ncsfs, reXtd, 3 * ctx->ncsfs);
+        // TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, Ytd + iexci * 3 * ctx->ncsfs, reYtd, 3 * ctx->ncsfs);
+    }
+
+    STDL_FREE_ALL(etd, Xamptd, Yamptd, op_ints_MO, egrad, Xtd, Ytd, reXtd, reYtd);
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
 
@@ -296,7 +358,7 @@ void test_response_polarizability_TD_ok() {
     float* Y = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Y);
 
-    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, egrad, X, Y));
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 1, egrad, X, Y));
 
     // compute polarizabilities
     float alpha[9], alpha_iso, alpha_aniso, result[] = {4.061f, 4.103f, 4.236f};
@@ -349,7 +411,7 @@ void test_property_polarizability_TD_fchk_vs_molden_ok() {
     float* Y_fchk = malloc(nw * 3 * ctx_fchk->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Y_fchk);
 
-    ASSERT_STDL_OK(stdl_response_TD_linear(ctx_fchk, nw, w, 3, egrad_fchk, X_fchk, Y_fchk));
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx_fchk, nw, w, 3, 1, egrad_fchk, X_fchk, Y_fchk));
 
     // molden
     stdl_wavefunction * wf_molden = NULL;
@@ -376,7 +438,7 @@ void test_property_polarizability_TD_fchk_vs_molden_ok() {
     float* Y_molden = malloc(nw * 3 * ctx_molden->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Y_molden);
 
-    ASSERT_STDL_OK(stdl_response_TD_linear(ctx_molden, nw, w, 3, egrad_molden, X_molden, Y_molden));
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx_molden, nw, w, 3, 1, egrad_molden, X_molden, Y_molden));
 
     // compute polarizabilities
     float alpha[9], alpha_iso_fchk, alpha_aniso_fchk, alpha_iso_molden, alpha_aniso_molden;
@@ -448,7 +510,7 @@ void test_response_polarizability_TDA_ok() {
 
     // compute polarizabilities
     float alpha[9], alpha_iso, alpha_aniso, result[] = {4.128f, 4.170f, 4.303f};
-    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, egrad, Xtda, Ytda));
+    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, 1, egrad, Xtda, Ytda));
 
     for (size_t iw = 0; iw < nw; ++iw) {
         ASSERT_STDL_OK(stdl_response_lr_tensor(
