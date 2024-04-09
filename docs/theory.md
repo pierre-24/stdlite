@@ -45,14 +45,14 @@ The second-order derivative is obtained from differentiating the Hellman-Feynman
 
 $$\tag{1}\frac{d^2 E}{d\lambda^2} =
 \sum_i \left.\frac{\partial^2 E(\{\kappa_i\},\lambda)}{\partial\lambda\partial\kappa_i}\right|_{\lambda=0}\,\frac{\partial\kappa_i}{\partial\lambda} 
-\Leftrightarrow \braket{\braket{\hat V; \hat V}} = (\mathbf\kappa^\lambda)^T\,\eta^\lambda$$
+\Leftrightarrow \braket{\braket{\hat V; \hat V}} = ({}^\lambda\kappa)^T\,{}^\lambda\eta$$
 
-where $\braket{\braket{\hat V; \hat V}}$ is the linear response function, $\mathbf\eta^\lambda$ is the perturbed electronic gradient, and $\mathbf\kappa^\lambda$, the first-order response vector to $\lambda$, containing all $\partial\kappa_i/\partial\lambda$.
-$\kappa^\lambda$ is computed thanks to the following set of equations (derivative of the stationary condition):
+where $\braket{\braket{\hat V; \hat V}}$ is the linear response function, ${}^\lambda\eta$ is the perturbed electronic gradient, and ${}^\lambda\kappa$, the first-order response vector to $\lambda$, containing all $\partial\kappa_i/\partial\lambda$.
+${}^\lambda\kappa$ is computed thanks to the following set of equations (derivative of the stationary condition):
 
-$$\tag{2}\sum_j \left.\frac{\partial^2 E(\{\kappa_i\},\lambda)}{\partial\kappa_i\partial\kappa_j}\right|_{\lambda=0}\,\frac{\partial\kappa_j}{\partial\lambda} = -\left.\frac{\partial^2 E(\{\kappa_i\},\lambda)}{\partial\lambda\partial\kappa_i}\right|_{\lambda=0}  \Leftrightarrow \mathbf{E}^\lambda\,\mathbf\kappa^\lambda = -\mathbf\eta^\lambda$$
+$$\tag{2}\sum_j \left.\frac{\partial^2 E(\{\kappa_i\},\lambda)}{\partial\kappa_i\partial\kappa_j}\right|_{\lambda=0}\,\frac{\partial\kappa_j}{\partial\lambda} = -\left.\frac{\partial^2 E(\{\kappa_i\},\lambda)}{\partial\lambda\partial\kappa_i}\right|_{\lambda=0}  \Leftrightarrow {}^\lambda\mathbf E\,{}^\lambda\kappa = -{}^\lambda\eta$$
  
-where $\mathbf E^\lambda$ is the electronic Hessian. Evaluating the elements of $\mathbf E^\lambda$ and $\mathbf\eta^\lambda$ actually result in new kinds of (bielectronic) integrals to evaluate (*vide supra*), while $\kappa^\lambda$ has to be computed by solving this equation.
+where ${}^\lambda\mathbf E$ is the electronic Hessian. Evaluating the elements of ${}^\lambda\mathbf E$ and ${}^\lambda\eta$ actually result in new kinds of (bielectronic) integrals to evaluate (*vide supra*), while ${}^\lambda\kappa$ has to be computed by solving this equation.
 Thanks to the [2n+1 rule](https://doi.org/10.1007/s10910-008-9497-x), the response vector can be used to access the quadratic response function (*i.e.*, the third derivative of the energy w.r.t. $\lambda$) as well.
 
 The dynamic case is similar. 
@@ -89,7 +89,7 @@ Using a Fourier series of $\hat V$, one can obtain a TD version of the linear re
 ### Linear response
 
 Under the conditions of the [Runge and Gross theorem](https://en.wikipedia.org/wiki/Runge%E2%80%93Gross_theorem), this theory can be applied to DFT.
-For a time-dependent perturbation at frequency $\omega$, and assuming the Hermicity of the different matrices and real orbitals, Eq. (2) can be written (the superscripts $\lambda$ have been dropped for clarity):
+For a time-dependent perturbation at frequency $\omega$, and assuming  real orbitals, Eq. (2) can be written (the superscripts $\lambda$ have been dropped for clarity):
 
 $$\tag{3}\left[\begin{pmatrix}
 \mathbf A & \mathbf B \\
@@ -100,14 +100,30 @@ $$\tag{3}\left[\begin{pmatrix}
 \end{pmatrix}\right]\,\begin{pmatrix}
 \mathbf x_\zeta(\omega)\\ \mathbf y_\zeta(\omega)
 \end{pmatrix}=-\begin{pmatrix}
-\mathbf \eta_\zeta\\ \mathbf \eta_\zeta
+\mathbf \eta_\zeta\\ \mathbf \eta_\zeta^\star
 \end{pmatrix},$$
 
 where $\mathbf x_\zeta(\omega)$ and $\mathbf y_\zeta(\omega)$ are the frequency-dependent linear response vectors (to be determined) in direction $\zeta$.
-The $\mathbf A$ and $\mathbf B$ are electronic Hessian (super-)matrices (related to orbital rotations).
+The $\mathbf A$ and $\mathbf B$ are electronic Hessian (super-)matrices (related to orbital rotations), which are the occ-unocc parts of ${}^\lambda\mathbf E$.
 The perturbed electronic gradient vector elements $\eta_{ia,\zeta} = \braket{i|\hat\eta_\zeta|a}$ are MO integral elements of the operator corresponding to the perturbation (e.g., when the perturbation is an electric field, $\hat\eta$ corresponds to the dipole moment operator, $\hat\mu$).
 
-To solve this problem, Eq. (3) can be turned into a linear equation of the form:
+To solve this problem, Eq. (3) can be turned into a linear equation. 
+Adding and subtracting the two lines of the system given in Eq. (3) results in:
+
+$$
+\begin{pmatrix}
+\mathbf A+ \mathbf B & -\omega \\
+-\omega & \mathbf A - \mathbf B
+\end{pmatrix}\,\begin{pmatrix}
+\mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)\\ \mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega)
+\end{pmatrix}=-2\,\begin{pmatrix}
+\Re(\mathbf \eta_\zeta)\\ \Im(\mathbf \eta_\zeta)
+\end{pmatrix},
+$$
+
+where $\Re(\eta_\zeta)$ and $\Im(\eta_\zeta)$ are the real and imaginary part of $\eta_\zeta$, respectively.
+
+In the case where $\Im(\eta_\zeta) = \mathbf 0$ (hermitian operator), then:
     
 $$[(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}]\,[\mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)] = -2\mathbf\eta_\zeta.$$
 
@@ -127,6 +143,11 @@ $$[(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}]\,[\mathbf x
     $$\mathbf v_{\zeta}(\omega)  =\mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega) =  \omega\,(\mathbf A-\mathbf B)^{-1}\,\mathbf u_{\zeta}(\omega),$$
     
     the response vector are obtained: $\mathbf x_{\zeta}(\omega) = \frac{1}{2}[\mathbf u_{\zeta}(\omega)  + \mathbf v_{\zeta}(\omega)]$ and $\mathbf y_{\zeta}(\omega) = \frac{1}{2}[\mathbf u_{\zeta}(\omega)  - \mathbf v_{\zeta}(\omega)]$.
+
+
+On the other hand, in the case where $\Re(\eta_\zeta) = \mathbf 0$ (anti-hermitian operator), then:
+
+$$[(\mathbf{A} - \mathbf{B}) - \omega^2(\mathbf{A}+\mathbf{B})^{-1}]\,[\mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega)] = -2\Im(\mathbf\eta_\zeta).$$
 
 The [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) (setting $\mathbf B = \mathbf 0$ in all previous equations) can also be used.
 
@@ -297,7 +318,6 @@ B'_{ia,jb} =& 2\,(ia|bj)' -a_x\,(ib|aj)'.
     
     The publication describing the XsTD-DFT implementation is not yet available. Thus, this approach is not yet implemented.
 
-
 ## Properties
 
 ### AO integrals
@@ -307,11 +327,11 @@ Operator are either hermitian (which results in a [symmetric](https://en.wikiped
 
 For the moment, the following operators are handled by `stdlite`:
 
-| Operator                  | Expression                                | Dimensionality | Symmetry       |
-|---------------------------|-------------------------------------------|----------------|----------------|
-| Dipole length (`dipl`)    | $\hat\mu^L = e\,(\hat r - R_0)$           | 3 (x, y, z)    | Hermitian      |
-| Dipole velocity (`dipv`)  | $\hat\mu^V = \hat\nabla$                  | 3 (x, y, z)    | Anti-hermitian |
-| Angular momentum (`angm`) | $\hat m = (\hat r - R_0)\times\vec\nabla$ | 3 (x, y, z)    | Anti-hermitian |
+| Operator                  | Expression                                   | Dimensionality | Symmetry       |
+|---------------------------|----------------------------------------------|----------------|----------------|
+| Dipole length (`dipl`)    | $\hat\mu^L = e\,(\hat r - R_0)$              | 3 (x, y, z)    | Hermitian      |
+| Dipole velocity (`dipv`)  | $\hat\mu^V = -i\hat\nabla$                   | 3 (x, y, z)    | Anti-hermitian |
+| Angular momentum (`angm`) | $\hat m = i\,(\hat r - R_0)\times\hat\nabla$ | 3 (x, y, z)    | Anti-hermitian |
 
 A conversion of $A$ from the AO to the MO basis is done using:
 
