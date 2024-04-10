@@ -6,6 +6,7 @@
 #include <stdlite/context.h>
 
 #include "user_input_handler.h"
+#include "responses_handler.h"
 
 #ifndef APP_NAME
 #define APP_NAME "stdlite_app"

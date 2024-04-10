@@ -7,7 +7,7 @@
 
 #include "responses_handler.h"
 
-int stdl_op_data_new(stdl_operator op, size_t nmo, size_t ncsfs, size_t nw, stdl_op_data **data_ptr) {
+int stdl_op_data_new(stdl_operator op, size_t nmo, size_t ncsfs, size_t nlrvs, stdl_op_data **data_ptr) {
     assert(data_ptr != NULL);
 
     *data_ptr = malloc(sizeof(stdl_op_data));
@@ -16,14 +16,22 @@ int stdl_op_data_new(stdl_operator op, size_t nmo, size_t ncsfs, size_t nw, stdl
     STDL_DEBUG("create op_data %p", *data_ptr);
 
     (*data_ptr)->op = op;
-    (*data_ptr)->nw = nw;
+    (*data_ptr)->nlrvs = nlrvs;
 
     (*data_ptr)->op_ints_MO = malloc(STDL_OPERATOR_DIM[op] * STDL_MATRIX_SP_SIZE(nmo) * sizeof(double));
-    (*data_ptr)->w = malloc(nw * sizeof(float ));
-    (*data_ptr)->egrad = malloc(STDL_OPERATOR_DIM[op] * ncsfs * sizeof(float ));
-    (*data_ptr)->X = malloc(nw * ncsfs * STDL_OPERATOR_DIM[op] * sizeof(float ));
-    (*data_ptr)->Y = malloc(nw * ncsfs * STDL_OPERATOR_DIM[op] * sizeof(float ));
-    STDL_ERROR_HANDLE_AND_REPORT((*data_ptr)->op_ints_MO == NULL || (*data_ptr)->w == NULL || (*data_ptr)->egrad == NULL || (*data_ptr)->X == NULL || (*data_ptr)->Y == NULL, stdl_op_data_delete(*data_ptr); return STDL_ERR_MALLOC, "malloc");
+
+    (*data_ptr)->w = NULL;
+    (*data_ptr)->egrad = NULL;
+    (*data_ptr)->X = NULL;
+    (*data_ptr)->Y = NULL;
+
+    if(nlrvs > 0) {
+        (*data_ptr)->w = malloc(nlrvs * sizeof(float ));
+        (*data_ptr)->egrad = malloc(STDL_OPERATOR_DIM[op] * ncsfs * sizeof(float ));
+        (*data_ptr)->X = malloc(nlrvs * ncsfs * STDL_OPERATOR_DIM[op] * sizeof(float ));
+        (*data_ptr)->Y = malloc(nlrvs * ncsfs * STDL_OPERATOR_DIM[op] * sizeof(float ));
+        STDL_ERROR_HANDLE_AND_REPORT((*data_ptr)->op_ints_MO == NULL || (*data_ptr)->w == NULL || (*data_ptr)->egrad == NULL || (*data_ptr)->X == NULL || (*data_ptr)->Y == NULL, stdl_op_data_delete(*data_ptr); return STDL_ERR_MALLOC, "malloc");
+    }
 
     return STDL_ERR_OK;
 }
@@ -44,7 +52,7 @@ int stdl_op_data_approximate_size(stdl_op_data *data, size_t nmo, size_t ncsfs, 
 
     *sz = sizeof(stdl_op_data)
             + STDL_MATRIX_SP_SIZE(nmo) * STDL_OPERATOR_DIM[data->op] * sizeof(double) // op_ints_MO
-            + (data->nw * (1 + 3 * ncsfs * STDL_OPERATOR_DIM[data->op])) * sizeof(float ); // egrad + X + Y
+            + (data->nlrvs * (1 + 3 * ncsfs * STDL_OPERATOR_DIM[data->op])) * sizeof(float ); // egrad + X + Y
 
     return STDL_ERR_OK;
 }
@@ -61,37 +69,42 @@ int stdl_op_data_dump_h5(stdl_op_data *data, stdl_context *ctx, hid_t group_id) 
     stdl_log_msg(0, "Saving LRV >");
     stdl_log_msg(1, "\n  | Create group `responses/%s` ", gname);
 
-    hid_t lrv_group_id = H5Gcreate(group_id, gname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    STDL_ERROR_HANDLE_AND_REPORT(lrv_group_id == H5I_INVALID_HID, return STDL_ERR_WRITE, "cannot create group");
+    hid_t op_group_id = H5Gcreate(group_id, gname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    STDL_ERROR_HANDLE_AND_REPORT(op_group_id == H5I_INVALID_HID, return STDL_ERR_WRITE, "cannot create group");
 
     stdl_log_msg(0, "-");
-    stdl_log_msg(1, "\n  | Store ints, egrad, and LRV ");
+    stdl_log_msg(1, "\n  | Store integrals ");
 
-    status = H5LTmake_dataset(lrv_group_id, "info", 1, (hsize_t[]) {4}, H5T_NATIVE_ULONG, (size_t[]) {data->op, STDL_OPERATOR_DIM[data->op], (size_t) STDL_OPERATOR_HERMITIAN[data->op], data->nw});
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", lrv_group_id);
+    status = H5LTmake_dataset(op_group_id, "info", 1, (hsize_t[]) {4}, H5T_NATIVE_ULONG, (size_t[]) {data->op, STDL_OPERATOR_DIM[data->op], (size_t) STDL_OPERATOR_HERMITIAN[data->op], data->nlrvs});
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", op_group_id);
 
-    status = H5LTmake_dataset(lrv_group_id, "w", 1, (hsize_t[]) {data->nw}, H5T_NATIVE_FLOAT, data->w);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", lrv_group_id);
+    status = H5LTmake_dataset(op_group_id, "integrals", 1, (hsize_t[]) {STDL_MATRIX_SP_SIZE(ctx->nmo)}, H5T_NATIVE_DOUBLE, data->op_ints_MO);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", op_group_id);
 
-    status = H5LTmake_dataset(lrv_group_id, "integrals", 1, (hsize_t[]) {STDL_MATRIX_SP_SIZE(ctx->nmo)}, H5T_NATIVE_DOUBLE, data->op_ints_MO);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", lrv_group_id);
+    if(data->nlrvs > 0) {
+        stdl_log_msg(0, "-");
+        stdl_log_msg(1, "\n  | Store egrad, and LRV ");
 
-    status = H5LTmake_dataset(lrv_group_id, "egrad", 2, (hsize_t[]) {ctx->ncsfs, STDL_OPERATOR_DIM[data->op]}, H5T_NATIVE_FLOAT, data->egrad);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", lrv_group_id);
+        status = H5LTmake_dataset(op_group_id, "w", 1, (hsize_t[]) {data->nlrvs}, H5T_NATIVE_FLOAT, data->w);
+        STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", op_group_id);
 
-    status = H5LTmake_dataset(lrv_group_id, "X", 3, (hsize_t[]) {data->nw, ctx->ncsfs, STDL_OPERATOR_DIM[data->op]}, H5T_NATIVE_FLOAT, data->X);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", lrv_group_id);
+        status = H5LTmake_dataset(op_group_id, "egrad", 2, (hsize_t[]) {ctx->ncsfs, STDL_OPERATOR_DIM[data->op]}, H5T_NATIVE_FLOAT, data->egrad);
+        STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", op_group_id);
 
-    status = H5LTmake_dataset(lrv_group_id, "Y", 3, (hsize_t[]) {data->nw, ctx->ncsfs, STDL_OPERATOR_DIM[data->op]}, H5T_NATIVE_FLOAT, data->Y);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", lrv_group_id);
+        status = H5LTmake_dataset(op_group_id, "X", 3, (hsize_t[]) {data->nlrvs, ctx->ncsfs, STDL_OPERATOR_DIM[data->op]}, H5T_NATIVE_FLOAT, data->X);
+        STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", op_group_id);
+
+        status = H5LTmake_dataset(op_group_id, "Y", 3, (hsize_t[]) {data->nlrvs, ctx->ncsfs, STDL_OPERATOR_DIM[data->op]},H5T_NATIVE_FLOAT, data->Y);
+        STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", op_group_id);
+    }
 
     stdl_log_msg(0, "< done\n");
 
-    H5Gclose(lrv_group_id);
+    H5Gclose(op_group_id);
     return STDL_ERR_OK;
 }
 
-int stdl_op_data_compute(stdl_op_data *data, stdl_context *ctx) {
+int stdl_op_data_compute_lrvs(stdl_op_data *data, stdl_context *ctx) {
     assert(data != NULL && ctx != NULL);
 
     // get perturbed gradient
@@ -100,9 +113,9 @@ int stdl_op_data_compute(stdl_op_data *data, stdl_context *ctx) {
 
     // compute response vectors
     if(ctx->B == NULL)
-        err = stdl_response_TDA_linear(ctx, data->nw, data->w, STDL_OPERATOR_DIM[data->op], 1, data->egrad, data->X, data->Y);
+        err = stdl_response_TDA_linear(ctx, data->nlrvs, data->w, STDL_OPERATOR_DIM[data->op], 1, data->egrad, data->X, data->Y);
     else
-        err = stdl_response_TD_linear(ctx, data->nw, data->w, STDL_OPERATOR_DIM[data->op], 1, data->egrad, data->X, data->Y);
+        err = stdl_response_TD_linear(ctx, data->nlrvs, data->w, STDL_OPERATOR_DIM[data->op], 1, data->egrad, data->X, data->Y);
 
     return err;
 }
@@ -136,6 +149,52 @@ int stdl_responses_handler_new(stdl_context *ctx, size_t nexci, stdl_responses_h
             STDL_ERROR_HANDLE_AND_REPORT((*rh_ptr)->Yamp == NULL, stdl_responses_handler_delete(*rh_ptr); return STDL_ERR_MALLOC, "malloc");
         }
     }
+
+    return STDL_ERR_OK;
+}
+
+int stdl_responses_handler_new_from_input(stdl_user_input_handler* inp, stdl_context* ctx, stdl_responses_handler **rh_ptr) {
+    assert(inp != NULL && inp->res_resreqs != NULL && ctx != NULL && rh_ptr != NULL);
+
+    int err;
+
+    stdl_log_msg(1, "+ ");
+    stdl_log_msg(0, "Preparing responses >");
+    stdl_log_msg(1, "\n  | Count requests ");
+
+    int ops_needed[STDL_OP_COUNT] = {0};
+    size_t ops_nlrvs[STDL_OP_COUNT] = {0};
+    size_t res_nexci = 0, res_nops = 0, res_nlrvs = 0;
+
+    stdl_response_request* req = inp->res_resreqs;
+    while (req != NULL) {
+        // check out if it contains a new operator
+        for (size_t iop = 0; iop < req->nops; ++iop) {
+            stdl_operator op = req->ops[iop];
+            if(!ops_needed[op])
+                res_nops += 1;
+
+            ops_needed[op] = 1;
+        }
+
+        // check out if it requires amplitudes
+        if(req->res_order > 0) {
+            if(req->nroots < 0)
+                res_nexci = ctx->ncsfs;
+            else if((size_t) req->nroots > res_nexci) {
+                if((size_t) req->nroots > ctx->ncsfs) {
+                    STDL_WARN("%ld excited states requested, which is more than the number of CSFs", req->nroots);
+                    req->nroots = (int) ctx->ncsfs;
+                }
+                res_nexci = (size_t) req->nroots;
+            }
+        }
+
+        req = req->next;
+    }
+
+    stdl_log_msg(0, "< done\n");
+    stdl_log_msg(0, "Will compute %ld matrix(ces) of MO integrals, %ld response vector(s), and %ld amplitude vector(s)\n", res_nops, res_nlrvs, res_nexci);
 
     return STDL_ERR_OK;
 }

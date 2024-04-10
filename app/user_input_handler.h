@@ -6,7 +6,6 @@
 #include <stdlite/context.h>
 
 #include "response_requests.h"
-#include "responses_handler.h"
 
 #define STDL_APP_ARG_DOC "Run a sTDA/sTD-DFT calculation.\n\n"
 
@@ -175,28 +174,16 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp);
  */
 int stdl_user_input_handler_make_context(stdl_user_input_handler* inp, stdl_context **ctx_ptr);
 
-/**
- * Prepare response calculations by creating a handler.
- *
- * @param inp a valid user input
- * @param ctx a valid context
- * @param[out] rh_ptr resulting responses handler
- * @return error code
- * @ingroup user_input_handler
- */
-int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl_context *ctx, stdl_responses_handler **rh_ptr);
-
 
 /**
  * Compute (and display) the properties requested by the user.
  *
  * @param inp a valid user input
  * @param ctx a valid context
- * @param rh a valid responses handler, with all responses computed
  * @return error code
  * @ingroup user_input_handler
  */
-int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, stdl_context* ctx, stdl_responses_handler* rh);
+int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, stdl_context* ctx);
 
 /**
  * Get the approximate space in memory

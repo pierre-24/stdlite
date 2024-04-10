@@ -47,9 +47,10 @@ void test_user_input_compute_responses() {
     TEST_ASSERT_NOT_NULL(ctx);
 
     // prepare responses
-    /*stdl_responses_handler *rh = NULL;
-    ASSERT_STDL_OK(stdl_user_input_handler_prepare_responses(inp, ctx, &rh));
+    stdl_responses_handler *rh = NULL;
+    ASSERT_STDL_OK(stdl_responses_handler_new_from_input(inp, ctx, &rh));
 
+    /*
     // compute responses
     ASSERT_STDL_OK(stdl_responses_handler_compute(rh, ctx));
 

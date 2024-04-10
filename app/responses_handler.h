@@ -1,6 +1,7 @@
 #ifndef STDLITE_RESPONSES_HANDLER_H
 #define STDLITE_RESPONSES_HANDLER_H
 
+#include "user_input_handler.h"
 #include "response_requests.h"
 
 /**
@@ -14,43 +15,43 @@ struct stdl_op_data_ {
     /// `double[STDL_MATRIX_SP_SIZE(nmo)]`
     double* op_ints_MO;
 
+    /// Number LRVs that are requested for `op`
+    size_t nlrvs;
+
     /// `float[dim,ncsfs]` perturbed gradient
     float* egrad;
 
-    /// Number of energies at which the vectors should be computed
-    size_t nw;
-
-    /// `float[nw]`, the energies
+    /// `float[nlrvs]`, the energies
     float* w;
 
-    /// `float[nw,nscfs,dim]` The linear response vector $\mathbf x(\omega)$
+    /// `float[nlrvs,nscfs,dim]` The linear response vector $\mathbf x(\omega)$
     float* X;
 
-    /// `float[nw,nscfs,dim]` The linear response vector $\mathbf y(\omega)$
+    /// `float[nlrvs,nscfs,dim]` The linear response vector $\mathbf y(\omega)$
     float* Y;
 };
 
 typedef struct stdl_op_data_ stdl_op_data;
 
 /**
- * Create a new linear response vectors request for `op` at `nw` energies.
+ * Create a new data storage for `op`, requesting for at `nlrvs` LRVs.
  *
  * @param op operator
- * @param nw number of energies
+ * @param nlrvs number of lrvs that are requested
  * @param[out] data_ptr resulting data
  * @return error code
  * @ingroup responses_handler
  */
-int stdl_op_data_new(stdl_operator op, size_t nmo, size_t ncsfs, size_t nw, stdl_op_data **data_ptr);
+int stdl_op_data_new(stdl_operator op, size_t nmo, size_t ncsfs, size_t nlrvs, stdl_op_data **data_ptr);
 
 /**
- * Actually compute the requested linear response vectors
+ * Actually compute the linear response vectors
  *
  * @param data a valid data
  * @return error code
  * @ingroup responses_handler
  */
-int stdl_op_data_compute(stdl_op_data *data, stdl_context *ctx);
+int stdl_op_data_compute_lrvs(stdl_op_data *data, stdl_context *ctx);
 
 /**
  * Delete a LRV request.
@@ -113,6 +114,17 @@ typedef struct stdl_responses_handler_ stdl_responses_handler;
  * @ingroup responses_handler
  */
 int stdl_responses_handler_new(stdl_context *ctx, size_t nexci, stdl_responses_handler **rh_ptr);
+
+/**
+ * Create a new responses handler from user input.
+ *
+ * @param inp a valid user input
+ * @param ctx a valid context
+ * @param[out] rh_ptr resulting handler
+ * @return error code
+ * @ingroup responses_handler
+ */
+int stdl_responses_handler_new_from_input(stdl_user_input_handler* inp, stdl_context* ctx, stdl_responses_handler **rh_ptr);
 
 /**
  * Delete handler.
