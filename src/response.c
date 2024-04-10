@@ -249,7 +249,7 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
 
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute %ld linear response vectors (TD-DFT) >", nw);
-    stdl_log_msg(1, "\n  | Make A+B and (A-B)⁻¹ ");
+    stdl_log_msg(1, "\n  | Make A+B and A-B ");
 
     size_t szXY = ctx->ncsfs * ndim;
 
@@ -267,6 +267,9 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
             AmB[STDL_MATRIX_SP_IDX(kia, kjb)] = a - b;
         }
     }
+
+    stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Invert %s ", is_hermitian? "A-B" : "A+B");
 
     // invert A-B [hermitian] or A+B [non-hermitian], taking advantage of its `sp` storage
     STDL_LA_INT* ipiv = malloc(iwrk_sz);
@@ -396,7 +399,8 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
         STDL_ERROR_HANDLE_AND_REPORT(lapack_err != 0, STDL_FREE_ALL(L, ipiv); return STDL_ERR_RESPONSE, "error while ssptrs(): %d", lapack_err);
 
         // separate X and Y
-        // Yi' = w*A^(-1)*Xi'
+        // Xi' = Xi + Yi [hermitian] or Xi - Yi [non-hermitian]
+        // Yi' = w*A^(-1)*Xi' = Xi - Yi [hermitian] or Xi + Yi [non-hermitian]
         #pragma omp parallel for
         for(size_t kia = 0; kia < ctx->ncsfs; kia++) {
             for(size_t cpt = 0; cpt < ndim; cpt++) {
@@ -408,13 +412,13 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
             }
         }
 
-        // Xi = 1/2*(Xi' + Yi') && Yi = 1/2*(Xi' - Yi')
+        // Xi = 1/2*(Xi' + Yi') && Yi = 1/2*(Xi' - Yi') [hermitian] or 1/2*(Yi-Xi) [non-hermitian]
         #pragma omp parallel for
         for(size_t kia = 0; kia < ctx->ncsfs; kia++) {
             for(size_t cpt = 0; cpt < ndim; cpt++) {
                 float u = Xi[kia * ndim + cpt], v = Yi[kia * ndim + cpt];
                 Xi[kia * ndim + cpt] = .5f * (u + v);
-                Yi[kia * ndim + cpt] = .5f * (u - v);
+                Yi[kia * ndim + cpt] = .5f * (is_hermitian? (u - v) : (v - u));
             }
         }
 

@@ -169,11 +169,14 @@ $$\tag{4}\begin{pmatrix}
 
 which is generally referred to as the Casida equation. 
 In this case, each $\omega_m$ (eigenvalue, corresponding to the transition energy bewteen $\ket{0}$ and $\ket{m}$) is associated to one $\mathbf x^m$ and one $\mathbf y^m$ ("eigenfunction"), might be seen as amplitude vectors associated to excitation and de-excitation, respectively. 
+They satisfy $(\mathbf x^m)^2-(\mathbf y^m)^2=\mathbf 1$.
 Solving this problem is done using two approaches.
 
 On the one hand, Eq. (4) can be rewritten in a true eigenvalue problem, namely:
 
-$$(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}+\mathbf{B})\,(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,\mathbf{z}^m = \omega^2\,\mathbf{z}^m, \text{ with } \mathbf{z}^m = (\mathbf{A}-\mathbf{B})^{-\frac{1}{2}} (\mathbf x^m + \mathbf y^m).$$
+$$(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}+\mathbf{B})\,(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,\mathbf{z}^m = \omega^2\,\mathbf{z}^m, \text{ with } \mathbf{z}^m = (\mathbf{A}-\mathbf{B})^{-\frac{1}{2}} (\mathbf x^m + \mathbf y^m),$$
+
+with $(\mathbf z^m)^2=\mathbf 1$.
 
 ??? note "Detailed solution"
 
@@ -195,25 +198,30 @@ In this case, $\ket{m} = \sum_{ia}\,x^m_{ia}\,\ket{\Psi_i^a}$, where $\ket{\Psi_
 
 In both cases, these amplitude vectors are linked to their linear response counterparts through the following spectral representation:
 
-$$\begin{aligned}
-x_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,\left[\frac{x_{ia}^{m}}{\omega-\omega_m}-\frac{y_{ia}^{m}}{\omega+\omega_m}\right],\\
-y_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,\left[\frac{y_{ia}^{m}}{\omega-\omega_m}-\frac{x_{ia}^{m}}{\omega+\omega_m}\right],
-\end{aligned}$$
++ If $\hat\eta$ is hermitian:
 
-where these expression involves a summation over the manifold $\{\ket{m}\}$ of excited states (and one can set $\mathbf y^m = 0$ to get the TDA version).
-These representations lead to simplification when taking residue of response functions.
+    $$\begin{aligned}
+    x_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,\left[\frac{x_{ia}^{m}}{\omega-\omega_m}-\frac{y_{ia}^{m}}{\omega+\omega_m}\right],\\ 
+    y_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,\left[\frac{y_{ia}^{m}}{\omega-\omega_m}-\frac{x_{ia}^{m}}{\omega+\omega_m}\right], 
+    \end{aligned}$$
 
-!!! info "Implications"
+    which implies:
 
-    From the spectral representations of $x_{ia,\zeta}(\omega)$ and $y_{ia,\zeta}(\omega)$, it is easy to see that:
-
-    $$x_{ia,\zeta}(0) = y_{ia,\zeta}(0),$$
-
-    and:
-    
     $$x_{ia,\zeta}(-\omega) = y_{ia,\zeta}(\omega) \land y_{ia,\zeta}(-\omega) = x_{ia,\zeta}(\omega).$$
 
-    The latter is usefull to evaluate linear and quadratic response properties at the same time.
++ If $\hat\eta$ is anti-hermitian [i.e., $\Re(\eta_\zeta)=0$]:
+
+    $$\begin{aligned}
+    x_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} - y^{m}_{ia})\,\left[\frac{x_{ia}^{m}}{\omega-\omega_m}+\frac{y_{ia}^{m}}{\omega+\omega_m}\right],\\
+    y_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} - y^{m}_{ia})\,\left[\frac{y_{ia}^{m}}{\omega-\omega_m}+\frac{x_{ia}^{m}}{\omega+\omega_m}\right],
+    \end{aligned}$$
+
+    which implies:
+
+    $$x_{ia,\zeta}(-\omega) = -y_{ia,\zeta}(\omega) \land y_{ia,\zeta}(-\omega) = -x_{ia,\zeta}(\omega).$$
+
+where these expression involves a summation over the manifold $\{\ket{m}\}$ of excited states (and one can set $\mathbf y^m = 0$ to get the TDA version).
+These representations help in obtaining expressions when taking residue of response functions.
 
 ## The simplified approaches to TD-DFT
 
@@ -346,7 +354,7 @@ Linear responses result in a rank-2 tensors, while a rank-3 tensor is the result
 Residue of the response functions provide information on the (excited states of the) unperturbed system.
 For example, the linear response function might be extended in the following spectral representation:
 
-$$\braket{\braket{\hat A; \hat B}}_{\omega_B} = \sum_{\ket{m}} \frac{\braket{0|\hat A|m}\braket{m|\hat B|0}}{\omega_B-\omega_m} + \frac{\braket{0|\hat B|m}\braket{m|\hat A|0}}{\omega_A+\omega_m},$$
+$$\braket{\braket{\hat A; \hat B}}_{\omega_B} = \sum_{\ket{m}} \frac{\braket{0|\hat A|m}\braket{m|\hat B|0}}{\omega_B-\omega_m} - \frac{\braket{0|\hat B|m}\braket{m|\hat A|0}}{\omega_B+\omega_m},$$
 
 and a corresponding single residue might be:
 
