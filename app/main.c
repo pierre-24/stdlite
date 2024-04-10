@@ -141,20 +141,18 @@ int main(int argc, char* argv[]) {
         }
 
         if(rh != NULL) {
-            size_t ev_sz, lrv_sz, amp_sz;
-            stdl_responses_handler_approximate_size(rh, ctx->nmo, ctx->ncsfs, &res_sz, &ev_sz, &lrv_sz, &amp_sz);
+            size_t ev_sz, ops_sz, amp_sz;
+            stdl_responses_handler_approximate_size(rh, ctx->nmo, ctx->ncsfs, &res_sz, &ops_sz, &amp_sz);
 
             double res_asz, ev_asz, lrv_asz, amp_asz;
             char *res_usz, *ev_usz, *lrv_usz, *amp_usz;
 
-            stdl_convert_size(res_sz - ev_sz - lrv_sz - amp_sz, &res_asz, &res_usz);
-            stdl_convert_size(ev_sz, &ev_asz, &ev_usz);
-            stdl_convert_size(lrv_sz, &lrv_asz, &lrv_usz);
+            stdl_convert_size(res_sz - ops_sz - amp_sz, &res_asz, &res_usz);
+            stdl_convert_size(ops_sz, &lrv_asz, &lrv_usz);
             stdl_convert_size(amp_sz, &amp_asz, &amp_usz);
 
             stdl_log_msg(0, "--------------  --- -----------\n");
-            stdl_log_msg(0, "Responses       INT %8.1f%s\n", ev_asz, ev_usz);
-            stdl_log_msg(0, "                LRV %8.1f%s\n", lrv_asz, lrv_usz);
+            stdl_log_msg(0, "Responses       LRV %8.1f%s\n", lrv_asz, lrv_usz);
             stdl_log_msg(0, "                AMP %8.1f%s\n", amp_asz, amp_usz);
             stdl_log_msg(0, "                OTH %8.1f%s\n", res_asz, res_usz);
         }
