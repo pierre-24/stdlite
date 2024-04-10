@@ -11,6 +11,7 @@ srcs += files(
     'integrals.c',
     'logging.c',
     'property.c',
+    'property_tensor.c',
     'response.c',
     'wavefunction.c',
 )

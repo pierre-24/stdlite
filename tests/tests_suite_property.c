@@ -70,12 +70,11 @@ void test_property_polarizability_TD_SOS_ok() {
     for (size_t iw = 0; iw < nw; ++iw) {
         stdl_response_lr_tensor(
                 ctx,
-                (size_t[]) {3, 3},
+                (size_t[]) {3, 3}, (int[]) {1, 1},
                 dipoles_mat,
                 Xtd + iw * 3 * ctx->ncsfs,
                 Ytd + iw * 3 * ctx->ncsfs,
-                0, alpha
-        );
+                0, alpha);
 
         // stdl_matrix_ssp_print(3, alpha, "alpha");
 
@@ -223,12 +222,11 @@ void test_property_polarizability_TDA_SOS_ok() {
     for (size_t iw = 0; iw < nw; ++iw) {
         stdl_response_lr_tensor(
                 ctx,
-                (size_t[]) {3, 3},
+                (size_t[]) {3, 3}, (int[]) {1, 1},
                 dipoles_mat,
                 Xtda + iw * 3 * ctx->ncsfs,
                 Ytda + iw * 3 * ctx->ncsfs,
-                0, alpha
-        );
+                0, alpha);
 
         // stdl_matrix_ssp_print(3, alpha, "alpha");
 

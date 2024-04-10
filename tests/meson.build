@@ -27,6 +27,7 @@ tests_to_run = [
     'utils_molden_parser',
     'utils_permutations',
     'property',
+    'property_tensor',
     'wavefunction',
 ]
 

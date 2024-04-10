@@ -938,12 +938,11 @@ int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, std
 
             err = stdl_response_lr_tensor(
                     ctx,
-                    (size_t[]) {dim0, dim1},
+                    (size_t[]) {dim0, dim1}, (int[]) {1, 1},
                     req->lrvreqs[0]->op_integrals,
                     req->lrvreqs[1]->X + req->wpos[1] * dim1 * ctx->ncsfs,
                     req->lrvreqs[1]->Y + req->wpos[1] * dim1 * ctx->ncsfs,
-                    0, tensor
-            );
+                    0, tensor);
             STDL_ERROR_CODE_HANDLE(err, free(tensor); return err);
 
             if(req->ops[0] == STDL_OP_DIPL && req->ops[1] == STDL_OP_DIPL)
