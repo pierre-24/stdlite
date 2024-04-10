@@ -4,90 +4,16 @@
 #include <stdlite/property.h>
 #include <stdlite/utils/experimental_quantity.h>
 #include <stdlite/utils/permutations.h>
+#include <stdlite/integrals.h>
+#include <stdlite/property_tensor.h>
 
 #include <string.h>
 
 #include "tests_suite.h"
-#include "stdlite/integrals.h"
 
 void setUp() {
     stdl_set_debug_level(-1);
     stdl_set_log_level(0);
-}
-
-void test_property_polarizability_TD_SOS_ok() {
-    stdl_wavefunction * wf = NULL;
-    stdl_basis * bs = NULL;
-    read_molden("../tests/test_files/water_631gdf_sph.molden", &wf, &bs);
-
-    stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 25. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
-    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
-
-    // fetch excitations
-    float* etd = malloc(ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(etd);
-
-    float* Xamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Xamptd);
-
-    float* Yamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Yamptd);
-
-    ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, etd, Xamptd, Yamptd));
-
-    // compute dipole integrals and convert to MO
-    double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
-    TEST_ASSERT_NOT_NULL(dipoles_mat);
-
-    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_mat);
-
-    // get transition dipoles
-    float* tdipstd = malloc(ctx->ncsfs * 3 * sizeof(float ));
-    stdl_property_transition_dipoles(ctx, ctx->ncsfs, dipoles_mat, Xamptd, Yamptd, tdipstd);
-
-    // build egrad
-    float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(egrad);
-
-    stdl_response_perturbed_gradient(ctx, 3, 1, dipoles_mat, egrad);
-
-    // solve linear response
-    size_t nw = 3;
-    float w[] = {0, STDL_CONST_HC / 1064.f, STDL_CONST_HC / 532.f};
-
-    float* Xtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(Xtd);
-
-    float* Ytd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(Ytd);
-
-    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 1, egrad, Xtd, Ytd));
-
-    // compute polarizabilities
-    float alpha[9], alpha_zz;
-
-    for (size_t iw = 0; iw < nw; ++iw) {
-        stdl_response_lr_tensor(
-                ctx,
-                (size_t[]) {3, 3}, (int[]) {1, 1},
-                dipoles_mat,
-                Xtd + iw * 3 * ctx->ncsfs,
-                Ytd + iw * 3 * ctx->ncsfs,
-                0, alpha);
-
-        // stdl_matrix_ssp_print(3, alpha, "alpha");
-
-        // compute alpha_zz from SOS
-        alpha_zz = .0f;
-        for (size_t iexci = 0; iexci < ctx->ncsfs; ++iexci)
-            alpha_zz += powf(tdipstd[2 * ctx->ncsfs + iexci], 2) / (etd[iexci] - w[iw]) + powf(tdipstd[2 * ctx->ncsfs + iexci], 2) / (etd[iexci] + w[iw]);
-
-        TEST_ASSERT_FLOAT_WITHIN(1e-2, alpha[8], alpha_zz);
-    }
-
-    STDL_FREE_ALL(etd, Xamptd, Yamptd, dipoles_mat, tdipstd, egrad, Xtd, Ytd);
-    ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
 
 
@@ -169,76 +95,6 @@ void test_property_first_hyperpolarizability_TD_ok() {
     TEST_ASSERT_FLOAT_WITHIN(1e-2, 43.85, beta2_ZXX);
 
     STDL_FREE_ALL(dipoles_mat, egrad, X, Y);
-
-    ASSERT_STDL_OK(stdl_context_delete(ctx));
-}
-
-void test_property_polarizability_TDA_SOS_ok() {
-    stdl_wavefunction * wf = NULL;
-    stdl_basis * bs = NULL;
-    read_fchk("../tests/test_files/water_631gdf.fchk", &wf, &bs);
-
-    stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 25. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
-
-    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
-
-    // compute dipole integrals and convert to MO
-    double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
-    TEST_ASSERT_NOT_NULL(dipoles_mat);
-
-    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_mat);
-
-    // build egrad
-    float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(egrad);
-
-    stdl_response_perturbed_gradient(ctx, 3, 1, dipoles_mat, egrad);
-
-    // fetch all excitations
-    float* etda = malloc(ctx->ncsfs * sizeof(float ));
-    float* Xamptda = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float ));
-    ASSERT_STDL_OK(stdl_response_TDA_casida(ctx, ctx->ncsfs, etda, Xamptda));
-
-    // get transition dipoles
-    float* tdipstda = malloc(ctx->ncsfs * 3 * sizeof(float ));
-    ASSERT_STDL_OK(stdl_property_transition_dipoles(ctx, ctx->ncsfs, dipoles_mat, Xamptda, NULL, tdipstda));
-
-    // solve linear response
-    size_t nw = 3;
-    float w[] = {0, STDL_CONST_HC / 1064.f, STDL_CONST_HC / 532.f};
-
-    float* Xtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Xtda);
-
-    float* Ytda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Ytda);
-
-    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, 1, egrad, Xtda, Ytda));
-
-    // compute polarizabilities
-    float alpha[9], alpha_zz;
-
-    for (size_t iw = 0; iw < nw; ++iw) {
-        stdl_response_lr_tensor(
-                ctx,
-                (size_t[]) {3, 3}, (int[]) {1, 1},
-                dipoles_mat,
-                Xtda + iw * 3 * ctx->ncsfs,
-                Ytda + iw * 3 * ctx->ncsfs,
-                0, alpha);
-
-        // stdl_matrix_ssp_print(3, alpha, "alpha");
-
-        // compute alpha_zz from SOS
-        alpha_zz = .0f;
-        for (size_t iexci = 0; iexci < ctx->ncsfs; ++iexci)
-            alpha_zz += powf(tdipstda[2 * ctx->ncsfs + iexci], 2) / (etda[iexci] - w[iw]) + powf(tdipstda[2 * ctx->ncsfs + iexci], 2) / (w[iw] + etda[iexci]);
-
-        TEST_ASSERT_FLOAT_WITHIN(1e-2, alpha[8], alpha_zz);
-    }
-
-    STDL_FREE_ALL(dipoles_mat, etda, Xamptda, egrad, Xtda, Ytda, tdipstda);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }

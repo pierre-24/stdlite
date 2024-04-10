@@ -8,6 +8,7 @@
 #include <stdlite/utils/fchk_parser.h>
 #include <stdlite/utils/molden_parser.h>
 #include <stdlite/property.h>
+#include <stdlite/property_tensor.h>
 #include <stdlite/response.h>
 #include <stdlite/utils/matrix.h>
 #include <stdlite/utils/experimental_quantity.h>
@@ -936,13 +937,15 @@ int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, std
             float* tensor = malloc(dim0 * dim1 * sizeof(float ));
             STDL_ERROR_HANDLE_AND_REPORT(tensor == NULL, return STDL_ERR_MALLOC, "malloc");
 
-            err = stdl_response_lr_tensor(
+            err = stdl_property_tensor_linear(
                     ctx,
-                    (size_t[]) {dim0, dim1}, (int[]) {1, 1},
-                    req->lrvreqs[0]->op_integrals,
-                    req->lrvreqs[1]->X + req->wpos[1] * dim1 * ctx->ncsfs,
-                    req->lrvreqs[1]->Y + req->wpos[1] * dim1 * ctx->ncsfs,
-                    0, tensor);
+                    (stdl_lrv[]) {
+                        // TODO: whooops, that's convoluted :(
+                            {STDL_OP_DIPL, req->lrvreqs[0]->op_integrals, -req->lrvreqs[0]->w[req->wpos[0]], req->lrvreqs[0]->Y + req->wpos[0] * dim0 * ctx->ncsfs, req->lrvreqs[0]->X + req->wpos[0] * dim0 * ctx->ncsfs},
+                            {STDL_OP_DIPL, req->lrvreqs[1]->op_integrals, req->lrvreqs[1]->w[req->wpos[1]], req->lrvreqs[1]->X + req->wpos[1] * dim1 * ctx->ncsfs, req->lrvreqs[1]->Y + req->wpos[1] * dim1 * ctx->ncsfs}
+                    },
+                    tensor
+            );
             STDL_ERROR_CODE_HANDLE(err, free(tensor); return err);
 
             if(req->ops[0] == STDL_OP_DIPL && req->ops[1] == STDL_OP_DIPL)
