@@ -210,3 +210,81 @@ void test_user_input_make_context() {
     ASSERT_STDL_OK(stdl_context_delete(ctx));
     ASSERT_STDL_OK(stdl_user_input_handler_delete(inp));
 }
+
+void test_user_input_response_requests_ok() {
+    stdl_user_input_handler *inp = NULL;
+    stdl_user_input_handler_new(&inp);
+    TEST_ASSERT_NOT_NULL(inp);
+
+    fputs("title = \"test calculation\"\n"
+          "data_output=\"test_prepare_response.h5\"\n"
+          "[context]\n"
+          "source = \"../tests/test_files/water_631g.fchk\"\n"
+          "source_type = \"FCHK\"\n"
+          "ethr = '12eV'\n"
+          "[responses]\n"
+          "linear = [{opA = 'dipl', opB = 'dipl', wB = '1064nm'}, {opA = 'dipl', opB = 'dipl', wB = '532nm'}]\n"
+          "quadratic = [{opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = '1064nm', wC = '1064nm'}]\n"
+          "linear_sr = [{opA = 'dipl', nroots = -1}]",
+          stream);
+    rewind(stream);
+
+    ASSERT_STDL_OK(stdl_user_input_handler_fill_from_toml(inp, stream));
+    ASSERT_STDL_OK(stdl_user_input_handler_check(inp));
+
+    TEST_ASSERT_EQUAL(inp->res_nw, 2);
+    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, ((float[]) {STDL_CONST_HC / 1064.f, STDL_CONST_HC / 532.f}), inp->res_w, 2);
+
+    stdl_response_request *req = inp->res_resreqs;
+    TEST_ASSERT_NOT_NULL(req);
+
+    TEST_ASSERT_EQUAL(1, req->resp_order);
+    TEST_ASSERT_EQUAL(0, req->res_order);
+    TEST_ASSERT_EQUAL(2, req->nw);
+    TEST_ASSERT_EQUAL_UINT64_ARRAY(((size_t[]) {0, 0}), req->iw, 2);
+    TEST_ASSERT_EQUAL(2, req->nops);
+    TEST_ASSERT_EQUAL_INT_ARRAY(((int[]) {STDL_OP_DIPL, STDL_OP_DIPL}), req->ops, 2);
+    TEST_ASSERT_EQUAL(0, req->nroots);
+
+    TEST_ASSERT_NOT_NULL(req->next);
+    req = req->next;
+    TEST_ASSERT_EQUAL(1, req->resp_order);
+    TEST_ASSERT_EQUAL(0, req->res_order);
+    TEST_ASSERT_EQUAL(2, req->nw);
+    TEST_ASSERT_EQUAL_UINT64_ARRAY(((size_t[]){1, 1}), req->iw, 2);
+    TEST_ASSERT_EQUAL(2, req->nops);
+    TEST_ASSERT_EQUAL_INT_ARRAY(((int[]) {STDL_OP_DIPL, STDL_OP_DIPL}), req->ops, 2);
+    TEST_ASSERT_EQUAL(0, req->nroots);
+
+    TEST_ASSERT_NOT_NULL(req->next);
+    req = req->next;
+    TEST_ASSERT_EQUAL(2, req->resp_order);
+    TEST_ASSERT_EQUAL(0, req->res_order);
+    TEST_ASSERT_EQUAL(3, req->nw);
+    TEST_ASSERT_EQUAL_UINT64_ARRAY(((size_t[]){1, 0, 0}), req->iw, 3);
+    TEST_ASSERT_EQUAL(3, req->nops);
+    TEST_ASSERT_EQUAL_INT_ARRAY(((int[]) {STDL_OP_DIPL, STDL_OP_DIPL, STDL_OP_DIPL}), req->ops, 3);
+    TEST_ASSERT_EQUAL(0, req->nroots);
+
+    TEST_ASSERT_NOT_NULL(req->next);
+    req = req->next;
+    TEST_ASSERT_EQUAL(1, req->resp_order);
+    TEST_ASSERT_EQUAL(1, req->res_order);
+    TEST_ASSERT_EQUAL(0, req->nw);
+    TEST_ASSERT_EQUAL(1, req->nops);
+    TEST_ASSERT_EQUAL(req->ops[0], STDL_OP_DIPL);
+    TEST_ASSERT_EQUAL(-1, req->nroots);
+    TEST_ASSERT_NULL(req->iw);
+    TEST_ASSERT_NULL(req->lrvs);
+
+    // create context
+    stdl_context *ctx = NULL;
+    ASSERT_STDL_OK(stdl_user_input_handler_make_context(inp, &ctx));
+    TEST_ASSERT_NOT_NULL(ctx);
+
+    // delete data output
+    unlink(inp->data_output);
+
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
+    ASSERT_STDL_OK(stdl_user_input_handler_delete(inp));
+}

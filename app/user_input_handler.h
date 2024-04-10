@@ -77,6 +77,12 @@ struct stdl_user_input_handler_ {
     // ----- responses:
     /// Response requests
     stdl_response_request* res_resreqs;
+
+    /// number of frequencies
+    size_t res_nw;
+
+    /// frequencies
+    float* res_w;
 };
 
 typedef struct stdl_user_input_handler_ stdl_user_input_handler;

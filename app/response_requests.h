@@ -4,6 +4,7 @@
 
 #include <stdlite/context.h>
 #include <stdlite/integrals.h>
+#include <stdlite/property_tensor.h>
 
 /**
  * Linear response vectors (LRV) requests, in an orderly manner. Also store linear vectors when computed.
@@ -95,20 +96,23 @@ struct stdl_response_request_ {
     /// number of residues (0 = none, 1 = first residue, 2 = second residue)
     size_t res_order;
 
-    /// `stdl_operator[resp_order-res_order+1]` the operators associated with the request
+    /// Number of operators
+    size_t nops; // = resp_order-res_order+1
+
+    /// `stdl_operator[nops]` the operators associated with the request
     stdl_operator *ops;
 
-    /// `float[(resp_order == res_order)? 0: resp_order-res_order+1]` the energies at which linear response vectors should be computed
-    float* w;
+    /// Number of frequencies (and LRVs)
+    size_t nw; // == (resp_order == res_order)? 0: resp_order-res_order+1
 
-    /// number of amplitude vectors (*i.e.*, excitations) requested, any negatives number means "all"
+    /// `size_t[nw]` the energies at which linear response vectors should be computed
+    size_t* iw;
+
+    /// `stdl_lrv[nw]` for the corresponding linear response vector
+    stdl_lrv* lrvs;
+
+    /// number of amplitude vectors (*i.e.*, excitations) requested, a negative value means "all"
     int nroots;
-
-    /// `stdl_linear_response_vectors_request[resp_order-res_order]` for each operator (except the first one), the corresponding linear response vector request
-    struct stdl_lrv_request_** lrvreqs;
-
-    /// `size_t[(resp_order == res_order)? 0: resp_order-res_order+1]` For each frequency, its corresponding position in the linear response vector request
-    size_t* wpos;
 
     /// Next request
     struct stdl_response_request_* next;
@@ -122,13 +126,13 @@ typedef struct stdl_response_request_ stdl_response_request;
  * @param resp_order Order of the response, must be > 0.
  * @param res_order Order of the residue, must be `res_order < resp_order`
  * @param ops operators
- * @param w energies at which linear response vectors should be computed
+ * @param iw index of energies at which linear response vectors should be computed
  * @param nroots number of excitations (and, thus, amplitude vectors) that should be computed. Negative number means "all"
  * @param[out] req_ptr the resulting request
  * @return error code
  * @ingroup requests
  */
-int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator* ops, float* w, int nroots, stdl_response_request** req_ptr);
+int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator* ops, size_t *iw, int nroots, stdl_response_request** req_ptr);
 
 /**
  * Delete a request.

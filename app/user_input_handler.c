@@ -45,6 +45,8 @@ int stdl_user_input_handler_new(stdl_user_input_handler** inp_ptr) {
 
     // -- response:
     (*inp_ptr)->res_resreqs = NULL;
+    (*inp_ptr)->res_nw = 0;
+    (*inp_ptr)->res_w = NULL;
 
     return STDL_ERR_OK;
 }
@@ -57,7 +59,7 @@ int stdl_user_input_handler_delete(stdl_user_input_handler* inp) {
     if(inp->res_resreqs != NULL)
         stdl_response_request_delete(inp->res_resreqs);
 
-    STDL_FREE_ALL(inp->title, inp->ctx_source, inp->data_output, inp);
+    STDL_FREE_ALL(inp->title, inp->ctx_source, inp->data_output, inp->res_w, inp);
 
     return STDL_ERR_OK;
 }
@@ -105,6 +107,62 @@ int _operator_in(toml_table_t* table, char* field, stdl_operator * result, int* 
     }
 
     return err;
+}
+
+struct _w_list {
+    float w;
+    struct _w_list* next;
+};
+
+int _w_list_new(float w, struct _w_list** elm) {
+    *elm = malloc(sizeof(struct _w_list));
+    STDL_ERROR_HANDLE_AND_REPORT(*elm == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    (*elm)->w = w;
+    (*elm)->next = NULL;
+    return STDL_ERR_OK;
+}
+
+int _w_list_get_id(struct _w_list** first, float w, size_t* id) {
+    *id = 0;
+    struct _w_list* elm = *first;
+
+    if(*first == NULL) {
+        _w_list_new(w, &elm);
+        *first = elm;
+    } else {
+        struct _w_list* prev = NULL;
+        int found = 0;
+
+        while (elm != NULL && found == 0) {
+            if (stdl_float_equals(elm->w, w, 1e-6f))
+                found = 1;
+            else {
+                (*id)++;
+                prev = elm;
+                elm = elm->next;
+            }
+        }
+
+        if(!found) {
+            struct _w_list* last = NULL;
+            _w_list_new(w, &last);
+            prev->next = last;
+        }
+    }
+
+    return STDL_ERR_OK;
+}
+
+int _w_list_delete(struct _w_list* lst) {
+    assert(lst != NULL);
+
+    if(lst->next != NULL)
+        _w_list_delete(lst->next);
+
+    STDL_FREE_IF_USED(lst);
+
+    return STDL_ERR_OK;
 }
 
 int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f) {
@@ -211,6 +269,7 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
         STDL_DEBUG("Read [responses]");
 
         stdl_response_request* prev = NULL;
+        struct _w_list* wlist = NULL;
 
         // linear response
         toml_array_t* lresp = toml_array_in(response, "linear");
@@ -230,13 +289,17 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
                 STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `opB` in `linear[%d]`", i);
 
-                float w;
-                err = _energy_in(t, "wB", &w, &isset);
+                float wB;
+                err = _energy_in(t, "wB", &wB, &isset);
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
-                STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `w` in `linear[%d]`", i);
+                STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `wB` in `linear[%d]`", i);
+
+                size_t iwA, iwB;
+                _w_list_get_id(&wlist, wB, &iwA);
+                _w_list_get_id(&wlist, wB, &iwB);
 
                 stdl_response_request* req = NULL;
-                err = stdl_response_request_new(1, 0, (stdl_operator[]) {opA, opB}, (float[]) {w, w}, 0, &req);
+                err = stdl_response_request_new(1, 0, (stdl_operator[]) {opA, opB}, (size_t[]) {iwA, iwB}, 0, &req);
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
 
                 if(prev == NULL) {
@@ -283,8 +346,13 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
                 STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `wC` in `quadratic[%d]`", i);
 
+                size_t iwA, iwB, iwC;
+                _w_list_get_id(&wlist, wB + wC, &iwA);
+                _w_list_get_id(&wlist, wB, &iwB);
+                _w_list_get_id(&wlist, wC, &iwC);
+
                 stdl_response_request* req = NULL;
-                err = stdl_response_request_new(2, 0, (stdl_operator[]) {opA, opB, opC}, (float[]) {wB + wC, wB, wC}, 0, &req);
+                err = stdl_response_request_new(2, 0, (stdl_operator[]) {opA, opB, opC}, (size_t[]) {iwA, iwB, iwC}, 0, &req);
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
 
                 if(prev == NULL) {
@@ -333,6 +401,32 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
 
                 i += 1;
                 t = toml_table_at(lresp_sr, i);
+            }
+        }
+
+        // TODO: quadratic sr and dr
+
+        struct _w_list* elm = wlist, *prevw = NULL;
+        while (elm != NULL) {
+            inp->res_nw++;
+            elm = elm->next;
+        }
+
+        if(inp->res_nw > 0) {
+            inp->res_w = malloc(inp->res_nw * sizeof(float));
+            STDL_ERROR_HANDLE_AND_REPORT(inp->res_w == NULL, _w_list_delete(wlist); err = STDL_ERR_MALLOC; goto _end, "malloc");
+
+            size_t iw = 0;
+            elm = wlist;
+            while (elm != NULL) {
+                inp->res_w[iw] = elm->w;
+
+                prevw = elm;
+                elm = elm->next;
+                iw++;
+
+                prevw->next = NULL;
+                _w_list_delete(prevw);
             }
         }
     }
@@ -595,7 +689,7 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
                 _op_log("opA", req->ops[0]);
                 stdl_log_msg(0, ", ");
                 _op_log("opB", req->ops[1]);
-                stdl_log_msg(0, ", wB=%f},\n", req->w[1]);
+                stdl_log_msg(0, ", wB=%f},\n", inp->res_w[req->iw[1]]);
             }
             req = req->next;
         }
@@ -612,7 +706,7 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
                 _op_log("opB", req->ops[1]);
                 stdl_log_msg(0, ", ");
                 _op_log("opC", req->ops[2]);
-                stdl_log_msg(0, ", wB=%f, wC=%f},\n", req->w[1], req->w[2]);
+                stdl_log_msg(0, ", wB=%f, wC=%f},\n", inp->res_w[req->iw[1]], inp->res_w[req->iw[2]]);
             }
             req = req->next;
         }
@@ -734,31 +828,7 @@ int stdl_user_input_handler_make_context(stdl_user_input_handler* inp, stdl_cont
     return err;
 }
 
-struct _w_list {
-    float w;
-    struct _w_list* next;
-};
-
-int _w_list_new(float w, struct _w_list** elm) {
-    *elm = malloc(sizeof(struct _w_list));
-    STDL_ERROR_HANDLE_AND_REPORT(*elm == NULL, return STDL_ERR_MALLOC, "malloc");
-
-    (*elm)->w = w;
-    (*elm)->next = NULL;
-    return STDL_ERR_OK;
-}
-
-int _w_list_delete(struct _w_list* lst) {
-    assert(lst != NULL);
-
-    if(lst->next != NULL)
-        _w_list_delete(lst->next);
-
-    STDL_FREE_IF_USED(lst);
-
-    return STDL_ERR_OK;
-}
-
+/*
 int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl_context *ctx, stdl_responses_handler **rh_ptr) {
     assert(inp != NULL && ctx != NULL && inp->res_resreqs != NULL && rh_ptr != NULL);
 
@@ -837,7 +907,7 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl
         req = req->next;
     }
 
-    stdl_log_msg(0, "-");
+    /*stdl_log_msg(0, "-");
     stdl_log_msg(1, "\n  | build requests ");
 
     err = stdl_responses_handler_new(res_nops, res_nlrvreq, res_nexci, inp->data_output, ctx, rh_ptr);
@@ -918,11 +988,12 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl
     }
 
     stdl_log_msg(0, "< done\n");
-    stdl_log_msg(0, "Will compute %ld matrix(ces) of MO integrals, %ld response vector(s), and %ld amplitude vector(s)\n", (*rh_ptr)->nops, totnw, (*rh_ptr)->nexci);
+    // stdl_log_msg(0, "Will compute %ld matrix(ces) of MO integrals, %ld response vector(s), and %ld amplitude vector(s)\n", (*rh_ptr)->nops, totnw, (*rh_ptr)->nexci);
 
     return STDL_ERR_OK;
-}
+}*/
 
+/*
 int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, stdl_context* ctx, stdl_responses_handler* rh) {
     assert(inp != NULL && ctx != NULL && rh != NULL);
 
@@ -977,7 +1048,7 @@ int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, std
             STDL_ERROR_HANDLE_AND_REPORT(tdips == NULL, return STDL_ERR_MALLOC, "malloc");
 
             // TODO: it should be more general than that!
-            stdl_property_transition_dipoles(ctx, rh->nexci, rh->ops_integrals[0] /* <- !!!! */, rh->Xamp, rh->Yamp, tdips);
+            stdl_property_transition_dipoles(ctx, rh->nexci, rh->ops_integrals[0] , rh->Xamp, rh->Yamp, tdips);
 
             stdl_log_property_g2e_dipoles(rh, ctx, tdips, 5e-3f);
 
@@ -988,7 +1059,7 @@ int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, std
     }
 
     return STDL_ERR_OK;
-}
+}*/
 
 int stdl_user_input_handler_approximate_size(stdl_user_input_handler *inp, size_t *sz, size_t *respreq_sz) {
     assert(inp != NULL && sz != NULL);

@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
     stdl_log_msg(0, "Elapsed time in context: %.2f secs\n", stdl_timer_stop(&elapsed_time_ctx));
 
     // Compute responses
-    struct timespec elapsed_time_response;
+    /*struct timespec elapsed_time_response;
     stdl_timer_start(&elapsed_time_response);
 
     title("Compute responses");
@@ -81,11 +81,11 @@ int main(int argc, char* argv[]) {
         stdl_log_msg(0, "No response requested.\n");
     }
 
-    stdl_log_msg(0, "Elapsed time in responses: %.2f secs\n", stdl_timer_stop(&elapsed_time_response));
+    stdl_log_msg(0, "Elapsed time in responses: %.2f secs\n", stdl_timer_stop(&elapsed_time_response));*/
 
 
     // compute properties
-    struct timespec elapsed_time_properties;
+    /*struct timespec elapsed_time_properties;
     stdl_timer_start(&elapsed_time_properties);
 
     title("Properties");
@@ -96,7 +96,7 @@ int main(int argc, char* argv[]) {
         stdl_log_msg(0, "No properties.\n");
     }
 
-    stdl_log_msg(0, "Elapsed time in properties: %.2f secs\n", stdl_timer_stop(&elapsed_time_properties));
+    stdl_log_msg(0, "Elapsed time in properties: %.2f secs\n", stdl_timer_stop(&elapsed_time_properties));*/
 
     // the end
     _end:

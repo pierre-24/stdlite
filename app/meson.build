@@ -25,7 +25,7 @@ app_dep += tomlc99_dep
 # sources
 srcs = files(
     'app.c',
-    'log_property.c',
+    # 'log_property.c',
     'response_requests.c',
     'responses_handler.c',
     'user_input_handler.c'
