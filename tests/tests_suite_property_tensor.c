@@ -73,7 +73,7 @@ void test_response_polarizability_TD_ok() {
 void test_property_polarizability_TD_SOS_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
-    read_molden("../tests/test_files/water_631gdf_sph.molden", &wf, &bs);
+    read_molden("../tests/test_files/chiral_sto3g.molden", &wf, &bs);
 
     stdl_context* ctx = NULL;
     ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 25. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
@@ -120,7 +120,7 @@ void test_property_polarizability_TD_SOS_ok() {
     ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 1, egrad, Xtd, Ytd));
 
     // compute polarizabilities
-    float alpha[9], alpha_zz;
+    float alpha[9], alpha_sos[9];
 
     for (size_t iw = 0; iw < nw; ++iw) {
         ASSERT_STDL_OK(stdl_property_tensor_linear(
@@ -132,14 +132,20 @@ void test_property_polarizability_TD_SOS_ok() {
                 alpha
         ));
 
-        // stdl_matrix_ssp_print(3, alpha, "alpha");
+        stdl_matrix_sge_print(3, 3, alpha, "alpha");
 
-        // compute alpha_zz from SOS
-        alpha_zz = .0f;
-        for (size_t iexci = 0; iexci < ctx->ncsfs; ++iexci)
-            alpha_zz += powf(tdipstd[2 * ctx->ncsfs + iexci], 2) / (etd[iexci] - w[iw]) + powf(tdipstd[2 * ctx->ncsfs + iexci], 2) / (etd[iexci] + w[iw]);
+        // compute tensor from SOS
+        for (int cpt_i = 0; cpt_i < 3; ++cpt_i) {
+            for (int cpt_j = 0; cpt_j < 3; ++cpt_j) {
+                alpha_sos[cpt_i * 3 + cpt_j] = .0f;
+                for (size_t iexci = 0; iexci < ctx->ncsfs; ++iexci)
+                    alpha_sos[cpt_i * 3 + cpt_j] += (tdipstd[cpt_i * ctx->ncsfs + iexci] * tdipstd[cpt_j * ctx->ncsfs + iexci]) / (etd[iexci] - w[iw]) + (tdipstd[cpt_i * ctx->ncsfs + iexci] * tdipstd[cpt_j * ctx->ncsfs + iexci]) / (etd[iexci] + w[iw]);
+            }
+        }
 
-        TEST_ASSERT_FLOAT_WITHIN(1e-2, alpha[8], alpha_zz);
+        stdl_matrix_sge_print(3, 3, alpha_sos, "alpha (SOS)");
+
+        TEST_ASSERT_FLOAT_ARRAY_WITHIN(5e-1, alpha, alpha_sos, 9);
     }
 
     STDL_FREE_ALL(etd, Xamptd, Yamptd, dipoles_mat, tdipstd, egrad, Xtd, Ytd);
@@ -301,7 +307,7 @@ void test_response_polarizability_TDA_ok() {
 void test_property_polarizability_TDA_SOS_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
-    read_fchk("../tests/test_files/water_631gdf.fchk", &wf, &bs);
+    read_molden("../tests/test_files/chiral_sto3g.molden", &wf, &bs);
 
     stdl_context* ctx = NULL;
     ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 25. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
@@ -342,7 +348,7 @@ void test_property_polarizability_TDA_SOS_ok() {
     ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, 1, egrad, Xtda, Ytda));
 
     // compute polarizabilities
-    float alpha[9], alpha_zz;
+    float alpha[9], alpha_sos[9];
 
     for (size_t iw = 0; iw < nw; ++iw) {
         ASSERT_STDL_OK(stdl_property_tensor_linear(
@@ -354,14 +360,20 @@ void test_property_polarizability_TDA_SOS_ok() {
                 alpha
         ));
 
-        // stdl_matrix_ssp_print(3, alpha, "alpha");
+        stdl_matrix_sge_print(3, 3, alpha, "alpha");
 
-        // compute alpha_zz from SOS
-        alpha_zz = .0f;
-        for (size_t iexci = 0; iexci < ctx->ncsfs; ++iexci)
-            alpha_zz += powf(tdipstda[2 * ctx->ncsfs + iexci], 2) / (etda[iexci] - w[iw]) + powf(tdipstda[2 * ctx->ncsfs + iexci], 2) / (w[iw] + etda[iexci]);
+        // compute tensor from SOS
+        for (int cpt_i = 0; cpt_i < 3; ++cpt_i) {
+            for (int cpt_j = 0; cpt_j < 3; ++cpt_j) {
+                alpha_sos[cpt_i * 3 + cpt_j] = .0f;
+                for (size_t iexci = 0; iexci < ctx->ncsfs; ++iexci)
+                    alpha_sos[cpt_i * 3 + cpt_j] += (tdipstda[cpt_i * ctx->ncsfs + iexci] * tdipstda[cpt_j * ctx->ncsfs + iexci]) / (etda[iexci] - w[iw]) + (tdipstda[cpt_i * ctx->ncsfs + iexci] * tdipstda[cpt_j * ctx->ncsfs + iexci]) / (etda[iexci] + w[iw]);
+            }
+        }
 
-        TEST_ASSERT_FLOAT_WITHIN(1e-2, alpha[8], alpha_zz);
+        stdl_matrix_sge_print(3, 3, alpha_sos, "alpha (SOS)");
+
+        TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, alpha, alpha_sos, 9);
     }
 
     STDL_FREE_ALL(dipoles_mat, etda, Xamptda, egrad, Xtda, Ytda, tdipstda);

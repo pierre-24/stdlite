@@ -17,7 +17,7 @@ int stdl_property_tensor_linear(stdl_context *ctx, stdl_lrv lrvs[2], float *tens
         for (size_t sigma = 0; sigma < dim1; ++sigma) {
 
             stdl_log_msg(0, "-");
-            stdl_log_msg(1, "\n  | Computing (%d1,%d1) ", zeta, sigma);
+            stdl_log_msg(1, "\n  | Computing (%d,%d) ", zeta, sigma);
             float value = .0f;
 
             #pragma omp parallel for reduction(+:value) private(d1, d2, s1, s2)
@@ -25,12 +25,12 @@ int stdl_property_tensor_linear(stdl_context *ctx, stdl_lrv lrvs[2], float *tens
                 size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
 
                 d1 = (float) lrvs[0].op_ints_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)];
-                d2 = (float) lrvs[1].op_ints_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)];
+                d2 = (float) lrvs[1].op_ints_MO[sigma * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)];
 
-                s1 = lrvs[0].Xw[lia * dim1 + sigma] + (STDL_OPERATOR_HERMITIAN[lrvs[0].op]? 1.f: -1.f) * lrvs[0].Yw[lia * dim1 + sigma];
+                s1 = lrvs[0].Xw[lia * dim1 + zeta] + (STDL_OPERATOR_HERMITIAN[lrvs[0].op]? 1.f: -1.f) * lrvs[0].Yw[lia * dim1 + zeta];
                 s2 = lrvs[1].Xw[lia * dim1 + sigma] + (STDL_OPERATOR_HERMITIAN[lrvs[1].op]? 1.f: -1.f) * lrvs[1].Yw[lia * dim1 + sigma];
 
-                value -= d1 * s1 + d2 * s2;
+                value -= d1 * s2 + d2 * s1;
             }
 
             tensor[zeta * dim0 + sigma] = value;
