@@ -32,6 +32,9 @@ struct stdl_op_data_ {
 
     /// `float[nlrvs,nscfs,dim]` The linear response vector $\mathbf y(\omega)$
     float* Y;
+
+    /// `stdl_lrv[nlrv]`, ready-to-use objects for property tensor
+    stdl_lrv* lrvs;
 };
 
 typedef struct stdl_op_data_ stdl_op_data;
@@ -45,8 +48,7 @@ typedef struct stdl_op_data_ stdl_op_data;
  * @return error code
  * @ingroup responses_handler
  */
-int stdl_op_data_new(stdl_operator op, size_t nmo, size_t ncsfs, size_t nlrvs, float *w, size_t *iw,
-                     stdl_op_data **data_ptr);
+int stdl_op_data_new(stdl_operator op, size_t nmo, size_t ncsfs, size_t nlrvs, float *w, size_t *iw, stdl_op_data **data_ptr);
 
 /**
  * Actually compute the linear response vectors
@@ -143,6 +145,7 @@ int stdl_responses_handler_delete(stdl_responses_handler* rh);
  * Compute linear/amplitude vectors.
  *
  * @param rh a valid responses handler
+ * @param inp a valid user input
  * @param ctx a valid context
  * @return error code
  * @ingroup responses_handler
@@ -159,6 +162,17 @@ int stdl_responses_handler_compute(stdl_responses_handler *rh, stdl_user_input_h
  * @ingroup responses_handler
  */
 int stdl_responses_handler_approximate_size(stdl_responses_handler *rh, size_t nmo, size_t ncsfs, size_t *sz, size_t *ops_sz, size_t *amp_sz);
+
+/**
+ * Compute the property tensors corresponding to each user's request.
+ *
+ * @param rh a valid responses handler
+ * @param inp a valid user input
+ * @param ctx a valid context
+ * @return error code
+ * @ingroup responses_handler
+ */
+int stdl_response_handler_compute_properties(stdl_responses_handler* rh, stdl_user_input_handler* inp, stdl_context* ctx);
 
 
 #endif //STDLITE_RESPONSES_HANDLER_H

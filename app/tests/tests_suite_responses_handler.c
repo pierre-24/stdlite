@@ -1,5 +1,7 @@
 #include <unistd.h>
 
+#include <stdlite/helpers.h>
+
 #include "user_input_handler.h"
 #include "responses_handler.h"
 #include "tests_suite.h"
@@ -50,14 +52,25 @@ void test_user_input_compute_responses() {
     stdl_responses_handler *rh = NULL;
     ASSERT_STDL_OK(stdl_responses_handler_new_from_input(inp, ctx, &rh));
 
+    stdl_op_data* op_data = rh->lrvs_data[STDL_OP_DIPL];
+    TEST_ASSERT_NOT_NULL(op_data);
+
+    TEST_ASSERT_EQUAL(STDL_OP_DIPL, op_data->op);
+    TEST_ASSERT_EQUAL(2, op_data->nlrvs);
+    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, ((float []) {STDL_CONST_HC / 1064.f, STDL_CONST_HC / 532.f}), op_data->w, 2);
+
     // compute responses
     ASSERT_STDL_OK(stdl_responses_handler_compute(rh, inp, ctx));
 
-    /*
-    // compute properties
-    ASSERT_STDL_OK(stdl_user_input_handler_compute_properties(inp, ctx, rh));*/
+    TEST_ASSERT_EQUAL(STDL_OP_DIPL, op_data->lrvs[0].op);
+    TEST_ASSERT_FLOAT_WITHIN(1e-6, STDL_CONST_HC / 1064.f, op_data->lrvs[0].w);
+    TEST_ASSERT_EQUAL(STDL_OP_DIPL, op_data->lrvs[1].op);
+    TEST_ASSERT_FLOAT_WITHIN(1e-6, STDL_CONST_HC / 532.f, op_data->lrvs[1].w);
 
-    // delete data output
+    // compute properties
+    ASSERT_STDL_OK(stdl_response_handler_compute_properties(rh, inp, ctx));
+
+    // delete op_data output
     unlink(inp->data_output);
 
     ASSERT_STDL_OK(stdl_responses_handler_delete(rh));

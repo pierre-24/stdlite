@@ -8,44 +8,6 @@
 #include "stdlite/utils/permutations.h"
 
 
-int stdl_property_polarizability(stdl_context* ctx, double* dips_MO, float* X, float* Y, float* alpha) {
-    assert(ctx != NULL && dips_MO != NULL && X != NULL && Y != NULL && alpha != NULL);
-
-    stdl_log_msg(1, "+ ");
-    stdl_log_msg(0, "Compute polarizability tensor >");
-    stdl_log_msg(1, "\n  | Preparing ");
-
-    size_t nvirt = ctx->nmo - ctx->nocc;
-
-    float s, d;
-
-    for (int zeta = 0; zeta < 3; ++zeta) {
-        for (int sigma = 0; sigma <= zeta; ++sigma) {
-            alpha[STDL_MATRIX_SP_IDX(zeta, sigma)] = .0f;
-
-            stdl_log_msg(0, "-");
-            stdl_log_msg(1, "\n  | Computing (%d,%d) ", zeta, sigma);
-            float value = .0f;
-
-            #pragma omp parallel for reduction(+:value) private(s, d)
-            for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
-                size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
-
-                d = (float) dips_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)];
-                s = X[lia * 3 + sigma]+ Y[lia * 3 + sigma];
-
-                value += -2.f * d * s;
-            }
-
-            alpha[STDL_MATRIX_SP_IDX(zeta, sigma)] = value;
-        }
-    }
-
-    stdl_log_msg(0, "< done\n");
-
-    return STDL_ERR_OK;
-}
-
 int stdl_property_transition_dipoles(stdl_context *ctx, size_t nexci, double* dips_MO, float* X, float* Y, float * tdips) {
     assert(ctx != NULL && nexci > 0 && dips_MO != NULL && X != NULL && tdips != NULL);
 

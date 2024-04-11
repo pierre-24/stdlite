@@ -20,7 +20,6 @@ int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator
     (*req_ptr)->nops = resp_order-res_order+1;
     (*req_ptr)->nlrvs = (resp_order == res_order) ? 0 : (*req_ptr)->nops;
     (*req_ptr)->iw = NULL;
-    (*req_ptr)->lrvs = NULL;
     (*req_ptr)->next = NULL;
 
     (*req_ptr)->ops = malloc((*req_ptr)->nops * sizeof(stdl_operator));
@@ -30,8 +29,7 @@ int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator
 
     if((*req_ptr)->nlrvs > 0) {
         (*req_ptr)->iw = malloc((*req_ptr)->nlrvs * sizeof(size_t));
-        (*req_ptr)->lrvs = malloc((*req_ptr)->nlrvs * sizeof(stdl_lrv));
-        STDL_ERROR_HANDLE_AND_REPORT((*req_ptr)->ops == NULL || (*req_ptr)->lrvs == NULL, stdl_response_request_delete(*req_ptr); return STDL_ERR_MALLOC, "malloc");
+        STDL_ERROR_HANDLE_AND_REPORT((*req_ptr)->iw == NULL, stdl_response_request_delete(*req_ptr); return STDL_ERR_MALLOC, "malloc");
 
         memcpy((*req_ptr)->iw, iw, (*req_ptr)->nlrvs * sizeof(size_t ));
     }
@@ -47,7 +45,7 @@ int stdl_response_request_delete(stdl_response_request* req) {
     if(req->next != NULL)
         stdl_response_request_delete(req->next);
 
-    STDL_FREE_ALL(req->ops, req->lrvs, req->iw, req);
+    STDL_FREE_ALL(req->ops, req->iw, req);
 
     return STDL_ERR_OK;
 

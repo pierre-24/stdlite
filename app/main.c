@@ -83,20 +83,19 @@ int main(int argc, char* argv[]) {
 
     stdl_log_msg(0, "Elapsed time in responses: %.2f secs\n", stdl_timer_stop(&elapsed_time_response));
 
-
     // compute properties
-    /*struct timespec elapsed_time_properties;
+    struct timespec elapsed_time_properties;
     stdl_timer_start(&elapsed_time_properties);
 
     title("Properties");
     if(input->res_resreqs != NULL) {
-        err = stdl_user_input_handler_compute_properties(input, ctx, rh);
+        err = stdl_response_handler_compute_properties(rh, input, ctx);
         STDL_ERROR_CODE_HANDLE(err, goto _end);
     } else {
         stdl_log_msg(0, "No properties.\n");
     }
 
-    stdl_log_msg(0, "Elapsed time in properties: %.2f secs\n", stdl_timer_stop(&elapsed_time_properties));*/
+    stdl_log_msg(0, "Elapsed time in properties: %.2f secs\n", stdl_timer_stop(&elapsed_time_properties));
 
     // the end
     _end:

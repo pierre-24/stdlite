@@ -25,6 +25,7 @@ int stdl_op_data_new(stdl_operator op, size_t nmo, size_t ncsfs, size_t nlrvs, f
     (*data_ptr)->egrad = NULL;
     (*data_ptr)->X = NULL;
     (*data_ptr)->Y = NULL;
+    (*data_ptr)->lrvs = NULL;
 
     if(nlrvs > 0) {
         (*data_ptr)->w = malloc(nlrvs * sizeof(float ));
@@ -32,7 +33,17 @@ int stdl_op_data_new(stdl_operator op, size_t nmo, size_t ncsfs, size_t nlrvs, f
         (*data_ptr)->egrad = malloc(STDL_OPERATOR_DIM[op] * ncsfs * sizeof(float ));
         (*data_ptr)->X = malloc(nlrvs * ncsfs * STDL_OPERATOR_DIM[op] * sizeof(float ));
         (*data_ptr)->Y = malloc(nlrvs * ncsfs * STDL_OPERATOR_DIM[op] * sizeof(float ));
-        STDL_ERROR_HANDLE_AND_REPORT((*data_ptr)->op_ints_MO == NULL || (*data_ptr)->w == NULL || (*data_ptr)->w == NULL || (*data_ptr)->egrad == NULL || (*data_ptr)->X == NULL || (*data_ptr)->Y == NULL, stdl_op_data_delete(*data_ptr); return STDL_ERR_MALLOC, "malloc");
+        (*data_ptr)->lrvs = malloc(nlrvs * sizeof(stdl_lrv));
+
+        STDL_ERROR_HANDLE_AND_REPORT(
+                (*data_ptr)->op_ints_MO == NULL
+                    || (*data_ptr)->w == NULL
+                    || (*data_ptr)->w == NULL
+                    || (*data_ptr)->egrad == NULL
+                    || (*data_ptr)->X == NULL
+                    || (*data_ptr)->Y == NULL
+                    || (*data_ptr)->lrvs == NULL,
+                stdl_op_data_delete(*data_ptr); return STDL_ERR_MALLOC, "malloc");
 
         memcpy((*data_ptr)->w, w, nlrvs * sizeof(float ));
         memcpy((*data_ptr)->iw, iw, nlrvs * sizeof(size_t ));
@@ -47,7 +58,7 @@ int stdl_op_data_delete(stdl_op_data* data) {
 
     STDL_DEBUG("delete op_data %p", data);
 
-    STDL_FREE_ALL(data->w, data->iw, data->op_ints_MO, data->egrad, data->X, data->Y, data);
+    STDL_FREE_ALL(data->w, data->iw, data->op_ints_MO, data->egrad, data->X, data->Y, data->lrvs, data);
 
     return STDL_ERR_OK;
 }
@@ -118,9 +129,19 @@ int stdl_op_data_compute_lrvs(stdl_op_data *data, stdl_context *ctx) {
 
     // compute response vectors
     if(ctx->B == NULL)
-        err = stdl_response_TDA_linear(ctx, data->nlrvs, data->w, STDL_OPERATOR_DIM[data->op], 1, data->egrad, data->X, data->Y);
+        err = stdl_response_TDA_linear(ctx, data->nlrvs, data->w, STDL_OPERATOR_DIM[data->op], STDL_OPERATOR_HERMITIAN[data->op], data->egrad, data->X, data->Y);
     else
-        err = stdl_response_TD_linear(ctx, data->nlrvs, data->w, STDL_OPERATOR_DIM[data->op], 1, data->egrad, data->X, data->Y);
+        err = stdl_response_TD_linear(ctx, data->nlrvs, data->w, STDL_OPERATOR_DIM[data->op], STDL_OPERATOR_HERMITIAN[data->op], data->egrad, data->X, data->Y);
+
+    // distribute over `data->lrvs`
+    for (size_t ilrv = 0; ilrv < data->nlrvs; ++ilrv) {
+        data->lrvs[ilrv].op = data->op;
+        data->lrvs[ilrv].op_ints_MO = data->op_ints_MO;
+        data->lrvs[ilrv].w = data->w[ilrv];
+
+        data->lrvs[ilrv].Xw = data->X + ilrv * STDL_OPERATOR_DIM[data->op] * ctx->ncsfs;
+        data->lrvs[ilrv].Yw = data->Y + ilrv * STDL_OPERATOR_DIM[data->op] * ctx->ncsfs;
+    }
 
     return err;
 }
@@ -383,6 +404,55 @@ int stdl_responses_handler_compute(stdl_responses_handler *rh, stdl_user_input_h
     H5Fclose(file_id);
 
     return err;
+}
+
+// find the lrv data corresponding to a given request
+int _find_lrvs(stdl_responses_handler* rh, stdl_user_input_handler* inp, stdl_response_request* req, stdl_lrv** lrvs) {
+    assert(rh != NULL && inp != NULL && req != NULL && lrvs != NULL);
+
+    for (size_t iop = 0; iop < req->nops; ++iop) {
+        stdl_operator op = req->ops[iop];
+        stdl_op_data* op_data = rh->lrvs_data[op];
+        STDL_ERROR_HANDLE_AND_REPORT(op_data == NULL, return STDL_ERR_INPUT, "missing data for %s?!?", STDL_OPERATOR_NAME[op]);
+
+        lrvs[iop] = NULL;
+
+        for (size_t ilrv = 0; ilrv < op_data->nlrvs; ++ilrv) {
+            if(op_data->iw[ilrv] == req->iw[iop]) {
+                lrvs[iop] = &(op_data->lrvs[ilrv]);
+                break;
+            }
+        }
+
+        STDL_ERROR_HANDLE_AND_REPORT(lrvs[iop] == NULL, return STDL_ERR_INPUT, "cannot find lrv for %ld", iop);
+    }
+
+    return STDL_ERR_OK;
+}
+
+int stdl_response_handler_compute_properties(stdl_responses_handler* rh, stdl_user_input_handler* inp, stdl_context* ctx) {
+    assert(rh != NULL && inp != NULL && ctx != NULL);
+
+    int err;
+
+    stdl_response_request* req = inp->res_resreqs;
+    while (req != NULL) {
+        if(req->resp_order == 1 && req->res_order == 0) { // linear
+            stdl_lrv* lrvs[] = {NULL, NULL};
+
+            err = _find_lrvs(rh, inp, req, lrvs);
+            STDL_ERROR_CODE_HANDLE(err, return err);
+        } else if(req->resp_order == 2 && req->res_order == 0) { // quadratic
+            stdl_lrv* lrvs[] = {NULL, NULL, NULL};
+
+            err = _find_lrvs(rh, inp, req, lrvs);
+            STDL_ERROR_CODE_HANDLE(err, return err);
+        }
+
+        req = req->next;
+    }
+
+    return STDL_ERR_OK;
 }
 
 int stdl_responses_handler_approximate_size(stdl_responses_handler *rh, size_t nmo, size_t ncsfs, size_t *sz, size_t *ops_sz, size_t *amp_sz) {

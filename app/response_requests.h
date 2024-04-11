@@ -30,9 +30,6 @@ struct stdl_response_request_ {
     /// `size_t[nlrvs]` the energies at which linear response vectors should be computed
     size_t* iw;
 
-    /// `stdl_lrv[nlrvs]` for the corresponding linear response vector
-    stdl_lrv* lrvs;
-
     /// number of amplitude vectors (*i.e.*, excitations) requested, a negative value means "all"
     int nroots;
 
