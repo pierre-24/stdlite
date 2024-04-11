@@ -107,14 +107,24 @@ int stdl_permutations_delete(stdl_permutations* permutations) {
     return STDL_ERR_OK;
 }
 
+int _memcmp(void* perm1, void* perm2, void* data) {
+    size_t sz = *((size_t*) data);
+    return memcmp(perm1, perm2, sz) == 0;
+}
+
 int stdl_permutations_remove_duplicates(stdl_permutations* permutations, size_t nelm, size_t elmsz) {
     size_t szx = nelm * elmsz;
+    return stdl_permutations_remove_duplicates_with_callback(permutations, _memcmp, &szx);
+}
+
+int stdl_permutations_remove_duplicates_with_callback(stdl_permutations *permutations, int (*cmp)(void *, void *, void*), void* data) {
+    assert(permutations != NULL && cmp != NULL);
 
     stdl_permutations* current = permutations;
     while (current != NULL) {
         stdl_permutations *next = current->next, *previous = current;
         while (next != NULL) {
-            if(memcmp(current->perm, next->perm, szx) == 0) {
+            if(cmp(current->perm, next->perm, data)) {
                 previous->next = next->next;
                 next->next = NULL;
                 stdl_permutations_delete(next);

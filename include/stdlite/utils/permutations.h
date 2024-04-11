@@ -40,8 +40,7 @@ int stdl_permutations_new(void* original_set, size_t nelm, size_t elmsz, stdl_pe
 int stdl_permutations_delete(stdl_permutations* permutations);
 
 /**
- * Remove duplicates in a sequence of permutations.
- * Note that this implementation scales as $\mathcal{O}(N^2)$ in the worst case, with $N$ the length of the sequence.
+ * Remove duplicates in a sequence of permutations, by using `memcmp` in `stdl_permutations_remove_duplicates_with_callback()` (i.e., performing a data comparison).
  *
  * @param permutations a valid sequence of permutations
  * @param nelm number of element in the original set
@@ -50,5 +49,17 @@ int stdl_permutations_delete(stdl_permutations* permutations);
  * @ingroup permutations
  */
 int stdl_permutations_remove_duplicates(stdl_permutations* permutations, size_t nelm, size_t elmsz);
+
+/**
+ * Remove duplicates in a sequence of permutations, using `cmp` to compare two permutations
+ * Note that this implementation scales as $\mathcal{O}(N^2)$ in the worst case, with $N$ the length of the sequence.
+ *
+ * @param permutations a valid sequence of permutations
+ * @param cmp comparator of the form `int cmp(void* perm1, void* perm2, void* data)`, must return 0 if `perm1` and `perm2` are different, 1 if they are equals.
+ * @param data data passed to each call to the callback
+ * @return error code
+ * @ingroup permutations
+ */
+int stdl_permutations_remove_duplicates_with_callback(stdl_permutations* permutations, int (*cmp)(void*, void*, void*), void* data);
 
 #endif //STDLITE_PERMUTATIONS_H
