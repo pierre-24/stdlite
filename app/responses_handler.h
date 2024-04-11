@@ -33,7 +33,7 @@ struct stdl_op_data_ {
     /// `float[nlrvs,nscfs,dim]` The linear response vector $\mathbf y(\omega)$
     float* Y;
 
-    /// `stdl_lrv[nlrv]`, ready-to-use objects for property tensor
+    /// `stdl_lrv[nlrv]`, ready-to-use objects for property property_tensor
     stdl_lrv* lrvs;
 };
 

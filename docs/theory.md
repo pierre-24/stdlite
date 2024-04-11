@@ -349,7 +349,7 @@ $$O_{pq} = \sum^{AO}_{\mu\nu} C_{p\mu} O_{\mu\nu} C_{q\nu}.$$
 
 Linear and quadratic response functions are generally noted $\braket{\braket{\hat A; \hat B}}_{\omega_B}$ and $\braket{\braket{\hat A; \hat B, \hat C}}_{\omega_B,\omega_C}$, which describes how the expectation value of $\hat A$ (at frequency $\omega_A = -\omega_B - \omega_C$) responds to a set of perturbation to first and second order in perturbation.
 
-Linear responses result in a rank-2 tensors, while a rank-3 tensor is the result of a quadratic response function.
+Linear responses result in a rank-2 tensors, while a rank-3 property_tensor is the result of a quadratic response function.
 
 Residue of the response functions provide information on the (excited states of the) unperturbed system.
 For example, the linear response function might be extended in the following spectral representation:

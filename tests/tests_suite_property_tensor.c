@@ -99,7 +99,7 @@ void test_property_polarizability_TD_SOS_ok() {
 
     // get transition dipoles
     float* tdipstd = malloc(ctx->ncsfs * 3 * sizeof(float ));
-    stdl_property_transition_dipoles(ctx, ctx->ncsfs, dipoles_mat, Xamptd, Yamptd, tdipstd);
+    ASSERT_STDL_OK(stdl_property_tensor_g2e_moments(ctx, STDL_OP_DIPL, dipoles_mat, ctx->ncsfs, Xamptd, Yamptd, tdipstd));
 
     // build egrad
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
@@ -133,7 +133,7 @@ void test_property_polarizability_TD_SOS_ok() {
 
         stdl_matrix_sge_print(3, 3, alpha, "alpha");
 
-        // compute tensor from SOS
+        // compute property_tensor from SOS
         for (int cpt_i = 0; cpt_i < 3; ++cpt_i) {
             for (int cpt_j = 0; cpt_j < 3; ++cpt_j) {
                 alpha_sos[cpt_i * 3 + cpt_j] = .0f;
@@ -325,7 +325,7 @@ void test_property_polarizability_TDA_SOS_ok() {
 
     // get transition dipoles
     float* tdipstda = malloc(ctx->ncsfs * 3 * sizeof(float ));
-    ASSERT_STDL_OK(stdl_property_transition_dipoles(ctx, ctx->ncsfs, dipoles_mat, Xamptda, NULL, tdipstda));
+    ASSERT_STDL_OK(stdl_property_tensor_g2e_moments(ctx, STDL_OP_DIPL, dipoles_mat, ctx->ncsfs, Xamptda, NULL, tdipstda));
 
     // solve linear response
     size_t nw = 3;
@@ -352,7 +352,7 @@ void test_property_polarizability_TDA_SOS_ok() {
 
         stdl_matrix_sge_print(3, 3, alpha, "alpha");
 
-        // compute tensor from SOS
+        // compute property_tensor from SOS
         for (int cpt_i = 0; cpt_i < 3; ++cpt_i) {
             for (int cpt_j = 0; cpt_j < 3; ++cpt_j) {
                 alpha_sos[cpt_i * 3 + cpt_j] = .0f;

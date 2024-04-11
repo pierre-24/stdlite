@@ -182,7 +182,7 @@ void test_property_first_hyperpolarizability_TD_SOS_ok() {
 
     // get 0→m transition dipoles
     float* t0mdipstd = malloc(ctx->ncsfs * 3 * sizeof(float ));
-    stdl_property_transition_dipoles(ctx, ctx->ncsfs, dipoles_mat, Xamptd, Yamptd, t0mdipstd);
+    ASSERT_STDL_OK(stdl_property_tensor_g2e_moments(ctx, STDL_OP_DIPL, dipoles_mat, ctx->ncsfs, Xamptd, Yamptd, t0mdipstd));
 
     // get m→n transition dipoles
     float* tmndipstd = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float ));
@@ -290,7 +290,7 @@ void test_property_first_hyperpolarizability_TDA_SOS_ok() {
 
     // get 0→m transition dipoles
     float* t0mdipstda = malloc(ctx->ncsfs * 3 * sizeof(float ));
-    stdl_property_transition_dipoles(ctx, ctx->ncsfs, dipoles_mat, Xamptda, NULL, t0mdipstda);
+    ASSERT_STDL_OK(stdl_property_tensor_g2e_moments(ctx, STDL_OP_DIPL, dipoles_mat, ctx->ncsfs, Xamptda, NULL, t0mdipstda));
 
     // get m→n transition dipoles
     float* tmndipstda = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float ));

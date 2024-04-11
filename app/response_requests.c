@@ -20,6 +20,7 @@ int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator
     (*req_ptr)->nops = resp_order-res_order+1;
     (*req_ptr)->nlrvs = (resp_order == res_order) ? 0 : (*req_ptr)->nops;
     (*req_ptr)->iw = NULL;
+    (*req_ptr)->property_tensor = NULL;
     (*req_ptr)->next = NULL;
 
     (*req_ptr)->ops = malloc((*req_ptr)->nops * sizeof(stdl_operator));
@@ -45,7 +46,7 @@ int stdl_response_request_delete(stdl_response_request* req) {
     if(req->next != NULL)
         stdl_response_request_delete(req->next);
 
-    STDL_FREE_ALL(req->ops, req->iw, req);
+    STDL_FREE_ALL(req->ops, req->iw, req->property_tensor, req);
 
     return STDL_ERR_OK;
 

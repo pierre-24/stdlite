@@ -73,7 +73,7 @@ int stdl_property_tensor_linear(stdl_context *ctx, stdl_lrv *lrvs[2], float *ten
 
                 if(e0->lrv == e1->lrv) {
 
-                    STDL_DEBUG("Set element (%ld,%ld) of tensor via permutation", e0->cpt, e1->cpt);
+                    STDL_DEBUG("Set element (%ld,%ld) of property_tensor via permutation", e0->cpt, e1->cpt);
 
                     isset[e0->cpt * dim0 + e1->cpt] = 1;
                     tensor[e0->cpt * dim0 + e1->cpt] = value;
@@ -89,6 +89,36 @@ int stdl_property_tensor_linear(stdl_context *ctx, stdl_lrv *lrvs[2], float *ten
     stdl_log_msg(0, "< done\n");
 
     STDL_FREE_IF_USED(isset);
+
+    return STDL_ERR_OK;
+}
+
+int stdl_property_tensor_g2e_moments(stdl_context *ctx, stdl_operator op, double* op_ints_MO, size_t nexci, float* Xamp, float* Yamp, float * tg2e) {
+    assert(ctx != NULL && nexci > 0 && op_ints_MO != NULL && Xamp != NULL && tg2e != NULL);
+
+    stdl_log_msg(1, "+ ");
+    stdl_log_msg(0, "Compute ground to excited transition moments >");
+    stdl_log_msg(1, "\n  | Looping through CSFs ");
+
+    size_t nvirt = ctx->nmo - ctx->nocc, dim0 = STDL_OPERATOR_DIM[op];
+    float s2 = sqrtf(2);
+
+    #pragma omp parallel for
+    for (size_t iexci = 0; iexci < nexci; ++iexci) {
+        tg2e[0 * nexci + iexci] = tg2e[1 * nexci + iexci] = tg2e[2 * nexci + iexci] = .0f;
+
+        for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
+            size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
+            float amplitude = Xamp[iexci * ctx->ncsfs + lia];
+            if(Yamp != NULL)
+                amplitude += (STDL_OPERATOR_HERMITIAN[op]? 1.f : -1.f) * Yamp[iexci * ctx->ncsfs + lia];
+
+            for (size_t cpt = 0; cpt < dim0; ++cpt)
+                tg2e[cpt * nexci + iexci] += s2 * amplitude * ((float) op_ints_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)]) * (STDL_OPERATOR_HERMITIAN[op] ? 1.f : -1.f);
+        }
+    }
+
+    stdl_log_msg(0, "< done\n");
 
     return STDL_ERR_OK;
 }

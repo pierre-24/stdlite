@@ -4,21 +4,7 @@
 #include <stdlite/context.h>
 
 /**
- * Compute the transition dipoles.
- *
- * @param ctx a valid context, with `ctx->ncsfs > 0`.
- * @param nexci number of excitations computed
- * @param dips_MO `float[3,STDL_MATRIX_SP_SIZE(ctx->nmo)]`, the dipole moment matrix, **in MO basis**.
- * @param X `float[nexci,ncsfs]` amplitude vector $\mathbf x$
- * @param Y `float[nexci,ncsfs]` amplitude vector $\mathbf y$, might be `NULL` if TDA.
- * @param[out] tdips `float[3,nexci]` the transition tdips
- * @return error code
- * @ingroup property
- */
-int stdl_property_transition_dipoles(stdl_context *ctx, size_t nexci, double* dips_MO, float* X, float* Y, float * tdips);
-
-/**
- * Compute the hyperpolarizability $\beta(-\omega_\sigma;\omega_1,\omega_2)$ tensor elements.
+ * Compute the hyperpolarizability $\beta(-\omega_\sigma;\omega_1,\omega_2)$ property_tensor elements.
  * Use intrinsic permutations to alleviate some costs if possible.
  *
  * @note Since permutations relies on the addresses of the response vectors, the same $\mathbf x(\omega)$ (and $\mathbf y(\omega)$) should be used if some frequencies are the same (e.g., for a static calculation, the input for `Xs` should be `(float*[]) {Xs, Xs, Xs}`).
@@ -27,7 +13,7 @@ int stdl_property_transition_dipoles(stdl_context *ctx, size_t nexci, double* di
  * @param dips_MO `float[3,STDL_MATRIX_SP_SIZE(ctx->nmo)]`, the dipole moment matrix, **in MO basis**.
  * @param Xs `float*[3]` the 3 linear response vectors corresponding to $\mathbf x(-\omega_\sigma)$, $\mathbf x(\omega_1)$, and $\mathbf x(\omega_2)$.
  * @param Ys `float*[3]` the 3 linear response vectors corresponding to $\mathbf y(-\omega_\sigma)$, $\mathbf y(\omega_1)$, and $\mathbf y(\omega_2)$.
- * @param[out] beta `float[3,3,3]` the hyperpolarizability tensor
+ * @param[out] beta `float[3,3,3]` the hyperpolarizability property_tensor
  * @return error code
  * @ingroup property
  */

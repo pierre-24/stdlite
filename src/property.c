@@ -8,44 +8,14 @@
 #include "stdlite/utils/permutations.h"
 
 
-int stdl_property_transition_dipoles(stdl_context *ctx, size_t nexci, double* dips_MO, float* X, float* Y, float * tdips) {
-    assert(ctx != NULL && nexci > 0 && dips_MO != NULL && X != NULL && tdips != NULL);
-
-    stdl_log_msg(1, "+ ");
-    stdl_log_msg(0, "Compute ground to excited transition dipole moments >");
-    stdl_log_msg(1, "\n  | Looping through CSFs ");
-
-    size_t nvirt = ctx->nmo - ctx->nocc;
-    float s2 = sqrtf(2);
-
-    #pragma omp parallel for
-    for (size_t iexci = 0; iexci < nexci; ++iexci) {
-        tdips[0 * nexci + iexci] =  tdips[1 * nexci + iexci] =  tdips[2 * nexci + iexci] = .0f;
-
-        for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
-            size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
-            float amplitude = X[iexci * ctx->ncsfs + lia];
-            if(Y != NULL)
-                amplitude += Y[iexci * ctx->ncsfs + lia];
-
-            for (size_t cpt = 0; cpt < 3; ++cpt)
-                tdips[cpt * nexci + iexci] += s2 * amplitude * ((float) dips_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)]);
-        }
-    }
-
-    stdl_log_msg(0, "< done\n");
-
-    return STDL_ERR_OK;
-}
-
-// a small structure to hold permutations in beta tensor calculations
+// a small structure to hold permutations in beta property_tensor calculations
 typedef struct _bperm_ {
     float* X;
     float* Y;
     size_t cpt; // size_t is chosen for padding
 } _bperm;
 
-// Compute an element of the first hyperpolarizability tensor
+// Compute an element of the first hyperpolarizability property_tensor
 int _first_hyperpolarizability_component(stdl_context* ctx, int component[3], double* dips_MO, float * X[3], float * Y[3], float* val) {
     assert(ctx != NULL && component != NULL && dips_MO != NULL && X[0] != NULL && X[1] != NULL && X[2] != NULL && Y[0] != NULL && Y[1] != NULL && Y[2] != NULL && val != NULL);
     size_t nvirt = ctx->nmo - ctx->nocc;
@@ -122,7 +92,7 @@ int stdl_property_first_hyperpolarizability(stdl_context* ctx, double* dips_MO, 
     assert(ctx != NULL && dips_MO != NULL && Xs[0] != NULL && Xs[1] != NULL && Xs[2] != NULL && Ys[0] != NULL && Ys[1] != NULL && Ys[2] != NULL && beta != NULL);
 
     stdl_log_msg(1, "+ ");
-    stdl_log_msg(0, "Compute first hyperpolarizability tensor >");
+    stdl_log_msg(0, "Compute first hyperpolarizability property_tensor >");
     stdl_log_msg(1, "\n  | Preparing ");
 
     int isset[3][3][3] = {0};

@@ -52,7 +52,7 @@ Here, the result is:
 
 ```text 
 --- Properties -----------------------------------------------------------------
-Compute polarizability tensor >------< done
+Compute polarizability property_tensor >------< done
 ** alpha(-w;w), w=0.000000 (inf nm)
          x            y            z
 x      1.62024      0.00000     -0.00000
@@ -60,7 +60,7 @@ y      0.00000      7.02043      0.00000
 z     -0.00000      0.00000      3.69417
 iso =        4.11162
 aniso =      4.71843
-Compute polarizability tensor >------< done
+Compute polarizability property_tensor >------< done
 ** alpha(-w;w), w=0.042823 (1064.00 nm)
          x            y            z
 x      1.62570      0.00000     -0.00000
@@ -68,7 +68,7 @@ y      0.00000      7.05151      0.00000
 z     -0.00000      0.00000      3.71297
 iso =        4.13006
 aniso =      4.74035
-Compute polarizability tensor >------< done
+Compute polarizability property_tensor >------< done
 ** alpha(-w;w), w=0.085645 (532.00 nm)
          x            y            z
 x      1.64285      0.00000     -0.00000
@@ -76,7 +76,7 @@ y      0.00000      7.14678      0.00000
 z     -0.00000      0.00000      3.77115
 iso =        4.18692
 aniso =      4.80717
-Compute first hyperpolarizability tensor >------------------< done
+Compute first hyperpolarizability property_tensor >------------------< done
 ** beta(-w1-w2;w1,w2), w1=0.000000 (inf nm), w2=0.000000 (inf nm)
           x            y            z
 xx      0.00000      0.00000      1.17469
@@ -92,7 +92,7 @@ zz     -0.00000      0.00000      9.31467
 <B2ZXX> =     15.77636
 BHRS    =      9.55603
 DR      =      4.78826
-Compute first hyperpolarizability tensor >------------------< done
+Compute first hyperpolarizability property_tensor >------------------< done
 ** beta(-w1-w2;w1,w2), w1=0.042823 (1064.00 nm), w2=0.042823 (1064.00 nm)
           x            y            z
 xx      0.00000      0.00000      1.25188

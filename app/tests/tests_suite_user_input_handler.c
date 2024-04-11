@@ -275,7 +275,6 @@ void test_user_input_response_requests_ok() {
     TEST_ASSERT_EQUAL(req->ops[0], STDL_OP_DIPL);
     TEST_ASSERT_EQUAL(-1, req->nroots);
     TEST_ASSERT_NULL(req->iw);
-    TEST_ASSERT_NULL(req->lrvs);
 
     // create context
     stdl_context *ctx = NULL;

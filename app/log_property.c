@@ -115,26 +115,7 @@ int stdl_log_property_linear_tensor(stdl_response_request* req, float* tensor, f
     return STDL_ERR_OK;
 }*/
 
-int stdl_log_property_g2e_dipoles(stdl_responses_handler *rh, stdl_context *ctx, float *tdips, float thresh) {
-    assert(rh != NULL && ctx != NULL && tdips != NULL && thresh > 0);
-
-    // energy and transition dipole moment
-    stdl_log_msg(0, "**    -------- Energy -------- ------ Transition dipole ---------\n");
-    stdl_log_msg(0, "       (Eh)     (eV)    (nm)      X        Y        Z      fL   \n");
-    for (size_t iexci = 0; iexci < rh->nexci; ++iexci) {
-        // print energies
-        stdl_log_msg(0, "%4ld %8.5f %7.3f %7.2f", iexci + 1, rh->eexci[iexci], rh->eexci[iexci] * STDL_CONST_AU_TO_EV, STDL_CONST_HC / rh->eexci[iexci]);
-
-        // print transition dipole & oscillator strength
-        stdl_log_msg(0, " % 8.5f % 8.5f % 8.5f %7.5f",
-                     tdips[0 * rh->nexci + iexci],
-                     tdips[1 * rh->nexci + iexci],
-                     tdips[2 * rh->nexci + iexci],
-                     rh->eexci[iexci] * (powf(tdips[0 * rh->nexci + iexci], 2) + powf(tdips[1 * rh->nexci + iexci], 2) + powf(tdips[2 * rh->nexci + iexci], 2)) * 2.f / 3
-        );
-
-        stdl_log_msg(0, "\n");
-    }
+void _log_amplitude_contributions(stdl_responses_handler *rh, stdl_context *ctx, float thresh) {
 
     float s2o2 = sqrtf(2) / 2;
     size_t nvirt = ctx->nmo - ctx->nocc;
@@ -177,6 +158,67 @@ int stdl_log_property_g2e_dipoles(stdl_responses_handler *rh, stdl_context *ctx,
         if(iexci < rh->nexci -1)
             stdl_log_msg(1, "     -------- -------------------------------\n");
     }
+}
+
+int stdl_log_property_g2e_dipoles(stdl_responses_handler *rh, stdl_context *ctx, float *tdips, float thresh) {
+    assert(rh != NULL && ctx != NULL && tdips != NULL && thresh > 0);
+
+    // energy and transition dipole moment
+    stdl_log_msg(0, "**    -------- Energy ------- ------ Transition dipole ---------\n");
+    stdl_log_msg(0, "       (Eh)     (eV)    (nm)      X        Y        Z      fL   \n");
+    for (size_t iexci = 0; iexci < rh->nexci; ++iexci) {
+        // print energies
+        stdl_log_msg(0, "%4ld %8.5f %7.3f %7.2f", iexci + 1, rh->eexci[iexci], rh->eexci[iexci] * STDL_CONST_AU_TO_EV, STDL_CONST_HC / rh->eexci[iexci]);
+
+        // print transition dipole & oscillator strength
+        stdl_log_msg(0, " % 8.5f % 8.5f % 8.5f %7.5f",
+                     tdips[0 * rh->nexci + iexci],
+                     tdips[1 * rh->nexci + iexci],
+                     tdips[2 * rh->nexci + iexci],
+                     rh->eexci[iexci] * (powf(tdips[0 * rh->nexci + iexci], 2) + powf(tdips[1 * rh->nexci + iexci], 2) + powf(tdips[2 * rh->nexci + iexci], 2)) * 2.f / 3
+        );
+
+        stdl_log_msg(0, "\n");
+    }
+
+    _log_amplitude_contributions(rh, ctx, thresh);
+
+    return STDL_ERR_OK;
+}
+
+int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx, stdl_operator op, float *tg2e, float thresh) {
+    assert(rh != NULL && ctx != NULL && tg2e != NULL && thresh > 0);
+
+    size_t dim0 = STDL_OPERATOR_DIM[op];
+
+    // energy and transition moments
+    stdl_log_msg(0, "**    -------- Energy ------- ");
+    for (size_t cpt = 0; cpt < dim0 * 3; ++cpt)
+        stdl_log_msg(0, "-");
+    stdl_log_msg(0, " %4s ", STDL_OPERATOR_NAME[op]);
+    for (size_t cpt = 0; cpt < dim0 * 6 - 7; ++cpt)
+        stdl_log_msg(0, "-");
+
+    stdl_log_msg(0, "\n");
+
+    stdl_log_msg(0, "       (Eh)     (eV)    (nm) ");
+    for (size_t cpt = 0; cpt < dim0; ++cpt)
+        stdl_log_msg(0, "   %-3d   ", cpt);
+
+    stdl_log_msg(0, "\n");
+
+    for (size_t iexci = 0; iexci < rh->nexci; ++iexci) {
+        // print energies
+        stdl_log_msg(0, "%4ld %8.5f %7.3f %7.2f", iexci + 1, rh->eexci[iexci], rh->eexci[iexci] * STDL_CONST_AU_TO_EV, STDL_CONST_HC / rh->eexci[iexci]);
+
+        for (size_t cpt = 0; cpt < dim0; ++cpt) {
+            stdl_log_msg(0, " % 8.5f",tg2e[cpt * rh->nexci + iexci]);
+        }
+
+        stdl_log_msg(0, "\n");
+    }
+
+    _log_amplitude_contributions(rh, ctx, thresh);
 
     return STDL_ERR_OK;
 }

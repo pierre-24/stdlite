@@ -6,7 +6,7 @@
 /**
  * Compute the experimental quantities related to electric polarizability: iso- and anisotropy.
  *
- * @param alpha `float[STDL_MATRIX_SP_SIZE(3)]` the polarizability tensor
+ * @param alpha `float[STDL_MATRIX_SP_SIZE(3)]` the polarizability property_tensor
  * @param[out] iso the isotropic polarizability value
  * @param[out] aniso the anisotropic polarizability value
  * @return error code

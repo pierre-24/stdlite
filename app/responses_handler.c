@@ -444,22 +444,33 @@ int stdl_response_handler_compute_properties(stdl_responses_handler* rh, stdl_us
             err = _find_lrvs(rh, inp, req, lrvs);
             STDL_ERROR_CODE_HANDLE(err, return err);
 
-            float* tensor = malloc(STDL_OPERATOR_DIM[lrvs[0]->op] * STDL_OPERATOR_DIM[lrvs[1]->op] * sizeof(float ));
-            STDL_ERROR_HANDLE_AND_REPORT(tensor == NULL, return STDL_ERR_MALLOC, "malloc");
+            req->property_tensor = malloc(STDL_OPERATOR_DIM[lrvs[0]->op] * STDL_OPERATOR_DIM[lrvs[1]->op] * sizeof(float ));
+            STDL_ERROR_HANDLE_AND_REPORT(req->property_tensor == NULL, return STDL_ERR_MALLOC, "malloc");
 
-            err = stdl_property_tensor_linear(ctx, lrvs, tensor);
-            STDL_ERROR_CODE_HANDLE(err, STDL_FREE_IF_USED(tensor); return err);
+            err = stdl_property_tensor_linear(ctx, lrvs, req->property_tensor);
+            STDL_ERROR_CODE_HANDLE(err, return err);
 
             if(req->ops[0] == STDL_OP_DIPL && req->ops[1] == STDL_OP_DIPL)
-                stdl_log_property_polarizability(req, tensor, inp->res_w[req->iw[1]]);
+                stdl_log_property_polarizability(req, req->property_tensor, inp->res_w[req->iw[1]]);
             else
-                stdl_log_property_linear_tensor(req, tensor, inp->res_w[req->iw[1]]);
+                stdl_log_property_linear_tensor(req, req->property_tensor, inp->res_w[req->iw[1]]);
 
         } else if(req->resp_order == 2 && req->res_order == 0) { // quadratic
             stdl_lrv* lrvs[] = {NULL, NULL, NULL};
 
             err = _find_lrvs(rh, inp, req, lrvs);
             STDL_ERROR_CODE_HANDLE(err, return err);
+        } else if(req->resp_order == 1 && req->res_order == 1) { // linear SR
+            req->property_tensor = malloc(rh->nexci * STDL_OPERATOR_DIM[req->ops[0]] * sizeof(float ));
+            STDL_ERROR_HANDLE_AND_REPORT(req->property_tensor == NULL, return STDL_ERR_MALLOC, "malloc");
+
+            err = stdl_property_tensor_g2e_moments(ctx, req->ops[0], rh->lrvs_data[req->ops[0]]->op_ints_MO, rh->nexci, rh->Xamp, rh->Yamp, req->property_tensor);
+            STDL_ERROR_CODE_HANDLE(err, return err);
+
+            if(req->ops[0] == STDL_OP_DIPL)
+                stdl_log_property_g2e_dipoles(rh, ctx, req->property_tensor, 5e-3f);
+            else
+                stdl_log_property_g2e_moments(rh, ctx, STDL_OP_DIPL, req->property_tensor, 5e-3f);
         }
 
         req = req->next;
