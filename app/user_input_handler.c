@@ -863,8 +863,8 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl
         }
 
         // if LRV is required, add frequency
-        size_t nw = (req->resp_order == req->res_order)? 0: req->resp_order-req->res_order+1;
-        for (size_t iw = 0; iw < nw; ++iw) {
+        size_t nlrvs = (req->resp_order == req->res_order)? 0: req->resp_order-req->res_order+1;
+        for (size_t iw = 0; iw < nlrvs; ++iw) {
             stdl_operator op = req->ops[iw];
             struct _w_list* elm = NULL;
             err = _w_list_new(req->w[iw], &elm);
@@ -928,32 +928,32 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl
     for (int iop = 0; iop < STDL_OP_COUNT; ++iop) {
         if(islrvs[iop]) {
             // count the number of frequencies
-            size_t nw = 0;
+            size_t nlrvs = 0;
             struct _w_list* last = lrvs_w[iop];
             while (last != NULL) {
-                nw++;
+                nlrvs++;
                 last = last->next;
             }
 
-            totnw += nw;
+            totnw += nlrvs;
 
-            STDL_ERROR_HANDLE_AND_REPORT(nw == 0, return STDL_ERR_INPUT, "LRV but nw=0");
+            STDL_ERROR_HANDLE_AND_REPORT(nlrvs == 0, return STDL_ERR_INPUT, "LRV but nlrvs=0");
 
             // create LRV request
             (*rh_ptr)->lrvreqs[ioffset] = NULL;
-            err = stdl_lrv_request_new(iop, nw, ctx->ncsfs, (*rh_ptr)->lrvreqs + ioffset);
+            err = stdl_lrv_request_new(iop, nlrvs, ctx->ncsfs, (*rh_ptr)->lrvreqs + ioffset);
             STDL_ERROR_CODE_HANDLE(err, return err);
 
             lrvs[iop] = (*rh_ptr)->lrvreqs[ioffset];
 
             // copy frequencies
-            nw = 0;
+            nlrvs = 0;
             struct _w_list* curr = lrvs_w[iop];
             struct _w_list* prev = NULL;
             while (curr != NULL) {
-                (*rh_ptr)->lrvreqs[ioffset]->w[nw] = curr->w;
+                (*rh_ptr)->lrvreqs[ioffset]->w[nlrvs] = curr->w;
 
-                nw++;
+                nlrvs++;
 
                 prev = curr;
                 curr = curr->next;
@@ -975,7 +975,7 @@ int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl
             for (size_t iop = 0; iop < nops; ++iop) {
                 stdl_lrv_request *lrvreq = lrvs[req->ops[iop]];
                 req->lrvreqs[iop] = lrvreq;
-                for (size_t jw = 0; jw < lrvreq->nw; ++jw) {
+                for (size_t jw = 0; jw < lrvreq->nlrvs; ++jw) {
                     if (stdl_float_equals(req->w[iop], lrvreq->w[jw], 1e-6f)) {
                         req->wpos[iop] = jw;
                         break;

@@ -24,13 +24,13 @@ struct stdl_response_request_ {
     /// `stdl_operator[nops]` the operators associated with the request
     stdl_operator *ops;
 
-    /// Number of frequencies (and LRVs)
-    size_t nw; // == (resp_order == res_order)? 0: resp_order-res_order+1
+    /// Number of frequencies and LRVs
+    size_t nlrvs; // == (resp_order == res_order)? 0: resp_order-res_order+1
 
-    /// `size_t[nw]` the energies at which linear response vectors should be computed
+    /// `size_t[nlrvs]` the energies at which linear response vectors should be computed
     size_t* iw;
 
-    /// `stdl_lrv[nw]` for the corresponding linear response vector
+    /// `stdl_lrv[nlrvs]` for the corresponding linear response vector
     stdl_lrv* lrvs;
 
     /// number of amplitude vectors (*i.e.*, excitations) requested, a negative value means "all"

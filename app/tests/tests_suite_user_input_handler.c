@@ -240,7 +240,7 @@ void test_user_input_response_requests_ok() {
 
     TEST_ASSERT_EQUAL(1, req->resp_order);
     TEST_ASSERT_EQUAL(0, req->res_order);
-    TEST_ASSERT_EQUAL(2, req->nw);
+    TEST_ASSERT_EQUAL(2, req->nlrvs);
     TEST_ASSERT_EQUAL_UINT64_ARRAY(((size_t[]) {0, 0}), req->iw, 2);
     TEST_ASSERT_EQUAL(2, req->nops);
     TEST_ASSERT_EQUAL_INT_ARRAY(((int[]) {STDL_OP_DIPL, STDL_OP_DIPL}), req->ops, 2);
@@ -250,7 +250,7 @@ void test_user_input_response_requests_ok() {
     req = req->next;
     TEST_ASSERT_EQUAL(1, req->resp_order);
     TEST_ASSERT_EQUAL(0, req->res_order);
-    TEST_ASSERT_EQUAL(2, req->nw);
+    TEST_ASSERT_EQUAL(2, req->nlrvs);
     TEST_ASSERT_EQUAL_UINT64_ARRAY(((size_t[]){1, 1}), req->iw, 2);
     TEST_ASSERT_EQUAL(2, req->nops);
     TEST_ASSERT_EQUAL_INT_ARRAY(((int[]) {STDL_OP_DIPL, STDL_OP_DIPL}), req->ops, 2);
@@ -260,7 +260,7 @@ void test_user_input_response_requests_ok() {
     req = req->next;
     TEST_ASSERT_EQUAL(2, req->resp_order);
     TEST_ASSERT_EQUAL(0, req->res_order);
-    TEST_ASSERT_EQUAL(3, req->nw);
+    TEST_ASSERT_EQUAL(3, req->nlrvs);
     TEST_ASSERT_EQUAL_UINT64_ARRAY(((size_t[]){1, 0, 0}), req->iw, 3);
     TEST_ASSERT_EQUAL(3, req->nops);
     TEST_ASSERT_EQUAL_INT_ARRAY(((int[]) {STDL_OP_DIPL, STDL_OP_DIPL, STDL_OP_DIPL}), req->ops, 3);
@@ -270,7 +270,7 @@ void test_user_input_response_requests_ok() {
     req = req->next;
     TEST_ASSERT_EQUAL(1, req->resp_order);
     TEST_ASSERT_EQUAL(1, req->res_order);
-    TEST_ASSERT_EQUAL(0, req->nw);
+    TEST_ASSERT_EQUAL(0, req->nlrvs);
     TEST_ASSERT_EQUAL(1, req->nops);
     TEST_ASSERT_EQUAL(req->ops[0], STDL_OP_DIPL);
     TEST_ASSERT_EQUAL(-1, req->nroots);
