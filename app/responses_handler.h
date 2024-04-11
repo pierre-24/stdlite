@@ -24,6 +24,9 @@ struct stdl_op_data_ {
     /// `float[nlrvs]`, the energies
     float* w;
 
+    /// `size_t[nlrvs]`, the index in `inp->res_w`
+    size_t* iw;
+
     /// `float[nlrvs,nscfs,dim]` The linear response vector $\mathbf x(\omega)$
     float* X;
 
@@ -42,7 +45,8 @@ typedef struct stdl_op_data_ stdl_op_data;
  * @return error code
  * @ingroup responses_handler
  */
-int stdl_op_data_new(stdl_operator op, size_t nmo, size_t ncsfs, size_t nlrvs, stdl_op_data **data_ptr);
+int stdl_op_data_new(stdl_operator op, size_t nmo, size_t ncsfs, size_t nlrvs, float *w, size_t *iw,
+                     stdl_op_data **data_ptr);
 
 /**
  * Actually compute the linear response vectors

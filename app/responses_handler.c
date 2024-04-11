@@ -7,7 +7,7 @@
 
 #include "responses_handler.h"
 
-int stdl_op_data_new(stdl_operator op, size_t nmo, size_t ncsfs, size_t nlrvs, stdl_op_data **data_ptr) {
+int stdl_op_data_new(stdl_operator op, size_t nmo, size_t ncsfs, size_t nlrvs, float *w, size_t *iw, stdl_op_data **data_ptr) {
     assert(data_ptr != NULL);
 
     *data_ptr = malloc(sizeof(stdl_op_data));
@@ -21,16 +21,21 @@ int stdl_op_data_new(stdl_operator op, size_t nmo, size_t ncsfs, size_t nlrvs, s
     (*data_ptr)->op_ints_MO = malloc(STDL_OPERATOR_DIM[op] * STDL_MATRIX_SP_SIZE(nmo) * sizeof(double));
 
     (*data_ptr)->w = NULL;
+    (*data_ptr)->iw = NULL;
     (*data_ptr)->egrad = NULL;
     (*data_ptr)->X = NULL;
     (*data_ptr)->Y = NULL;
 
     if(nlrvs > 0) {
         (*data_ptr)->w = malloc(nlrvs * sizeof(float ));
+        (*data_ptr)->iw = malloc(nlrvs * sizeof(size_t ));
         (*data_ptr)->egrad = malloc(STDL_OPERATOR_DIM[op] * ncsfs * sizeof(float ));
         (*data_ptr)->X = malloc(nlrvs * ncsfs * STDL_OPERATOR_DIM[op] * sizeof(float ));
         (*data_ptr)->Y = malloc(nlrvs * ncsfs * STDL_OPERATOR_DIM[op] * sizeof(float ));
-        STDL_ERROR_HANDLE_AND_REPORT((*data_ptr)->op_ints_MO == NULL || (*data_ptr)->w == NULL || (*data_ptr)->egrad == NULL || (*data_ptr)->X == NULL || (*data_ptr)->Y == NULL, stdl_op_data_delete(*data_ptr); return STDL_ERR_MALLOC, "malloc");
+        STDL_ERROR_HANDLE_AND_REPORT((*data_ptr)->op_ints_MO == NULL || (*data_ptr)->w == NULL || (*data_ptr)->w == NULL || (*data_ptr)->egrad == NULL || (*data_ptr)->X == NULL || (*data_ptr)->Y == NULL, stdl_op_data_delete(*data_ptr); return STDL_ERR_MALLOC, "malloc");
+
+        memcpy((*data_ptr)->w, w, nlrvs * sizeof(float ));
+        memcpy((*data_ptr)->iw, iw, nlrvs * sizeof(size_t ));
     }
 
     return STDL_ERR_OK;
@@ -42,7 +47,7 @@ int stdl_op_data_delete(stdl_op_data* data) {
 
     STDL_DEBUG("delete op_data %p", data);
 
-    STDL_FREE_ALL(data->w, data->egrad, data->X, data->Y, data);
+    STDL_FREE_ALL(data->w, data->iw, data->op_ints_MO, data->egrad, data->X, data->Y, data);
 
     return STDL_ERR_OK;
 }
@@ -156,15 +161,15 @@ int stdl_responses_handler_new(stdl_context *ctx, size_t nexci, stdl_responses_h
 int stdl_responses_handler_new_from_input(stdl_user_input_handler* inp, stdl_context* ctx, stdl_responses_handler **rh_ptr) {
     assert(inp != NULL && inp->res_resreqs != NULL && ctx != NULL && rh_ptr != NULL);
 
-    int err;
-
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Preparing responses >");
     stdl_log_msg(1, "\n  | Count requests ");
 
     int ops_needed[STDL_OP_COUNT] = {0};
-    size_t ops_nlrvs[STDL_OP_COUNT] = {0};
     size_t res_nexci = 0, res_nops = 0, res_nlrvs = 0;
+
+    int* ops_w = calloc(STDL_OP_COUNT * inp->res_nw, sizeof(int));
+    STDL_ERROR_HANDLE_AND_REPORT(ops_w == NULL, return STDL_ERR_MALLOC, "malloc");
 
     stdl_response_request* req = inp->res_resreqs;
     while (req != NULL) {
@@ -175,6 +180,11 @@ int stdl_responses_handler_new_from_input(stdl_user_input_handler* inp, stdl_con
                 res_nops += 1;
 
             ops_needed[op] = 1;
+        }
+
+        // check out if it contains new frequencies
+        for (size_t ilrv = 0; ilrv < req->nlrvs; ++ilrv) {
+            ops_w[req->ops[ilrv] * STDL_OP_COUNT + req->iw[ilrv]] = 1;
         }
 
         // check out if it requires amplitudes
@@ -193,8 +203,42 @@ int stdl_responses_handler_new_from_input(stdl_user_input_handler* inp, stdl_con
         req = req->next;
     }
 
+    stdl_log_msg(0, "-");
+    stdl_log_msg(1, "\n  | Setup handler and data ");
+
+    int err = stdl_responses_handler_new(ctx, res_nexci, rh_ptr);
+    STDL_ERROR_CODE_HANDLE(err, return err);
+
+    for (int iop = 0; iop < STDL_OP_COUNT; ++iop) {
+        size_t nlrvs = 0;
+
+        if(ops_needed[iop]) {
+            float* op_w = malloc(inp->res_nw * sizeof(float ));
+            size_t* op_iw = malloc(inp->res_nw * sizeof(size_t ));
+            STDL_ERROR_HANDLE_AND_REPORT(op_w == NULL, free(ops_w); return STDL_ERR_MALLOC, "malloc");
+
+            STDL_DEBUG("%s selected", STDL_OPERATOR_NAME[iop]);
+            for (size_t iw = 0; iw < inp->res_nw; ++iw) {
+                if(ops_w[iop * STDL_OP_COUNT + iw]) {
+                    op_iw[nlrvs] = iw;
+                    op_w[nlrvs] = inp->res_w[iw];
+                    nlrvs += 1;
+                }
+            }
+
+            err = stdl_op_data_new(iop, ctx->nmo, ctx->ncsfs, nlrvs, op_w, op_iw, &((*rh_ptr)->lrvs_data[iop]));
+            STDL_ERROR_CODE_HANDLE(err,  STDL_FREE_IF_USED(op_iw); STDL_FREE_IF_USED(op_w); STDL_FREE_IF_USED(ops_w); return err);
+
+            STDL_FREE_ALL(op_w, op_iw);
+
+            res_nlrvs += nlrvs;
+        }
+    }
+
     stdl_log_msg(0, "< done\n");
     stdl_log_msg(0, "Will compute %ld matrix(ces) of MO integrals, %ld response vector(s), and %ld amplitude vector(s)\n", res_nops, res_nlrvs, res_nexci);
+
+    STDL_FREE_ALL(ops_w);
 
     return STDL_ERR_OK;
 }
@@ -204,6 +248,11 @@ int stdl_responses_handler_delete(stdl_responses_handler* rh) {
     assert(rh != NULL);
 
     STDL_DEBUG("delete responses_handler %p", rh);
+
+    for (int iop = 0; iop < STDL_OP_COUNT; ++iop) {
+        if(rh->lrvs_data[iop] != NULL)
+            stdl_op_data_delete(rh->lrvs_data[iop]);
+    }
 
     STDL_FREE_ALL(rh->eexci, rh->Xamp, rh->Yamp, rh);
 

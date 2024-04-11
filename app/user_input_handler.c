@@ -125,10 +125,12 @@ int _w_list_new(float w, struct _w_list** elm) {
 
 int _w_list_get_id(struct _w_list** first, float w, size_t* id) {
     *id = 0;
+    int err;
     struct _w_list* elm = *first;
 
     if(*first == NULL) {
-        _w_list_new(w, &elm);
+        err = _w_list_new(w, &elm);
+        STDL_ERROR_CODE_HANDLE(err, return err);
         *first = elm;
     } else {
         struct _w_list* prev = NULL;
@@ -146,7 +148,8 @@ int _w_list_get_id(struct _w_list** first, float w, size_t* id) {
 
         if(!found) {
             struct _w_list* last = NULL;
-            _w_list_new(w, &last);
+            err = _w_list_new(w, &last);
+            STDL_ERROR_CODE_HANDLE(err, return err);
             prev->next = last;
         }
     }
@@ -295,8 +298,9 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
                 STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `wB` in `linear[%d]`", i);
 
                 size_t iwA, iwB;
-                _w_list_get_id(&wlist, wB, &iwA);
-                _w_list_get_id(&wlist, wB, &iwB);
+                err = _w_list_get_id(&wlist, wB, &iwA) ||
+                        _w_list_get_id(&wlist, wB, &iwB);
+                STDL_ERROR_CODE_HANDLE(err, _w_list_delete(wlist); goto _end);
 
                 stdl_response_request* req = NULL;
                 err = stdl_response_request_new(1, 0, (stdl_operator[]) {opA, opB}, (size_t[]) {iwA, iwB}, 0, &req);
@@ -347,9 +351,10 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
                 STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `wC` in `quadratic[%d]`", i);
 
                 size_t iwA, iwB, iwC;
-                _w_list_get_id(&wlist, wB + wC, &iwA);
-                _w_list_get_id(&wlist, wB, &iwB);
-                _w_list_get_id(&wlist, wC, &iwC);
+                err = _w_list_get_id(&wlist, wB + wC, &iwA)
+                        || _w_list_get_id(&wlist, wB, &iwB)
+                        || _w_list_get_id(&wlist, wC, &iwC);
+                STDL_ERROR_CODE_HANDLE(err, _w_list_delete(wlist); goto _end);
 
                 stdl_response_request* req = NULL;
                 err = stdl_response_request_new(2, 0, (stdl_operator[]) {opA, opB, opC}, (size_t[]) {iwA, iwB, iwC}, 0, &req);
@@ -827,171 +832,6 @@ int stdl_user_input_handler_make_context(stdl_user_input_handler* inp, stdl_cont
 
     return err;
 }
-
-/*
-int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl_context *ctx, stdl_responses_handler **rh_ptr) {
-    assert(inp != NULL && ctx != NULL && inp->res_resreqs != NULL && rh_ptr != NULL);
-
-    int err;
-
-    stdl_log_msg(1, "+ ");
-    stdl_log_msg(0, "Preparing responses >");
-    stdl_log_msg(1, "\n  | Count requests ");
-
-    // count the number of operators, LRV requests, amplitudes, and freqs.
-    size_t res_nops = 0, res_nlrvreq = 0, res_nexci = 0, totnw = 0;
-
-    short operators[STDL_OP_COUNT] = {0};
-    short islrvs[STDL_OP_COUNT] = {0};
-    struct _w_list* lrvs_w[STDL_OP_COUNT] = {NULL};
-
-    stdl_response_request* req = inp->res_resreqs;
-    while (req != NULL) {
-        // check out if it contains a new operator
-        size_t nops = req->resp_order - req->res_order + 1;
-        for (size_t iop = 0; iop < nops; ++iop) {
-            stdl_operator op = req->ops[iop];
-            if(!operators[op])
-                res_nops += 1;
-
-            if(!islrvs[op] && req->res_order < req->resp_order) {
-                islrvs[op] = 1;
-                res_nlrvreq += 1;
-            }
-
-            operators[op] = 1;
-        }
-
-        // if LRV is required, add frequency
-        size_t nlrvs = (req->resp_order == req->res_order)? 0: req->resp_order-req->res_order+1;
-        for (size_t iw = 0; iw < nlrvs; ++iw) {
-            stdl_operator op = req->ops[iw];
-            struct _w_list* elm = NULL;
-            err = _w_list_new(req->w[iw], &elm);
-            STDL_ERROR_CODE_HANDLE(err, return err);
-
-            if(lrvs_w[op] == NULL) {
-                lrvs_w[op] = elm;
-            } else {
-                struct _w_list* last = lrvs_w[op];
-                int already_in = 0;
-                while (last->next != NULL && !already_in) {
-                    if(stdl_float_equals(req->w[iw], last->w, 1e-6f)) {
-                        already_in = 1;
-                    }
-
-                    last = last->next;
-                }
-
-                if(!already_in && !stdl_float_equals(req->w[iw], last->w, 1e-6f)) {
-                    last->next = elm;
-                }
-                else
-                    _w_list_delete(elm);
-            }
-        }
-
-        // check out if it requires amplitudes
-        if(req->res_order > 0) {
-            if(req->nroots < 0)
-                res_nexci = ctx->ncsfs;
-            else if((size_t) req->nroots > res_nexci) {
-                if((size_t) req->nroots > ctx->ncsfs) {
-                    STDL_WARN("%ld excited states requested, which is more than the number of CSFs", req->nroots);
-                    req->nroots = (int) ctx->ncsfs;
-                }
-                res_nexci = (size_t) req->nroots;
-            }
-        }
-
-        req = req->next;
-    }
-
-    /*stdl_log_msg(0, "-");
-    stdl_log_msg(1, "\n  | build requests ");
-
-    err = stdl_responses_handler_new(res_nops, res_nlrvreq, res_nexci, inp->data_output, ctx, rh_ptr);
-    STDL_ERROR_CODE_HANDLE(err, return err);
-
-    // copy operators
-    int ioffset = 0;
-    for (int iop = 0; iop < STDL_OP_COUNT; ++iop) {
-        if(operators[iop]) {
-            (*rh_ptr)->ops[ioffset] = iop;
-            ioffset++;
-        }
-    }
-
-    // create LRV requests
-    stdl_lrv_request* lrvs[STDL_OP_COUNT] = {NULL};
-    ioffset = 0;
-    for (int iop = 0; iop < STDL_OP_COUNT; ++iop) {
-        if(islrvs[iop]) {
-            // count the number of frequencies
-            size_t nlrvs = 0;
-            struct _w_list* last = lrvs_w[iop];
-            while (last != NULL) {
-                nlrvs++;
-                last = last->next;
-            }
-
-            totnw += nlrvs;
-
-            STDL_ERROR_HANDLE_AND_REPORT(nlrvs == 0, return STDL_ERR_INPUT, "LRV but nlrvs=0");
-
-            // create LRV request
-            (*rh_ptr)->lrvreqs[ioffset] = NULL;
-            err = stdl_lrv_request_new(iop, nlrvs, ctx->ncsfs, (*rh_ptr)->lrvreqs + ioffset);
-            STDL_ERROR_CODE_HANDLE(err, return err);
-
-            lrvs[iop] = (*rh_ptr)->lrvreqs[ioffset];
-
-            // copy frequencies
-            nlrvs = 0;
-            struct _w_list* curr = lrvs_w[iop];
-            struct _w_list* prev = NULL;
-            while (curr != NULL) {
-                (*rh_ptr)->lrvreqs[ioffset]->w[nlrvs] = curr->w;
-
-                nlrvs++;
-
-                prev = curr;
-                curr = curr->next;
-                prev->next = NULL;
-                _w_list_delete(prev);
-            }
-
-            ioffset++;
-        }
-    }
-
-    stdl_log_msg(0, "-");
-    stdl_log_msg(1, "\n  | assign each response to its request ");
-
-    req = inp->res_resreqs;
-    while (req != NULL) {
-        if(req->resp_order != req->res_order) {
-            size_t nops = req->resp_order - req->res_order + 1;
-            for (size_t iop = 0; iop < nops; ++iop) {
-                stdl_lrv_request *lrvreq = lrvs[req->ops[iop]];
-                req->lrvreqs[iop] = lrvreq;
-                for (size_t jw = 0; jw < lrvreq->nlrvs; ++jw) {
-                    if (stdl_float_equals(req->w[iop], lrvreq->w[jw], 1e-6f)) {
-                        req->wpos[iop] = jw;
-                        break;
-                    }
-                }
-            }
-        }
-
-        req = req->next;
-    }
-
-    stdl_log_msg(0, "< done\n");
-    // stdl_log_msg(0, "Will compute %ld matrix(ces) of MO integrals, %ld response vector(s), and %ld amplitude vector(s)\n", (*rh_ptr)->nops, totnw, (*rh_ptr)->nexci);
-
-    return STDL_ERR_OK;
-}*/
 
 /*
 int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, stdl_context* ctx, stdl_responses_handler* rh) {

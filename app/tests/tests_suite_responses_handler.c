@@ -7,7 +7,7 @@
 FILE* stream;
 
 void setUp(void) {
-    stdl_set_debug_level(-1);
+    stdl_set_debug_level(0);
     stdl_set_log_level(0);
 
     stream = tmpfile();
@@ -55,12 +55,12 @@ void test_user_input_compute_responses() {
     ASSERT_STDL_OK(stdl_responses_handler_compute(rh, ctx));
 
     // compute properties
-    ASSERT_STDL_OK(stdl_user_input_handler_compute_properties(inp, ctx, rh));
+    ASSERT_STDL_OK(stdl_user_input_handler_compute_properties(inp, ctx, rh));*/
 
     // delete data output
     unlink(inp->data_output);
 
-    ASSERT_STDL_OK(stdl_responses_handler_delete(rh));*/
+    ASSERT_STDL_OK(stdl_responses_handler_delete(rh));
     ASSERT_STDL_OK(stdl_context_delete(ctx));
     ASSERT_STDL_OK(stdl_user_input_handler_delete(inp));
 }

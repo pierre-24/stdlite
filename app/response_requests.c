@@ -18,7 +18,7 @@ int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator
     (*req_ptr)->res_order = res_order;
     (*req_ptr)->nroots = nroots;
     (*req_ptr)->nops = resp_order-res_order+1;
-    (*req_ptr)->nlrvs = (resp_order == res_order) ? 0 : resp_order - res_order + 1;
+    (*req_ptr)->nlrvs = (resp_order == res_order) ? 0 : (*req_ptr)->nops;
     (*req_ptr)->iw = NULL;
     (*req_ptr)->lrvs = NULL;
     (*req_ptr)->next = NULL;
