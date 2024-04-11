@@ -18,7 +18,7 @@ nav:
     - API/integrals/index.md
     - API/context/index.md
     - API/response/index.md
-    - API/property/index.md
+    - API/property_tensor/index.md
     - API/helpers/index.md
     - API/utilities/index.md
   - API of stdlite_run:

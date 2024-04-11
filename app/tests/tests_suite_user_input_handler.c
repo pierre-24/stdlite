@@ -276,14 +276,8 @@ void test_user_input_response_requests_ok() {
     TEST_ASSERT_EQUAL(-1, req->nroots);
     TEST_ASSERT_NULL(req->iw);
 
-    // create context
-    stdl_context *ctx = NULL;
-    ASSERT_STDL_OK(stdl_user_input_handler_make_context(inp, &ctx));
-    TEST_ASSERT_NOT_NULL(ctx);
-
     // delete data output
     unlink(inp->data_output);
 
-    ASSERT_STDL_OK(stdl_context_delete(ctx));
     ASSERT_STDL_OK(stdl_user_input_handler_delete(inp));
 }

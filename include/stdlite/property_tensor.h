@@ -29,7 +29,7 @@ struct stdl_lrv_ {
 typedef struct stdl_lrv_ stdl_lrv;
 
 /**
- * Compute the linear response function $\pm\braket{\braket{\hat A; \hat B}}_\omega$ property_tensor elements.
+ * Compute the linear response function tensor $$-\braket{\braket{\hat A; \hat B}}_\omega$ elements.
  *
  * @param ctx a valid context, with `ctx->ncsfs > 0`.
  * @param lrvs `stdl_lrv[2]` the LRV (one for $\hat A$, one for $\hat B$) from which the property_tensor will be computed
@@ -51,7 +51,7 @@ int stdl_property_tensor_linear(stdl_context *ctx, stdl_lrv *lrvs[2], float *ten
  * @param Y `float[nexci,ncsfs]` amplitude vector $\mathbf y$, might be `NULL` if TDA.
  * @param[out] tdips `float[STDL_OPERATOR_DIM[op]nexci]` the resultings transition moments
  * @return error code
- * @ingroup property
+ * @ingroup property_tensor
  */
 int stdl_property_tensor_g2e_moments(stdl_context *ctx, stdl_operator op, double* op_ints_MO, size_t nexci, float* Xamp, float* Yamp, float * tg2e);
 

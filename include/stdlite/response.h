@@ -8,7 +8,7 @@
  * @ingroup response
  */
 #ifndef STDL_RESPONSE_EIGV_ABSTOL
-#define STDL_RESPONSE_EIGV_ABSTOL 1e-5f
+#define STDL_RESPONSE_EIGV_ABSTOL 1e-6f
 #endif
 
 /**

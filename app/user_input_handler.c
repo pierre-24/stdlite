@@ -96,12 +96,16 @@ int _operator_in(toml_table_t* table, char* field, stdl_operator * result, int* 
 
     if(op.ok) {
         STDL_DEBUG("- (operator) %s", field);
-        if(strcmp(op.u.s, "dipl") == 0) {
-            *result = STDL_OP_DIPL;
-            *isset = 1;
-        } else {
-            err = STDL_ERR_INPUT;
+        for (int iop = 0; iop < STDL_OP_COUNT; ++iop) {
+            if(strcmp(op.u.s, STDL_OPERATOR_NAME[iop]) == 0) {
+                *result = iop;
+                *isset = 1;
+                break;
+            }
         }
+
+        if(!*isset)
+            err = STDL_ERR_INPUT;
 
         free(op.u.s);
     }

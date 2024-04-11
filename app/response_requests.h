@@ -33,7 +33,7 @@ struct stdl_response_request_ {
     /// number of amplitude vectors (*i.e.*, excitations) requested, a negative value means "all"
     int nroots;
 
-    /// Tensor. Its shape depends on the property
+    /// The resulting tensor (migh be `NULL` if it was not computed yet). Its shape depends on the property.
     float* property_tensor;
 
     /// Next request

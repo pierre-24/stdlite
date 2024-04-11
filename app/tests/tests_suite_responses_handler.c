@@ -33,11 +33,11 @@ void test_user_input_compute_responses() {
           "gammaJ = 2.0\n"
           "gammaK = 4.0\n"
           "ax = 1.0\n"
-          "tda=0\n"
+          "tda=1\n"
           "[responses]\n"
           "linear = [{opA = 'dipl', opB = 'dipl', wB = '0'}, {opA = 'dipl', opB = 'dipl', wB = '1064nm'}, {opA = 'dipl', opB = 'dipl', wB = '532nm'}]\n"
           "quadratic = [{opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = '1064nm', wC = '1064nm'}]\n"
-          "linear_sr = [{opA = 'dipl', nroots = -1}]",
+          "linear_sr = [{opA = 'dipl', nroots = -1}, {opA = 'dipv', nroots = -1}]",
           stream);
     rewind(stream);
 
