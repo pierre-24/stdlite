@@ -1,16 +1,15 @@
 #include <stdlite/logging.h>
 #include <stdlite/helpers.h>
-#include <stdlite/utils/matrix.h>
 #include <stdlite/utils/experimental_quantity.h>
 #include <assert.h>
 
 #include "log_property.h"
 
 
-int stdl_log_property_polarizability(stdl_response_request* req, float* alpha) {
+int stdl_log_property_polarizability(stdl_response_request* req, float* alpha, float w) {
     assert(req != NULL && alpha != NULL);
 
-    stdl_log_msg(0, "** alpha(-w;w), w=%f (%.2f nm)\n", req->lrvreqs[1]->w[req->wpos[1]], STDL_CONST_HC / req->lrvreqs[1]->w[req->wpos[1]]);
+    stdl_log_msg(0, "** alpha(-w;w) @ w=%f (%.2f nm)\n", w, STDL_CONST_HC / w);
     stdl_log_msg(0, "         x            y            z\n");
 
     for (size_t zeta = 0; zeta < 3; ++zeta) {
@@ -38,7 +37,32 @@ int stdl_log_property_polarizability(stdl_response_request* req, float* alpha) {
     return STDL_ERR_OK;
 }
 
-int stdl_log_property_first_hyperpolarizability(stdl_response_request* req, float beta[3][3][3]) {
+int stdl_log_property_linear_tensor(stdl_response_request* req, float* tensor, float w) {
+    assert(req != NULL && tensor != NULL);
+
+    size_t dim0 = STDL_OPERATOR_DIM[req->ops[0]], dim1 = STDL_OPERATOR_DIM[req->ops[1]];
+
+    stdl_log_msg(0, "** -<<%s;%s>>_w @ w=%f Eh (%.2f nm)\n", STDL_OPERATOR_NAME[req->ops[0]], STDL_OPERATOR_NAME[req->ops[1]], w, STDL_CONST_HC / w);
+
+    stdl_log_msg(0, "    ");
+    for (size_t sigma = 0; sigma < dim1; ++sigma)
+        stdl_log_msg(0, "     %3d     ", sigma);
+
+    stdl_log_msg(0, "\n");
+
+    for (size_t zeta = 0; zeta < dim0; ++zeta) {
+        stdl_log_msg(0, "%-3d ", zeta);
+        for (size_t sigma = 0; sigma < dim1; ++sigma) {
+            stdl_log_msg(0, " % 12.5f", tensor[zeta * dim0 + sigma]);
+        }
+        stdl_log_msg(0, "\n");
+    }
+
+    return STDL_ERR_OK;
+}
+
+
+/*int stdl_log_property_first_hyperpolarizability(stdl_response_request* req, float beta[3][3][3]) {
     assert(req != NULL && beta != NULL);
 
     stdl_log_msg(0,
@@ -89,7 +113,7 @@ int stdl_log_property_first_hyperpolarizability(stdl_response_request* req, floa
     }
 
     return STDL_ERR_OK;
-}
+}*/
 
 int stdl_log_property_g2e_dipoles(stdl_responses_handler *rh, stdl_context *ctx, float *tdips, float thresh) {
     assert(rh != NULL && ctx != NULL && tdips != NULL && thresh > 0);

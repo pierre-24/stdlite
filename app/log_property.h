@@ -8,11 +8,22 @@
  * Print the polarizability tensor and its corresponding experimental quantities.
  *
  * @param req a valid response request
- * @param alpha `float[6]` the polarizability tensor
+ * @param alpha `float[9]` the polarizability tensor
  * @return error code
  * @ingroup log_property
  */
-int stdl_log_property_polarizability(stdl_response_request* req, float* alpha);
+int stdl_log_property_polarizability(stdl_response_request* req, float* alpha, float w);
+
+/**
+ * Print a linear response tensor.
+ *
+ * @param req a valid response request
+ * @param tensor `float[dim0 * dim1]` the tensor
+ * @return error code
+ * @ingroup log_property
+ */
+int stdl_log_property_linear_tensor(stdl_response_request* req, float* tensor, float w);
+
 
 /**
  * Print the first hyperpolarizability tensor and its corresponding experimental quantities.

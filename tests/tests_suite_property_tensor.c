@@ -53,12 +53,12 @@ void test_response_polarizability_TD_ok() {
     float alpha[9], alpha_iso, alpha_aniso, result[] = {4.061f, 4.103f, 4.236f};
 
     for (size_t iw = 0; iw < nw; ++iw) {
+
+        stdl_lrv lrv = {STDL_OP_DIPL, dipoles_mat, w[iw], X + iw * 3 * ctx->ncsfs, Y + iw * 3 * ctx->ncsfs};
+
         ASSERT_STDL_OK(stdl_property_tensor_linear(
                 ctx,
-                (stdl_lrv[]) {
-                        {STDL_OP_DIPL, dipoles_mat, -w[iw], Y + iw * 3 * ctx->ncsfs, X + iw * 3 * ctx->ncsfs},
-                        {STDL_OP_DIPL, dipoles_mat, w[iw], X + iw * 3 * ctx->ncsfs, Y + iw * 3 * ctx->ncsfs}
-                },
+                (stdl_lrv*[]) {&lrv, &lrv},
                 alpha
         ));
         stdl_qexp_polarizability(alpha, &alpha_iso, &alpha_aniso);
@@ -76,7 +76,7 @@ void test_property_polarizability_TD_SOS_ok() {
     read_molden("../tests/test_files/chiral_sto3g.molden", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 25. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
 
     // fetch excitations
@@ -123,12 +123,11 @@ void test_property_polarizability_TD_SOS_ok() {
     float alpha[9], alpha_sos[9];
 
     for (size_t iw = 0; iw < nw; ++iw) {
+        stdl_lrv lrv = {STDL_OP_DIPL, dipoles_mat, w[iw], Xtd + iw * 3 * ctx->ncsfs, Ytd + iw * 3 * ctx->ncsfs};
+
         ASSERT_STDL_OK(stdl_property_tensor_linear(
                 ctx,
-                (stdl_lrv[]) {
-                        {STDL_OP_DIPL, dipoles_mat, -w[iw], Ytd + iw * 3 * ctx->ncsfs, Xtd + iw * 3 * ctx->ncsfs},
-                        {STDL_OP_DIPL, dipoles_mat, w[iw], Xtd + iw * 3 * ctx->ncsfs, Ytd + iw * 3 * ctx->ncsfs}
-                },
+                (stdl_lrv*[]) {&lrv, &lrv},
                 alpha
         ));
 
@@ -160,7 +159,7 @@ void test_property_tensor_polarizability_TD_fchk_vs_molden_ok() {
     read_fchk("../tests/test_files/water_631gdf.fchk", &wf_fchk, &bs_fchk);
 
     stdl_context* ctx_fchk = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf_fchk, bs_fchk, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx_fchk));
+    ASSERT_STDL_OK(stdl_context_new(wf_fchk, bs_fchk, 2.0, 4.0, 10. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx_fchk));
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx_fchk, 1));
 
     double* dipoles_mat_fchk = malloc(3 * STDL_MATRIX_SP_SIZE(ctx_fchk->nmo) * sizeof(double));
@@ -215,23 +214,18 @@ void test_property_tensor_polarizability_TD_fchk_vs_molden_ok() {
     float alpha[9], alpha_iso_fchk, alpha_aniso_fchk, alpha_iso_molden, alpha_aniso_molden;
 
     for (size_t iw = 0; iw < nw; ++iw) {
-
+        stdl_lrv lrv_fchk = {STDL_OP_DIPL, dipoles_mat_fchk, w[iw], X_fchk + iw * 3 * ctx_fchk->ncsfs, Y_fchk + iw * 3 * ctx_fchk->ncsfs};
         ASSERT_STDL_OK(stdl_property_tensor_linear(
                 ctx_fchk,
-                (stdl_lrv[]) {
-                        {STDL_OP_DIPL, dipoles_mat_fchk, -w[iw], Y_fchk + iw * 3 * ctx_fchk->ncsfs, X_fchk+ iw * 3 * ctx_fchk->ncsfs},
-                        {STDL_OP_DIPL, dipoles_mat_fchk, w[iw], X_fchk + iw * 3 * ctx_fchk->ncsfs, Y_fchk + iw * 3 * ctx_fchk->ncsfs}
-                },
+                (stdl_lrv*[]) {&lrv_fchk, &lrv_fchk},
                 alpha
         ));
         stdl_qexp_polarizability(alpha, &alpha_iso_fchk, &alpha_aniso_fchk);
 
+        stdl_lrv lrv_molden = {STDL_OP_DIPL, dipoles_mat_molden, w[iw], X_molden + iw * 3 * ctx_molden->ncsfs, Y_molden + iw * 3 * ctx_molden->ncsfs};
         ASSERT_STDL_OK(stdl_property_tensor_linear(
                 ctx_molden,
-                (stdl_lrv[]) {
-                        {STDL_OP_DIPL, dipoles_mat_molden, -w[iw], Y_molden + iw * 3 * ctx_molden->ncsfs, X_molden + iw * 3 * ctx_molden->ncsfs},
-                        {STDL_OP_DIPL, dipoles_mat_molden, w[iw], X_molden + iw * 3 * ctx_molden->ncsfs, Y_molden + iw * 3 * ctx_molden->ncsfs}
-                },
+                (stdl_lrv*[]) {&lrv_molden, &lrv_molden},
                 alpha
         ));
 
@@ -286,12 +280,10 @@ void test_response_polarizability_TDA_ok() {
     ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, 1, egrad, Xtda, Ytda));
 
     for (size_t iw = 0; iw < nw; ++iw) {
+        stdl_lrv lrv = {STDL_OP_DIPL, dipoles_mat, w[iw], Xtda + iw * 3 * ctx->ncsfs, Ytda + iw * 3 * ctx->ncsfs};
         ASSERT_STDL_OK(stdl_property_tensor_linear(
                 ctx,
-                (stdl_lrv[]) {
-                        {STDL_OP_DIPL, dipoles_mat, -w[iw], Ytda + iw * 3 * ctx->ncsfs, Xtda + iw * 3 * ctx->ncsfs},
-                        {STDL_OP_DIPL, dipoles_mat, w[iw], Xtda + iw * 3 * ctx->ncsfs, Ytda + iw * 3 * ctx->ncsfs}
-                },
+                (stdl_lrv*[]) {&lrv, &lrv},
                 alpha
         ));
 
@@ -310,7 +302,7 @@ void test_property_polarizability_TDA_SOS_ok() {
     read_molden("../tests/test_files/chiral_sto3g.molden", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 25. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 10. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
 
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
 
@@ -351,12 +343,10 @@ void test_property_polarizability_TDA_SOS_ok() {
     float alpha[9], alpha_sos[9];
 
     for (size_t iw = 0; iw < nw; ++iw) {
+        stdl_lrv lrv = {STDL_OP_DIPL, dipoles_mat, w[iw], Xtda + iw * 3 * ctx->ncsfs, Ytda + iw * 3 * ctx->ncsfs};
         ASSERT_STDL_OK(stdl_property_tensor_linear(
                 ctx,
-                (stdl_lrv[]) {
-                        {STDL_OP_DIPL, dipoles_mat, -w[iw], Ytda + iw * 3 * ctx->ncsfs, Xtda + iw * 3 * ctx->ncsfs},
-                        {STDL_OP_DIPL, dipoles_mat, w[iw], Xtda + iw * 3 * ctx->ncsfs, Ytda + iw * 3 * ctx->ncsfs}
-                },
+                (stdl_lrv*[]) {&lrv, &lrv},
                 alpha
         ));
 

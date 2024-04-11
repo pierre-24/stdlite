@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "responses_handler.h"
+#include "log_property.h"
 
 int stdl_op_data_new(stdl_operator op, size_t nmo, size_t ncsfs, size_t nlrvs, float *w, size_t *iw, stdl_op_data **data_ptr) {
     assert(data_ptr != NULL);
@@ -442,6 +443,18 @@ int stdl_response_handler_compute_properties(stdl_responses_handler* rh, stdl_us
 
             err = _find_lrvs(rh, inp, req, lrvs);
             STDL_ERROR_CODE_HANDLE(err, return err);
+
+            float* tensor = malloc(STDL_OPERATOR_DIM[lrvs[0]->op] * STDL_OPERATOR_DIM[lrvs[1]->op] * sizeof(float ));
+            STDL_ERROR_HANDLE_AND_REPORT(tensor == NULL, return STDL_ERR_MALLOC, "malloc");
+
+            err = stdl_property_tensor_linear(ctx, lrvs, tensor);
+            STDL_ERROR_CODE_HANDLE(err, STDL_FREE_IF_USED(tensor); return err);
+
+            if(req->ops[0] == STDL_OP_DIPL && req->ops[1] == STDL_OP_DIPL)
+                stdl_log_property_polarizability(req, tensor, inp->res_w[req->iw[1]]);
+            else
+                stdl_log_property_linear_tensor(req, tensor, inp->res_w[req->iw[1]]);
+
         } else if(req->resp_order == 2 && req->res_order == 0) { // quadratic
             stdl_lrv* lrvs[] = {NULL, NULL, NULL};
 

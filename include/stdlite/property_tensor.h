@@ -37,7 +37,7 @@ typedef struct stdl_lrv_ stdl_lrv;
  * @return error code
  * @ingroup tensor
  */
-int stdl_property_tensor_linear(stdl_context *ctx, stdl_lrv lrvs[2], float *tensor);
+int stdl_property_tensor_linear(stdl_context *ctx, stdl_lrv *lrvs[2], float *tensor);
 
 
 #endif //STDLITE_TENSOR_H
