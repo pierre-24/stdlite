@@ -75,8 +75,8 @@ int main(int argc, char* argv[]) {
         err = stdl_responses_handler_new_from_input(input, ctx, &rh);
         STDL_ERROR_CODE_HANDLE(err, goto _end);
 
-        //err = stdl_responses_handler_compute(rh, ctx);
-        //STDL_ERROR_CODE_HANDLE(err, goto _end);
+        err = stdl_responses_handler_compute(rh, input, ctx);
+        STDL_ERROR_CODE_HANDLE(err, goto _end);
     } else {
         stdl_log_msg(0, "No response requested.\n");
     }

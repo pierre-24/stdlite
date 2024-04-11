@@ -50,10 +50,10 @@ void test_user_input_compute_responses() {
     stdl_responses_handler *rh = NULL;
     ASSERT_STDL_OK(stdl_responses_handler_new_from_input(inp, ctx, &rh));
 
-    /*
     // compute responses
-    ASSERT_STDL_OK(stdl_responses_handler_compute(rh, ctx));
+    ASSERT_STDL_OK(stdl_responses_handler_compute(rh, inp, ctx));
 
+    /*
     // compute properties
     ASSERT_STDL_OK(stdl_user_input_handler_compute_properties(inp, ctx, rh));*/
 

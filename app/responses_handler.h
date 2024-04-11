@@ -147,7 +147,7 @@ int stdl_responses_handler_delete(stdl_responses_handler* rh);
  * @return error code
  * @ingroup responses_handler
  */
-int stdl_responses_handler_compute(stdl_responses_handler* rh, stdl_context* ctx);
+int stdl_responses_handler_compute(stdl_responses_handler *rh, stdl_user_input_handler *inp, stdl_context *ctx);
 
 /**
  * Get the approximate space in memory
