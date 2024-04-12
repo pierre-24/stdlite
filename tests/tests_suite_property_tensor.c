@@ -370,3 +370,112 @@ void test_property_polarizability_TDA_SOS_ok() {
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
+
+void test_property_tensor_angmom_dipl_TD_SOS_ok() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_molden("../tests/test_files/chiral_sto3g.molden", &wf, &bs);
+
+    stdl_context* ctx = NULL;
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 10. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
+
+    // fetch excitations
+    float* etd = malloc(ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(etd);
+
+    float* Xamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(Xamptd);
+
+    float* Yamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(Yamptd);
+
+    ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, etd, Xamptd, Yamptd));
+
+    // compute dipl integrals and convert to MO
+    double* dipl_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipl_mat);
+
+    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipl_mat);
+
+    // get transition dipoles
+    float* tg2edipl = malloc(ctx->ncsfs * 3 * sizeof(float ));
+    ASSERT_STDL_OK(stdl_property_tensor_g2e_moments(ctx, STDL_OP_DIPL, dipl_mat, ctx->ncsfs, Xamptd, Yamptd, tg2edipl));
+
+    // build egrad
+    float* egrad_dipl = malloc(3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(egrad_dipl);
+
+    stdl_response_perturbed_gradient(ctx, 3, 1, dipl_mat, egrad_dipl);
+
+    // solve linear response
+    size_t nw = 3;
+    float w[] = {0, 0.025f, STDL_CONST_HC / 532.f};
+
+    float* X_dipl = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(X_dipl);
+
+    float* Y_dipl = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(Y_dipl);
+
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 1, egrad_dipl, X_dipl, Y_dipl));
+
+    // compute angm integrals and convert to MO
+    double* angm_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(angm_mat);
+
+    make_int1e_MO(wf, bs, STDL_OP_ANGM, 1., ctx, angm_mat);
+
+    // get transition dipoles
+    float* tg2eangm = malloc(ctx->ncsfs * 3 * sizeof(float ));
+    ASSERT_STDL_OK(stdl_property_tensor_g2e_moments(ctx, STDL_OP_ANGM, angm_mat, ctx->ncsfs, Xamptd, Yamptd, tg2eangm));
+
+    // build egrad
+    float* egrad_angm = malloc(3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(egrad_angm);
+
+    stdl_response_perturbed_gradient(ctx, 3, 0, angm_mat, egrad_angm);
+
+    // solve linear response
+    float* X_angm = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(X_angm);
+
+    float* Y_angm = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(Y_angm);
+
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 0, egrad_angm, X_angm, Y_angm));
+
+    // compute tensor
+    float tensor[9], tensor_sos[9];
+
+    for (size_t iw = 0; iw < nw; ++iw) {
+        stdl_lrv lrv0 = {STDL_OP_ANGM, angm_mat, w[iw], X_angm + iw * 3 * ctx->ncsfs, Y_angm + iw * 3 * ctx->ncsfs},
+            lrv1 = {STDL_OP_DIPL, dipl_mat, w[iw], X_dipl + iw * 3 * ctx->ncsfs, Y_dipl + iw * 3 * ctx->ncsfs};
+
+        ASSERT_STDL_OK(stdl_property_tensor_linear(
+                ctx,
+                (stdl_lrv*[]) {&lrv0, &lrv1},
+                tensor
+        ));
+
+        stdl_matrix_sge_print(0, 3, 3, tensor, "tensor");
+
+        // compute property_tensor from SOS
+        for (int cpt_i = 0; cpt_i < 3; ++cpt_i) {
+            for (int cpt_j = 0; cpt_j < 3; ++cpt_j) {
+                tensor_sos[cpt_i * 3 + cpt_j] = .0f;
+                for (size_t iexci = 0; iexci < ctx->ncsfs; ++iexci) {
+                    float v = tg2eangm[cpt_i * ctx->ncsfs + iexci] * tg2edipl[cpt_j * ctx->ncsfs + iexci];
+                    tensor_sos[cpt_i * 3 + cpt_j] += v * (-1 / (etd[iexci] - w[iw]) + 1 / (etd[iexci] + w[iw]));
+                }
+            }
+        }
+
+        stdl_matrix_sge_print(0, 3, 3, tensor_sos, "tensor (SOS)");
+
+        // TEST_ASSERT_FLOAT_ARRAY_WITHIN(5e-1, tensor, tensor_sos, 9);
+    }
+
+    STDL_FREE_ALL(etd, Xamptd, Yamptd, dipl_mat, tg2edipl, angm_mat, tg2eangm, egrad_dipl, X_dipl, Y_dipl, egrad_angm, X_angm, Y_angm);
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
+}

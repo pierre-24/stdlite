@@ -29,7 +29,7 @@ void test_user_input_compute_responses() {
           "[context]\n"
           "source = \"../tests/test_files/chiral_sto3g.molden\"\n"
           "source_type = \"MOLDEN\"\n"
-          "ethr = '10eV'\n"
+          "ethr = '40eV'\n"
           "gammaJ = 2.0\n"
           "gammaK = 4.0\n"
           "ax = 1.0\n"
