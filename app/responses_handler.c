@@ -334,6 +334,7 @@ int stdl_responses_handler_compute(stdl_responses_handler *rh, stdl_user_input_h
         else
             stdl_response_TD_casida(ctx, rh->nexci, rh->eexci, rh->Xamp, rh->Yamp);
 
+        stdl_log_property_amplitude_contributions(rh, ctx, 5e-3);
         _dump_amplitudes_h5(res_group_id, ctx, rh);
     }
 
@@ -361,7 +362,9 @@ int stdl_responses_handler_compute(stdl_responses_handler *rh, stdl_user_input_h
         for (size_t cpt = 0; cpt < STDL_OPERATOR_DIM[op_data->op]; ++cpt) {
             char buff[128];
             sprintf(buff, "Component %ld", cpt);
-            stdl_matrix_dsp_print(ctx->original_wf->nao, op_ints_AO + cpt * STDL_MATRIX_SP_SIZE(ctx->original_wf->nao), buff);
+            stdl_matrix_dsp_print(3, ctx->original_wf->nao,
+                                  op_ints_AO + cpt * STDL_MATRIX_SP_SIZE(ctx->original_wf->nao),
+                                  buff);
         }
 
         stdl_log_msg(1, "+ ");
@@ -385,7 +388,7 @@ int stdl_responses_handler_compute(stdl_responses_handler *rh, stdl_user_input_h
         for (size_t cpt = 0; cpt < STDL_OPERATOR_DIM[op_data->op]; ++cpt) {
             char buff[128];
             sprintf(buff, "Component %ld", cpt);
-            stdl_matrix_dsp_print(ctx->nmo, op_data->op_ints_MO + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo), buff);
+            stdl_matrix_dsp_print(2, ctx->nmo, op_data->op_ints_MO + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo), buff);
         }
 
         STDL_FREE_IF_USED(op_ints_AO);
@@ -468,9 +471,9 @@ int stdl_response_handler_compute_properties(stdl_responses_handler* rh, stdl_us
             STDL_ERROR_CODE_HANDLE(err, return err);
 
             if(req->ops[0] == STDL_OP_DIPL)
-                stdl_log_property_g2e_dipoles(rh, ctx, req->property_tensor, 5e-3f);
+                stdl_log_property_g2e_dipoles(rh, ctx, req->property_tensor);
             else
-                stdl_log_property_g2e_moments(rh, ctx, req->ops[0], req->property_tensor, 5e-3f);
+                stdl_log_property_g2e_moments(rh, ctx, req->ops[0], req->property_tensor);
         }
 
         req = req->next;

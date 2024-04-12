@@ -9,12 +9,8 @@
 #include <stdlite/utils/molden_parser.h>
 #include <stdlite/property.h>
 #include <stdlite/property_tensor.h>
-#include <stdlite/response.h>
-#include <stdlite/utils/matrix.h>
-#include <stdlite/utils/experimental_quantity.h>
 
 #include "user_input_handler.h"
-#include "log_property.h"
 
 int stdl_user_input_handler_new(stdl_user_input_handler** inp_ptr) {
     assert(inp_ptr != NULL);

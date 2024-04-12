@@ -87,8 +87,8 @@ void test_response_egrad_non_hermitian_ok() {
         }
     }
 
-    stdl_matrix_sge_print(ctx->nmo, 3, egrad, "egrad");
-    stdl_matrix_sge_print(ctx->nmo, 3, egrad_from_ge, "egrad'");
+    stdl_matrix_sge_print(2, ctx->nmo, 3, egrad, "egrad");
+    stdl_matrix_sge_print(2, ctx->nmo, 3, egrad_from_ge, "egrad'");
 
     // check if equivalent
     TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, egrad, egrad_from_ge, 3 * ctx->ncsfs);

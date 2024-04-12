@@ -36,26 +36,34 @@ int stdl_log_property_linear_tensor(stdl_response_request* req, float* tensor, f
 int stdl_log_property_first_hyperpolarizability(stdl_response_request* req, float beta[3][3][3]);
 
 /**
- * Print the ground to excited dipole moments, as well as the contribution of each CSFs (if above `thresh`)
+ * Print the ground to excited dipole moments, together with the oscillator strength.
  * @param rh a valid responses handler
  * @param ctx a valid context
  * @param tdips transition dipoles
- * @param thresh threshold for the contributions
  * @return error code
  * @ingroup log_property
  */
-int stdl_log_property_g2e_dipoles(stdl_responses_handler *rh, stdl_context *ctx, float *tdips, float thresh);
+int stdl_log_property_g2e_dipoles(stdl_responses_handler *rh, stdl_context *ctx, float *tdips);
 
 /**
- * Print the ground to excited moments for `op`, as well as the contribution of each CSFs (if above `thresh`)
+ * Print the ground to excited moments for `op`.
  * @param rh a valid responses handler
  * @param ctx a valid context
  * @param op the operator
  * @param tg2e transition dipoles
+ * @return error code
+ * @ingroup log_property
+ */
+int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx, stdl_operator op, float *tg2e);
+
+/**
+ * Print the contribution of each CSFs (if above `thresh`).
+ * @param rh a valid responses handler
+ * @param ctx a valid context
  * @param thresh threshold for the contributions
  * @return error code
  * @ingroup log_property
  */
-int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx, stdl_operator op, float *tg2e, float thresh);
+void stdl_log_property_amplitude_contributions(stdl_responses_handler *rh, stdl_context *ctx, float thresh);
 
 #endif //STDLITE_LOG_PROPERTY_H

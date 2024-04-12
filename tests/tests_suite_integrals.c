@@ -29,7 +29,7 @@ void test_ovlp_ok() {
 
     ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_OVLP, 1., S));
 
-    stdl_matrix_dsp_print(wf->nao, S, "S");
+    stdl_matrix_dsp_print(2, wf->nao, S, "S");
 
     // check that <i|i> = 1 (not so obvious in libcint with cartesian functions)
     for (size_t i = 0; i < wf->nao; ++i)
@@ -45,9 +45,9 @@ void test_diplens_ok() {
 
     ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_DIPL, -1., diplens));
 
-    stdl_matrix_dsp_print(wf->nao, diplens + 0 * STDL_MATRIX_SP_SIZE(wf->nao), "xdipl");
-    stdl_matrix_dsp_print(wf->nao, diplens + 1 * STDL_MATRIX_SP_SIZE(wf->nao), "ydipl");
-    stdl_matrix_dsp_print(wf->nao, diplens + 2 * STDL_MATRIX_SP_SIZE(wf->nao), "zdipl");
+    stdl_matrix_dsp_print(2, wf->nao, diplens + 0 * STDL_MATRIX_SP_SIZE(wf->nao), "xdipl");
+    stdl_matrix_dsp_print(2, wf->nao, diplens + 1 * STDL_MATRIX_SP_SIZE(wf->nao), "ydipl");
+    stdl_matrix_dsp_print(2, wf->nao, diplens + 2 * STDL_MATRIX_SP_SIZE(wf->nao), "zdipl");
 
     free(diplens);
 }
@@ -58,9 +58,9 @@ void test_dipvels_ok() {
 
     ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_DIPV, 1., dipvels));
 
-    stdl_matrix_dsp_print(wf->nao, dipvels + 0 * STDL_MATRIX_SP_SIZE(wf->nao), "xdipv");
-    stdl_matrix_dsp_print(wf->nao, dipvels + 1 * STDL_MATRIX_SP_SIZE(wf->nao), "ydipv");
-    stdl_matrix_dsp_print(wf->nao, dipvels + 2 * STDL_MATRIX_SP_SIZE(wf->nao), "zdipv");
+    stdl_matrix_dsp_print(2, wf->nao, dipvels + 0 * STDL_MATRIX_SP_SIZE(wf->nao), "xdipv");
+    stdl_matrix_dsp_print(2, wf->nao, dipvels + 1 * STDL_MATRIX_SP_SIZE(wf->nao), "ydipv");
+    stdl_matrix_dsp_print(2, wf->nao, dipvels + 2 * STDL_MATRIX_SP_SIZE(wf->nao), "zdipv");
 
     free(dipvels);
 }
@@ -72,9 +72,9 @@ void test_angmoms_ok() {
 
     ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_ANGM, 1., angmoms));
 
-    stdl_matrix_dsp_print(wf->nao, angmoms + 0 * STDL_MATRIX_SP_SIZE(wf->nao), "xangm");
-    stdl_matrix_dsp_print(wf->nao, angmoms + 1 * STDL_MATRIX_SP_SIZE(wf->nao), "yangm");
-    stdl_matrix_dsp_print(wf->nao, angmoms + 2 * STDL_MATRIX_SP_SIZE(wf->nao), "zangm");
+    stdl_matrix_dsp_print(2, wf->nao, angmoms + 0 * STDL_MATRIX_SP_SIZE(wf->nao), "xangm");
+    stdl_matrix_dsp_print(2, wf->nao, angmoms + 1 * STDL_MATRIX_SP_SIZE(wf->nao), "yangm");
+    stdl_matrix_dsp_print(2, wf->nao, angmoms + 2 * STDL_MATRIX_SP_SIZE(wf->nao), "zangm");
 
     free(angmoms);
 }

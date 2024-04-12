@@ -115,7 +115,8 @@ int stdl_log_property_linear_tensor(stdl_response_request* req, float* tensor, f
     return STDL_ERR_OK;
 }*/
 
-void _log_amplitude_contributions(stdl_responses_handler *rh, stdl_context *ctx, float thresh) {
+void stdl_log_property_amplitude_contributions(stdl_responses_handler *rh, stdl_context *ctx, float thresh) {
+    assert(rh != NULL && ctx != NULL && thresh > 0);
 
     float s2o2 = sqrtf(2) / 2;
     size_t nvirt = ctx->nmo - ctx->nocc;
@@ -160,8 +161,8 @@ void _log_amplitude_contributions(stdl_responses_handler *rh, stdl_context *ctx,
     }
 }
 
-int stdl_log_property_g2e_dipoles(stdl_responses_handler *rh, stdl_context *ctx, float *tdips, float thresh) {
-    assert(rh != NULL && ctx != NULL && tdips != NULL && thresh > 0);
+int stdl_log_property_g2e_dipoles(stdl_responses_handler *rh, stdl_context *ctx, float *tdips) {
+    assert(rh != NULL && ctx != NULL && tdips != NULL);
 
     // energy and transition dipole moment
     stdl_log_msg(0, "**    -------- Energy ------- ------ Transition dipole ---------\n");
@@ -181,13 +182,11 @@ int stdl_log_property_g2e_dipoles(stdl_responses_handler *rh, stdl_context *ctx,
         stdl_log_msg(0, "\n");
     }
 
-    _log_amplitude_contributions(rh, ctx, thresh);
-
     return STDL_ERR_OK;
 }
 
-int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx, stdl_operator op, float *tg2e, float thresh) {
-    assert(rh != NULL && ctx != NULL && tg2e != NULL && thresh > 0);
+int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx, stdl_operator op, float *tg2e) {
+    assert(rh != NULL && ctx != NULL && tg2e != NULL);
 
     size_t dim0 = STDL_OPERATOR_DIM[op];
 
@@ -217,8 +216,6 @@ int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx,
 
         stdl_log_msg(0, "\n");
     }
-
-    _log_amplitude_contributions(rh, ctx, thresh);
 
     return STDL_ERR_OK;
 }

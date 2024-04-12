@@ -131,7 +131,7 @@ void test_property_polarizability_TD_SOS_ok() {
                 alpha
         ));
 
-        stdl_matrix_sge_print(3, 3, alpha, "alpha");
+        stdl_matrix_sge_print(2, 3, 3, alpha, "alpha");
 
         // compute property_tensor from SOS
         for (int cpt_i = 0; cpt_i < 3; ++cpt_i) {
@@ -142,7 +142,7 @@ void test_property_polarizability_TD_SOS_ok() {
             }
         }
 
-        stdl_matrix_sge_print(3, 3, alpha_sos, "alpha (SOS)");
+        stdl_matrix_sge_print(2, 3, 3, alpha_sos, "alpha (SOS)");
 
         TEST_ASSERT_FLOAT_ARRAY_WITHIN(5e-1, alpha, alpha_sos, 9);
     }
@@ -350,7 +350,7 @@ void test_property_polarizability_TDA_SOS_ok() {
                 alpha
         ));
 
-        stdl_matrix_sge_print(3, 3, alpha, "alpha");
+        stdl_matrix_sge_print(2, 3, 3, alpha, "alpha");
 
         // compute property_tensor from SOS
         for (int cpt_i = 0; cpt_i < 3; ++cpt_i) {
@@ -361,7 +361,7 @@ void test_property_polarizability_TDA_SOS_ok() {
             }
         }
 
-        stdl_matrix_sge_print(3, 3, alpha_sos, "alpha (SOS)");
+        stdl_matrix_sge_print(2, 3, 3, alpha_sos, "alpha (SOS)");
 
         TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, alpha, alpha_sos, 9);
     }

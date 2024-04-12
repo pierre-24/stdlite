@@ -328,8 +328,8 @@ void test_ao_to_mo_hermitian() {
 
     ASSERT_STDL_OK(stdl_wavefunction_dge_ao_to_dge_mo(wf->nao, wf->nmo, wf->C, prop_ao_ge, prop_mo_ge));
 
-    stdl_matrix_dsp_print(wf->nmo, prop_mo_sp, "P");
-    stdl_matrix_dge_print(wf->nmo, wf->nmo, prop_mo_ge, "P'");
+    stdl_matrix_dsp_print(2, wf->nmo, prop_mo_sp, "P");
+    stdl_matrix_dge_print(2, wf->nmo, wf->nmo, prop_mo_ge, "P'");
 
     // test that prop in MO basis are the same
     for (size_t p = 0; p < wf->nmo; ++p) {
@@ -378,8 +378,8 @@ void test_ao_to_mo_anti_hermitian() {
     ASSERT_STDL_OK(stdl_wavefunction_dsp_ao_to_dsp_mo(wf->nao, wf->nmo, 0, wf->C, prop_ao_sp, prop_mo_sp));
     ASSERT_STDL_OK(stdl_wavefunction_dge_ao_to_dge_mo(wf->nao, wf->nmo, wf->C, prop_ao_ge, prop_mo_ge));
 
-    stdl_matrix_dsp_print(wf->nmo, prop_mo_sp, "P (MO)");
-    stdl_matrix_dge_print(wf->nmo, wf->nmo, prop_mo_ge, "P' (MO)");
+    stdl_matrix_dsp_print(2, wf->nmo, prop_mo_sp, "P (MO)");
+    stdl_matrix_dge_print(2, wf->nmo, wf->nmo, prop_mo_ge, "P' (MO)");
 
     // test that prop in MO basis are the same
     for (size_t p = 0; p < wf->nmo; ++p) {
