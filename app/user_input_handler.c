@@ -96,6 +96,7 @@ int _operator_in(toml_table_t* table, char* field, stdl_operator * result, int* 
             if(strcmp(op.u.s, STDL_OPERATOR_NAME[iop]) == 0) {
                 *result = iop;
                 *isset = 1;
+                STDL_DEBUG(STDL_OPERATOR_NAME[iop]);
                 break;
             }
         }

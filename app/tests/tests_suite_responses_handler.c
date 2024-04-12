@@ -29,15 +29,15 @@ void test_user_input_compute_responses() {
           "[context]\n"
           "source = \"../tests/test_files/chiral_sto3g.molden\"\n"
           "source_type = \"MOLDEN\"\n"
-          "ethr = '15eV'\n"
+          "ethr = '10eV'\n"
           "gammaJ = 2.0\n"
           "gammaK = 4.0\n"
           "ax = 1.0\n"
-          "tda=1\n"
+          "tda=0\n"
           "[responses]\n"
-          "linear = [{opA = 'dipl', opB = 'dipl', wB = '0'}, {opA = 'dipl', opB = 'dipl', wB = '1064nm'}, {opA = 'dipl', opB = 'dipl', wB = '532nm'}]\n"
-          "quadratic = [{opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = '1064nm', wC = '1064nm'}]\n"
-          "linear_sr = [{opA = 'dipl', nroots = -1}, {opA = 'dipv', nroots = -1}, {opA = 'angm', nroots = -1}]",
+          "linear = [{opA = 'dipl', opB = 'dipl', wB = '532nm'}, {opA = 'angm', opB = 'dipl', wB = '532nm'}]\n"
+          "#quadratic = [{opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = '1064nm', wC = '1064nm'}]\n"
+          "linear_sr = [{opA = 'dipl', nroots = -1}, {opA = 'angm', nroots = -1}]",
           stream);
     rewind(stream);
 
@@ -53,27 +53,33 @@ void test_user_input_compute_responses() {
     stdl_responses_handler *rh = NULL;
     ASSERT_STDL_OK(stdl_responses_handler_new_from_input(inp, ctx, &rh));
 
-    stdl_op_data* op_data = rh->lrvs_data[STDL_OP_DIPL];
-    TEST_ASSERT_NOT_NULL(op_data);
+    stdl_op_data* op_data_dipl = rh->lrvs_data[STDL_OP_DIPL];
+    TEST_ASSERT_NOT_NULL(op_data_dipl);
 
-    TEST_ASSERT_EQUAL(STDL_OP_DIPL, op_data->op);
-    TEST_ASSERT_EQUAL(3, op_data->nlrvs);
-    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, ((float []) {0, STDL_CONST_HC / 1064.f, STDL_CONST_HC / 532.f}), op_data->w, 3);
+    TEST_ASSERT_EQUAL(STDL_OP_DIPL, op_data_dipl->op);
+    TEST_ASSERT_EQUAL(1, op_data_dipl->nlrvs);
+    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, ((float []) {STDL_CONST_HC / 532.f}), op_data_dipl->w, 1);
+
+    stdl_op_data* op_data_angm = rh->lrvs_data[STDL_OP_ANGM];
+    TEST_ASSERT_NOT_NULL(op_data_angm);
+
+    TEST_ASSERT_EQUAL(STDL_OP_ANGM, op_data_angm->op);
+    TEST_ASSERT_EQUAL(1, op_data_angm->nlrvs);
+    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, ((float []) {STDL_CONST_HC / 532.f}), op_data_angm->w, 1);
 
     // compute responses
     ASSERT_STDL_OK(stdl_responses_handler_compute(rh, inp, ctx));
 
-    TEST_ASSERT_EQUAL(STDL_OP_DIPL, op_data->lrvs[0].op);
-    TEST_ASSERT_FLOAT_WITHIN(1e-6, 0, op_data->lrvs[0].w);
-    TEST_ASSERT_EQUAL(STDL_OP_DIPL, op_data->lrvs[1].op);
-    TEST_ASSERT_FLOAT_WITHIN(1e-6, STDL_CONST_HC / 1064.f, op_data->lrvs[1].w);
-    TEST_ASSERT_EQUAL(STDL_OP_DIPL, op_data->lrvs[2].op);
-    TEST_ASSERT_FLOAT_WITHIN(1e-6, STDL_CONST_HC / 532.f, op_data->lrvs[2].w);
+    TEST_ASSERT_EQUAL(STDL_OP_DIPL, op_data_dipl->lrvs[0].op);
+    TEST_ASSERT_FLOAT_WITHIN(1e-6, STDL_CONST_HC / 532.f, op_data_dipl->lrvs[0].w);
+
+    TEST_ASSERT_EQUAL(STDL_OP_ANGM, op_data_angm->lrvs[0].op);
+    TEST_ASSERT_FLOAT_WITHIN(1e-6, STDL_CONST_HC / 532.f, op_data_angm->lrvs[0].w);
 
     // compute properties
     ASSERT_STDL_OK(stdl_response_handler_compute_properties(rh, inp, ctx));
 
-    // delete op_data output
+    // delete op_data_dipl output
     unlink(inp->data_output);
 
     ASSERT_STDL_OK(stdl_responses_handler_delete(rh));

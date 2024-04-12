@@ -20,6 +20,7 @@ int stdl_op_data_new(stdl_operator op, size_t nmo, size_t ncsfs, size_t nlrvs, f
     (*data_ptr)->nlrvs = nlrvs;
 
     (*data_ptr)->op_ints_MO = malloc(STDL_OPERATOR_DIM[op] * STDL_MATRIX_SP_SIZE(nmo) * sizeof(double));
+    STDL_ERROR_HANDLE_AND_REPORT((*data_ptr)->op_ints_MO == NULL, stdl_op_data_delete(*data_ptr); return STDL_ERR_MALLOC, "malloc");
 
     (*data_ptr)->w = NULL;
     (*data_ptr)->iw = NULL;
@@ -191,6 +192,8 @@ int stdl_responses_handler_new_from_input(stdl_user_input_handler* inp, stdl_con
     size_t res_nexci = 0, res_nops = 0, res_nlrvs = 0;
 
     int* ops_w = calloc(STDL_OP_COUNT * inp->res_nw, sizeof(int));
+    printf("sz = %ld (%d)\n", STDL_OP_COUNT * inp->res_nw, STDL_OP_COUNT);
+
     STDL_ERROR_HANDLE_AND_REPORT(ops_w == NULL, return STDL_ERR_MALLOC, "malloc");
 
     stdl_response_request* req = inp->res_resreqs;
@@ -206,7 +209,7 @@ int stdl_responses_handler_new_from_input(stdl_user_input_handler* inp, stdl_con
 
         // check out if it contains new frequencies
         for (size_t ilrv = 0; ilrv < req->nlrvs; ++ilrv) {
-            ops_w[req->ops[ilrv] * STDL_OP_COUNT + req->iw[ilrv]] = 1;
+            ops_w[req->ops[ilrv] * inp->res_nw + req->iw[ilrv]] = 1;
         }
 
         // check out if it requires amplitudes
@@ -231,17 +234,17 @@ int stdl_responses_handler_new_from_input(stdl_user_input_handler* inp, stdl_con
     int err = stdl_responses_handler_new(ctx, res_nexci, rh_ptr);
     STDL_ERROR_CODE_HANDLE(err, return err);
 
-    for (int iop = 0; iop < STDL_OP_COUNT; ++iop) {
+    for (size_t iop = 0; iop < STDL_OP_COUNT; ++iop) {
         size_t nlrvs = 0;
 
         if(ops_needed[iop]) {
             float* op_w = malloc(inp->res_nw * sizeof(float ));
             size_t* op_iw = malloc(inp->res_nw * sizeof(size_t ));
-            STDL_ERROR_HANDLE_AND_REPORT(op_w == NULL, free(ops_w); return STDL_ERR_MALLOC, "malloc");
+            STDL_ERROR_HANDLE_AND_REPORT(op_w == NULL || op_iw == NULL, STDL_FREE_IF_USED(op_w); STDL_FREE_IF_USED(op_iw); return STDL_ERR_MALLOC, "malloc");
 
             STDL_DEBUG("%s selected", STDL_OPERATOR_NAME[iop]);
             for (size_t iw = 0; iw < inp->res_nw; ++iw) {
-                if(ops_w[iop * STDL_OP_COUNT + iw]) {
+                if(ops_w[iop *  inp->res_nw + iw]) {
                     op_iw[nlrvs] = iw;
                     op_w[nlrvs] = inp->res_w[iw];
                     nlrvs += 1;

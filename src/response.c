@@ -305,8 +305,6 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
         lapack_err = LAPACKE_ssptrs_work(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, (STDL_LA_INT) ndim, L, ipiv, Xi, (STDL_LA_INT) ndim);
         STDL_ERROR_HANDLE_AND_REPORT(lapack_err != 0, STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptrs(): %d", lapack_err);
 
-        stdl_matrix_sge_print(2, ctx->ncsfs, ndim, Xi, "X'");
-
         // separate X and Y
         // Xi' = Xi + Yi [hermitian] or Xi - Yi [non-hermitian]
         // Yi' = w*(A-B)^(-1)*Xi' = Xi - Yi [hermitian] or w*(A+B)^(-1)*Xi' = Xi + Yi [non-hermitian]

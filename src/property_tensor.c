@@ -22,7 +22,7 @@ int _property_tensor_linear_element(size_t components[2], stdl_context* ctx, std
         float s1, s2, d1, d2;
 
         d1 = (float) lrvs[0]->op_ints_MO[components[0] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)] * (STDL_OPERATOR_HERMITIAN[lrvs[0]->op]? 1.f: -1.f);
-        d2 = (float) lrvs[1]->op_ints_MO[components[1] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)] * (STDL_OPERATOR_HERMITIAN[lrvs[0]->op]? 1.f: -1.f);
+        d2 = (float) lrvs[1]->op_ints_MO[components[1] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)] * (STDL_OPERATOR_HERMITIAN[lrvs[1]->op]? 1.f: -1.f);
 
         s1 = lrvs[0]->Xw[lia * dim0 + components[0]] + (STDL_OPERATOR_HERMITIAN[lrvs[0]->op]? 1.f: -1.f) * lrvs[0]->Yw[lia * dim0 + components[0]];
         s2 = lrvs[1]->Xw[lia * dim1 + components[1]] + (STDL_OPERATOR_HERMITIAN[lrvs[1]->op]? 1.f: -1.f) * lrvs[1]->Yw[lia * dim1 + components[1]];
@@ -71,7 +71,7 @@ int stdl_property_tensor_linear(stdl_context *ctx, stdl_lrv *lrvs[2], float *ten
             while (element != NULL) {
                 _l_elm* e0 = (_l_elm *) element->perm, *e1 = e0 + 1;
 
-                if(e0->lrv == e1->lrv) {
+                if(e0->lrv == lrvs[0] && e1->lrv == lrvs[1]) {
 
                     STDL_DEBUG("Set element (%ld,%ld) of property_tensor via permutation", e0->cpt, e1->cpt);
 
