@@ -41,8 +41,9 @@ int stdl_log_property_linear_tensor(stdl_response_request* req, float* tensor, f
     assert(req != NULL && tensor != NULL);
 
     size_t dim0 = STDL_OPERATOR_DIM[req->ops[0]], dim1 = STDL_OPERATOR_DIM[req->ops[1]];
+    float trs = STDL_OPERATOR_TRS[req->ops[0]] * STDL_OPERATOR_TRS[req->ops[1]];
 
-    stdl_log_msg(0, "** -<<%s;%s>>_w @ w=%f Eh (%.2f nm)\n", STDL_OPERATOR_NAME[req->ops[0]], STDL_OPERATOR_NAME[req->ops[1]], w, STDL_CONST_HC / w);
+    stdl_log_msg(0, "** -%s<<%s;%s>>_w @ w=%f Eh (%.2f nm)\n", trs < 0? "Im": "", STDL_OPERATOR_NAME[req->ops[0]], STDL_OPERATOR_NAME[req->ops[1]], w, STDL_CONST_HC / w);
 
     stdl_log_msg(0, "    ");
     for (size_t sigma = 0; sigma < dim1; ++sigma)

@@ -42,18 +42,18 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
 
 
 /**
- * Create the perturbed electronic gradient matrix, $-2\eta$ (or $-2\Im(\eta)$ if `is_hermitian=0`)
+ * Create the perturbed electronic gradient matrix, $-2\eta$.
  * to be used in linear response equation (`stdl_response_TD_linear()`).
  *
  * @param ctx a valid context, with `ctx->ncsfs > 0`.
  * @param dim dimension of the corresponding operator
- * @param is_hermitian whether the operator is hermitian (`1`) or not (`0`)
+ * @param issym whether the operator is symmetric (`1`, $\eta_{pq} = \eta_{qp}$) or not (`0`, $\eta_{pq} = -\eta_{qp}$)
  * @param op_ints_MO `double[dim,ctx->nmo,ctx->nmo]`, the value of $\eta$ in MO basis
  * @param[out] egrad `float[ctx->ncsfs,dim]` $-2\eta$, the resulting perturbed electronic gradient
  * @return error code
  * @ingroup response
  */
-int stdl_response_perturbed_gradient(stdl_context *ctx, size_t dim, int is_hermitian, double *op_ints_MO, float *egrad);
+int stdl_response_perturbed_gradient(stdl_context *ctx, size_t dim, int issym, double *op_ints_MO, float *egrad);
 
 
 /**
@@ -63,14 +63,14 @@ int stdl_response_perturbed_gradient(stdl_context *ctx, size_t dim, int is_hermi
  * @param nw number of energies at which linear response should be computed
  * @param w `float[nlrvs]` energies at which linear response should be computed
  * @param ndim dimension of the electronic gradient
- * @param is_hermitian whether the operator is hermitian (`1`) or not (`0`)
+ * @param isherm whether the operator is hermitian (`1`) or not (`0`)
  * @param egrad `float[ncsfs,ndim]` $-2\eta$, the perturbed electronic gradient in each dimension.
  * @param[out] X `float[nlrvs,ncsfs,ndim]` response vector $\mathbf x(\omega)$, in each dimension.
  * @param[out] Y `float[nlrvs,ncsfs,ndim]` response vector $\mathbf y(\omega)$, in each dimension.
  * @return error code
  * @ingroup response
  */
-int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, int is_hermitian, float *egrad, float *X, float *Y);
+int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, int isherm, float *egrad, float *X, float *Y);
 
 /**
  * Solve the linear response equation at `nlrvs` energies $\{\omega_i\}$, within the Tamm-Dancoff approximation, to get the corresponding response vectors ($\mathbf x(\omega_i)$, $\mathbf y(\omega_i)$).
@@ -79,14 +79,14 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
  * @param nw number of energies at which linear response should be computed
  * @param w `float[nlrvs]` energies at which linear response should be computed
  * @param ndim dimension of the electronic gradient
- * @param is_hermitian whether the operator is hermitian (`1`) or not (`0`)
+ * @param isherm whether the operator is hermitian (`1`) or not (`0`)
  * @param egrad `float[ncsfs,ndim]` $-2\eta$, the perturbed electronic gradient in each dimension.
  * @param[out] X `float[nlrvs,ncsfs,ndim]` response vector $\mathbf x(\omega)$, in each dimension.
  * @param[out] Y `float[nlrvs,ncsfs,ndim]` response vector $\mathbf y(\omega)$ in each dimension.
  * @return error code
  * @ingroup response
  */
-int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, int is_hermitian, float *egrad, float *X, float *Y);
+int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, int isherm, float *egrad, float *X, float *Y);
 
 
 #endif //STDLITE_RESPONSE_H

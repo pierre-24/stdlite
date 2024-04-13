@@ -443,7 +443,7 @@ void test_property_tensor_angmom_dipl_TD_SOS_ok() {
     float* Y_angm = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Y_angm);
 
-    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 0, egrad_angm, X_angm, Y_angm));
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 1, egrad_angm, X_angm, Y_angm));
 
     // compute tensor
     float tensor[9], tensor_sos[9];
@@ -458,7 +458,7 @@ void test_property_tensor_angmom_dipl_TD_SOS_ok() {
                 tensor
         ));
 
-        stdl_matrix_sge_print(0, 3, 3, tensor, "tensor");
+        stdl_matrix_sge_print(2, 3, 3, tensor, "tensor");
 
         // compute property_tensor from SOS
         for (int cpt_i = 0; cpt_i < 3; ++cpt_i) {
@@ -466,14 +466,14 @@ void test_property_tensor_angmom_dipl_TD_SOS_ok() {
                 tensor_sos[cpt_i * 3 + cpt_j] = .0f;
                 for (size_t iexci = 0; iexci < ctx->ncsfs; ++iexci) {
                     float v = tg2eangm[cpt_i * ctx->ncsfs + iexci] * tg2edipl[cpt_j * ctx->ncsfs + iexci];
-                    tensor_sos[cpt_i * 3 + cpt_j] += v * (-1 / (etd[iexci] - w[iw]) + 1 / (etd[iexci] + w[iw]));
+                    tensor_sos[cpt_i * 3 + cpt_j] += v * (1 / (etd[iexci] - w[iw]) - 1 / (etd[iexci] + w[iw]));
                 }
             }
         }
 
-        stdl_matrix_sge_print(0, 3, 3, tensor_sos, "tensor (SOS)");
+        stdl_matrix_sge_print(2, 3, 3, tensor_sos, "tensor (SOS)");
 
-        // TEST_ASSERT_FLOAT_ARRAY_WITHIN(5e-1, tensor, tensor_sos, 9);
+        TEST_ASSERT_FLOAT_ARRAY_WITHIN(5e-1, tensor, tensor_sos, 9);
     }
 
     STDL_FREE_ALL(etd, Xamptd, Yamptd, dipl_mat, tg2edipl, angm_mat, tg2eangm, egrad_dipl, X_dipl, Y_dipl, egrad_angm, X_angm, Y_angm);

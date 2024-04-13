@@ -123,7 +123,7 @@ $$
 
 where $\Re(\eta_\zeta)$ and $\Im(\eta_\zeta)$ are the real and imaginary part of $\eta_\zeta$, respectively.
 
-In the case where $\Im(\eta_\zeta) = \mathbf 0$ (hermitian operator), then:
+In the case where $\eta^\star = \eta \Rightarrow \Im(\eta_\zeta) = 0$ (hermitian operator), then:
     
 $$[(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}]\,[\mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)] = -2\mathbf\eta_\zeta.$$
 
@@ -145,7 +145,7 @@ $$[(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}]\,[\mathbf x
     the response vector are obtained: $\mathbf x_{\zeta}(\omega) = \frac{1}{2}[\mathbf u_{\zeta}(\omega)  + \mathbf v_{\zeta}(\omega)]$ and $\mathbf y_{\zeta}(\omega) = \frac{1}{2}[\mathbf u_{\zeta}(\omega)  - \mathbf v_{\zeta}(\omega)]$.
 
 
-On the other hand, in the case where $\Re(\eta_\zeta) = \mathbf 0$ (anti-hermitian operator), then:
+On the other hand, in the case where $\eta = -\eta^\star \Rightarrow \Re(\eta_\zeta) = 0$ (anti-hermitian operator), then:
 
 $$[(\mathbf{A} - \mathbf{B}) - \omega^2(\mathbf{A}+\mathbf{B})^{-1}]\,[\mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega)] = -2\Im(\mathbf\eta_\zeta).$$
 
@@ -209,7 +209,7 @@ In both cases, these amplitude vectors are linked to their linear response count
 
     $$x_{ia,\zeta}(-\omega) = y_{ia,\zeta}(\omega) \land y_{ia,\zeta}(-\omega) = x_{ia,\zeta}(\omega).$$
 
-+ If $\hat\eta$ is anti-hermitian [i.e., $\Re(\eta_\zeta)=0$]:
++ If $\hat\eta$ is anti-hermitian:
 
     $$\begin{aligned}
     x_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} - y^{m}_{ia})\,\left[\frac{x_{ia}^{m}}{\omega-\omega_m}+\frac{y_{ia}^{m}}{\omega+\omega_m}\right],\\
@@ -331,25 +331,62 @@ B'_{ia,jb} =& 2\,(ia|bj)' -a_x\,(ib|aj)'.
 ### AO integrals
 
 The AO integral elements of an operator, $\hat O$, are denoted $O_{\mu\nu} = \braket{\mu|\hat O|\nu}$.
-Operator are either hermitian (which results in a [symmetric](https://en.wikipedia.org/wiki/Symmetric_matrix) matrix, $O_{\mu\nu} = O_{\nu\mu}$) or anti-hermitian (which results in a [skew-symmetric](https://en.wikipedia.org/wiki/Skew-Hermitian_matrix) matrix, $O_{\mu\nu} = -O_{\nu\mu}^\star$).
-
-For the moment, the following operators are handled by `stdlite`:
-
-| Operator                  | Expression                                   | Dimensionality | Symmetry       |
-|---------------------------|----------------------------------------------|----------------|----------------|
-| Dipole length (`dipl`)    | $\hat\mu^L = e\,(\hat r - R_0)$              | 3 (x, y, z)    | Hermitian      |
-| Dipole velocity (`dipv`)  | $\hat\mu^V = -i\hat\nabla$                   | 3 (x, y, z)    | Anti-hermitian |
-| Angular momentum (`angm`) | $\hat m = i\,(\hat r - R_0)\times\hat\nabla$ | 3 (x, y, z)    | Anti-hermitian |
+Operator are either hermitian (which results in a [hermitian](https://en.wikipedia.org/wiki/Hermitian_matrix) matrix, $O_{\mu\nu} = O^\star_{\nu\mu}$ with real values on the diagonal) or anti-hermitian (which results in a [skew-symmetric](https://en.wikipedia.org/wiki/Skew-Hermitian_matrix) matrix, $O_{\mu\nu} = -O_{\nu\mu}^\star$).
 
 A conversion of $A$ from the AO to the MO basis is done using:
 
 $$O_{pq} = \sum^{AO}_{\mu\nu} C_{p\mu} O_{\mu\nu} C_{q\nu}.$$
 
+
+For the moment, the following operators are handled by `stdlite`:
+
+| Operator                  | Expression                                 | Dimensionality | Symmetry       | Hermitian | [Time-Reversal symmetry](https://en.wikipedia.org/wiki/T-symmetry) |
+|---------------------------|--------------------------------------------|----------------|----------------|-----------|--------------------------------------------------------------------|
+| Dipole length (`dipl`)    | $\hat\mu^L = e\,(\vec r - R_0)$            | 3 (x, y, z)    | Symmetric      | Yes       | Even                                                               |
+| Dipole velocity (`dipv`)  | $\hat\mu^V = i\vec\nabla$                  | 3 (x, y, z)    | Anti-symmetric | Yes       | Odd                                                                |
+| Angular momentum (`angm`) | $\hat m = i(\hat r - R_0)\times\vec\nabla$ | 3 (x, y, z)    | Anti-symmetric | Yes       | Odd                                                                |
+
+An [even time-reversal symmetry](https://en.wikipedia.org/wiki/T-symmetry#Even) operator do not change upon time reversal, that is:
+
+$${}^A\theta = \hat\theta\hat A \hat\theta^\dagger = 1,$$
+
+while an odd time-reversal operator is negated:
+
+$${}^B\theta = \hat\theta\hat B \hat\theta^\dagger = -1.$$
+
+$\hat p = -i\vec\nabla$ is an example of the latter. 
+$\hat\theta$ is the so-called [time-reversal operator](https://bohr.physics.berkeley.edu/classes/221/9697/timerev.pdf).
+As discussed, *e.g.*, in [10.1016/S1380-7323(02)80033-4](https://dx.doi.org/10.1016/S1380-7323(02)80033-4), the transformation $\omega \leftrightarrow -\omega$ is in fact equivalent to time-reversal.
+
 ### Linear and quadratic response functions
 
 Linear and quadratic response functions are generally noted $\braket{\braket{\hat A; \hat B}}_{\omega_B}$ and $\braket{\braket{\hat A; \hat B, \hat C}}_{\omega_B,\omega_C}$, which describes how the expectation value of $\hat A$ (at frequency $\omega_A = -\omega_B - \omega_C$) responds to a set of perturbation to first and second order in perturbation.
 
-Linear responses result in a rank-2 tensors, while a rank-3 property_tensor is the result of a quadratic response function.
+Linear responses result in a rank-2 tensor, $\mathcal{T}^{(2)}$:
+
+$$\begin{aligned}
+\mathcal{T}^{(2)}_{\zeta\sigma} &= -\braket{\braket{\hat A_\zeta;\hat B_\sigma}}_\omega\\
+&= -\sum_\mathcal{P} \sum_{ia}^{CSFs} A_{ia,\zeta}\,{}^B\kappa_{ia,\sigma}(\omega)\\
+&= -\sum_{ia}^{CSFs} [A_{ia,\zeta}\,{}^B\kappa_{ia,\sigma}(\omega) + B_{ia,\sigma}\,{}^A\kappa_{ia,\zeta}(-\omega)],
+\end{aligned}$$
+
+where $\sum_{\mathcal P}$ is thus the sum over the sequence of permutations of the pairs of operator and energies $\{(\hat A_\zeta, -\omega), (\hat B_\sigma, \omega)\}$, and:
+
+$${}^B\kappa_{ia,\sigma}(\omega) = \begin{cases}
+{}^Bx_{ia,\sigma}(\omega) + {}^By_{ia,\sigma}(\omega) & \text{ if } {}^A\theta{}^B\theta = 1, \\
+{}^Bx_{ia,\sigma}(\omega) - {}^By_{ia,\sigma}(\omega) & \text{ otherwise},
+\end{cases}$$
+
+where ${}^B\mathbf \kappa(\omega)$ is computed from the linear response vectors ${}^B\mathbf x(\omega)$ and ${}^B\mathbf y(\omega)$, computed using Eq. (3) with $\hat B$.
+
+??? note "Consequence of the spectral representation"
+
+    If $\hat B$ is hermitian, then, from the spectral representations of the linear response vectors, it can be seen that ${}^B\kappa(\omega)$ is either:
+
+    + hermitian (and real) if both $\hat A$ and $\hat B$ have the same symmetry with respect to time reversal, or 
+    + anti-hermitian (and thus imaginary) if not. This further implies that $\lim_{\omega\to 0} {}^B\kappa(\omega)=0$.
+
+A rank-3 tensor, $\mathcal{T}^{(3)}$ is the result of a quadratic response function.
 
 Residue of the response functions provide information on the (excited states of the) unperturbed system.
 For example, the linear response function might be extended in the following spectral representation:

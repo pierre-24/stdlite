@@ -15,17 +15,20 @@ int _property_tensor_linear_element(size_t components[2], stdl_context* ctx, std
     float v = 0;
     size_t dim0 = STDL_OPERATOR_DIM[lrvs[0]->op], dim1 = STDL_OPERATOR_DIM[lrvs[1]->op];
 
+    // time-reversal symmetry of the whole thing
+    float trs = STDL_OPERATOR_TRS[lrvs[0]->op] * STDL_OPERATOR_TRS[lrvs[1]->op];
+
     #pragma omp parallel for reduction(+:v)
     for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
         size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
 
         float s1, s2, d1, d2;
 
-        d1 = (float) lrvs[0]->op_ints_MO[components[0] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)] * (STDL_OPERATOR_HERMITIAN[lrvs[0]->op]? 1.f: -1.f);
-        d2 = (float) lrvs[1]->op_ints_MO[components[1] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)] * (STDL_OPERATOR_HERMITIAN[lrvs[1]->op]? 1.f: -1.f);
+        d1 = (float) lrvs[0]->op_ints_MO[components[0] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)] * (STDL_OPERATOR_ISSYM[lrvs[0]->op]? 1.f: -1.f);
+        d2 = (float) lrvs[1]->op_ints_MO[components[1] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)] * (STDL_OPERATOR_ISSYM[lrvs[1]->op]? 1.f: -1.f);
 
-        s1 = lrvs[0]->Xw[lia * dim0 + components[0]] + (STDL_OPERATOR_HERMITIAN[lrvs[0]->op]? 1.f: -1.f) * lrvs[0]->Yw[lia * dim0 + components[0]];
-        s2 = lrvs[1]->Xw[lia * dim1 + components[1]] + (STDL_OPERATOR_HERMITIAN[lrvs[1]->op]? 1.f: -1.f) * lrvs[1]->Yw[lia * dim1 + components[1]];
+        s1 = lrvs[0]->Xw[lia * dim0 + components[0]] + trs * lrvs[0]->Yw[lia * dim0 + components[0]];
+        s2 = lrvs[1]->Xw[lia * dim1 + components[1]] + trs * lrvs[1]->Yw[lia * dim1 + components[1]];
 
         v -= d1 * s2 + d2 * s1;
     }
@@ -111,10 +114,10 @@ int stdl_property_tensor_g2e_moments(stdl_context *ctx, stdl_operator op, double
             size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
             float amplitude = Xamp[iexci * ctx->ncsfs + lia];
             if(Yamp != NULL)
-                amplitude += (STDL_OPERATOR_HERMITIAN[op]? 1.f : -1.f) * Yamp[iexci * ctx->ncsfs + lia];
+                amplitude += STDL_OPERATOR_TRS[op] * Yamp[iexci * ctx->ncsfs + lia];
 
             for (size_t cpt = 0; cpt < dim0; ++cpt)
-                tg2e[cpt * nexci + iexci] += s2 * amplitude * ((float) op_ints_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)]) * (STDL_OPERATOR_HERMITIAN[op] ? 1.f : -1.f);
+                tg2e[cpt * nexci + iexci] += s2 * amplitude * ((float) op_ints_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)]) * (STDL_OPERATOR_ISSYM[op] ? 1.f : -1.f);
         }
     }
 

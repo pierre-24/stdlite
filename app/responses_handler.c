@@ -93,7 +93,7 @@ int stdl_op_data_dump_h5(stdl_op_data *data, stdl_context *ctx, hid_t group_id) 
     stdl_log_msg(0, "-");
     stdl_log_msg(1, "\n  | Store integrals ");
 
-    status = H5LTmake_dataset(op_group_id, "info", 1, (hsize_t[]) {4}, H5T_NATIVE_ULONG, (size_t[]) {data->op, STDL_OPERATOR_DIM[data->op], (size_t) STDL_OPERATOR_HERMITIAN[data->op], data->nlrvs});
+    status = H5LTmake_dataset(op_group_id, "info", 1, (hsize_t[]) {4}, H5T_NATIVE_ULONG, (size_t[]) {data->op, STDL_OPERATOR_DIM[data->op], (size_t) STDL_OPERATOR_ISSYM[data->op], data->nlrvs});
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", op_group_id);
 
     status = H5LTmake_dataset(op_group_id, "integrals", 1, (hsize_t[]) {STDL_MATRIX_SP_SIZE(ctx->nmo)}, H5T_NATIVE_DOUBLE, data->op_ints_MO);
@@ -126,7 +126,7 @@ int stdl_op_data_compute_lrvs(stdl_op_data *data, stdl_context *ctx) {
     assert(data != NULL && ctx != NULL);
 
     // get perturbed gradient
-    int err = stdl_response_perturbed_gradient(ctx, STDL_OPERATOR_DIM[data->op], STDL_OPERATOR_HERMITIAN[data->op], data->op_ints_MO, data->egrad);
+    int err = stdl_response_perturbed_gradient(ctx, STDL_OPERATOR_DIM[data->op], STDL_OPERATOR_ISSYM[data->op], data->op_ints_MO, data->egrad);
     STDL_ERROR_CODE_HANDLE(err, return err);
 
     // compute response vectors
@@ -192,7 +192,6 @@ int stdl_responses_handler_new_from_input(stdl_user_input_handler* inp, stdl_con
     size_t res_nexci = 0, res_nops = 0, res_nlrvs = 0;
 
     int* ops_w = calloc(STDL_OP_COUNT * inp->res_nw, sizeof(int));
-    printf("sz = %ld (%d)\n", STDL_OP_COUNT * inp->res_nw, STDL_OP_COUNT);
 
     STDL_ERROR_HANDLE_AND_REPORT(ops_w == NULL, return STDL_ERR_MALLOC, "malloc");
 
@@ -378,7 +377,7 @@ int stdl_responses_handler_compute(stdl_responses_handler *rh, stdl_user_input_h
             err = stdl_wavefunction_dsp_ao_to_dsp_mo(
                     ctx->original_wf->nao,
                     ctx->nmo,
-                    STDL_OPERATOR_HERMITIAN[op_data->op],
+                    STDL_OPERATOR_ISSYM[op_data->op],
                     ctx->C_ptr,
                     op_ints_AO + cpt * STDL_MATRIX_SP_SIZE(ctx->original_wf->nao),
                     op_data->op_ints_MO + cpt * STDL_MATRIX_SP_SIZE(ctx->nmo));

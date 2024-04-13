@@ -52,15 +52,38 @@ static size_t STDL_OPERATOR_DIM[STDL_OP_COUNT] = {
 };
 
 /**
- * Hermicity of each operator
+ * Symmetry of each operator
  * @ingroup integrals
  */
-static int STDL_OPERATOR_HERMITIAN[STDL_OP_COUNT] = {
+static int STDL_OPERATOR_ISSYM[STDL_OP_COUNT] = {
         1, // dipl
         0, // dipv
         0, // angm
         1, // ovlp
 };
+
+/**
+ * Hermicity of each operator
+ * @ingroup integrals
+ */
+static int STDL_OPERATOR_HERMITIAN[STDL_OP_COUNT] = {
+        1, // dipl
+        1, // dipv
+        1, // angm
+        1, // ovlp
+};
+
+/**
+ * Time-reversal symmetry of each operator
+ * @ingroup integrals
+ */
+static float STDL_OPERATOR_TRS[STDL_OP_COUNT] = {
+        1.f, // dipl
+        -1.f, // dipv
+        -1.f, // angm
+        1.f, // ovlp
+};
+
 
 typedef FINT (*_int1e_f)(
         double* /* buff */,

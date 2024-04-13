@@ -14,7 +14,7 @@ void setUp() {
 
 
 // Use the spectral representation of a linear response vector to re-create `Wlin`, which is either X(w) or Y(w) depending on `getX`
-void _make_response_vector(stdl_context *ctx, float w, int is_hermitian, double *ints_MO, float *e, float *Xamp, float *Yamp, int getX, float *Wlin) {
+void _make_response_vector(stdl_context *ctx, float w, int issym, int isherm, double *ints_MO, float *e, float *Xamp, float *Yamp, int getX, float *Wlin) {
     size_t nvirt = ctx->nmo - ctx->nocc;
 
     float mu_ia, x_ia, y_ia;
@@ -29,7 +29,7 @@ void _make_response_vector(stdl_context *ctx, float w, int is_hermitian, double 
             for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
                 size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
 
-                mu_ia = (!is_hermitian ? -1.f : 1.f) * (float) ints_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)];
+                mu_ia = (issym ? 1.f : -1.f) * (float) ints_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)];
 
                 x_ia = Xamp[iexci * ctx->ncsfs + lia];
                 if (Yamp != NULL)
@@ -37,7 +37,7 @@ void _make_response_vector(stdl_context *ctx, float w, int is_hermitian, double 
                 else
                     y_ia = .0f;
 
-                if(is_hermitian)
+                if(isherm)
                     Wlin[lia * 3 + zeta] += mu_ia * (x_ia + y_ia) * (((getX ? x_ia : y_ia) / (w - e[iexci])) - ((getX ? y_ia : x_ia) / (w + e[iexci])));
                 else
                     Wlin[lia * 3 + zeta] += mu_ia * (x_ia - y_ia) * (((getX ? x_ia : y_ia) / (w - e[iexci])) + ((getX ? y_ia : x_ia) / (w + e[iexci])));
@@ -47,7 +47,7 @@ void _make_response_vector(stdl_context *ctx, float w, int is_hermitian, double 
     }
 }
 
-void test_response_egrad_non_hermitian_ok() {
+void test_response_egrad_antisym_ok() {
     stdl_wavefunction *wf = NULL;
     stdl_basis *bs = NULL;
     read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
@@ -163,8 +163,8 @@ void test_response_TDA_ok() {
     TEST_ASSERT_NOT_NULL(reYtda);
 
     for (size_t iexci = 0; iexci < nw; ++iexci) {
-        _make_response_vector(ctx, w[iexci], 1, dipoles_mat, etda, Xamptda, NULL, 1, reXtda);
-        _make_response_vector(ctx, w[iexci], 1, dipoles_mat, etda, Xamptda, NULL, 0, reYtda);
+        _make_response_vector(ctx, w[iexci], 1, 1, dipoles_mat, etda, Xamptda, NULL, 1, reXtda);
+        _make_response_vector(ctx, w[iexci], 1, 1, dipoles_mat, etda, Xamptda, NULL, 0, reYtda);
 
         TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, Xtda + iexci * 3 * ctx->ncsfs, reXtda,  3 * ctx->ncsfs);
         TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, Ytda + iexci * 3 * ctx->ncsfs, reYtda,  3 * ctx->ncsfs);
@@ -175,7 +175,7 @@ void test_response_TDA_ok() {
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
 
-void test_response_TDA_nonhermitian_ok() {
+void test_response_TDA_antisym_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
@@ -212,7 +212,7 @@ void test_response_TDA_nonhermitian_ok() {
     float* Ytda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(Ytda);
 
-    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, 0, egrad, Xtda, Ytda));
+    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, 1, egrad, Xtda, Ytda));
 
     // compare to spectral representation
     float* reXtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
@@ -222,8 +222,8 @@ void test_response_TDA_nonhermitian_ok() {
     TEST_ASSERT_NOT_NULL(reYtda);
 
     for (size_t iexci = 0; iexci < nw; ++iexci) {
-        _make_response_vector(ctx, w[iexci], 0, op_ints_MO, etda, Xamptda, NULL, 1, reXtda);
-        _make_response_vector(ctx, w[iexci], 0, op_ints_MO, etda, Xamptda, NULL, 0, reYtda);
+        _make_response_vector(ctx, w[iexci], 0, 1, op_ints_MO, etda, Xamptda, NULL, 1, reXtda);
+        _make_response_vector(ctx, w[iexci], 0, 1, op_ints_MO, etda, Xamptda, NULL, 0, reYtda);
 
         TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, Xtda + iexci * 3 * ctx->ncsfs, reXtda, 3 * ctx->ncsfs);
         TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, Ytda + iexci * 3 * ctx->ncsfs, reYtda, 3 * ctx->ncsfs);
@@ -312,8 +312,8 @@ void test_response_TD_ok() {
     TEST_ASSERT_NOT_NULL(reYtd);
 
     for (size_t iexci = 0; iexci < nw; ++iexci) {
-        _make_response_vector(ctx, w[iexci], 1, dipoles_mat, etd, Xamptd, Yamptd, 1, reXtd);
-        _make_response_vector(ctx, w[iexci], 1, dipoles_mat, etd, Xamptd, Yamptd, 0, reYtd);
+        _make_response_vector(ctx, w[iexci], 1, 1, dipoles_mat, etd, Xamptd, Yamptd, 1, reXtd);
+        _make_response_vector(ctx, w[iexci], 1, 1, dipoles_mat, etd, Xamptd, Yamptd, 0, reYtd);
 
         TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, Xtd + iexci * 3 * ctx->ncsfs, reXtd,  3 * ctx->ncsfs);
         TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, Ytd + iexci * 3 * ctx->ncsfs, reYtd,  3 * ctx->ncsfs);
@@ -323,7 +323,7 @@ void test_response_TD_ok() {
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
 
-void test_response_TD_nonhermitian_ok() {
+void test_response_TD_antisym_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
@@ -367,7 +367,7 @@ void test_response_TD_nonhermitian_ok() {
     float* Ytd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(Ytd);
 
-    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 0, egrad, Xtd, Ytd));
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 1, egrad, Xtd, Ytd));
 
     // compare to spectral representation
     float* reXtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
@@ -376,17 +376,11 @@ void test_response_TD_nonhermitian_ok() {
     float* reYtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(reYtd);
     for (size_t iexci = 0; iexci < nw; ++iexci) {
-        _make_response_vector(ctx, w[iexci], 0, op_ints_MO, etd, Xamptd, Yamptd, 1, reXtd);
-        _make_response_vector(ctx, w[iexci], 0, op_ints_MO, etd, Xamptd, Yamptd, 0, reYtd);
+        _make_response_vector(ctx, w[iexci], 0, 1, op_ints_MO, etd, Xamptd, Yamptd, 1, reXtd);
+        _make_response_vector(ctx, w[iexci], 0, 1, op_ints_MO, etd, Xamptd, Yamptd, 0, reYtd);
 
         TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, Xtd + iexci * 3 * ctx->ncsfs, reXtd, 3 * ctx->ncsfs);
         TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, Ytd + iexci * 3 * ctx->ncsfs, reYtd, 3 * ctx->ncsfs);
-    }
-
-    // check if x(w) = -y(w) (and conversely)
-    for(size_t ielm=0; ielm < 3 * ctx->ncsfs; ielm++) {
-        TEST_ASSERT_FLOAT_WITHIN(1e-6, Xtd[ielm], -Ytd[ielm]); // static
-        TEST_ASSERT_FLOAT_WITHIN(1e-6, Xtd[2 * 3 * ctx->ncsfs + ielm], -Ytd[3 * 3 * ctx->ncsfs +  ielm]); // dynamic
     }
 
     STDL_FREE_ALL(etd, Xamptd, Yamptd, op_ints_MO, egrad, Xtd, Ytd, reXtd, reYtd);
