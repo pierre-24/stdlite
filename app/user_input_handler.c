@@ -101,9 +101,6 @@ int _operator_in(toml_table_t* table, char* field, stdl_operator * result, int* 
             }
         }
 
-        if(!*isset)
-            err = STDL_ERR_INPUT;
-
         free(op.u.s);
     }
 
@@ -386,7 +383,13 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
                 stdl_operator opA;
                 err = _operator_in(t, "opA", &opA, &isset);
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
-                STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `op` in `linear_sr[%d]`", i);
+                STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `opA` in `linear_sr[%d]`", i);
+
+                stdl_operator opB;
+                err = _operator_in(t, "opB", &opB, &isset);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+                if(!isset)
+                    opB = opA;
 
                 int nroots;
                 toml_datum_t root = toml_int_in(t, "nroots");
@@ -394,7 +397,7 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
                 nroots = (int) root.u.i;
 
                 stdl_response_request* req = NULL;
-                err = stdl_response_request_new(1, 1, (stdl_operator[]) {opA}, NULL, nroots, &req);
+                err = stdl_response_request_new(1, 1, (stdl_operator[]) {opA, opB}, NULL, nroots, &req);
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
 
                 if(prev == NULL) {

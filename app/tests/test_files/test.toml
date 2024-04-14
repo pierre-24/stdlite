@@ -2,12 +2,12 @@ title = "test calculation"
 data_output = "water_631g.h5"
 
 [context]
-source = "../tests/test_files/water_631g.fchk"
-source_type = "FCHK"
+source = "../tests/test_files/chiral_sto3g.molden"
+source_type = "MOLDEN"
 method = "monopole"
-ethr = '12eV'
+ethr = '40eV'
 ax = 1.0
-tda = 0
+tda = 1
 e2thr=1e-4
 
 [responses]
@@ -27,6 +27,9 @@ quadratic = [
 
 linear_sr = [
     {opA = 'dipl', nroots = 5},  # transition dipole
+    {opA = 'dipv', nroots = 5},  # transition dipole
+    {opA = 'dipl', opB = 'angm', nroots = 5},  # transition dipole
+    {opA = 'dipv', opB = 'angm', nroots = 5},  # transition dipole
 ]
 
 quadratic_dr = [

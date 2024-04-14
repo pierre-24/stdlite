@@ -36,25 +36,15 @@ int stdl_log_property_linear_tensor(stdl_response_request* req, float* tensor, f
 int stdl_log_property_first_hyperpolarizability(stdl_response_request* req, float beta[3][3][3]);
 
 /**
- * Print the ground to excited dipole moments, together with the oscillator strength.
+ * Print the ground to excited moments for `ops`.
  * @param rh a valid responses handler
  * @param ctx a valid context
- * @param tdips transition dipoles
+ * @param ops `stdl_operator[2]` the operators
+ * @param tg2e `float[rh->nexci * dim0 +  rh->nexci * dim1]` transition moments for both operators
  * @return error code
  * @ingroup log_property
  */
-int stdl_log_property_g2e_dipoles(stdl_responses_handler *rh, stdl_context *ctx, float *tdips);
-
-/**
- * Print the ground to excited moments for `op`.
- * @param rh a valid responses handler
- * @param ctx a valid context
- * @param op the operator
- * @param tg2e transition dipoles
- * @return error code
- * @ingroup log_property
- */
-int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx, stdl_operator op, float *tg2e);
+int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx, stdl_operator ops[2], float *tg2e);
 
 /**
  * Print the contribution of each CSFs (if above `thresh`).

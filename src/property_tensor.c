@@ -100,7 +100,7 @@ int stdl_property_tensor_g2e_moments(stdl_context *ctx, stdl_operator op, double
     assert(ctx != NULL && nexci > 0 && op_ints_MO != NULL && Xamp != NULL && tg2e != NULL);
 
     stdl_log_msg(1, "+ ");
-    stdl_log_msg(0, "Compute ground to excited transition moments >");
+    stdl_log_msg(0, "Compute ground to excited transition moments for `%s` >", STDL_OPERATOR_NAME[op]);
     stdl_log_msg(1, "\n  | Looping through CSFs ");
 
     size_t nvirt = ctx->nmo - ctx->nocc, dim0 = STDL_OPERATOR_DIM[op];

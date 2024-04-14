@@ -466,16 +466,20 @@ int stdl_response_handler_compute_properties(stdl_responses_handler* rh, stdl_us
             err = _find_lrvs(rh, inp, req, lrvs);
             STDL_ERROR_CODE_HANDLE(err, return err);
         } else if(req->resp_order == 1 && req->res_order == 1) { // linear SR
-            req->property_tensor = malloc(rh->nexci * STDL_OPERATOR_DIM[req->ops[0]] * sizeof(float ));
+            req->property_tensor = malloc(rh->nexci * (STDL_OPERATOR_DIM[req->ops[0]] +  STDL_OPERATOR_DIM[req->ops[1]]) * sizeof(float ));
             STDL_ERROR_HANDLE_AND_REPORT(req->property_tensor == NULL, return STDL_ERR_MALLOC, "malloc");
 
             err = stdl_property_tensor_g2e_moments(ctx, req->ops[0], rh->lrvs_data[req->ops[0]]->op_ints_MO, rh->nexci, rh->Xamp, rh->Yamp, req->property_tensor);
             STDL_ERROR_CODE_HANDLE(err, return err);
 
-            if(req->ops[0] == STDL_OP_DIPL)
-                stdl_log_property_g2e_dipoles(rh, ctx, req->property_tensor);
-            else
-                stdl_log_property_g2e_moments(rh, ctx, req->ops[0], req->property_tensor);
+            if(req->ops[1] != req->ops[0]) {
+                err = stdl_property_tensor_g2e_moments(ctx, req->ops[1], rh->lrvs_data[req->ops[1]]->op_ints_MO, rh->nexci, rh->Xamp, rh->Yamp, req->property_tensor  + rh->nexci * STDL_OPERATOR_DIM[req->ops[0]]);
+                STDL_ERROR_CODE_HANDLE(err, return err);
+            } else {
+                memcpy(req->property_tensor + rh->nexci * STDL_OPERATOR_DIM[req->ops[0]], req->property_tensor, rh->nexci * STDL_OPERATOR_DIM[req->ops[0]] * sizeof(float));
+            }
+
+            stdl_log_property_g2e_moments(rh, ctx, req->ops, req->property_tensor);
         }
 
         req = req->next;

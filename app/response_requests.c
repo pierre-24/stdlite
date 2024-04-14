@@ -17,7 +17,7 @@ int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator
     (*req_ptr)->resp_order = resp_order;
     (*req_ptr)->res_order = res_order;
     (*req_ptr)->nroots = nroots;
-    (*req_ptr)->nops = resp_order-res_order+1;
+    (*req_ptr)->nops = resp_order+1;
     (*req_ptr)->nlrvs = (resp_order == res_order) ? 0 : (*req_ptr)->nops;
     (*req_ptr)->iw = NULL;
     (*req_ptr)->property_tensor = NULL;

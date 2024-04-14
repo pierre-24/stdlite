@@ -162,48 +162,61 @@ void stdl_log_property_amplitude_contributions(stdl_responses_handler *rh, stdl_
     }
 }
 
-int stdl_log_property_g2e_dipoles(stdl_responses_handler *rh, stdl_context *ctx, float *tdips) {
-    assert(rh != NULL && ctx != NULL && tdips != NULL);
-
-    // energy and transition dipole moment
-    stdl_log_msg(0, "**    -------- Energy ------- ------ Transition dipole ---------\n");
-    stdl_log_msg(0, "       (Eh)     (eV)    (nm)      X        Y        Z      fL   \n");
-    for (size_t iexci = 0; iexci < rh->nexci; ++iexci) {
-        // print energies
-        stdl_log_msg(0, "%4ld %8.5f %7.3f %7.2f", iexci + 1, rh->eexci[iexci], rh->eexci[iexci] * STDL_CONST_AU_TO_EV, STDL_CONST_HC / rh->eexci[iexci]);
-
-        // print transition dipole & oscillator strength
-        stdl_log_msg(0, " % 8.5f % 8.5f % 8.5f %7.5f",
-                     tdips[0 * rh->nexci + iexci],
-                     tdips[1 * rh->nexci + iexci],
-                     tdips[2 * rh->nexci + iexci],
-                     rh->eexci[iexci] * (powf(tdips[0 * rh->nexci + iexci], 2) + powf(tdips[1 * rh->nexci + iexci], 2) + powf(tdips[2 * rh->nexci + iexci], 2)) * 2.f / 3
-        );
-
-        stdl_log_msg(0, "\n");
-    }
-
-    return STDL_ERR_OK;
-}
-
-int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx, stdl_operator op, float *tg2e) {
+int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx, stdl_operator ops[2], float *tg2e) {
     assert(rh != NULL && ctx != NULL && tg2e != NULL);
 
-    size_t dim0 = STDL_OPERATOR_DIM[op];
+    size_t dim0 = STDL_OPERATOR_DIM[ops[0]], dim1 = STDL_OPERATOR_DIM[ops[1]];
 
-    // energy and transition moments
+    // headers
     stdl_log_msg(0, "**    -------- Energy ------- ");
-    for (size_t cpt = 0; cpt < dim0 * 3; ++cpt)
+    for (size_t cpt = 0; cpt < dim0 * 2; ++cpt)
         stdl_log_msg(0, "-");
-    stdl_log_msg(0, " %4s ", STDL_OPERATOR_NAME[op]);
-    for (size_t cpt = 0; cpt < dim0 * 6 - 7; ++cpt)
+    stdl_log_msg(0, " <0|%4s|m> ", STDL_OPERATOR_NAME[ops[0]]);
+    for (size_t cpt = 0; cpt < dim0 * 7 - 13; ++cpt)
         stdl_log_msg(0, "-");
+
+    if(ops[0] != ops[1]) {
+        stdl_log_msg(0, " ");
+        for (size_t cpt = 0; cpt < dim0 * 2; ++cpt)
+            stdl_log_msg(0, "-");
+        stdl_log_msg(0, " <0|%4s|m> ", STDL_OPERATOR_NAME[ops[1]]);
+        for (size_t cpt = 0; cpt < dim0 * 7 - 13; ++cpt)
+            stdl_log_msg(0, "-");
+    }
+
+    if(dim0 == dim1) {
+        stdl_log_msg(0, " --------");
+        if ((ops[0] == ops[1] && ops[0] == STDL_OP_DIPL) // fL
+            || (ops[0] == ops[1] && ops[0] == STDL_OP_DIPV) // fV
+            || ((ops[0] == STDL_OP_DIPL && ops[1] == STDL_OP_ANGM) || (ops[1] == STDL_OP_DIPL && ops[0] == STDL_OP_ANGM)) // RL
+            || ((ops[0] == STDL_OP_DIPV && ops[1] == STDL_OP_ANGM) || (ops[1] == STDL_OP_DIPV && ops[0] == STDL_OP_ANGM)) // RV
+            )
+            stdl_log_msg(0, "---------");
+    }
 
     stdl_log_msg(0, "\n");
 
     stdl_log_msg(0, "       (Eh)     (eV)    (nm) ");
     for (size_t cpt = 0; cpt < dim0; ++cpt)
         stdl_log_msg(0, "   %-3d   ", cpt);
+
+    if (ops[0] != ops[1]) {
+        for (size_t cpt = 0; cpt < dim1; ++cpt)
+            stdl_log_msg(0, "   %-3d   ", cpt);
+    }
+
+    if(dim0 == dim1) {
+        stdl_log_msg(0, "    A·B  ");
+
+        if (ops[0] == ops[1] && ops[0] == STDL_OP_DIPL)
+            stdl_log_msg(0, "    fL   ");
+        else if (ops[0] == ops[1] && ops[0] == STDL_OP_DIPV)
+            stdl_log_msg(0, "    fV   ");
+        else if ((ops[0] == STDL_OP_DIPL && ops[1] == STDL_OP_ANGM) || (ops[1] == STDL_OP_DIPL && ops[0] == STDL_OP_ANGM))
+            stdl_log_msg(0, "    RL   ");
+        else if ((ops[0] == STDL_OP_DIPV && ops[1] == STDL_OP_ANGM) || (ops[1] == STDL_OP_DIPV && ops[0] == STDL_OP_ANGM))
+            stdl_log_msg(0, "    RV   ");
+    }
 
     stdl_log_msg(0, "\n");
 
@@ -213,6 +226,32 @@ int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx,
 
         for (size_t cpt = 0; cpt < dim0; ++cpt) {
             stdl_log_msg(0, " % 8.5f",tg2e[cpt * rh->nexci + iexci]);
+        }
+
+        if (ops[0] != ops[1]) {
+            for (size_t cpt = 0; cpt < dim1; ++cpt) {
+                stdl_log_msg(0, " % 8.5f",tg2e[rh->nexci * dim0 + cpt * rh->nexci + iexci]);
+            }
+
+        }
+
+        if(dim0 == dim1) {
+            float dotp = .0f;
+            for (size_t cpt = 0; cpt < dim1; ++cpt) {
+                dotp += tg2e[cpt * rh->nexci + iexci] * tg2e[rh->nexci * dim0 + cpt * rh->nexci + iexci];
+            }
+
+            stdl_log_msg(0, " % 8.5f", dotp);
+
+            if(ops[0] == ops[1] && ops[0] == STDL_OP_DIPL)
+                stdl_log_msg(0, " % 8.5f", 2.f/3 * rh->eexci[iexci] * dotp);
+            else if(ops[0] == ops[1] && ops[0] == STDL_OP_DIPV)
+                stdl_log_msg(0, " % 8.5f", 2.f/3 / rh->eexci[iexci] * dotp);
+            else if ((ops[0] == STDL_OP_DIPL && ops[1] == STDL_OP_ANGM) || (ops[1] == STDL_OP_DIPL && ops[0] == STDL_OP_ANGM))
+                stdl_log_msg(0, " % 8.5f", -.5* dotp);
+            else if ((ops[0] == STDL_OP_DIPV && ops[1] == STDL_OP_ANGM) || (ops[1] == STDL_OP_DIPV && ops[0] == STDL_OP_ANGM))
+                stdl_log_msg(0, " % 8.5f", -.5 * 1 / rh->eexci[iexci] * dotp);
+
         }
 
         stdl_log_msg(0, "\n");

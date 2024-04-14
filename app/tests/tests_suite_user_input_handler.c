@@ -271,8 +271,9 @@ void test_user_input_response_requests_ok() {
     TEST_ASSERT_EQUAL(1, req->resp_order);
     TEST_ASSERT_EQUAL(1, req->res_order);
     TEST_ASSERT_EQUAL(0, req->nlrvs);
-    TEST_ASSERT_EQUAL(1, req->nops);
+    TEST_ASSERT_EQUAL(2, req->nops);
     TEST_ASSERT_EQUAL(req->ops[0], STDL_OP_DIPL);
+    TEST_ASSERT_EQUAL(req->ops[1], STDL_OP_DIPL);
     TEST_ASSERT_EQUAL(-1, req->nroots);
     TEST_ASSERT_NULL(req->iw);
 

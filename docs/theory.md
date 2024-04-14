@@ -388,6 +388,9 @@ where ${}^B\mathbf \kappa(\omega)$ is computed from the linear response vectors 
 
 A rank-3 tensor, $\mathcal{T}^{(3)}$ is the result of a quadratic response function.
 
+
+### Residues
+
 Residue of the response functions provide information on the (excited states of the) unperturbed system.
 For example, the linear response function might be extended in the following spectral representation:
 
@@ -398,8 +401,25 @@ and a corresponding single residue might be:
 $$\lim_{\omega_B\to\omega_m} (\omega_B-\omega_m)\,\braket{\braket{\hat A; \hat B}}_{\omega_B} = \braket{0|\hat A|m}\braket{m|\hat B|0},$$
 
 which provides access to transition matrix elements $\braket{0|\hat A|m}$ between the ground state $\ket{0}$ and an excited state $\ket{m}$. 
-In practice, such residues are thus evaluated thanks to amplitude vectors through the spectral representation of linear responses.
+In practice, such residues are thus evaluated thanks to amplitude vectors through the spectral representation of linear responses, which gives (assuming that we have a singlet wavefunction):
 
+$$A_{0m,\zeta} = \braket{0|\hat A_\zeta|m} = \sqrt{2}\,\sum_{ia}^{CSF} A_{ia,\zeta}\,\kappa_{ia}^m,$$
+
+where:
+
+$$\kappa^m_{ia} = \begin{cases}
+x^m_{ia}+y^m_{ia} & \text{if } {}^A\theta = 1, \\
+x^m_{ia}-y^m_{ia} & \text{otherwise}.
+\end{cases}$$
+
+Different ground to excited moments, related to experimentally measurable properties, can be extracted (all given in atomic units):
+
+| Property            | Dipole length                                               | Dipole velocity                                                       |
+|---------------------|-------------------------------------------------------------|-----------------------------------------------------------------------|
+| Oscillator strength | $f^L_{0m} = \frac{2}{3}\,\omega_m\, \|\vec\mu^L_{0m} \|^2$  | $f^L_{0m} = \frac{2}{3\,\omega_m}\, \|\vec\mu^V_{0m} \|^2$            |
+| Rotatory strength   | $R^L_{0m} = -\frac{1}{2}\,(\vec\mu^L_{0m}\cdot\vec m_{0m})$ | $R^V_{0m} = -\frac{1}{2\,\omega_m}\,(\vec\mu^V_{0m}\cdot\vec m_{0m})$ | 
+
+See, *e.g.*, [10.1016/j.comptc.2014.02.023](https://doi.org/10.1016/j.comptc.2014.02.023), for a discussion on the differences between the two formalisms.
 
 ## Sources and references
 
