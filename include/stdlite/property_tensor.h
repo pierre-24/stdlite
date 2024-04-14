@@ -41,19 +41,19 @@ int stdl_property_tensor_linear(stdl_context *ctx, stdl_lrv *lrvs[2], float *ten
 
 
 /**
- * Compute ground to excited transition moments for `op`.
+ * Compute ground to excited transition moments for `ops`.
  *
  * @param ctx a valid context, with `ctx->ncsfs > 0`.
- * @param op the operator
- * @param op_ints_MO `float[STDL_OPERATOR_DIM[op],STDL_MATRIX_SP_SIZE(ctx->nmo)]`, operator integrals
+ * @param ops the operators
+ * @param ops_ints_MO `float[dim,STDL_MATRIX_SP_SIZE(ctx->nmo)]`, operator integrals
  * @param nexci number of excitations computed
  * @param X `float[nexci,ncsfs]` amplitude vector $\mathbf x$
  * @param Y `float[nexci,ncsfs]` amplitude vector $\mathbf y$, might be `NULL` if TDA.
- * @param[out] tdips `float[STDL_OPERATOR_DIM[op]nexci]` the resultings transition moments
+ * @param[out] tdips `float[dim0 + dim1, nexci]` the resulting transition moments
  * @return error code
  * @ingroup property_tensor
  */
-int stdl_property_tensor_g2e_moments(stdl_context *ctx, stdl_operator op, double* op_ints_MO, size_t nexci, float* Xamp, float* Yamp, float * tg2e);
+int stdl_property_tensor_g2e_moments(stdl_context *ctx, stdl_operator ops[2], double* ops_ints_MO[2], size_t nexci, float* Xamp, float* Yamp, float * tg2e);
 
 
 #endif //STDLITE_TENSOR_H

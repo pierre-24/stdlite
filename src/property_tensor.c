@@ -96,28 +96,36 @@ int stdl_property_tensor_linear(stdl_context *ctx, stdl_lrv *lrvs[2], float *ten
     return STDL_ERR_OK;
 }
 
-int stdl_property_tensor_g2e_moments(stdl_context *ctx, stdl_operator op, double* op_ints_MO, size_t nexci, float* Xamp, float* Yamp, float * tg2e) {
-    assert(ctx != NULL && nexci > 0 && op_ints_MO != NULL && Xamp != NULL && tg2e != NULL);
+int stdl_property_tensor_g2e_moments(stdl_context *ctx, stdl_operator ops[2], double* ops_ints_MO[2], size_t nexci, float* Xamp, float* Yamp, float * tg2e) {
+    assert(ctx != NULL && nexci > 0 && ops_ints_MO != NULL && Xamp != NULL && tg2e != NULL);
 
     stdl_log_msg(1, "+ ");
-    stdl_log_msg(0, "Compute ground to excited transition moments for `%s` >", STDL_OPERATOR_NAME[op]);
+    stdl_log_msg(0, "Compute ground to excited transition moments for `%s` and `%s` >", STDL_OPERATOR_NAME[ops[0]], STDL_OPERATOR_NAME[ops[1]]);
     stdl_log_msg(1, "\n  | Looping through CSFs ");
 
-    size_t nvirt = ctx->nmo - ctx->nocc, dim0 = STDL_OPERATOR_DIM[op];
+    size_t nvirt = ctx->nmo - ctx->nocc, dim0 = STDL_OPERATOR_DIM[ops[0]], dim1 = STDL_OPERATOR_DIM[ops[1]];
     float s2 = sqrtf(2);
 
     #pragma omp parallel for
     for (size_t iexci = 0; iexci < nexci; ++iexci) {
-        tg2e[0 * nexci + iexci] = tg2e[1 * nexci + iexci] = tg2e[2 * nexci + iexci] = .0f;
+        for (size_t cpt = 0; cpt < dim0 + dim1; ++cpt) {
+            tg2e[cpt * nexci + iexci] = .0f;
+        }
 
         for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
             size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
-            float amplitude = Xamp[iexci * ctx->ncsfs + lia];
-            if(Yamp != NULL)
-                amplitude += STDL_OPERATOR_TRS[op] * Yamp[iexci * ctx->ncsfs + lia];
+            float amplitude0 = Xamp[iexci * ctx->ncsfs + lia], amplitude1 = amplitude0;
+
+            if(Yamp != NULL) {
+                amplitude0 += STDL_OPERATOR_TRS[ops[0]] * Yamp[iexci * ctx->ncsfs + lia];
+                amplitude1 += STDL_OPERATOR_TRS[ops[1]] * Yamp[iexci * ctx->ncsfs + lia];
+            }
 
             for (size_t cpt = 0; cpt < dim0; ++cpt)
-                tg2e[cpt * nexci + iexci] += s2 * amplitude * ((float) op_ints_MO[cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)]) * (STDL_OPERATOR_ISSYM[op] ? 1.f : -1.f);
+                tg2e[cpt * nexci + iexci] += s2 * amplitude0 * ((float) ops_ints_MO[0][cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)]) * (STDL_OPERATOR_ISSYM[ops[0]] ? 1.f : -1.f);
+
+            for (size_t cpt = 0; cpt < dim1; ++cpt)
+                tg2e[(dim0 + cpt) * nexci + iexci] += s2 * amplitude1 * ((float) ops_ints_MO[1][cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)]) * (STDL_OPERATOR_ISSYM[ops[1]] ? 1.f : -1.f);
         }
     }
 

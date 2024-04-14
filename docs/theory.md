@@ -414,10 +414,10 @@ x^m_{ia}-y^m_{ia} & \text{otherwise}.
 
 Different ground to excited moments, related to experimentally measurable properties, can be extracted (all given in atomic units):
 
-| Property            | Dipole length                                               | Dipole velocity                                                       |
-|---------------------|-------------------------------------------------------------|-----------------------------------------------------------------------|
-| Oscillator strength | $f^L_{0m} = \frac{2}{3}\,\omega_m\, \|\vec\mu^L_{0m} \|^2$  | $f^L_{0m} = \frac{2}{3\,\omega_m}\, \|\vec\mu^V_{0m} \|^2$            |
-| Rotatory strength   | $R^L_{0m} = -\frac{1}{2}\,(\vec\mu^L_{0m}\cdot\vec m_{0m})$ | $R^V_{0m} = -\frac{1}{2\,\omega_m}\,(\vec\mu^V_{0m}\cdot\vec m_{0m})$ | 
+| Property            | Dipole length                                                   | Dipole velocity                                                          |
+|---------------------|-----------------------------------------------------------------|--------------------------------------------------------------------------|
+| Oscillator strength | $f^L_{0m} = \frac{2}{3}\,\omega_m\, \|\vec\mu^L_{0m} \|^2$      | $f^L_{0m} = \frac{2}{3\,\omega_m}\, \|\vec\mu^V_{0m} \|^2$               |
+| Rotatory strength   | $R^L_{0m} = -\frac{1}{2}\, \Im(\vec\mu^L_{0m}\cdot\vec m_{0m})$ | $R^V_{0m} = -\frac{1}{2\,\omega_m}\,\Re(\vec\mu^V_{0m}\cdot\vec m_{0m})$ | 
 
 See, *e.g.*, [10.1016/j.comptc.2014.02.023](https://doi.org/10.1016/j.comptc.2014.02.023), for a discussion on the differences between the two formalisms.
 

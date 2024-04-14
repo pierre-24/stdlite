@@ -29,7 +29,7 @@ void test_user_input_compute_responses() {
           "[context]\n"
           "source = \"../tests/test_files/chiral_sto3g.molden\"\n"
           "source_type = \"MOLDEN\"\n"
-          "ethr = '40eV'\n"
+          "ethr = '10eV'\n"
           "gammaJ = 2.0\n"
           "gammaK = 4.0\n"
           "ax = 1.0\n"
@@ -37,7 +37,7 @@ void test_user_input_compute_responses() {
           "[responses]\n"
           "linear = [{opA = 'dipl', opB = 'dipl', wB = '532nm'}, {opA = 'angm', opB = 'dipl', wB = '532nm'}]\n"
           "#quadratic = [{opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = '1064nm', wC = '1064nm'}]\n"
-          "linear_sr = [{opA = 'dipl', nroots = -1}, {opA = 'angm', nroots = -1}]",
+          "linear_sr = [{opA = 'dipl', nroots = -1}, {opA = 'angm', opB = 'dipl', nroots = -1}]",
           stream);
     rewind(stream);
 

@@ -283,7 +283,7 @@ int stdl_responses_handler_delete(stdl_responses_handler* rh) {
     return STDL_ERR_OK;
 }
 
-int _dump_amplitudes_h5(hid_t group_id, stdl_context* ctx, stdl_responses_handler* rh) {
+int _dump_amplitudes_h5(stdl_responses_handler *rh, stdl_context *ctx, hid_t group_id) {
 
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Saving amplitudes >");
@@ -336,8 +336,8 @@ int stdl_responses_handler_compute(stdl_responses_handler *rh, stdl_user_input_h
         else
             stdl_response_TD_casida(ctx, rh->nexci, rh->eexci, rh->Xamp, rh->Yamp);
 
-        stdl_log_property_amplitude_contributions(rh, ctx, 5e-3);
-        _dump_amplitudes_h5(res_group_id, ctx, rh);
+        stdl_log_property_amplitude_contributions(rh, ctx, 5e-3f);
+        _dump_amplitudes_h5(rh, ctx, res_group_id);
     }
 
     // integrals & LRVs (if any)
@@ -469,15 +469,8 @@ int stdl_response_handler_compute_properties(stdl_responses_handler* rh, stdl_us
             req->property_tensor = malloc(rh->nexci * (STDL_OPERATOR_DIM[req->ops[0]] +  STDL_OPERATOR_DIM[req->ops[1]]) * sizeof(float ));
             STDL_ERROR_HANDLE_AND_REPORT(req->property_tensor == NULL, return STDL_ERR_MALLOC, "malloc");
 
-            err = stdl_property_tensor_g2e_moments(ctx, req->ops[0], rh->lrvs_data[req->ops[0]]->op_ints_MO, rh->nexci, rh->Xamp, rh->Yamp, req->property_tensor);
+            err = stdl_property_tensor_g2e_moments(ctx, req->ops, (double *[]) {rh->lrvs_data[req->ops[0]]->op_ints_MO, rh->lrvs_data[req->ops[1]]->op_ints_MO}, rh->nexci, rh->Xamp, rh->Yamp, req->property_tensor);
             STDL_ERROR_CODE_HANDLE(err, return err);
-
-            if(req->ops[1] != req->ops[0]) {
-                err = stdl_property_tensor_g2e_moments(ctx, req->ops[1], rh->lrvs_data[req->ops[1]]->op_ints_MO, rh->nexci, rh->Xamp, rh->Yamp, req->property_tensor  + rh->nexci * STDL_OPERATOR_DIM[req->ops[0]]);
-                STDL_ERROR_CODE_HANDLE(err, return err);
-            } else {
-                memcpy(req->property_tensor + rh->nexci * STDL_OPERATOR_DIM[req->ops[0]], req->property_tensor, rh->nexci * STDL_OPERATOR_DIM[req->ops[0]] * sizeof(float));
-            }
 
             stdl_log_property_g2e_moments(rh, ctx, req->ops, req->property_tensor);
         }
