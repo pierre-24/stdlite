@@ -7,7 +7,7 @@
 #include "response_requests.h"
 
 int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator* ops, size_t *iw, int nroots, stdl_response_request** req_ptr) {
-    assert(req_ptr != NULL && resp_order > 0);
+    assert(req_ptr != NULL && resp_order > 0 && res_order <= resp_order);
 
     *req_ptr = malloc(sizeof(stdl_response_request));
     STDL_ERROR_HANDLE_AND_REPORT(*req_ptr == NULL, return STDL_ERR_MALLOC, "malloc");
@@ -49,7 +49,6 @@ int stdl_response_request_delete(stdl_response_request* req) {
     STDL_FREE_ALL(req->ops, req->iw, req->property_tensor, req);
 
     return STDL_ERR_OK;
-
 }
 
 int stdl_response_request_approximate_size(stdl_response_request *req, size_t *sz) {
@@ -65,5 +64,53 @@ int stdl_response_request_approximate_size(stdl_response_request *req, size_t *s
             + req->nlrvs * (sizeof(size_t) + sizeof(stdl_lrv)) // iw + lrvs
             + next_sz;
 
+    return STDL_ERR_OK;
+}
+
+int stdl_response_request_dump_h5(stdl_response_request *req, size_t maxnexci, hid_t group_id) {
+    assert(req != NULL && group_id != H5I_INVALID_HID);
+
+    stdl_log_msg(1, "+ ");
+    stdl_log_msg(0, "Saving property > ");
+    stdl_log_msg(1, "\n  | Saving data ");
+
+    herr_t status = H5LTmake_dataset(group_id, "info", 1, (hsize_t[]) {5}, H5T_NATIVE_ULONG, (size_t[]) {req->resp_order, req->res_order,  req->nops, req->nlrvs, req->res_order > 0 ? maxnexci : 0});
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", group_id);
+
+    status = H5LTmake_dataset(group_id, "ops", 1, (hsize_t[]) {(hsize_t) req->nops}, H5T_NATIVE_INT, req->ops);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", group_id);
+
+    if(req->nlrvs > 0) {
+        status = H5LTmake_dataset(group_id, "w", 1, (hsize_t[]) {(hsize_t) req->nlrvs}, H5T_NATIVE_ULONG, req->iw);
+        STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", group_id);
+    }
+
+    if(req->property_tensor != NULL) {
+
+        // get its shape
+        hsize_t dims[3] = {0};
+        int rank = 0;
+
+        if (req->resp_order == 1 && req->res_order == 0) {
+            dims[0] = (hsize_t) STDL_OPERATOR_DIM[req->ops[0]];
+            dims[1] = (hsize_t) STDL_OPERATOR_DIM[req->ops[1]];
+            rank = 2;
+        } else if (req->resp_order == 2 && req->res_order == 0) {
+            dims[0] = (hsize_t) STDL_OPERATOR_DIM[req->ops[0]];
+            dims[1] = (hsize_t) STDL_OPERATOR_DIM[req->ops[1]];
+            dims[2] = (hsize_t) STDL_OPERATOR_DIM[req->ops[2]];
+            rank = 3;
+        } else if (req->resp_order == 1 && req->res_order == 1) {
+            dims[0] = (hsize_t) (STDL_OPERATOR_DIM[req->ops[0]] + STDL_OPERATOR_DIM[req->ops[1]]);
+            dims[1] = (hsize_t) (req->nroots < 0? maxnexci : req->nroots);
+            rank = 2;
+        }
+
+        // write it
+        status = H5LTmake_dataset(group_id, "property_tensor", rank, dims, H5T_NATIVE_FLOAT, req->property_tensor);
+        STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", group_id);
+    }
+
+    stdl_log_msg(0, "< done\n");
     return STDL_ERR_OK;
 }

@@ -44,7 +44,8 @@ int stdl_log_property_first_hyperpolarizability(stdl_response_request* req, floa
  * @return error code
  * @ingroup log_property
  */
-int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx, stdl_operator ops[2], float *tg2e);
+int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx, stdl_operator ops[2], size_t nexci,
+                                  float *tg2e);
 
 /**
  * Print the contribution of each CSFs (if above `thresh`).

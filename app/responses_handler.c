@@ -298,6 +298,9 @@ int _dump_amplitudes_h5(stdl_responses_handler *rh, stdl_context *ctx, hid_t gro
     herr_t status = H5LTmake_dataset(amp_group_id, "info", 1, (hsize_t[]) {1}, H5T_NATIVE_ULONG, (size_t[]) {rh->nexci});
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", amp_group_id);
 
+    status = H5LTmake_dataset(amp_group_id, "eexci", 1, (hsize_t[]) {rh->nexci}, H5T_NATIVE_FLOAT, rh->eexci);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", amp_group_id);
+
     status = H5LTmake_dataset(amp_group_id, "X", 2, (hsize_t[]) {rh->nexci, ctx->ncsfs}, H5T_NATIVE_FLOAT, rh->Xamp);
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", amp_group_id);
 
@@ -439,46 +442,108 @@ int _find_lrvs(stdl_responses_handler* rh, stdl_user_input_handler* inp, stdl_re
 int stdl_response_handler_compute_properties(stdl_responses_handler* rh, stdl_user_input_handler* inp, stdl_context* ctx) {
     assert(rh != NULL && inp != NULL && ctx != NULL);
 
-    int err;
+    int err = STDL_ERR_OK;
+    hid_t prop_group_id = H5I_INVALID_HID;
 
+    // open H5 file
+    hid_t file_id = H5Fopen(inp->data_output, H5F_ACC_RDWR, H5P_DEFAULT);
+    STDL_ERROR_HANDLE_AND_REPORT(file_id == H5I_INVALID_HID, err = STDL_ERR_OPEN; goto _end, "cannot open %s", inp->data_output);
+
+    // create group
+    prop_group_id = H5Gcreate(file_id, "properties", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    STDL_ERROR_HANDLE_AND_REPORT(prop_group_id == H5I_INVALID_HID, err = STDL_ERR_WRITE; goto _end, "cannot create group");
+
+    // add info
+    herr_t status = H5LTmake_dataset(prop_group_id, "w", 1, (hsize_t[]) {inp->res_nw}, H5T_NATIVE_FLOAT, inp->res_w);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_WRITE; goto _end, "cannot create dataset in group %d", prop_group_id);
+
+    size_t ireq = 0;
     stdl_response_request* req = inp->res_resreqs;
+    char buffattr[256];
     while (req != NULL) {
         if(req->resp_order == 1 && req->res_order == 0) { // linear
             stdl_lrv* lrvs[] = {NULL, NULL};
 
             err = _find_lrvs(rh, inp, req, lrvs);
-            STDL_ERROR_CODE_HANDLE(err, return err);
+            STDL_ERROR_CODE_HANDLE(err, goto _end);
 
             req->property_tensor = malloc(STDL_OPERATOR_DIM[lrvs[0]->op] * STDL_OPERATOR_DIM[lrvs[1]->op] * sizeof(float ));
-            STDL_ERROR_HANDLE_AND_REPORT(req->property_tensor == NULL, return STDL_ERR_MALLOC, "malloc");
+            STDL_ERROR_HANDLE_AND_REPORT(req->property_tensor == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
 
             err = stdl_property_tensor_linear(ctx, lrvs, req->property_tensor);
-            STDL_ERROR_CODE_HANDLE(err, return err);
+            STDL_ERROR_CODE_HANDLE(err, goto _end);
 
             if(req->ops[0] == STDL_OP_DIPL && req->ops[1] == STDL_OP_DIPL)
                 stdl_log_property_polarizability(req, req->property_tensor, inp->res_w[req->iw[1]]);
             else
                 stdl_log_property_linear_tensor(req, req->property_tensor, inp->res_w[req->iw[1]]);
 
+            sprintf(buffattr, "<<%s;%s>> @ wB=%f",
+                    STDL_OPERATOR_NAME[req->ops[0]],
+                    STDL_OPERATOR_NAME[req->ops[1]],
+                    inp->res_w[req->iw[1]]);
+
         } else if(req->resp_order == 2 && req->res_order == 0) { // quadratic
             stdl_lrv* lrvs[] = {NULL, NULL, NULL};
 
             err = _find_lrvs(rh, inp, req, lrvs);
-            STDL_ERROR_CODE_HANDLE(err, return err);
+            STDL_ERROR_CODE_HANDLE(err, goto _end);
+
+            sprintf(buffattr, "<<%s;%s,%s>> @ wB=%f wC=%f",
+                    STDL_OPERATOR_NAME[req->ops[0]],
+                    STDL_OPERATOR_NAME[req->ops[1]],
+                    STDL_OPERATOR_NAME[req->ops[2]],
+                    inp->res_w[req->iw[1]],
+                    inp->res_w[req->iw[2]]
+                    );
         } else if(req->resp_order == 1 && req->res_order == 1) { // linear SR
             req->property_tensor = malloc(rh->nexci * (STDL_OPERATOR_DIM[req->ops[0]] +  STDL_OPERATOR_DIM[req->ops[1]]) * sizeof(float ));
-            STDL_ERROR_HANDLE_AND_REPORT(req->property_tensor == NULL, return STDL_ERR_MALLOC, "malloc");
+            STDL_ERROR_HANDLE_AND_REPORT(req->property_tensor == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
 
-            err = stdl_property_tensor_g2e_moments(ctx, req->ops, (double *[]) {rh->lrvs_data[req->ops[0]]->op_ints_MO, rh->lrvs_data[req->ops[1]]->op_ints_MO}, rh->nexci, rh->Xamp, rh->Yamp, req->property_tensor);
-            STDL_ERROR_CODE_HANDLE(err, return err);
+            err = stdl_property_tensor_g2e_moments(
+                    ctx,
+                    req->ops,
+                    (double *[]) {rh->lrvs_data[req->ops[0]]->op_ints_MO, rh->lrvs_data[req->ops[1]]->op_ints_MO},
+                    req->nroots < 0 ? rh->nexci : req->nroots,
+                    rh->Xamp, rh->Yamp,
+                    req->property_tensor);
+            STDL_ERROR_CODE_HANDLE(err, goto _end);
 
-            stdl_log_property_g2e_moments(rh, ctx, req->ops, req->property_tensor);
+            stdl_log_property_g2e_moments(rh, ctx, req->ops, req->nroots < 0 ? rh->nexci : req->nroots, req->property_tensor);
+
+            sprintf(buffattr, "lim_w <<%s;%s>>",
+                    STDL_OPERATOR_NAME[req->ops[0]],
+                    STDL_OPERATOR_NAME[req->ops[1]]
+                    );
         }
 
+        // write in H5
+        char buff[256];
+        sprintf(buff, "prop%ld", ireq);
+        hid_t propx_group_id = H5Gcreate(prop_group_id, buff, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        STDL_ERROR_HANDLE_AND_REPORT(prop_group_id == H5I_INVALID_HID, return STDL_ERR_WRITE, "cannot create group");
+
+        err = stdl_response_request_dump_h5(req, rh->nexci, propx_group_id);
+        STDL_ERROR_CODE_HANDLE(err, goto _end);
+
+        H5Gclose(propx_group_id);
+
+        status = H5LTset_attribute_string(prop_group_id, buff, "name", buffattr);
+        STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_WRITE; goto _end, "cannot create attribute to group %d", propx_group_id);
+
         req = req->next;
+        ireq++;
     }
 
-    return STDL_ERR_OK;
+    // write info in H5
+    status = H5LTmake_dataset(prop_group_id, "info", 1, (hsize_t[]) {1}, H5T_NATIVE_ULONG, (size_t[]) {ireq});
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", prop_group_id);
+
+    _end:
+    H5Gclose(prop_group_id);
+    H5Fclose(file_id);
+
+    return err;
 }
 
 int stdl_responses_handler_approximate_size(stdl_responses_handler *rh, size_t nmo, size_t ncsfs, size_t *sz, size_t *ops_sz, size_t *amp_sz) {

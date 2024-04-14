@@ -162,8 +162,8 @@ void stdl_log_property_amplitude_contributions(stdl_responses_handler *rh, stdl_
     }
 }
 
-int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx, stdl_operator ops[2], float *tg2e) {
-    assert(rh != NULL && ctx != NULL && tg2e != NULL);
+int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx, stdl_operator ops[2], size_t nexci, float *tg2e) {
+    assert(rh != NULL && ctx != NULL && tg2e != NULL && nexci > 0);
 
     size_t dim0 = STDL_OPERATOR_DIM[ops[0]], dim1 = STDL_OPERATOR_DIM[ops[1]];
 
@@ -220,17 +220,17 @@ int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx,
 
     stdl_log_msg(0, "\n");
 
-    for (size_t iexci = 0; iexci < rh->nexci; ++iexci) {
+    for (size_t iexci = 0; iexci < nexci; ++iexci) {
         // print energies
         stdl_log_msg(0, "%4ld %8.5f %7.3f %7.2f", iexci + 1, rh->eexci[iexci], rh->eexci[iexci] * STDL_CONST_AU_TO_EV, STDL_CONST_HC / rh->eexci[iexci]);
 
         for (size_t cpt = 0; cpt < dim0; ++cpt) {
-            stdl_log_msg(0, " % 8.5f",tg2e[cpt * rh->nexci + iexci]);
+            stdl_log_msg(0, " % 8.5f",tg2e[cpt * nexci + iexci]);
         }
 
         if (ops[0] != ops[1]) {
             for (size_t cpt = 0; cpt < dim1; ++cpt) {
-                stdl_log_msg(0, " % 8.5f",tg2e[(dim0 + cpt) * rh->nexci + iexci]);
+                stdl_log_msg(0, " % 8.5f",tg2e[(dim0 + cpt) * nexci + iexci]);
             }
 
         }
@@ -238,7 +238,7 @@ int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx,
         if(dim0 == dim1) {
             float dotp = .0f;
             for (size_t cpt = 0; cpt < dim1; ++cpt) {
-                dotp += tg2e[cpt * rh->nexci + iexci] * tg2e[(dim0 + cpt) * rh->nexci + iexci];
+                dotp += tg2e[cpt * rh->nexci + iexci] * tg2e[(dim0 + cpt) * nexci + iexci];
             }
 
             stdl_log_msg(0, " % 8.5f", dotp);

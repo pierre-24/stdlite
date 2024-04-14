@@ -15,7 +15,7 @@ struct stdl_response_request_ {
     /// order of the response (1 = linear, 2 = quadratic, etc)
     size_t resp_order;
 
-    /// number of residues (0 = none, 1 = first residue, 2 = second residue)
+    /// order of the residues (0 = none, 1 = single residue, 2 = double residue), should be `<= resp_order`
     size_t res_order;
 
     /// Number of operators
@@ -73,6 +73,17 @@ int stdl_response_request_delete(stdl_response_request* req);
  * @ingroup requests
  */
 int stdl_response_request_approximate_size(stdl_response_request* req, size_t* sz);
+
+/**
+ * Dump the tensor in H5.
+ *
+ * @param req a valid request
+ * @param maxnexci number of excitation actually computed
+ * @param group_id a valid H5 group
+ * @return error code
+ * @ingroup requests
+ */
+int stdl_response_request_dump_h5(stdl_response_request *req, size_t maxnexci, hid_t group_id);
 
 
 #endif //STDLITE_RESPONSE_REQUESTS_H
