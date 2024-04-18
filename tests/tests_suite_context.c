@@ -193,13 +193,13 @@ void test_context_select_csfs_ok() {
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
 
     TEST_ASSERT_EQUAL_INT(10, ctx->ncsfs);
-    TEST_ASSERT_NULL(ctx->B);
+    TEST_ASSERT_NULL(ctx->AmB);
 
     // stdl_matrix_ssp_print(ctx->ncsfs, ctx->A, "A");
 
     // check that energies are in increasing order
     for (size_t lia = 1; lia < ctx->ncsfs; ++lia) {
-        TEST_ASSERT_TRUE(ctx->A[STDL_MATRIX_SP_IDX(lia - 1, lia - 1)] <= ctx->A[STDL_MATRIX_SP_IDX(lia, lia)]);
+        TEST_ASSERT_TRUE(ctx->ApB[STDL_MATRIX_SP_IDX(lia - 1, lia - 1)] <= ctx->ApB[STDL_MATRIX_SP_IDX(lia, lia)]);
     }
 
     // stdl_matrix_ssp_print(ctx->ncsfs, ctx->A, "A");
@@ -255,8 +255,8 @@ void test_context_dump_load_h5_ok() {
     TEST_ASSERT_EQUAL(ctx1->ncsfs, ctx2->ncsfs);
 
     TEST_ASSERT_EQUAL_INT_ARRAY(ctx1->csfs, ctx2->csfs, ctx1->ncsfs);
-    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, ctx1->A, ctx2->A, STDL_MATRIX_SP_SIZE(ctx1->ncsfs));
-    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, ctx1->B, ctx2->B, STDL_MATRIX_SP_SIZE(ctx1->ncsfs));
+    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, ctx1->ApB, ctx2->ApB, STDL_MATRIX_SP_SIZE(ctx1->ncsfs));
+    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, ctx1->AmB, ctx2->AmB, STDL_MATRIX_SP_SIZE(ctx1->ncsfs));
     TEST_ASSERT_DOUBLE_ARRAY_WITHIN(1e-12, ctx1->C, ctx2->C, ctx1->nmo * ctx1->original_wf->nao);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx1));

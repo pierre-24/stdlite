@@ -130,7 +130,7 @@ int stdl_op_data_compute_lrvs(stdl_op_data *data, stdl_context *ctx) {
     STDL_ERROR_CODE_HANDLE(err, return err);
 
     // compute response vectors
-    if(ctx->B == NULL)
+    if(ctx->AmB == NULL)
         err = stdl_response_TDA_linear(ctx, data->nlrvs, data->w, STDL_OPERATOR_DIM[data->op], STDL_OPERATOR_HERMITIAN[data->op], data->egrad, data->X, data->Y);
     else
         err = stdl_response_TD_linear(ctx, data->nlrvs, data->w, STDL_OPERATOR_DIM[data->op], STDL_OPERATOR_HERMITIAN[data->op], data->egrad, data->X, data->Y);
@@ -172,7 +172,7 @@ int stdl_responses_handler_new(stdl_context *ctx, size_t nexci, stdl_responses_h
 
         STDL_ERROR_HANDLE_AND_REPORT((*rh_ptr)->eexci == NULL || (*rh_ptr)->Xamp == NULL, stdl_responses_handler_delete(*rh_ptr); return STDL_ERR_MALLOC, "malloc");
 
-        if(ctx->B != NULL) {
+        if(ctx->AmB != NULL) {
             (*rh_ptr)->Yamp = malloc(ctx->ncsfs * nexci * sizeof(float));
             STDL_ERROR_HANDLE_AND_REPORT((*rh_ptr)->Yamp == NULL, stdl_responses_handler_delete(*rh_ptr); return STDL_ERR_MALLOC, "malloc");
         }
@@ -334,7 +334,7 @@ int stdl_responses_handler_compute(stdl_responses_handler *rh, stdl_user_input_h
     if(rh->nexci > 0) {
         stdl_log_msg(0, "~~ Compute amplitude vectors\n");
 
-        if(ctx->B == NULL)
+        if(ctx->AmB == NULL)
             stdl_response_TDA_casida(ctx, rh->nexci, rh->eexci, rh->Xamp);
         else
             stdl_response_TD_casida(ctx, rh->nexci, rh->eexci, rh->Xamp, rh->Yamp);

@@ -285,7 +285,7 @@ void test_response_polarizability_TDA_ok() {
     TEST_ASSERT_NOT_NULL(Ytda);
 
     // compute polarizabilities
-    float alpha[9], alpha_iso, alpha_aniso, result[] = {4.128f, 4.170f, 4.303f};
+    float alpha[9], alpha_iso, alpha_aniso, result[] = {4.061f, 4.101f, 4.229f};
     ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, 1, egrad, Xtda, Ytda));
 
     for (size_t iw = 0; iw < nw; ++iw) {

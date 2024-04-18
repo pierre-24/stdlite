@@ -133,8 +133,8 @@ int _context_new_noselect(stdl_wavefunction *wf, stdl_basis *bs, float gammaJ, f
 
     (*ctx_ptr)->ncsfs = 0;
     (*ctx_ptr)->csfs = NULL;
-    (*ctx_ptr)->A = NULL;
-    (*ctx_ptr)->B = NULL;
+    (*ctx_ptr)->ApB = NULL;
+    (*ctx_ptr)->AmB = NULL;
 
     return STDL_ERR_OK;
 }
@@ -225,7 +225,7 @@ int stdl_context_delete(stdl_context* ctx) {
     if(ctx->bs != NULL)
         stdl_basis_delete(ctx->bs);
 
-    STDL_FREE_ALL(ctx->C, ctx->csfs, ctx->A, ctx->B, ctx);
+    STDL_FREE_ALL(ctx->C, ctx->csfs, ctx->ApB, ctx->AmB, ctx);
 
     return STDL_ERR_OK;
 }
@@ -522,12 +522,12 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
      */
     float* ecsfs = malloc((ctx->ncsfs) * sizeof(float ));
     ctx->csfs = malloc((ctx->ncsfs) * sizeof(size_t));
-    ctx->A = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-    STDL_ERROR_HANDLE_AND_REPORT(ecsfs == NULL || ctx->csfs == NULL || ctx->A == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices); return STDL_ERR_MALLOC, "malloc");
+    ctx->ApB = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+    STDL_ERROR_HANDLE_AND_REPORT(ecsfs == NULL || ctx->csfs == NULL || ctx->ApB == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices); return STDL_ERR_MALLOC, "malloc");
 
     if(compute_B) {
-        ctx->B = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-        STDL_ERROR_HANDLE_AND_REPORT(ctx->B == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices); return STDL_ERR_MALLOC, "malloc");
+        ctx->AmB = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+        STDL_ERROR_HANDLE_AND_REPORT(ctx->AmB == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices); return STDL_ERR_MALLOC, "malloc");
     }
 
     // store index in order
@@ -567,13 +567,18 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
                 ibaj += iaBB_K[kib * natm + B_] * qAia[kja * natm + B_];
             }
 
-            ctx->A[STDL_MATRIX_SP_IDX(lia, ljb)] = 2 * iajb - ijab;
+            if(compute_B) {
+                ctx->ApB[STDL_MATRIX_SP_IDX(lia, ljb)] = 4 * iajb - ijab - ctx->ax * ibaj;
+                ctx->AmB[STDL_MATRIX_SP_IDX(lia, ljb)] = - ijab + ctx->ax * ibaj;
+            } else
+                ctx->ApB[STDL_MATRIX_SP_IDX(lia, ljb)] = 2 * iajb - ijab;
 
-            if(kia == kjb) // diagonal element
-                ctx->A[STDL_MATRIX_SP_IDX(lia, ljb)] += (float) (ctx->e_ptr[ctx->nocc + a] - ctx->e_ptr[i]);
+            if(kia == kjb) { // diagonal element
+                ctx->ApB[STDL_MATRIX_SP_IDX(lia, ljb)] += (float) (ctx->e_ptr[ctx->nocc + a] - ctx->e_ptr[i]);
+                if(compute_B)
+                    ctx->AmB[STDL_MATRIX_SP_IDX(lia, ljb)] += (float) (ctx->e_ptr[ctx->nocc + a] - ctx->e_ptr[i]);
+            }
 
-            if(compute_B)
-                ctx->B[STDL_MATRIX_SP_IDX(lia, ljb)] = 2 * iajb - ctx->ax * ibaj;
         }
     }
 
@@ -582,265 +587,9 @@ int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B) {
     stdl_log_msg(0, "< done\n");
     stdl_log_msg(0, "Selected %ld CSFs (%.2f%% of %ld CSFs)\n", ctx->ncsfs, (float) ctx->ncsfs / (float) nexci_ia * 100, nexci_ia);
 
-    stdl_matrix_ssp_print(2, ctx->ncsfs, ctx->A, "A");
-    if(ctx->B != NULL)
-        stdl_matrix_ssp_print(2, ctx->ncsfs, ctx->B, "B");
-
-    STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices);
-
-    return STDL_ERR_OK;
-}
-
-// evaluate (pq|rs): `wrk` is a working space of size `2*natm` to store transition charges for pq and rs.
-float _pqrs_monopole_wrk(stdl_context* ctx, size_t p, size_t q, size_t r, size_t s, float* AABB, float* wrk) {
-    // set wrk to zero
-    for (size_t A = 0; A < ctx->original_wf->natm; ++A) {
-        wrk[A] = .0f;
-        wrk[ctx->original_wf->natm + A] = .0f;
-    }
-
-    // compute transition charges on each atom
-    for (size_t mu = 0; mu < ctx->original_wf->nao; ++mu) {
-        wrk[ctx->original_wf->aotoatm[mu]] += (float) (ctx->C[p * ctx->original_wf->nao + mu] * ctx->C[q * ctx->original_wf->nao + mu]);
-        wrk[ctx->original_wf->natm + ctx->original_wf->aotoatm[mu]] += (float) (ctx->C[r * ctx->original_wf->nao + mu] * ctx->C[s * ctx->original_wf->nao + mu]);
-    }
-
-    // (pq|rs)' = wrk*wrk*AABB
-    float pqrs = .0f;
-    for (size_t A_ = 0; A_ < ctx->original_wf->natm; ++A_) {
-        for (size_t B_ = 0; B_ < ctx->original_wf->natm; ++B_) {
-            pqrs += wrk[A_] * wrk[ctx->original_wf->natm + B_] * AABB[STDL_MATRIX_SP_IDX(A_, B_)];
-        }
-    }
-
-    return pqrs;
-}
-
-int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B) {
-    assert(ctx != NULL && ctx->ncsfs == 0);
-
-    stdl_log_msg(1, "+ ");
-    stdl_log_msg(0, "Select CSFs (monopole approximation -- direct method) >");
-    stdl_log_msg(1, "\n  | Build (ij|BB)_J and (ia|BB)_K ");
-
-    size_t natm = ctx->original_wf->natm,
-            nvirt = ctx->nmo - ctx->nocc,
-            nexci_ia = ctx->nocc * nvirt;
-
-    double* atm = ctx->original_wf->atm;
-
-    /*
-     * 1) (AA|BB)_J and (AA|BB)_K
-     */
-
-    float* env = malloc((2 * STDL_MATRIX_SP_SIZE(natm)) * sizeof(float));
-    STDL_ERROR_HANDLE_AND_REPORT(env == NULL, return STDL_ERR_MALLOC, "malloc");
-
-    // Coulomb and exchange-like integrals (AA|BB), `float[natm * natm]`
-    float * AABB_J = env;
-    float * AABB_K = env + STDL_MATRIX_SP_SIZE(natm);
-    float* wrk;
-
-    #pragma omp parallel for
-    for(size_t A_=0; A_ < natm; A_++) {
-        for(size_t B_=0; B_ <= A_; B_++) {
-            float r_AB = 0;
-            if(A_ != B_) {
-                r_AB = (float) sqrt(pow(atm[A_ * 4 + 1] - atm[B_ * 4 + 1], 2) + pow(atm[A_ * 4 + 2] - atm[B_ * 4 + 2], 2) + pow(atm[A_ * 4 + 3] - atm[B_ * 4 + 3], 2));
-            }
-
-            float etaAB = .5f * (eta[(int) atm[A_ * 4 + 0]] + eta[(int) atm[B_ * 4 + 0]]);
-
-            AABB_J[STDL_MATRIX_SP_IDX(A_, B_)] = 1.f / powf(powf(r_AB, ctx->gammaJ) + powf(ctx->ax * etaAB, -ctx->gammaJ), 1.f / ctx->gammaJ);
-            AABB_K[STDL_MATRIX_SP_IDX(A_, B_)] = 1.f / powf(powf(r_AB, ctx->gammaK) + powf(etaAB, -ctx->gammaK), 1.f / ctx->gammaK);
-        }
-    }
-
-    stdl_log_msg(0, "-");
-    stdl_log_msg(1, "\n  | Select primary CSFs below %f Eh, looping through %d CSFS ", ctx->ethr, nexci_ia);
-
-    /*
-     *  2) To select primary CSFs i→a, one needs to evaluate A'_ia,ia = (e_a - e_i) + 2*(ia|ia)' - (ii|aa)'.
-     *     Then, CSFs are selected if A'_ia,ia <= E_thr.
-     */
-
-    // marks csfs_ensemble as not-included (0), primary (1), or secondary (2).
-    char* csfs_ensemble = malloc(nexci_ia * sizeof(short));
-    STDL_ERROR_HANDLE_AND_REPORT(csfs_ensemble == NULL, free(env); return STDL_ERR_MALLOC, "malloc");
-
-    // store diagonal components
-    float* A_diag = malloc(nexci_ia * sizeof(float ));
-    STDL_ERROR_HANDLE_AND_REPORT(A_diag == NULL, STDL_FREE_ALL(env, csfs_ensemble); return STDL_ERR_MALLOC, "malloc");
-
-    ctx->ncsfs = 0;
-    size_t ncsfs = 0;
-
-    #pragma omp parallel for private(wrk) reduction(+:ncsfs)
-    for(size_t i=0; i < ctx->nocc; i++) {
-        wrk = malloc(2 * natm * sizeof(float ));
-
-        for (size_t a = 0; a < nvirt; ++a) {
-            size_t kia = i * nvirt + a;
-
-            float iaia = _pqrs_monopole_wrk(ctx, i, ctx->nocc + a, i, ctx->nocc + a, AABB_K, wrk);
-            float iiaa = _pqrs_monopole_wrk(ctx, i, i, ctx->nocc + a, ctx->nocc + a, AABB_J, wrk);
-
-            A_diag[kia] = (float) (ctx->e_ptr[ctx->nocc + a] - ctx->e_ptr[i]) + 2 * iaia - iiaa;
-
-            if(A_diag[kia] <= ctx->ethr) {
-                csfs_ensemble[kia] = 1;
-                ncsfs++;
-                STDL_DEBUG("selected primary:: %ld→%ld [%d] (E=%f Eh)", i, ctx->nocc + a, kia, A_diag[kia]);
-            } else {// ... the rest is selected to be considered in perturbation.
-                csfs_ensemble[kia] = 2; // mark as potentially secondary for the moment
-            }
-        }
-
-        free(wrk);
-    }
-
-    // while we're at it, sort the CSFs
-    stdl_log_msg(0, "-");
-    stdl_log_msg(1, "\n  | Sorting CSFs ");
-
-    size_t* csfs_sorted_indices = malloc(nexci_ia * sizeof(size_t));
-    STDL_ERROR_HANDLE_AND_REPORT(csfs_sorted_indices == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag); return STDL_ERR_MALLOC, "malloc");
-
-    for(size_t kia=0; kia < nexci_ia; kia++)
-        csfs_sorted_indices[kia] = kia;
-
-    // heap sort, https://en.wikipedia.org/wiki/Heapsort#Standard_implementation
-    size_t start = nexci_ia / 2, end = nexci_ia, tmp_swap, root, child;
-    while(end > 1) {
-        if(start) {
-            start -= 1;
-        } else {
-            end -= 1;
-            tmp_swap = csfs_sorted_indices[end];
-            csfs_sorted_indices[end] = csfs_sorted_indices[0];
-            csfs_sorted_indices[0] = tmp_swap;
-        }
-
-        root = start;
-        while((2 * root + 1) < end) {
-            child = 2 * root + 1;
-            if(child + 1 < end && A_diag[csfs_sorted_indices[child]] < A_diag[csfs_sorted_indices[child + 1]])
-                child += 1;
-
-            if(A_diag[csfs_sorted_indices[root]] < A_diag[csfs_sorted_indices[child]]) {
-                tmp_swap = csfs_sorted_indices[child];
-                csfs_sorted_indices[child] = csfs_sorted_indices[root];
-                csfs_sorted_indices[root] = tmp_swap;
-                root = child;
-            } else {
-                break;
-            }
-        }
-    }
-
-    STDL_ERROR_HANDLE_AND_REPORT(ncsfs == 0, return STDL_ERR_CONTEXT, "no CSFs selected. `E_thr` should be at least %f Eh!", A_diag[csfs_sorted_indices[0]]);
-
-    /*
-     * 3) Now, select S-CSFs j→b so that E^(2)_jb > E^(2)_thr.
-     */
-
-    stdl_log_msg(0, "-");
-    stdl_log_msg(1, "\n  | Select secondary CSFs with E^(2) < %e Eh, looping through the %d remaining CSFs ", ctx->e2thr, nexci_ia - ncsfs);
-
-    #pragma omp parallel for private(wrk) reduction(+:ncsfs)
-    for(size_t kjb=0; kjb < nexci_ia; kjb++) { // loop over possible S-CSFs
-        if(csfs_ensemble[kjb] == 2) {
-            size_t b = kjb % nvirt, j = kjb / nvirt;
-            float e2 = .0f; // perturbation energy
-
-            wrk = malloc(2 * natm * sizeof(float ));
-
-            for(size_t kia=0; kia < nexci_ia; kia++) { // loop over P-CSFs
-                if(csfs_ensemble[kia] == 1) {
-
-                    size_t a = kia % nvirt, i = kia / nvirt;
-                    float ijab = _pqrs_monopole_wrk(ctx, i, j, ctx->nocc + a, ctx->nocc + b, AABB_J, wrk);
-                    float iajb = _pqrs_monopole_wrk(ctx, i, ctx->nocc + a, j, ctx->nocc + b, AABB_K, wrk);
-
-                    float A_iajb = 2 * iajb - ijab;
-
-                    e2 += powf(A_iajb, 2) / (A_diag[kjb] - A_diag[kia]);
-                }
-            }
-
-            if(e2 < ctx->e2thr) {
-                csfs_ensemble[kjb] = 0; // discarded
-            } else {
-                STDL_DEBUG("selected secondary:: %ld→%ld [%d] (E=%f Eh)", j, ctx->nocc + b, kjb, A_diag[kjb]);
-                ncsfs++;
-            }
-
-            free(wrk);
-        }
-    }
-
-    ctx->ncsfs = ncsfs;
-
-    stdl_log_msg(0, "-");
-    stdl_log_msg(1, "\n  | Build A' (and B') matrices with %ld CSFs", ctx->ncsfs);
-
-    /*
-     * 4) Store selected CSFs (in increasing energy order), and create A', B' matrices
-     */
-    float* ecsfs = malloc((ctx->ncsfs) * sizeof(float ));
-    ctx->csfs = malloc((ctx->ncsfs) * sizeof(size_t));
-    ctx->A = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-    STDL_ERROR_HANDLE_AND_REPORT(ecsfs == NULL || ctx->csfs == NULL || ctx->A == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices); return STDL_ERR_MALLOC, "malloc");
-
-    if(compute_B) {
-        ctx->B = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
-        STDL_ERROR_HANDLE_AND_REPORT(ctx->B == NULL, STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices); return STDL_ERR_MALLOC, "malloc");
-    }
-
-    // store index in order
-    size_t lia = 0;
-    for(size_t kia_=0; kia_ < nexci_ia; kia_++) {
-        size_t kia = csfs_sorted_indices[kia_]; // corresponding index
-        if(csfs_ensemble[kia] > 0) {
-            ctx->csfs[lia] = kia;
-            ecsfs[lia] = A_diag[kia];
-            lia++;
-        }
-    }
-
-    // build A' and B' (if requested)
-    #pragma omp parallel for private(wrk)
-    for(lia=0; lia < ctx->ncsfs; lia++) {
-        size_t kia = ctx->csfs[lia];
-        size_t a = kia % nvirt, i = kia / nvirt;
-
-        wrk = malloc(2 * natm * sizeof(float ));
-
-        for (size_t ljb = 0; ljb <= lia; ++ljb) {
-            size_t kjb = ctx->csfs[ljb]; // corresponding index
-            size_t b = kjb % nvirt, j = kjb / nvirt;
-
-            float iajb = _pqrs_monopole_wrk(ctx, i, ctx->nocc + a, j, ctx->nocc + b, AABB_K, wrk);
-            float ijab = _pqrs_monopole_wrk(ctx, i, j, ctx->nocc + a, ctx->nocc + b, AABB_J, wrk);
-            float ibaj = _pqrs_monopole_wrk(ctx, i, ctx->nocc + b, ctx->nocc + a, j, AABB_K, wrk);
-
-            ctx->A[STDL_MATRIX_SP_IDX(lia, ljb)] = 2 * iajb - ijab;
-
-            if(kia == kjb) // diagonal element
-                ctx->A[STDL_MATRIX_SP_IDX(lia, ljb)] += (float) (ctx->e_ptr[ctx->nocc + a] - ctx->e_ptr[i]);
-
-            if(compute_B)
-                ctx->B[STDL_MATRIX_SP_IDX(lia, ljb)] = 2 * iajb - ctx->ax * ibaj;
-        }
-
-        free(wrk);
-    }
-
-    STDL_FREE_IF_USED(ecsfs);
-
-    stdl_log_msg(0, "< done\n");
-    stdl_log_msg(0, "Selected %ld CSFs (%.2f%% of %ld CSFs)\n", ctx->ncsfs, (float) ctx->ncsfs / (float) nexci_ia * 100, nexci_ia);
-
+    stdl_matrix_ssp_print(3, ctx->ncsfs, ctx->ApB, "A+B");
+    if(ctx->AmB != NULL)
+        stdl_matrix_ssp_print(3, ctx->ncsfs, ctx->AmB, "A-B");
 
     STDL_FREE_ALL(env, csfs_ensemble, A_diag, csfs_sorted_indices);
 
@@ -878,7 +627,7 @@ int stdl_context_dump_h5(stdl_context* ctx, hid_t file_id) {
     STDL_ERROR_HANDLE_AND_REPORT(ctx_group_id == H5I_INVALID_HID, return STDL_ERR_WRITE, "cannot create group");
 
     // info
-    status = H5LTmake_dataset(ctx_group_id, "info", 1, (hsize_t[]) {6}, H5T_NATIVE_ULONG, (size_t[]) {ctx->e_ptr - wf->e, ctx->C_ptr - wf->C, ctx->nmo, ctx->nocc, ctx->ncsfs, ctx->B != NULL});
+    status = H5LTmake_dataset(ctx_group_id, "info", 1, (hsize_t[]) {6}, H5T_NATIVE_ULONG, (size_t[]) {ctx->e_ptr - wf->e, ctx->C_ptr - wf->C, ctx->nmo, ctx->nocc, ctx->ncsfs, ctx->AmB != NULL});
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", ctx_group_id);
 
     // parameters for the selection of MOs/CSFs
@@ -893,11 +642,11 @@ int stdl_context_dump_h5(stdl_context* ctx, hid_t file_id) {
         status = H5LTmake_dataset(ctx_group_id, "csfs", 1, (hsize_t[]) {ctx->ncsfs}, H5T_NATIVE_ULONG, ctx->csfs);
         STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", ctx_group_id);
 
-        status = H5LTmake_dataset(ctx_group_id, "A", 1, (hsize_t[]) {STDL_MATRIX_SP_SIZE(ctx->ncsfs)}, H5T_NATIVE_FLOAT, ctx->A);
+        status = H5LTmake_dataset(ctx_group_id, ctx->AmB != NULL? "A+B" : "A", 1, (hsize_t[]) {STDL_MATRIX_SP_SIZE(ctx->ncsfs)}, H5T_NATIVE_FLOAT, ctx->ApB);
         STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", ctx_group_id);
 
-        if(ctx->B != NULL) {
-            status = H5LTmake_dataset(ctx_group_id, "B", 1, (hsize_t[]) {STDL_MATRIX_SP_SIZE(ctx->ncsfs)}, H5T_NATIVE_FLOAT, ctx->B);
+        if(ctx->AmB != NULL) {
+            status = H5LTmake_dataset(ctx_group_id, "A-B", 1, (hsize_t[]) {STDL_MATRIX_SP_SIZE(ctx->ncsfs)}, H5T_NATIVE_FLOAT, ctx->AmB);
             STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", ctx_group_id);
         }
     }
@@ -992,22 +741,22 @@ int stdl_context_load_h5(hid_t file_id, stdl_context** ctx_ptr) {
 
     if((*ctx_ptr)->ncsfs > 0) {
         (*ctx_ptr)->csfs = malloc((*ctx_ptr)->ncsfs * sizeof(size_t));
-        (*ctx_ptr)->A = malloc(STDL_MATRIX_SP_SIZE((*ctx_ptr)->ncsfs) * sizeof(float));
+        (*ctx_ptr)->ApB = malloc(STDL_MATRIX_SP_SIZE((*ctx_ptr)->ncsfs) * sizeof(float));
 
-        STDL_ERROR_HANDLE_AND_REPORT((*ctx_ptr)->csfs == NULL || (*ctx_ptr)->A == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
+        STDL_ERROR_HANDLE_AND_REPORT((*ctx_ptr)->csfs == NULL || (*ctx_ptr)->ApB == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
 
         status = H5LTread_dataset(ctx_group_id, "csfs", H5T_NATIVE_ULLONG, (*ctx_ptr)->csfs);
         STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
 
-        status = H5LTread_dataset(ctx_group_id, "A", H5T_NATIVE_FLOAT, (*ctx_ptr)->A);
+        status = H5LTread_dataset(ctx_group_id, ulongbuff[5] != 0 ? "A+B" : "A", H5T_NATIVE_FLOAT, (*ctx_ptr)->ApB);
         STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
 
         if(ulongbuff[5] != 0) {
-            (*ctx_ptr)->B = malloc(STDL_MATRIX_SP_SIZE((*ctx_ptr)->ncsfs) * sizeof(float));
+            (*ctx_ptr)->AmB = malloc(STDL_MATRIX_SP_SIZE((*ctx_ptr)->ncsfs) * sizeof(float));
 
-            STDL_ERROR_HANDLE_AND_REPORT((*ctx_ptr)->B == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
+            STDL_ERROR_HANDLE_AND_REPORT((*ctx_ptr)->AmB == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
 
-            status = H5LTread_dataset(ctx_group_id, "B", H5T_NATIVE_FLOAT, (*ctx_ptr)->B);
+            status = H5LTread_dataset(ctx_group_id, "A-B", H5T_NATIVE_FLOAT, (*ctx_ptr)->AmB);
             STDL_ERROR_HANDLE_AND_REPORT(status < 0, err = STDL_ERR_READ; goto _end, "cannot read dataset");
         }
     }
@@ -1056,7 +805,7 @@ int stdl_context_approximate_size(stdl_context *ctx, size_t *sz, size_t *bs_sz, 
             + *bs_sz
             + (ctx->nmo * ctx->original_wf->nao * sizeof(double ))
             + ctx->ncsfs * sizeof(size_t)
-            + (ctx->B == NULL ? 1 : 2 ) * STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float);
+            + (ctx->AmB == NULL ? 1 : 2 ) * STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float);
 
     return STDL_ERR_OK;
 }

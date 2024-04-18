@@ -3,6 +3,7 @@
 
 #include "tests_suite.h"
 #include "user_input_handler.h"
+#include <stdlite/utils/matrix.h>
 
 FILE* stream;
 
@@ -196,9 +197,9 @@ void test_user_input_make_context() {
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 20.f / STDL_CONST_AU_TO_EV, ctx->ethr);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, inp->ctx_e2thr, ctx->e2thr);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 1.0, ctx->ax);
-    TEST_ASSERT_NULL(ctx->B); // because ctx_tda=0 by default
+    TEST_ASSERT_NULL(ctx->AmB); // because ctx_tda=0 by default
 
-    // just check context
+    // just check in H5
     hid_t file_id = H5Fopen(inp->data_output, H5F_ACC_RDONLY, H5P_DEFAULT);
     TEST_ASSERT_NOT_EQUAL(file_id, H5I_INVALID_HID);
     stdl_context* ctx2 = NULL;
@@ -206,6 +207,56 @@ void test_user_input_make_context() {
     TEST_ASSERT_EQUAL(ctx2->nmo, ctx->nmo);
     ASSERT_STDL_OK(stdl_context_delete(ctx2));
     H5Fclose(file_id);
+
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
+    ASSERT_STDL_OK(stdl_user_input_handler_delete(inp));
+}
+
+void test_user_input_reuse_context() {
+    stdl_user_input_handler* inp = NULL;
+
+    char* args[] =  {
+            "self",
+            "--data_output=test_remake_context.h5",
+            "--ctx_source=../app/tests/test_files/context_water_sto3g.h5",
+            "--ctx_source_type=STDL_CTX",
+    };
+
+    ASSERT_STDL_OK(stdl_user_input_handler_new_from_args(sizeof(args) / sizeof(char *), args, &inp));
+
+    TEST_ASSERT_EQUAL_STRING("../app/tests/test_files/context_water_sto3g.h5", inp->ctx_source);
+    TEST_ASSERT_EQUAL(STDL_SRC_CTX, inp->ctx_source_type);
+    TEST_ASSERT_EQUAL_STRING("test_remake_context.h5", inp->data_output);
+
+    // create context
+    stdl_context* ctx = NULL;
+    ASSERT_STDL_OK(stdl_user_input_handler_make_context(inp, &ctx));
+    TEST_ASSERT_NOT_NULL(ctx);
+
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, 4.0, ctx->gammaJ);
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, 2.0, ctx->gammaK);
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, 50.f / STDL_CONST_AU_TO_EV, ctx->ethr);
+    TEST_ASSERT_FLOAT_WITHIN(1e-4, 0.5, ctx->ax);
+    TEST_ASSERT_NOT_NULL(ctx->AmB);
+
+    // just check
+    hid_t file_id = H5Fopen(inp->ctx_source, H5F_ACC_RDONLY, H5P_DEFAULT);
+    TEST_ASSERT_NOT_EQUAL(file_id, H5I_INVALID_HID);
+
+    hid_t ctx_group_id = H5Gopen1(file_id, "context");
+
+    float* AmB = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(AmB);
+
+    herr_t status = H5LTread_dataset(ctx_group_id, "A-B", H5T_NATIVE_FLOAT, AmB);
+    TEST_ASSERT_TRUE(status == 0);
+
+    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, ctx->AmB, AmB, STDL_MATRIX_SP_SIZE(ctx->ncsfs));
+
+    H5Gclose(ctx_group_id);
+    H5Fclose(file_id);
+
+    STDL_FREE_IF_USED(AmB);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
     ASSERT_STDL_OK(stdl_user_input_handler_delete(inp));

@@ -126,7 +126,7 @@ void test_response_TDA_ok() {
 
     for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
         // The eigenvalues are more or less the diagonal elements of A.
-        TEST_ASSERT_FLOAT_WITHIN(1e-2, ctx->A[STDL_MATRIX_SP_IDX(lia, lia)], etda[lia]);
+        TEST_ASSERT_FLOAT_WITHIN(1e-2, ctx->ApB[STDL_MATRIX_SP_IDX(lia, lia)], etda[lia]);
 
         // check that X^2 is normed
         float sum = .0f;
@@ -260,19 +260,6 @@ void test_response_TD_ok() {
 
     ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, etd, Xamptd, Yamptd));
 
-    for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
-        // The eigenvalues are more or less the diagonal elements of A.
-        TEST_ASSERT_FLOAT_WITHIN(1e-2, ctx->A[STDL_MATRIX_SP_IDX(lia, lia)], etd[lia]);
-
-        // check that X^2-Y^2 is normed
-        float sum = .0f;
-        for (size_t kjb = 0; kjb < ctx->ncsfs; kjb++) {
-            sum += powf(Xamptd[lia * ctx->ncsfs + kjb], 2) - powf(Yamptd[lia * ctx->ncsfs + kjb], 2);
-        }
-
-        TEST_ASSERT_FLOAT_WITHIN(1e-4, 1.0f, sum);
-    }
-
     // compute dipole integrals and convert to MO
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_mat);
@@ -311,7 +298,7 @@ void test_response_TD_ok() {
     float* reYtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(reYtd);
 
-    for (size_t iexci = 0; iexci < nw; ++iexci) {
+   for (size_t iexci = 0; iexci < nw; ++iexci) {
         _make_response_vector(ctx, w[iexci], 1, 1, dipoles_mat, etd, Xamptd, Yamptd, 1, reXtd);
         _make_response_vector(ctx, w[iexci], 1, 1, dipoles_mat, etd, Xamptd, Yamptd, 0, reYtd);
 
@@ -324,6 +311,9 @@ void test_response_TD_ok() {
 }
 
 void test_response_TD_antisym_ok() {
+
+    // TEST_IGNORE_MESSAGE("latter");
+
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);

@@ -54,11 +54,11 @@ struct stdlite_context_ {
     /// `NULL` as long as no CSFs has been selected.
     size_t* csfs;
 
-    /// `float[STDL_MATRIX_SP_SIZE(ncfs)]`, part of the electronic Hessian matrix. `NULL` as long as no CSFs has been selected.
-    float* A;
+    /// `float[STDL_MATRIX_SP_SIZE(ncfs)]`, $\mathbf A+\mathbf B$. `NULL` as long as no CSFs has been selected.
+    float* ApB;
 
-    /// `float[STDL_MATRIX_SP_SIZE(ncfs)]`, part of the electronic Hessian matrix. Might be `NULL` if only `A` is required.
-    float* B;
+    /// `float[STDL_MATRIX_SP_SIZE(ncfs)]`, $\mathbf A-\mathbf B$. Might be `NULL` if only $\mathbf A$ (and thus `ApB` already contains $\mathbf A$) is required.
+    float* AmB;
 };
 
 typedef struct stdlite_context_ stdl_context;
@@ -91,11 +91,7 @@ int stdl_context_delete(stdl_context* ctx);
  * If `B` is set to `NULL`, then only $\mathbf A$ is filled (Tamm-Dancoff approximation).
  *
  * @param ctx a valid context
- * @param[out] nselected number of CSFs that were selected. If equals to 0, then `csfs` and `A` are not initialized.
- * @param[out] csfs `size_t[nselected]`, the indices (`i*ctx->nvirt + a`) of each selected CSF `i→a`, as `i = csfs[k] / ctx->nvirt; a = csfs[k] % ctx->nvirt`.
- *             They are sorted in increasing energy order, the energy being available at `A[k * nselected + k]`.
- * @param[out] A `float[STDL_MATRIX_SP_SIZE(nslected)]`, part of the electronic Hessian matrix, in `sp` format, to be created. Caller is responsible for free'ing it.
- * @param[out] B `float[STDL_MATRIX_SP_SIZE(nslected)]`, part of the electronic Hessian matrix, in `sp` format, to be created. Might be `NULL` if only `A` is required. If not, caller is responsible for free'ing it.
+ * @param compute_B whether $\mathbf B$ is required (`1`) or not (`0`)
  * @return error code
  * @ingroup context
  */

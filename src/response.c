@@ -29,7 +29,7 @@ int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
     float * wrk = malloc(wrk_sz);
     STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
-    memcpy(wrk, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float ));
+    memcpy(wrk, ctx->ApB, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float ));
     float* lapack_wrk = wrk + STDL_MATRIX_SP_SIZE(ctx->ncsfs);
 
     if (nexci < ctx->ncsfs) {
@@ -75,39 +75,26 @@ int stdl_response_TDA_casida(stdl_context *ctx, size_t nexci, float *e, float *X
 }
 
 int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X, float* Y) {
-    assert(ctx != NULL && ctx->ncsfs > 0 && nexci <= ctx->ncsfs && ctx->B != NULL && e != NULL && X != NULL && Y != NULL);
+    assert(ctx != NULL && ctx->ncsfs > 0 && nexci <= ctx->ncsfs && ctx->AmB != NULL && e != NULL && X != NULL && Y != NULL);
 
     size_t sz = ctx->ncsfs * ctx->ncsfs;
-    size_t wrk_sz = (3 * sz + 2 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) + 8 * ctx->ncsfs) * sizeof(float), iwrk_sz = 6 * ctx->ncsfs * sizeof(STDL_LA_INT);
+    size_t wrk_sz = (3 * sz + 8 * ctx->ncsfs) * sizeof(float), iwrk_sz = 6 * ctx->ncsfs * sizeof(STDL_LA_INT);
     _log_memory(wrk_sz + (nexci < ctx->ncsfs? iwrk_sz : 0) + (ctx->ncsfs * (ctx->ncsfs + 4)) * sizeof(float ) /* <- stdl_matrix_ssp_sqrt_sy */);
 
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute %ld excitation amplitude vectors (TD-DFT) >", nexci);
-    stdl_log_msg(1, "\n  | Make A+B and A-B ");
+    stdl_log_msg(1, "\n  | Make (A-B)^½ ");
 
     float * wrk = malloc(wrk_sz);
     STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
-    float *U = wrk, *V = wrk + sz, *W = wrk + 2 * sz, *ApB = wrk + 3 * sz, *AmB = wrk + 3 * sz + STDL_MATRIX_SP_SIZE(ctx->ncsfs), *lapack_wrk = wrk + 3 * sz + 2 * STDL_MATRIX_SP_SIZE(ctx->ncsfs);
-
-    // compute A+B and A-B
-    #pragma omp parallel for schedule(guided)
-    for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
-        for (size_t kjb = 0; kjb <= kia; ++kjb) {
-            float a = ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)], b = ctx->B[STDL_MATRIX_SP_IDX(kia, kjb)];
-            ApB[STDL_MATRIX_SP_IDX(kia, kjb)] = a + b;
-            AmB[STDL_MATRIX_SP_IDX(kia, kjb)] = a - b;
-        }
-    }
+    float *U = wrk, *V = wrk + sz, *W = wrk + 2 * sz, *lapack_wrk = wrk + 3 * sz;
 
     // U=A+B
-    stdl_matrix_ssp_blowsy(ctx->ncsfs, 'L', ApB, U);
+    stdl_matrix_ssp_blowsy(ctx->ncsfs, 'L', ctx->ApB, U);
 
-    stdl_log_msg(0, "-");
-    stdl_log_msg(1, "\n  | Make (A-B)^½ ");
-
-    // get V=(A-B)^1/2
-    stdl_matrix_ssp_sqrt_sy(ctx->ncsfs, AmB, V);
+    // V=(A-B)^1/2
+    stdl_matrix_ssp_sqrt_sy(ctx->ncsfs, ctx->AmB, V);
 
     stdl_log_msg(0, "-");
     stdl_log_msg(1, "\n  | Make (A-B)^½*(A+B)*(A-B)^½ ");
@@ -162,7 +149,7 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
         memcpy(X, U, sz * sizeof(float));
     }
 
-    STDL_ERROR_HANDLE_AND_REPORT(lapack_err != 0, free(wrk); return STDL_ERR_RESPONSE, "error while ssyevx(): %d", lapack_err);
+    STDL_ERROR_HANDLE_AND_REPORT(lapack_err != 0, free(wrk); return STDL_ERR_RESPONSE, "error while ssyev[x](): %d", lapack_err);
 
     stdl_log_msg(0, "-");
     stdl_log_msg(1, "\n  | Transpose ");
@@ -194,7 +181,7 @@ int stdl_response_TD_casida(stdl_context *ctx, size_t nexci, float *e, float *X,
         for(size_t kia = 0; kia < ctx->ncsfs; kia++) {
             float sum = .0f;
             for(size_t kjb = 0; kjb < ctx->ncsfs; kjb++) {
-                sum += ApB[STDL_MATRIX_SP_IDX(kia, kjb)] * X[iexci * ctx->ncsfs + kjb] / e[iexci];
+                sum += ctx->ApB[STDL_MATRIX_SP_IDX(kia, kjb)] * X[iexci * ctx->ncsfs + kjb] / e[iexci];
             }
 
             Y[iexci * ctx->ncsfs + kia] = sum;
@@ -242,45 +229,34 @@ int stdl_response_perturbed_gradient(stdl_context *ctx, size_t dim, int issym, d
 
 
 int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim, int isherm, float *egrad, float *X, float *Y) {
-    assert(ctx != NULL && ctx->ncsfs > 0 && nw > 0 && ndim > 0 && ctx->B != NULL && egrad != NULL && X != NULL && Y != NULL);
+    assert(ctx != NULL && ctx->ncsfs > 0 && nw > 0 && ndim > 0 && ctx->AmB != NULL && egrad != NULL && X != NULL && Y != NULL);
 
-    size_t wrk_sz = (3 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) + ctx->ncsfs) * sizeof(float), iwrk_sz = ctx->ncsfs * sizeof(STDL_LA_INT);
+    size_t wrk_sz = (2 * STDL_MATRIX_SP_SIZE(ctx->ncsfs) + ctx->ncsfs) * sizeof(float), iwrk_sz = ctx->ncsfs * sizeof(STDL_LA_INT);
     _log_memory(wrk_sz + iwrk_sz);
 
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute %ld linear response vectors (TD-DFT) >", nw);
-    stdl_log_msg(1, "\n  | Make A+B and A-B ");
+    stdl_log_msg(1, "\n  | Invert %s ", isherm ? "A-B" : "A+B");
 
     size_t szXY = ctx->ncsfs * ndim;
 
     float * wrk = malloc(wrk_sz);
     STDL_ERROR_HANDLE_AND_REPORT(wrk == NULL, return STDL_ERR_MALLOC, "malloc");
 
-    float *ApB = wrk, *AmB = wrk + STDL_MATRIX_SP_SIZE(ctx->ncsfs), *L = wrk + 2 *STDL_MATRIX_SP_SIZE(ctx->ncsfs), *lapack_wrk = wrk + 3 * STDL_MATRIX_SP_SIZE(ctx->ncsfs);
-
-    // compute A+B and A-B
-    #pragma omp parallel for schedule(guided)
-    for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
-        for (size_t kjb = 0; kjb <= kia; ++kjb) {
-            float a = ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)], b = ctx->B[STDL_MATRIX_SP_IDX(kia, kjb)];
-            ApB[STDL_MATRIX_SP_IDX(kia, kjb)] = a + b;
-            AmB[STDL_MATRIX_SP_IDX(kia, kjb)] = a - b;
-        }
-    }
-
-    stdl_log_msg(0, "-");
-    stdl_log_msg(1, "\n  | Invert %s ", isherm ? "A-B" : "A+B");
+    float *AxB = wrk, *L = wrk + STDL_MATRIX_SP_SIZE(ctx->ncsfs), *lapack_wrk = wrk + 2 * STDL_MATRIX_SP_SIZE(ctx->ncsfs);
 
     // invert A-B [hermitian] or A+B [non-hermitian], taking advantage of its `sp` storage
+    memcpy(AxB, isherm? ctx->AmB : ctx->ApB, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float ));
+
     STDL_LA_INT* ipiv = malloc(iwrk_sz);
     STDL_ERROR_HANDLE_AND_REPORT(ipiv == NULL, STDL_FREE_ALL(wrk); return STDL_ERR_MALLOC, "malloc");
 
-    STDL_LA_INT lapack_err = LAPACKE_ssptrf_work(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, isherm ? AmB : ApB, ipiv);
+    STDL_LA_INT lapack_err = LAPACKE_ssptrf_work(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, AxB, ipiv);
     STDL_ERROR_HANDLE_AND_REPORT(lapack_err != 0, STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptrf(): %d", lapack_err);
 
-    lapack_err = LAPACKE_ssptri_work(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, isherm ? AmB : ApB, ipiv, lapack_wrk);
+    lapack_err = LAPACKE_ssptri_work(LAPACK_ROW_MAJOR, 'L', (STDL_LA_INT) ctx->ncsfs, AxB, ipiv, lapack_wrk);
     STDL_ERROR_HANDLE_AND_REPORT(lapack_err != 0, STDL_FREE_ALL(wrk, ipiv); return STDL_ERR_RESPONSE, "error while ssptri(): %d", lapack_err);
-    // now, AmB/ApB contains its inverse
+    // now, AxB contains its inverse
 
     for (size_t iw = 0; iw < nw; ++iw) {
         stdl_log_msg(0, "-");
@@ -290,7 +266,7 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
         #pragma omp parallel for schedule(guided)
         for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
             for(size_t kjb = 0; kjb <= kia; ++kjb)
-                L[STDL_MATRIX_SP_IDX(kia, kjb)] = (isherm ? ApB : AmB)[STDL_MATRIX_SP_IDX(kia, kjb)] - powf(w[iw], 2) * (isherm ? AmB : ApB)[STDL_MATRIX_SP_IDX(kia, kjb)];
+                L[STDL_MATRIX_SP_IDX(kia, kjb)] = (isherm ? ctx->ApB : ctx->AmB)[STDL_MATRIX_SP_IDX(kia, kjb)] - powf(w[iw], 2) * AxB[STDL_MATRIX_SP_IDX(kia, kjb)];
         }
 
         float *Xi = X + iw * szXY, *Yi = Y + iw * szXY;
@@ -313,7 +289,7 @@ int stdl_response_TD_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim,
             for(size_t cpt = 0; cpt < ndim; cpt++) {
                 float sum = .0f;
                 for (size_t kjb = 0; kjb < ctx->ncsfs; kjb++)
-                    sum += (isherm ? AmB : ApB)[STDL_MATRIX_SP_IDX(kia, kjb)] * w[iw] * Xi[kia * ndim + cpt];
+                    sum += AxB[STDL_MATRIX_SP_IDX(kia, kjb)] * w[iw] * Xi[kia * ndim + cpt];
 
                 Yi[kia * ndim + cpt] = sum;
             }
@@ -362,7 +338,7 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
     float* L = wrk, *Ai = wrk + STDL_MATRIX_SP_SIZE(ctx->ncsfs), *lapack_wrk = wrk + 2 *STDL_MATRIX_SP_SIZE(ctx->ncsfs);
 
     // invert A
-    memcpy(Ai, ctx->A, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
+    memcpy(Ai, ctx->ApB, STDL_MATRIX_SP_SIZE(ctx->ncsfs) * sizeof(float));
 
     STDL_LA_INT* ipiv = malloc(iwrk_sz);
     STDL_ERROR_HANDLE_AND_REPORT(ipiv == NULL, STDL_FREE_ALL(L); return STDL_ERR_MALLOC, "malloc");
@@ -381,7 +357,7 @@ int stdl_response_TDA_linear(stdl_context *ctx, size_t nw, float *w, size_t ndim
         #pragma omp parallel for schedule(guided)
         for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
             for(size_t kjb = 0; kjb <= kia; ++kjb)
-                L[STDL_MATRIX_SP_IDX(kia, kjb)] = ctx->A[STDL_MATRIX_SP_IDX(kia, kjb)] - powf(w[iw], 2) * Ai[STDL_MATRIX_SP_IDX(kia, kjb)];
+                L[STDL_MATRIX_SP_IDX(kia, kjb)] = ctx->ApB[STDL_MATRIX_SP_IDX(kia, kjb)] - powf(w[iw], 2) * Ai[STDL_MATRIX_SP_IDX(kia, kjb)];
         }
 
         float *Xi = X + iw * szXY, *Yi = Y + iw * szXY;
