@@ -5,7 +5,7 @@
 #include "response_requests.h"
 
 /**
- * Handler for the LRVs associated to a given operator
+ * Handler for the LRVs associated to a given operator.
  * @ingroup responses_handler
  */
 struct stdl_op_data_ {
@@ -27,11 +27,11 @@ struct stdl_op_data_ {
     /// `size_t[nlrvs]`, the index in `inp->res_w`
     size_t* iw;
 
-    /// `float[nlrvs,nscfs,dim]` The linear response vector $\mathbf x(\omega)$
-    float* X;
+    /// `float[nlrvs,nscfs,dim]` The linear response vector $\mathbf x(\omega)+\mathbf y(\omega)$
+    float* XpY;
 
-    /// `float[nlrvs,nscfs,dim]` The linear response vector $\mathbf y(\omega)$
-    float* Y;
+    /// `float[nlrvs,nscfs,dim]` The linear response vector $\mathbf x(\omega)-\mathbf y(\omega)$
+    float* XmY;
 
     /// `stdl_lrv[nlrv]`, ready-to-use objects for property property_tensor
     stdl_lrv* lrvs;
@@ -101,11 +101,11 @@ struct stdl_responses_handler_ {
     /// `float[nexci]` the excitation energies
     float* eexci;
 
-    /// `float[nexci,ncsfs]` amplitude vector $\mathbf x^m$ for each excitation $\ket{m}$
-    float* Xamp;
+    /// `float[nexci,ncsfs]` amplitude vector $\mathbf x^m+\mathbf y^m$ for each excitation $\ket{m}$
+    float* XpYamp;
 
-    /// `float[nexci,ncsfs]` amplitude vector $\mathbf y^m$ for each excitation $\ket{m}$, might be `NULL` if TDA
-    float* Yamp;
+    /// `float[nexci,ncsfs]` amplitude vector $\mathbf x^m+\mathbf y^m$ for each excitation $\ket{m}$, might be `NULL` if TDA
+    float* XmYamp;
 };
 
 typedef struct stdl_responses_handler_ stdl_responses_handler;

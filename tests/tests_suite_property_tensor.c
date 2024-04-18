@@ -56,20 +56,20 @@ void test_response_polarizability_TD_ok() {
     size_t nw = 3;
     float w[] = {0, 4.282270E-2f, 4.282270E-2f * 2};
 
-    float* X = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(X);
+    float* XpY = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(XpY);
 
-    float* Y = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(Y);
+    float* XmY = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(XmY);
 
-    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 1, egrad, X, Y));
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 1, egrad, XpY, XmY));
 
     // compute polarizabilities
     float alpha[9], alpha_iso, alpha_aniso, result[] = {4.061f, 4.103f, 4.236f};
 
     for (size_t iw = 0; iw < nw; ++iw) {
 
-        stdl_lrv lrv = {STDL_OP_DIPL, dipoles_mat, w[iw], X + iw * 3 * ctx->ncsfs, Y + iw * 3 * ctx->ncsfs};
+        stdl_lrv lrv = {STDL_OP_DIPL, dipoles_mat, w[iw], XpY + iw * 3 * ctx->ncsfs, XmY + iw * 3 * ctx->ncsfs};
 
         ASSERT_STDL_OK(stdl_property_tensor_linear(
                 ctx,
@@ -80,7 +80,7 @@ void test_response_polarizability_TD_ok() {
         TEST_ASSERT_FLOAT_WITHIN(1e-2, result[iw], alpha_iso);
     }
 
-    STDL_FREE_ALL(dipoles_mat, egrad, X, Y);
+    STDL_FREE_ALL(dipoles_mat, egrad, XpY, XmY);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
@@ -98,13 +98,13 @@ void test_property_polarizability_TD_SOS_ok() {
     float* etd = malloc(ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(etd);
 
-    float* Xamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Xamptd);
+    float* XpYamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(XpYamptd);
 
-    float* Yamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Yamptd);
+    float* XmYamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(XmYamptd);
 
-    ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, etd, Xamptd, Yamptd));
+    ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, etd, XpYamptd, XmYamptd));
 
     // compute dipole integrals and convert to MO
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
@@ -114,7 +114,7 @@ void test_property_polarizability_TD_SOS_ok() {
 
     // get transition dipoles
     float* tg2etd = malloc(ctx->ncsfs * 6 * sizeof(float ));
-    ASSERT_STDL_OK(stdl_property_tensor_g2e_moments(ctx, (stdl_operator []) {STDL_OP_DIPL, STDL_OP_DIPL}, (double*[]) {dipoles_mat, dipoles_mat}, ctx->ncsfs, Xamptd, Yamptd, tg2etd));
+    ASSERT_STDL_OK(stdl_property_tensor_g2e_moments(ctx, (stdl_operator []) {STDL_OP_DIPL, STDL_OP_DIPL}, (double*[]) {dipoles_mat, dipoles_mat}, ctx->ncsfs, XpYamptd, XmYamptd, tg2etd));
 
     // build egrad
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
@@ -126,19 +126,19 @@ void test_property_polarizability_TD_SOS_ok() {
     size_t nw = 3;
     float w[] = {0, STDL_CONST_HC / 1064.f, STDL_CONST_HC / 532.f};
 
-    float* Xtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(Xtd);
+    float* XpYtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(XpYtd);
 
-    float* Ytd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(Ytd);
+    float* XmYtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(XmYtd);
 
-    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 1, egrad, Xtd, Ytd));
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 1, egrad, XpYtd, XmYtd));
 
     // compute polarizabilities
     float alpha[9], alpha_sos[9];
 
     for (size_t iw = 0; iw < nw; ++iw) {
-        stdl_lrv lrv = {STDL_OP_DIPL, dipoles_mat, w[iw], Xtd + iw * 3 * ctx->ncsfs, Ytd + iw * 3 * ctx->ncsfs};
+        stdl_lrv lrv = {STDL_OP_DIPL, dipoles_mat, w[iw], XpYtd + iw * 3 * ctx->ncsfs, XmYtd + iw * 3 * ctx->ncsfs};
 
         ASSERT_STDL_OK(stdl_property_tensor_linear(
                 ctx,
@@ -156,7 +156,7 @@ void test_property_polarizability_TD_SOS_ok() {
         TEST_ASSERT_FLOAT_ARRAY_WITHIN(5e-1, alpha, alpha_sos, 9);
     }
 
-    STDL_FREE_ALL(etd, Xamptd, Yamptd, dipoles_mat, tg2etd, egrad, Xtd, Ytd);
+    STDL_FREE_ALL(etd, XpYamptd, XmYamptd, dipoles_mat, tg2etd, egrad, XpYtd, XmYtd);
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
 
@@ -278,18 +278,18 @@ void test_response_polarizability_TDA_ok() {
     float w[] = {0, STDL_CONST_HC / 1064.f, STDL_CONST_HC / 532.f};
 
     // solve
-    float* Xtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(Xtda);
+    float* XpYtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(XpYtda);
 
-    float* Ytda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Ytda);
+    float* XmYtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(XmYtda);
 
     // compute polarizabilities
     float alpha[9], alpha_iso, alpha_aniso, result[] = {4.061f, 4.101f, 4.229f};
-    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, 1, egrad, Xtda, Ytda));
+    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, 1, egrad, XpYtda, XmYtda));
 
     for (size_t iw = 0; iw < nw; ++iw) {
-        stdl_lrv lrv = {STDL_OP_DIPL, dipoles_mat, w[iw], Xtda + iw * 3 * ctx->ncsfs, Ytda + iw * 3 * ctx->ncsfs};
+        stdl_lrv lrv = {STDL_OP_DIPL, dipoles_mat, w[iw], XpYtda + iw * 3 * ctx->ncsfs, XmYtda + iw * 3 * ctx->ncsfs};
         ASSERT_STDL_OK(stdl_property_tensor_linear(
                 ctx,
                 (stdl_lrv*[]) {&lrv, &lrv},
@@ -300,7 +300,7 @@ void test_response_polarizability_TDA_ok() {
         TEST_ASSERT_FLOAT_WITHIN(1e-2, result[iw], alpha_iso);
     }
 
-    STDL_FREE_ALL(dipoles_mat, egrad, Xtda, Ytda);
+    STDL_FREE_ALL(dipoles_mat, egrad, XpYtda, XmYtda);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
@@ -340,19 +340,19 @@ void test_property_polarizability_TDA_SOS_ok() {
     size_t nw = 3;
     float w[] = {0, STDL_CONST_HC / 1064.f, STDL_CONST_HC / 532.f};
 
-    float* Xtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Xtda);
+    float* XpYtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(XpYtda);
 
-    float* Ytda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Ytda);
+    float* XmYtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(XmYtda);
 
-    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, 1, egrad, Xtda, Ytda));
+    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, 1, egrad, XpYtda, XmYtda));
 
     // compute polarizabilities
     float alpha[9], alpha_sos[9];
 
     for (size_t iw = 0; iw < nw; ++iw) {
-        stdl_lrv lrv = {STDL_OP_DIPL, dipoles_mat, w[iw], Xtda + iw * 3 * ctx->ncsfs, Ytda + iw * 3 * ctx->ncsfs};
+        stdl_lrv lrv = {STDL_OP_DIPL, dipoles_mat, w[iw], XpYtda + iw * 3 * ctx->ncsfs, XmYtda + iw * 3 * ctx->ncsfs};
         ASSERT_STDL_OK(stdl_property_tensor_linear(
                 ctx,
                 (stdl_lrv*[]) {&lrv, &lrv},
@@ -369,7 +369,7 @@ void test_property_polarizability_TDA_SOS_ok() {
         TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, alpha, alpha_sos, 9);
     }
 
-    STDL_FREE_ALL(dipoles_mat, etda, Xamptda, egrad, Xtda, Ytda, tg2etda);
+    STDL_FREE_ALL(dipoles_mat, etda, Xamptda, egrad, XpYtda, XmYtda, tg2etda);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }

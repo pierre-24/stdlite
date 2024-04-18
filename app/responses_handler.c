@@ -25,16 +25,16 @@ int stdl_op_data_new(stdl_operator op, size_t nmo, size_t ncsfs, size_t nlrvs, f
     (*data_ptr)->w = NULL;
     (*data_ptr)->iw = NULL;
     (*data_ptr)->egrad = NULL;
-    (*data_ptr)->X = NULL;
-    (*data_ptr)->Y = NULL;
+    (*data_ptr)->XpY = NULL;
+    (*data_ptr)->XmY = NULL;
     (*data_ptr)->lrvs = NULL;
 
     if(nlrvs > 0) {
         (*data_ptr)->w = malloc(nlrvs * sizeof(float ));
         (*data_ptr)->iw = malloc(nlrvs * sizeof(size_t ));
         (*data_ptr)->egrad = malloc(STDL_OPERATOR_DIM[op] * ncsfs * sizeof(float ));
-        (*data_ptr)->X = malloc(nlrvs * ncsfs * STDL_OPERATOR_DIM[op] * sizeof(float ));
-        (*data_ptr)->Y = malloc(nlrvs * ncsfs * STDL_OPERATOR_DIM[op] * sizeof(float ));
+        (*data_ptr)->XpY = malloc(nlrvs * ncsfs * STDL_OPERATOR_DIM[op] * sizeof(float ));
+        (*data_ptr)->XmY = malloc(nlrvs * ncsfs * STDL_OPERATOR_DIM[op] * sizeof(float ));
         (*data_ptr)->lrvs = malloc(nlrvs * sizeof(stdl_lrv));
 
         STDL_ERROR_HANDLE_AND_REPORT(
@@ -42,8 +42,8 @@ int stdl_op_data_new(stdl_operator op, size_t nmo, size_t ncsfs, size_t nlrvs, f
                     || (*data_ptr)->w == NULL
                     || (*data_ptr)->w == NULL
                     || (*data_ptr)->egrad == NULL
-                    || (*data_ptr)->X == NULL
-                    || (*data_ptr)->Y == NULL
+                    || (*data_ptr)->XpY == NULL
+                    || (*data_ptr)->XmY == NULL
                     || (*data_ptr)->lrvs == NULL,
                 stdl_op_data_delete(*data_ptr); return STDL_ERR_MALLOC, "malloc");
 
@@ -60,7 +60,7 @@ int stdl_op_data_delete(stdl_op_data* data) {
 
     STDL_DEBUG("delete op_data %p", data);
 
-    STDL_FREE_ALL(data->w, data->iw, data->op_ints_MO, data->egrad, data->X, data->Y, data->lrvs, data);
+    STDL_FREE_ALL(data->w, data->iw, data->op_ints_MO, data->egrad, data->XpY, data->XmY, data->lrvs, data);
 
     return STDL_ERR_OK;
 }
@@ -109,10 +109,10 @@ int stdl_op_data_dump_h5(stdl_op_data *data, stdl_context *ctx, hid_t group_id) 
         status = H5LTmake_dataset(op_group_id, "egrad", 2, (hsize_t[]) {ctx->ncsfs, STDL_OPERATOR_DIM[data->op]}, H5T_NATIVE_FLOAT, data->egrad);
         STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", op_group_id);
 
-        status = H5LTmake_dataset(op_group_id, "X", 3, (hsize_t[]) {data->nlrvs, ctx->ncsfs, STDL_OPERATOR_DIM[data->op]}, H5T_NATIVE_FLOAT, data->X);
+        status = H5LTmake_dataset(op_group_id, "X+Y", 3, (hsize_t[]) {data->nlrvs, ctx->ncsfs, STDL_OPERATOR_DIM[data->op]}, H5T_NATIVE_FLOAT, data->XpY);
         STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", op_group_id);
 
-        status = H5LTmake_dataset(op_group_id, "Y", 3, (hsize_t[]) {data->nlrvs, ctx->ncsfs, STDL_OPERATOR_DIM[data->op]},H5T_NATIVE_FLOAT, data->Y);
+        status = H5LTmake_dataset(op_group_id, "X-Y", 3, (hsize_t[]) {data->nlrvs, ctx->ncsfs, STDL_OPERATOR_DIM[data->op]},H5T_NATIVE_FLOAT, data->XmY);
         STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", op_group_id);
     }
 
@@ -131,9 +131,9 @@ int stdl_op_data_compute_lrvs(stdl_op_data *data, stdl_context *ctx) {
 
     // compute response vectors
     if(ctx->AmB == NULL)
-        err = stdl_response_TDA_linear(ctx, data->nlrvs, data->w, STDL_OPERATOR_DIM[data->op], STDL_OPERATOR_HERMITIAN[data->op], data->egrad, data->X, data->Y);
+        err = stdl_response_TDA_linear(ctx, data->nlrvs, data->w, STDL_OPERATOR_DIM[data->op], STDL_OPERATOR_HERMITIAN[data->op], data->egrad, data->XpY, data->XmY);
     else
-        err = stdl_response_TD_linear(ctx, data->nlrvs, data->w, STDL_OPERATOR_DIM[data->op], STDL_OPERATOR_HERMITIAN[data->op], data->egrad, data->X, data->Y);
+        err = stdl_response_TD_linear(ctx, data->nlrvs, data->w, STDL_OPERATOR_DIM[data->op], STDL_OPERATOR_HERMITIAN[data->op], data->egrad, data->XpY, data->XmY);
 
     // distribute over `data->lrvs`
     for (size_t ilrv = 0; ilrv < data->nlrvs; ++ilrv) {
@@ -141,8 +141,8 @@ int stdl_op_data_compute_lrvs(stdl_op_data *data, stdl_context *ctx) {
         data->lrvs[ilrv].op_ints_MO = data->op_ints_MO;
         data->lrvs[ilrv].w = data->w[ilrv];
 
-        data->lrvs[ilrv].Xw = data->X + ilrv * STDL_OPERATOR_DIM[data->op] * ctx->ncsfs;
-        data->lrvs[ilrv].Yw = data->Y + ilrv * STDL_OPERATOR_DIM[data->op] * ctx->ncsfs;
+        data->lrvs[ilrv].XpYw = data->XpY + ilrv * STDL_OPERATOR_DIM[data->op] * ctx->ncsfs;
+        data->lrvs[ilrv].XmYw = data->XmY + ilrv * STDL_OPERATOR_DIM[data->op] * ctx->ncsfs;
     }
 
     return err;
@@ -163,18 +163,18 @@ int stdl_responses_handler_new(stdl_context *ctx, size_t nexci, stdl_responses_h
     }
 
     (*rh_ptr)->eexci = NULL;
-    (*rh_ptr)->Xamp = NULL;
-    (*rh_ptr)->Yamp = NULL;
+    (*rh_ptr)->XpYamp = NULL;
+    (*rh_ptr)->XmYamp = NULL;
 
     if(nexci > 0) {
         (*rh_ptr)->eexci = malloc(nexci * sizeof(float ));
-        (*rh_ptr)->Xamp = malloc(ctx->ncsfs * nexci * sizeof(float ));
+        (*rh_ptr)->XpYamp = malloc(ctx->ncsfs * nexci * sizeof(float ));
 
-        STDL_ERROR_HANDLE_AND_REPORT((*rh_ptr)->eexci == NULL || (*rh_ptr)->Xamp == NULL, stdl_responses_handler_delete(*rh_ptr); return STDL_ERR_MALLOC, "malloc");
+        STDL_ERROR_HANDLE_AND_REPORT((*rh_ptr)->eexci == NULL || (*rh_ptr)->XpYamp == NULL, stdl_responses_handler_delete(*rh_ptr); return STDL_ERR_MALLOC, "malloc");
 
         if(ctx->AmB != NULL) {
-            (*rh_ptr)->Yamp = malloc(ctx->ncsfs * nexci * sizeof(float));
-            STDL_ERROR_HANDLE_AND_REPORT((*rh_ptr)->Yamp == NULL, stdl_responses_handler_delete(*rh_ptr); return STDL_ERR_MALLOC, "malloc");
+            (*rh_ptr)->XmYamp = malloc(ctx->ncsfs * nexci * sizeof(float));
+            STDL_ERROR_HANDLE_AND_REPORT((*rh_ptr)->XmYamp == NULL, stdl_responses_handler_delete(*rh_ptr); return STDL_ERR_MALLOC, "malloc");
         }
     }
 
@@ -278,7 +278,7 @@ int stdl_responses_handler_delete(stdl_responses_handler* rh) {
             stdl_op_data_delete(rh->lrvs_data[iop]);
     }
 
-    STDL_FREE_ALL(rh->eexci, rh->Xamp, rh->Yamp, rh);
+    STDL_FREE_ALL(rh->eexci, rh->XpYamp, rh->XmYamp, rh);
 
     return STDL_ERR_OK;
 }
@@ -301,11 +301,11 @@ int _dump_amplitudes_h5(stdl_responses_handler *rh, stdl_context *ctx, hid_t gro
     status = H5LTmake_dataset(amp_group_id, "eexci", 1, (hsize_t[]) {rh->nexci}, H5T_NATIVE_FLOAT, rh->eexci);
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", amp_group_id);
 
-    status = H5LTmake_dataset(amp_group_id, "X", 2, (hsize_t[]) {rh->nexci, ctx->ncsfs}, H5T_NATIVE_FLOAT, rh->Xamp);
+    status = H5LTmake_dataset(amp_group_id, rh->XmYamp != NULL ? "X+Y" : "X", 2, (hsize_t[]) {rh->nexci, ctx->ncsfs}, H5T_NATIVE_FLOAT, rh->XpYamp);
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", amp_group_id);
 
-    if(rh->Yamp != NULL) {
-        status = H5LTmake_dataset(amp_group_id, "Y", 2, (hsize_t[]) {rh->nexci, ctx->ncsfs}, H5T_NATIVE_FLOAT, rh->Yamp);
+    if(rh->XmYamp != NULL) {
+        status = H5LTmake_dataset(amp_group_id, "X-Y", 2, (hsize_t[]) {rh->nexci, ctx->ncsfs}, H5T_NATIVE_FLOAT, rh->XmYamp);
         STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", amp_group_id);
     }
 
@@ -335,9 +335,9 @@ int stdl_responses_handler_compute(stdl_responses_handler *rh, stdl_user_input_h
         stdl_log_msg(0, "~~ Compute amplitude vectors\n");
 
         if(ctx->AmB == NULL)
-            stdl_response_TDA_casida(ctx, rh->nexci, rh->eexci, rh->Xamp);
+            stdl_response_TDA_casida(ctx, rh->nexci, rh->eexci, rh->XpYamp);
         else
-            stdl_response_TD_casida(ctx, rh->nexci, rh->eexci, rh->Xamp, rh->Yamp);
+            stdl_response_TD_casida(ctx, rh->nexci, rh->eexci, rh->XpYamp, rh->XmYamp);
 
         stdl_log_property_amplitude_contributions(rh, ctx, 5e-3f);
         _dump_amplitudes_h5(rh, ctx, res_group_id);
@@ -505,7 +505,7 @@ int stdl_response_handler_compute_properties(stdl_responses_handler* rh, stdl_us
                     req->ops,
                     (double *[]) {rh->lrvs_data[req->ops[0]]->op_ints_MO, rh->lrvs_data[req->ops[1]]->op_ints_MO},
                     req->nroots < 0 ? rh->nexci : req->nroots,
-                    rh->Xamp, rh->Yamp,
+                    rh->XpYamp, rh->XmYamp,
                     req->property_tensor);
             STDL_ERROR_CODE_HANDLE(err, goto _end);
 
@@ -558,7 +558,7 @@ int stdl_responses_handler_approximate_size(stdl_responses_handler *rh, size_t n
         }
     }
 
-    *amp_sz = rh->nexci * (1 + (rh->Yamp == NULL? 1 : 2) * ncsfs) * sizeof(float);
+    *amp_sz = rh->nexci * (1 + (rh->XmYamp == NULL ? 1 : 2) * ncsfs) * sizeof(float);
 
     *sz = sizeof(stdl_responses_handler)
             + *ops_sz

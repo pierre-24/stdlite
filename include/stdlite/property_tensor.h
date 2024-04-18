@@ -19,11 +19,11 @@ struct stdl_lrv_ {
     /// energy a which the LRV was computed
     float w;
 
-    /// `float[dim,ncsfs]` $\mathbf x_{\zeta,ia}(\omega)$
-    float* Xw;
+    /// `float[dim,ncsfs]` $\mathbf x_{\zeta,ia}(\omega)+\mathbf y_{\zeta,ia}(\omega)$
+    float* XpYw;
 
-    /// `float[dim,ncsfs]` $\mathbf y_{\zeta,ia}(\omega)$
-    float* Yw;
+    /// `float[dim,ncsfs]` $\mathbf x_{\zeta,ia}(\omega)-\mathbf y_{\zeta,ia}(\omega)$
+    float* XmYw;
 };
 
 typedef struct stdl_lrv_ stdl_lrv;
@@ -47,13 +47,13 @@ int stdl_property_tensor_linear(stdl_context *ctx, stdl_lrv *lrvs[2], float *ten
  * @param ops the operators
  * @param ops_ints_MO `float[dim,STDL_MATRIX_SP_SIZE(ctx->nmo)]`, operator integrals
  * @param nexci number of excitations computed
- * @param X `float[nexci,ncsfs]` amplitude vector $\mathbf x$
- * @param Y `float[nexci,ncsfs]` amplitude vector $\mathbf y$, might be `NULL` if TDA.
+ * @param XpYamp `float[nexci,ncsfs]` amplitude vector $\mathbf x^m+\mathbf y^m$
+ * @param XmYamp `float[nexci,ncsfs]` amplitude vector $\mathbf x^m+\mathbf y^m$, might be `NULL` if TDA.
  * @param[out] tdips `float[dim0 + dim1, nexci]` the resulting transition moments
  * @return error code
  * @ingroup property_tensor
  */
-int stdl_property_tensor_g2e_moments(stdl_context *ctx, stdl_operator ops[2], double* ops_ints_MO[2], size_t nexci, float* Xamp, float* Yamp, float * tg2e);
+int stdl_property_tensor_g2e_moments(stdl_context *ctx, stdl_operator ops[2], double* ops_ints_MO[2], size_t nexci, float* XpYamp, float* XmYamp, float * tg2e);
 
 
 #endif //STDLITE_TENSOR_H

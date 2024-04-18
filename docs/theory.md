@@ -140,6 +140,11 @@ $$\mathbf u_{\zeta}(\omega) =  \omega\,(\mathbf A-\mathbf B)^{-1}\,\mathbf t_{\z
 
 The [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) (setting $\mathbf B = \mathbf 0$ in all previous equations) can also be used.
 
+
+??? note "Implementation details"
+
+    For efficiency reasons, $\mathbf t_\zeta(\omega)$ and $\mathbf u_\zeta(\omega)$ are actually used by `stdlite`, rather than $\mathbf x_\zeta(\omega)$ and $\mathbf y_\zeta(\omega)$.
+
 ### Excitations
 
 Since the pole of the response function corresponds to the electronic excited states, it is also customary to consider the case when $\eta = 0$, which lead to the following pseudo-hermitian problem:
@@ -191,6 +196,11 @@ On the other hand, the [Tamm-Dancoff approximation](https://doi.org/10.1016/S000
 $$\mathbf A\,\mathbf x^m = \omega_m\,\mathbf x^m.$$
 
 In this case, $\ket{m} = \sum_{ia}\,x^m_{ia}\,\ket{\Psi_i^a}$, where $\ket{\Psi_i^a}$ is a **configuration state function**, *i.e.*, a singly-excited determinant where an electron has been moved from $i$ to $a$.
+
+??? note "Implementation details"
+
+    For efficiency reasons, $\mathbf t^m$ and $\mathbf u^m$ are actually used by `stdlite`, rather than $\mathbf x^m$ and $\mathbf y^m$.
+
 
 ### Spectral representations and their implications
 
@@ -252,6 +262,10 @@ The simplified TD-DFT methods root in 3 approximations which simplify the conten
 3. the [zero-differential overlap](https://en.wikipedia.org/wiki/Zero_differential_overlap) (ZDO) approximation is used for two-electron integrals which built $\mathbf A$ and $\mathbf B$. Different approximations for the remaining integrals define different flavors of simplified TD-DFT (see below).
 
 Then, using those approximated $\mathbf A'$ and $\mathbf B'$ matrices, the linear response or Casida equations presented above are solved.
+
+??? note "Implementation details"
+
+    For efficiency reasons, $\mathbf A'+\mathbf B'$ and $\mathbf A'-\mathbf B'$ are actually used by `stdlite` rather than $\mathbf A'$ and $\mathbf B'$.
 
 ### Truncation of the active space
 
@@ -317,7 +331,8 @@ A'_{ia,jb} =& \delta_{ij}\delta_{ab} (\varepsilon_a - \varepsilon_i) + 2\,(ia|jb
 B'_{ia,jb} =& 2\,(ia|bj)' -a_x\,(ib|aj)'.
 \end{aligned}$$
 
-??? note "Implementation detail"
+??? note "Implementation details"
+
     In order to be computationally efficient, these element can be evaluated by precomputing three kind of transition charges: $q_A^{ij}$, $q_A^{ia}$, and $q_A^{ab}$, and two intermediates:
     
     $$(ij|BB)_J = \sum_A^N q_A^{ij}\,(AA|BB)_J \text{ and } (ia|BB)_K = \sum_A^N q_A^{ia}\,(AA|BB)_K,$$

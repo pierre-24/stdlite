@@ -130,10 +130,12 @@ void stdl_log_property_amplitude_contributions(stdl_responses_handler *rh, stdl_
         // print contributions
         size_t printed = 0;
         for (size_t kia = 0; kia < ctx->ncsfs; ++kia) {
-            float c = powf(rh->Xamp[iexci * ctx->ncsfs + kia], 2);
+            float c;
 
-            if(rh->Yamp != NULL)
-                c -= powf(rh->Yamp[iexci * ctx->ncsfs + kia], 2);
+            if(rh->XmYamp != NULL)
+                c = rh->XpYamp[iexci * ctx->ncsfs + kia] * rh->XmYamp[iexci * ctx->ncsfs + kia];
+            else
+                c = powf(rh->XpYamp[iexci * ctx->ncsfs + kia], 2);
 
             if(c >= thresh) {
                 size_t i = ctx->csfs[kia] / nvirt, a = ctx->csfs[kia] % nvirt, hi = ctx->nocc - i - 1;
@@ -141,7 +143,7 @@ void stdl_log_property_amplitude_contributions(stdl_responses_handler *rh, stdl_
                 if(printed > 0)
                     stdl_log_msg(1, "             ");
 
-                stdl_log_msg(1, " %5.1f%% (% 6.4f) H", c * 100, rh->Xamp[iexci * ctx->ncsfs + kia] * s2o2);
+                stdl_log_msg(1, " %5.1f%% (% 6.4f) H", c * 100, rh->XpYamp[iexci * ctx->ncsfs + kia] * s2o2);
 
                 if(hi > 0)
                     stdl_log_msg(1, "-%ld", hi);

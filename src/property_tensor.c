@@ -15,8 +15,8 @@ int _property_tensor_linear_element(size_t components[2], stdl_context* ctx, std
     float v = 0;
     size_t dim1 = STDL_OPERATOR_DIM[lrvs[1]->op];
 
-    // time-reversal symmetry of the whole thing
-    float trs = STDL_OPERATOR_TRS[lrvs[0]->op] * STDL_OPERATOR_TRS[lrvs[1]->op];
+    // time-reversal symmetry of the whole thing dictates which matrix is chosen
+    float* XxY = STDL_OPERATOR_TRS[lrvs[0]->op] * STDL_OPERATOR_TRS[lrvs[1]->op] > 0 ? lrvs[1]->XpYw: lrvs[1]->XmYw;
 
     #pragma omp parallel for reduction(+:v)
     for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
@@ -25,7 +25,7 @@ int _property_tensor_linear_element(size_t components[2], stdl_context* ctx, std
         float s2, d1;
 
         d1 = (float) lrvs[0]->op_ints_MO[components[0] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)] * (STDL_OPERATOR_ISSYM[lrvs[0]->op]? 1.f: -1.f);
-        s2 = lrvs[1]->Xw[lia * dim1 + components[1]] + trs * lrvs[1]->Yw[lia * dim1 + components[1]];
+        s2 = XxY[lia * dim1 + components[1]];
 
         v -= 2 * d1 * s2;
     }
@@ -93,8 +93,8 @@ int stdl_property_tensor_linear(stdl_context *ctx, stdl_lrv *lrvs[2], float *ten
     return STDL_ERR_OK;
 }
 
-int stdl_property_tensor_g2e_moments(stdl_context *ctx, stdl_operator ops[2], double* ops_ints_MO[2], size_t nexci, float* Xamp, float* Yamp, float * tg2e) {
-    assert(ctx != NULL && nexci > 0 && ops_ints_MO != NULL && Xamp != NULL && tg2e != NULL);
+int stdl_property_tensor_g2e_moments(stdl_context *ctx, stdl_operator ops[2], double* ops_ints_MO[2], size_t nexci, float* XpYamp, float* XmYamp, float * tg2e) {
+    assert(ctx != NULL && nexci > 0 && ops_ints_MO != NULL && XpYamp != NULL && tg2e != NULL);
 
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute ground to excited transition moments for `%s` and `%s` >", STDL_OPERATOR_NAME[ops[0]], STDL_OPERATOR_NAME[ops[1]]);
@@ -111,11 +111,11 @@ int stdl_property_tensor_g2e_moments(stdl_context *ctx, stdl_operator ops[2], do
 
         for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
             size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
-            float amplitude0 = Xamp[iexci * ctx->ncsfs + lia], amplitude1 = amplitude0;
+            float amplitude0 = XpYamp[iexci * ctx->ncsfs + lia], amplitude1 = amplitude0;
 
-            if(Yamp != NULL) {
-                amplitude0 += STDL_OPERATOR_TRS[ops[0]] * Yamp[iexci * ctx->ncsfs + lia];
-                amplitude1 += STDL_OPERATOR_TRS[ops[1]] * Yamp[iexci * ctx->ncsfs + lia];
+            if(XmYamp != NULL) {
+                amplitude0 = (STDL_OPERATOR_TRS[ops[0]] > 0 ? XpYamp : XmYamp)[iexci * ctx->ncsfs + lia];
+                amplitude1 = (STDL_OPERATOR_TRS[ops[1]] > 0 ? XpYamp : XmYamp)[iexci * ctx->ncsfs + lia];
             }
 
             for (size_t cpt = 0; cpt < dim0; ++cpt)

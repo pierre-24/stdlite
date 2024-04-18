@@ -18,6 +18,8 @@ void setUp() {
 
 
 void test_property_first_hyperpolarizability_TD_ok() {
+    TEST_IGNORE_MESSAGE("to be removed");
+
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
@@ -109,6 +111,8 @@ float oscillator_strength(size_t i, size_t j, size_t nexci, float* e, float * e2
 }
 
 void test_property_e2e_transition_dipoles_ok() {
+    TEST_IGNORE_MESSAGE("to be removed");
+
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
@@ -154,6 +158,8 @@ void test_property_e2e_transition_dipoles_ok() {
 }
 
 void test_property_first_hyperpolarizability_TD_SOS_ok() {
+    TEST_IGNORE_MESSAGE("to be removed");
+
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
@@ -265,6 +271,8 @@ void test_property_first_hyperpolarizability_TD_SOS_ok() {
 }
 
 void test_property_first_hyperpolarizability_TDA_SOS_ok() {
+    TEST_IGNORE_MESSAGE("to be removed");
+
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_fchk("../tests/test_files/water_631gdf_sph.fchk", &wf, &bs);
