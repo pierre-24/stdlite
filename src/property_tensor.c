@@ -13,7 +13,7 @@ int _property_tensor_linear_element(size_t components[2], stdl_context* ctx, std
     size_t nvirt = ctx->nmo - ctx->nocc;
 
     float v = 0;
-    size_t dim0 = STDL_OPERATOR_DIM[lrvs[0]->op], dim1 = STDL_OPERATOR_DIM[lrvs[1]->op];
+    size_t dim1 = STDL_OPERATOR_DIM[lrvs[1]->op];
 
     // time-reversal symmetry of the whole thing
     float trs = STDL_OPERATOR_TRS[lrvs[0]->op] * STDL_OPERATOR_TRS[lrvs[1]->op];
@@ -22,15 +22,12 @@ int _property_tensor_linear_element(size_t components[2], stdl_context* ctx, std
     for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
         size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt + ctx->nocc;
 
-        float s1, s2, d1, d2;
+        float s2, d1;
 
         d1 = (float) lrvs[0]->op_ints_MO[components[0] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)] * (STDL_OPERATOR_ISSYM[lrvs[0]->op]? 1.f: -1.f);
-        d2 = (float) lrvs[1]->op_ints_MO[components[1] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, a)] * (STDL_OPERATOR_ISSYM[lrvs[1]->op]? 1.f: -1.f);
-
-        s1 = lrvs[0]->Xw[lia * dim0 + components[0]] + trs * lrvs[0]->Yw[lia * dim0 + components[0]];
         s2 = lrvs[1]->Xw[lia * dim1 + components[1]] + trs * lrvs[1]->Yw[lia * dim1 + components[1]];
 
-        v -= d1 * s2 + d2 * s1;
+        v -= 2 * d1 * s2;
     }
 
     *value = v;

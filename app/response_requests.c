@@ -71,7 +71,7 @@ int stdl_response_request_dump_h5(stdl_response_request *req, size_t maxnexci, h
     assert(req != NULL && group_id != H5I_INVALID_HID);
 
     stdl_log_msg(1, "+ ");
-    stdl_log_msg(0, "Saving property > ");
+    stdl_log_msg(0, "Saving property >");
     stdl_log_msg(1, "\n  | Saving data ");
 
     herr_t status = H5LTmake_dataset(group_id, "info", 1, (hsize_t[]) {5}, H5T_NATIVE_ULONG, (size_t[]) {req->resp_order, req->res_order,  req->nops, req->nlrvs, req->res_order > 0 ? maxnexci : 0});

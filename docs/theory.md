@@ -12,7 +12,7 @@ The goal of `stdlite` is to compute properties within the simplified TDA/TD-DFT 
     1. Extract data (*i.e.*, the atomic orbitals, as well as the MO energies, $\varepsilon$, and LCAO coefficients, $\mathbf C$) from a QC calculation;
     2. Select configuration state functions (CSFs, $\ket{\Psi_i^a}$, or singly excited determinants) using [a set of rules](#the-simplified-approaches-to-td-dft) and build the corresponding electronic hessian (super-)matrices $\mathbf A'$ and $\mathbf B'$ (might be zero);
     3. Using said matrices, compute the [linear response](#linear-response) or [amplitude](#excitations) vectors. This generally requires to compute extra [AO integrals](#ao-integrals);
-    4. Use said response/amplitude vectors to compute actual [properties](#properties).
+    4. Use said response/amplitude vectors to compute actual [properties](##linear-and-quadratic-response-functions).
 
 
 ## Response function theory
@@ -115,39 +115,28 @@ $$
 \mathbf A+ \mathbf B & -\omega \\
 -\omega & \mathbf A - \mathbf B
 \end{pmatrix}\,\begin{pmatrix}
-\mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)\\ \mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega)
+\mathbf t_\zeta(\omega)\\ \mathbf u_\zeta(\omega)
 \end{pmatrix}=-2\,\begin{pmatrix}
-\Re(\mathbf \eta_\zeta)\\ \Im(\mathbf \eta_\zeta)
+\mathbf \eta_\zeta + \mathbf \eta_\zeta^\star \\ \mathbf \eta_\zeta - \mathbf \eta_\zeta^\star
 \end{pmatrix},
 $$
 
-where $\Re(\eta_\zeta)$ and $\Im(\eta_\zeta)$ are the real and imaginary part of $\eta_\zeta$, respectively.
+where $\mathbf t_\zeta(\omega) = \mathbf x_\zeta(\omega)+\mathbf y_\zeta(\omega)$ and $\mathbf u_\zeta(\omega) = \mathbf x_\zeta(\omega)-\mathbf y_\zeta(\omega)$.
 
-In the case where $\eta^\star = \eta \Rightarrow \Im(\eta_\zeta) = 0$ (hermitian operator), then:
+In the case where $\eta^\star = \eta \Leftrightarrow \mathbf \eta_\zeta - \mathbf \eta_\zeta^\star = 0$ (hermitian operator), then:
     
-$$[(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}]\,[\mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)] = -2\mathbf\eta_\zeta.$$
+$$[(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}]\,\mathbf t_\zeta(\omega) = -2\mathbf\eta_\zeta,$$
 
-??? note "Detailed solution"
+which is to be solved, and then:
+
+$$\mathbf u_{\zeta}(\omega) =  \omega\,(\mathbf A-\mathbf B)^{-1}\,\mathbf t_{\zeta}(\omega).$$
+
+
+??? note "If $\hat\eta$ is anti-hermitian"
+
+    On the other hand, in the case where $\eta = -\eta^\star \Leftrightarrow \mathbf \eta_\zeta + \mathbf \eta_\zeta^\star = 0$ (anti-hermitian operator), then:
     
-    The previous equation is easier seen as a linear system written in the following form:
-
-    $$\mathbf L(\omega)\,\mathbf u_{\zeta}(\omega) = -2\mathbf\eta_\zeta,$$
-    
-    where $\mathbf L(\omega) = (\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}$ and $\mathbf u_{\zeta}(\omega)  = \mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)$, and which is solved using any of the usual methods for linear systems (worst case scenario: $\mathbf u_\zeta(\omega) = -2\mathbf L^{-1}(\omega)\,\eta_\zeta$).
-    Then, since, from Eq. (3),
-    
-    $$\mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega) = \omega\,(\mathbf A-\mathbf B)^{-1}\,[\mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)],$$
-    
-    one can define $\mathbf v_{\zeta}(\omega)$ as:
-
-    $$\mathbf v_{\zeta}(\omega)  =\mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega) =  \omega\,(\mathbf A-\mathbf B)^{-1}\,\mathbf u_{\zeta}(\omega),$$
-    
-    the response vector are obtained: $\mathbf x_{\zeta}(\omega) = \frac{1}{2}[\mathbf u_{\zeta}(\omega)  + \mathbf v_{\zeta}(\omega)]$ and $\mathbf y_{\zeta}(\omega) = \frac{1}{2}[\mathbf u_{\zeta}(\omega)  - \mathbf v_{\zeta}(\omega)]$.
-
-
-On the other hand, in the case where $\eta = -\eta^\star \Rightarrow \Re(\eta_\zeta) = 0$ (anti-hermitian operator), then:
-
-$$[(\mathbf{A} - \mathbf{B}) - \omega^2(\mathbf{A}+\mathbf{B})^{-1}]\,[\mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega)] = -2\Im(\mathbf\eta_\zeta).$$
+    $$[(\mathbf{A} - \mathbf{B}) - \omega^2(\mathbf{A}+\mathbf{B})^{-1}]\,[\mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega)] = -2\Im(\mathbf\eta_\zeta).$$
 
 The [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) (setting $\mathbf B = \mathbf 0$ in all previous equations) can also be used.
 
@@ -169,26 +158,33 @@ $$\tag{4}\begin{pmatrix}
 
 which is generally referred to as the Casida equation. 
 In this case, each $\omega_m$ (eigenvalue, corresponding to the transition energy bewteen $\ket{0}$ and $\ket{m}$) is associated to one $\mathbf x^m$ and one $\mathbf y^m$ ("eigenfunction"), might be seen as amplitude vectors associated to excitation and de-excitation, respectively. 
-They satisfy $(\mathbf x^m)^2-(\mathbf y^m)^2=\mathbf 1$.
+They satisfy $(\mathbf x^m + \mathbf y^m)\cdot(\mathbf x^m - \mathbf y^m) = |\mathbf x^m|^2-|\mathbf y^m|^2=1$.
 Solving this problem is done using two approaches.
 
 On the one hand, Eq. (4) can be rewritten in a true eigenvalue problem, namely:
 
-$$(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}+\mathbf{B})\,(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,\mathbf{z}^m = \omega^2\,\mathbf{z}^m, \text{ with } \mathbf{z}^m = (\mathbf{A}-\mathbf{B})^{-\frac{1}{2}} (\mathbf x^m + \mathbf y^m),$$
+$$
+\begin{pmatrix}
+\mathbf A+ \mathbf B & -\omega \\
+-\omega & \mathbf A - \mathbf B
+\end{pmatrix}\,\begin{pmatrix}
+\mathbf t^m\\ \mathbf u^m
+\end{pmatrix}= \mathbf 0,
+$$
 
-with $(\mathbf z^m)^2=\mathbf 1$.
+with $\mathbf t^m = \mathbf x^m + \mathbf y^m$ and $\mathbf u^m = \mathbf x^m - \mathbf y^m$.
+This turns, according to [10.1063/1.4867271](https://dx.doi.org/10.1063/1.4867271), in:
 
-??? note "Detailed solution"
+$$(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}+\mathbf{B})\,(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,\mathbf{z}^m = \omega^2\,\mathbf{z}^m, \text{ with } \mathbf{z}^m = (\mathbf{A}-\mathbf{B})^{-\frac{1}{2}} \mathbf t^m,$$
 
-    In this case, after $\mathbf z^m$ have been obtained, one extract using the following procedure. First, from previous expression, one can obtain:
-    
-    $$ \mathbf u^m = \mathbf x^m + \mathbf y^m = \frac{1}{\sqrt\omega}\,(\mathbf A-\mathbf B)^\frac{1}{2}\,\mathbf z^m.$$
-    
-    Now, since $(\mathbf A + \mathbf B)\,(\mathbf x^m+\mathbf y^m) = \omega\,(\mathbf x^m-\mathbf y^m)$ [obtained from Eq. (4)], one has:
-    
-    $$\mathbf v^m = \mathbf x^m-\mathbf y^m = \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,(\mathbf x^m+\mathbf y^m)  = \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,\mathbf u^m,$$
-    
-    and therefore the response vector are obtained: $\mathbf x^m = \frac{1}{2}(\mathbf u^m + \mathbf v^m)$ and $\mathbf y^m = \frac{1}{2}(\mathbf u^m - \mathbf v^m)$.
+to be solved.
+After $\mathbf z^m$ have been obtained, one can then extract:
+
+$$\begin{aligned}
+\mathbf t^m &= \frac{1}{\sqrt\omega}\,(\mathbf A-\mathbf B)^\frac{1}{2}\,\mathbf z^m,\\
+\mathbf u^m &= \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,\mathbf t^m.
+\end{aligned}
+$$
 
 On the other hand, the [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) ($\mathbf B = \mathbf 0$ and thus $\mathbf y^m = 0$) simply leads to:
 
@@ -196,20 +192,32 @@ $$\mathbf A\,\mathbf x^m = \omega_m\,\mathbf x^m.$$
 
 In this case, $\ket{m} = \sum_{ia}\,x^m_{ia}\,\ket{\Psi_i^a}$, where $\ket{\Psi_i^a}$ is a **configuration state function**, *i.e.*, a singly-excited determinant where an electron has been moved from $i$ to $a$.
 
-In both cases, these amplitude vectors are linked to their linear response counterparts through the following spectral representation:
+### Spectral representations and their implications
 
-+ If $\hat\eta$ is hermitian:
+These amplitude vectors are linked to their linear response counterparts through what is called their spectral representation. In particular, if $\hat\eta$ is hermitian:
 
-    $$\begin{aligned}
-    x_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,\left[\frac{x_{ia}^{m}}{\omega-\omega_m}-\frac{y_{ia}^{m}}{\omega+\omega_m}\right],\\ 
-    y_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,\left[\frac{y_{ia}^{m}}{\omega-\omega_m}-\frac{x_{ia}^{m}}{\omega+\omega_m}\right], 
-    \end{aligned}$$
+$$\begin{aligned}
+x_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,\left[\frac{x_{ia}^{m}}{\omega-\omega_m}-\frac{y_{ia}^{m}}{\omega+\omega_m}\right],\\ 
+y_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,\left[\frac{y_{ia}^{m}}{\omega-\omega_m}-\frac{x_{ia}^{m}}{\omega+\omega_m}\right], 
+\end{aligned}$$
 
-    which implies:
+which implies:
 
-    $$x_{ia,\zeta}(-\omega) = y_{ia,\zeta}(\omega) \land y_{ia,\zeta}(-\omega) = x_{ia,\zeta}(\omega).$$
+$$\mathbf x_\zeta(-\omega) = \mathbf y_\zeta(\omega) \land \mathbf y_\zeta(-\omega) = \mathbf x_\zeta(\omega) \Rightarrow \mathbf x_\zeta(0) = \mathbf y_\zeta(0).$$
 
-+ If $\hat\eta$ is anti-hermitian:
+These expression involves a summation over the manifold $\{\ket{m}\}$ of excited states (and one can set $\mathbf y^m = 0$ to get the TDA version).
+Furthermore,
+
+$$\begin{aligned}
+t_{ia,\zeta}(\omega) &= x_{ia,\zeta}(\omega) + y_{ia,\zeta}(\omega) =  \sum_{\ket{m}} \eta_{ia,\zeta}\,[t^{m}_{ia}]^2\,\left[\frac{1}{\omega-\omega_m}-\frac{1}{\omega+\omega_m}\right],\\
+u_{ia,\zeta}(\omega) &= x_{ia,\zeta}(\omega) - y_{ia,\zeta}(\omega) = \sum_{\ket{m}} \eta_{ia,\zeta}\,t^{m}_{ia}\,u_{ia}^{m}\,\left[\frac{1}{\omega-\omega_m}+\frac{1}{\omega+\omega_m}\right],
+\end{aligned}$$
+
+which implies that $\mathbf u_\zeta(\omega)$ is symmetric with respect to a change of the sign of the energy, while $\mathbf t_\zeta(\omega)$ is antisymmetric, since:
+
+$$\mathbf t_\zeta(-\omega) = \mathbf t_\zeta(\omega) \land \mathbf u_\zeta(-\omega) = -\mathbf u_\zeta(\omega) \Rightarrow \mathbf u_\zeta(0) = \mathbf 0.$$
+
+??? note "If $\hat\eta$ is anti-hermitian"
 
     $$\begin{aligned}
     x_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} - y^{m}_{ia})\,\left[\frac{x_{ia}^{m}}{\omega-\omega_m}+\frac{y_{ia}^{m}}{\omega+\omega_m}\right],\\
@@ -218,10 +226,9 @@ In both cases, these amplitude vectors are linked to their linear response count
 
     which implies:
 
-    $$x_{ia,\zeta}(-\omega) = -y_{ia,\zeta}(\omega) \land y_{ia,\zeta}(-\omega) = -x_{ia,\zeta}(\omega).$$
+    $$\mathbf x(-\omega) = -\mathbf y(\omega) \land \mathbf y(-\omega) = -\mathbf x(\omega).$$
 
-where these expression involves a summation over the manifold $\{\ket{m}\}$ of excited states (and one can set $\mathbf y^m = 0$ to get the TDA version).
-These representations help in obtaining expressions when taking residue of response functions.
+These representations help in obtaining expressions when taking residues of response functions.
 
 ## The simplified approaches to TD-DFT
 
@@ -337,47 +344,45 @@ A conversion of $A$ from the AO to the MO basis is done using:
 
 $$O_{pq} = \sum^{AO}_{\mu\nu} C_{p\mu} O_{\mu\nu} C_{q\nu}.$$
 
-
 For the moment, the following operators are handled by `stdlite`:
 
-| Operator                  | Expression                                 | Dimensionality | Symmetry       | Hermitian | [Time-Reversal symmetry](https://en.wikipedia.org/wiki/T-symmetry) |
-|---------------------------|--------------------------------------------|----------------|----------------|-----------|--------------------------------------------------------------------|
-| Dipole length (`dipl`)    | $\hat\mu^L = e\,(\vec r - R_0)$            | 3 (x, y, z)    | Symmetric      | Yes       | Even                                                               |
-| Dipole velocity (`dipv`)  | $\hat\mu^V = i\vec\nabla$                  | 3 (x, y, z)    | Anti-symmetric | Yes       | Odd                                                                |
-| Angular momentum (`angm`) | $\hat m = i(\hat r - R_0)\times\vec\nabla$ | 3 (x, y, z)    | Anti-symmetric | Yes       | Odd                                                                |
+| Operator                  | Expression                                 | Dimensionality | Symmetry      | Hermitian | [Time-Reversal symmetry](https://en.wikipedia.org/wiki/T-symmetry) |
+|---------------------------|--------------------------------------------|----------------|---------------|-----------|--------------------------------------------------------------------|
+| Dipole length (`dipl`)    | $\hat\mu^L = e\,(\vec r - R_0)$            | 3 (x, y, z)    | Symmetric     | Yes       | Even                                                               |
+| Dipole velocity (`dipv`)  | $\hat\mu^V = i\vec\nabla$                  | 3 (x, y, z)    | Antisymmetric | Yes       | Odd                                                                |
+| Angular momentum (`angm`) | $\hat m = i(\hat r - R_0)\times\vec\nabla$ | 3 (x, y, z)    | Antisymmetric | Yes       | Odd                                                                |
 
-An [even time-reversal symmetry](https://en.wikipedia.org/wiki/T-symmetry#Even) operator do not change upon time reversal, that is:
+An [even time-reversal symmetry](https://en.wikipedia.org/wiki/T-symmetry#Even) operator, $\hat A$, do not change upon time reversal.
+Indeed, given $\hat\theta$ the so-called [time-reversal operator](https://bohr.physics.berkeley.edu/classes/221/9697/timerev.pdf) so that $\hat\theta\psi(t) = \psi(-t)^\star$,
+one has:
 
-$${}^A\theta = \hat\theta\hat A \hat\theta^\dagger = 1,$$
+$${}^A\theta = \hat\theta\hat A \hat\theta^\dagger = 1.$$
 
-while an odd time-reversal operator is negated:
+If, on the other hand, an operator $\hat B$ has an odd time-reversal symmetry, then:
 
 $${}^B\theta = \hat\theta\hat B \hat\theta^\dagger = -1.$$
 
-$\hat p = -i\vec\nabla$ is an example of the latter. 
-$\hat\theta$ is the so-called [time-reversal operator](https://bohr.physics.berkeley.edu/classes/221/9697/timerev.pdf).
-As discussed, *e.g.*, in [10.1016/S1380-7323(02)80033-4](https://dx.doi.org/10.1016/S1380-7323(02)80033-4), the transformation $\omega \leftrightarrow -\omega$ is in fact equivalent to time-reversal.
+$\hat p = -i\vec\nabla$, being a purely imaginary operator, is an example of the latter. 
 
 ### Linear and quadratic response functions
 
 Linear and quadratic response functions are generally noted $\braket{\braket{\hat A; \hat B}}_{\omega_B}$ and $\braket{\braket{\hat A; \hat B, \hat C}}_{\omega_B,\omega_C}$, which describes how the expectation value of $\hat A$ (at frequency $\omega_A = -\omega_B - \omega_C$) responds to a set of perturbation to first and second order in perturbation.
 
-Linear responses result in a rank-2 tensor, $\mathcal{T}^{(2)}$:
+Linear responses result in a rank-2 tensor, $\mathcal{T}^{(2)}$.
+As discussed in [10.1016/S1380-7323(02)80033-4](https://dx.doi.org/10.1016/S1380-7323(02)80033-4), the time-reversal symmetry [and thus the symmetric or antisymmetric nature of $\mathbf t(\omega)$ and $\mathbf u(\omega)$ with respect to a change to the change of sign of $\omega$] can be exploited to compute the linear response:
 
-$$\begin{aligned}
-\mathcal{T}^{(2)}_{\zeta\sigma} &= -\braket{\braket{\hat A_\zeta;\hat B_\sigma}}_\omega\\
-&= -\sum_\mathcal{P} \sum_{ia}^{CSFs} A_{ia,\zeta}\,{}^B\kappa_{ia,\sigma}(\omega)\\
-&= -\sum_{ia}^{CSFs} [A_{ia,\zeta}\,{}^B\kappa_{ia,\sigma}(\omega) + B_{ia,\sigma}\,{}^A\kappa_{ia,\zeta}(-\omega)],
-\end{aligned}$$
+$$
+\mathcal{T}^{(2)}_{\zeta\sigma} = -\braket{\braket{\hat A_\zeta;\hat B_\sigma}}_\omega
+= -2 \sum_{ia}^{CSFs} A_{ia,\zeta}\,{}^B\kappa_{ia,\sigma}(\omega),$$
 
-where $\sum_{\mathcal P}$ is thus the sum over the sequence of permutations of the pairs of operator and energies $\{(\hat A_\zeta, -\omega), (\hat B_\sigma, \omega)\}$, and:
+with:
 
 $${}^B\kappa_{ia,\sigma}(\omega) = \begin{cases}
-{}^Bx_{ia,\sigma}(\omega) + {}^By_{ia,\sigma}(\omega) & \text{ if } {}^A\theta{}^B\theta = 1, \\
-{}^Bx_{ia,\sigma}(\omega) - {}^By_{ia,\sigma}(\omega) & \text{ otherwise},
+{}^Bt_{ia,\sigma}(\omega) & \text{ if } {}^A\theta{}^B\theta = 1, \\
+{}^Bu_{ia,\sigma}(\omega) & \text{ otherwise},
 \end{cases}$$
 
-where ${}^B\mathbf \kappa(\omega)$ is computed from the linear response vectors ${}^B\mathbf x(\omega)$ and ${}^B\mathbf y(\omega)$, computed using Eq. (3) with $\hat B$.
+where ${}^B\mathbf \kappa(\omega)$ is computed from the linear response vectors ${}^B\mathbf x(\omega)$ and ${}^B\mathbf y(\omega)$, obtained using Eq. (3) with $\hat\eta = \hat B$.
 
 ??? note "Consequence of the spectral representation"
 
@@ -403,13 +408,9 @@ $$\lim_{\omega_B\to\omega_m} (\omega_B-\omega_m)\,\braket{\braket{\hat A; \hat B
 which provides access to transition matrix elements $\braket{0|\hat A|m}$ between the ground state $\ket{0}$ and an excited state $\ket{m}$. 
 In practice, such residues are thus evaluated thanks to amplitude vectors through the spectral representation of linear responses, which gives (assuming that we have a singlet wavefunction):
 
-$$A_{0m,\zeta} = \braket{0|\hat A_\zeta|m} = \sqrt{2}\,\sum_{ia}^{CSF} A_{ia,\zeta}\,\kappa_{ia}^m,$$
-
-where:
-
-$$\kappa^m_{ia} = \begin{cases}
-x^m_{ia}+y^m_{ia} & \text{if } {}^A\theta = 1, \\
-x^m_{ia}-y^m_{ia} & \text{otherwise}.
+$$A_{0m,\zeta} = \braket{0|\hat A_\zeta|m} = \sqrt{2}\,\sum_{ia}^{CSF} A_{ia,\zeta}\,\kappa_{ia}^m, \text{ with } \kappa^m_{ia} = \begin{cases}
+t^m_{ia} & \text{if } {}^A\theta = 1, \\
+u^m_{ia} & \text{otherwise}.
 \end{cases}$$
 
 Different ground to excited moments, related to experimentally measurable properties, can be extracted (all given in atomic units):
