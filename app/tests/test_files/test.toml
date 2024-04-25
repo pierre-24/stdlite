@@ -5,9 +5,9 @@ data_output = "water_631g.h5"
 source = "../tests/test_files/chiral_sto3g.molden"
 source_type = "MOLDEN"
 method = "monopole"
-ethr = '40eV'
+ethr = '25eV'
 ax = 1.0
-tda = 1
+tda = 0
 e2thr=1e-4
 
 [responses]

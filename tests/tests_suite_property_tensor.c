@@ -2,7 +2,6 @@
 #include <stdlite/utils/matrix.h>
 #include <stdlite/helpers.h>
 #include <stdlite/utils/experimental_quantity.h>
-#include <stdlite/property.h>
 #include <stdlite/property_tensor.h>
 #include <stdlite/integrals.h>
 
@@ -12,7 +11,7 @@
 
 void setUp() {
     stdl_set_debug_level(-1);
-    stdl_set_log_level(0);
+    stdl_set_log_level(1);
 }
 
 void _tensor_sos2(stdl_operator ops[2], float w, size_t nexci, float* e, float* tg2e, float* tensor_sos) {
@@ -31,7 +30,6 @@ void _tensor_sos2(stdl_operator ops[2], float w, size_t nexci, float* e, float* 
 }
 
 void test_response_polarizability_TD_ok() {
-
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_fchk("../tests/test_files/water_631g.fchk", &wf, &bs);
@@ -468,5 +466,66 @@ void test_property_tensor_angmom_dipl_TD_SOS_ok() {
     }
 
     STDL_FREE_ALL(etd, Xamptd, Yamptd, dipl_mat, angm_mat, tg2e, egrad_dipl, X_dipl, Y_dipl, egrad_angm, X_angm, Y_angm);
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
+}
+
+void test_response_first_polarizability_TD_ok() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_molden("../tests/test_files/chiral_sto3g.molden", &wf, &bs);
+
+    stdl_context* ctx = NULL;
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 4.0, 2.0, 25. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
+
+    // compute dipole integrals and convert to MO
+    double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipoles_mat);
+
+    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_mat);
+
+    // build egrad
+    float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(egrad);
+
+    stdl_response_perturbed_gradient(ctx, 3, 1, dipoles_mat, egrad);
+
+    // solve response
+    size_t nw = 3;
+    float w[] = {0, 4.282270E-2f, 4.282270E-2f * 2};
+
+    float* XpY = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(XpY);
+
+    float* XmY = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(XmY);
+
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 1, egrad, XpY, XmY));
+
+    // compute polarizabilities
+    float beta[27];
+
+    stdl_lrv lrv0 = {STDL_OP_DIPL, dipoles_mat, 0, XpY, XmY};
+    stdl_lrv lrv1 = {STDL_OP_DIPL, dipoles_mat, 0, XpY + 1 * 3 * ctx->ncsfs, XmY + 1 * 3 * ctx->ncsfs};
+    stdl_lrv lrv2 = {STDL_OP_DIPL, dipoles_mat, 0, XpY + 2 * 3 * ctx->ncsfs, XmY + 2 * 3 * ctx->ncsfs};
+
+    ASSERT_STDL_OK(stdl_property_tensor_quadratic(
+            ctx,
+            (stdl_lrv*[]) {&lrv0, &lrv0, &lrv0},
+            beta
+    ));
+
+    stdl_matrix_sge_print(0, 9, 3, beta, "beta(0)");
+
+    ASSERT_STDL_OK(stdl_property_tensor_quadratic(
+            ctx,
+            (stdl_lrv*[]) {&lrv2, &lrv1, &lrv1},
+            beta
+    ));
+
+    stdl_matrix_sge_print(0, 9, 3, beta, "beta(-2w;w,w)");
+
+    STDL_FREE_ALL(dipoles_mat, egrad, XpY, XmY);
+
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }

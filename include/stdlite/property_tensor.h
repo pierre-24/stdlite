@@ -32,8 +32,8 @@ typedef struct stdl_lrv_ stdl_lrv;
  * Compute the linear response function tensor $$-\braket{\braket{\hat A; \hat B}}_\omega$ elements.
  *
  * @param ctx a valid context, with `ctx->ncsfs > 0`.
- * @param lrvs `stdl_lrv[2]` the LRV (one for $\hat A$, one for $\hat B$) from which the property_tensor will be computed
- * @param[out] tensor`float[STDL_OPERATOR_DIM[lrvs[0].op], STDL_OPERATOR_DIM[lrvs[1].op]]` the resulting property_tensor
+ * @param lrvs `stdl_lrv[2]` the LRV (one for $\hat A$, one for $\hat B$) from which the tensor will be computed
+ * @param[out] tensor`float[STDL_OPERATOR_DIM[lrvs[0].op], STDL_OPERATOR_DIM[lrvs[1].op]]` the resulting tensor
  * @return error code
  * @ingroup property_tensor
  */
@@ -54,6 +54,17 @@ int stdl_property_tensor_linear(stdl_context *ctx, stdl_lrv *lrvs[2], float *ten
  * @ingroup property_tensor
  */
 int stdl_property_tensor_g2e_moments(stdl_context *ctx, stdl_operator ops[2], double* ops_ints_MO[2], size_t nexci, float* XpYamp, float* XmYamp, float * tg2e);
+
+/**
+ * Compute the quadratic response function tensor $$-\braket{\braket{\hat A; \hat B, \hat C}}_{\omega_B,\omega_C}$ elements.
+ *
+ * @param ctx a valid context, with `ctx->ncsfs > 0`.
+ * @param lrvs `stdl_lrv[3]` the LRV (one for $\hat A$, one for $\hat B$, and one for $\hat C$) from which the property tensor will be computed
+ * @param[out] tensor`float[STDL_OPERATOR_DIM[lrvs[0].op], STDL_OPERATOR_DIM[lrvs[1].op], STDL_OPERATOR_DIM[lrvs[2].op]]` the resulting tensor
+ * @return error code
+ * @ingroup property_tensor
+ */
+int stdl_property_tensor_quadratic(stdl_context *ctx, stdl_lrv *lrvs[3], float *tensor);
 
 
 #endif //STDLITE_TENSOR_H
