@@ -135,74 +135,56 @@ int _property_tensor_quadratic_element(size_t components[3], stdl_context* ctx, 
     size_t nvirt = ctx->nmo - ctx->nocc;
     *value = 0;
 
-    float AKp = .0f, AKm = .0f, XpYPpQ = .0f, XmYPmQ = .0f;
-    size_t dim0 = STDL_OPERATOR_DIM[lrvs[0]->op], dim1 = STDL_OPERATOR_DIM[lrvs[1]->op], dim2 = STDL_OPERATOR_DIM[lrvs[2]->op];
+    size_t dim0 = STDL_OPERATOR_DIM[lrvs[0]->op], zeta = components[0];
 
-    #pragma omp parallel for reduction(+:AKp) reduction(+:AKm) reduction(+:XpYPpQ) reduction(+:XmYPmQ)
-    for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
-        size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt;
+    // permute over B and C operators
+    stdl_permutations* set = NULL;
+    int err = stdl_permutations_new((_l_elm[]) {
+            {lrvs[1], components[1]},
+            {lrvs[2], components[2]},
+    }, 2, sizeof(_l_elm), &set);
+    STDL_ERROR_CODE_HANDLE(err, return err);
 
-        for (size_t ljb = 0; ljb < ctx->ncsfs; ++ljb) {
-            size_t j = ctx->csfs[ljb] / nvirt, b = ctx->csfs[ljb] % nvirt;
+    STDL_ERROR_CODE_HANDLE(err, return err);
+    stdl_permutations* current = set;
+    while(current != NULL) {
+        _l_elm * e1 = (_l_elm *) current->perm, *e2 = e1 + 1;
+        size_t sigma = e1->cpt, tau = e2->cpt, dim1 = STDL_OPERATOR_DIM[e1->lrv->op], dim2 = STDL_OPERATOR_DIM[e2->lrv->op];
 
-            if(a == b) { // ia,ja
-                AKp += -.25f * (float) lrvs[0]->op_ints_MO[components[0] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * (
-                               lrvs[1]->XpYw[lia * dim1 + components[1]] * lrvs[2]->XpYw[ljb * dim2 + components[2]]
-                               - lrvs[1]->XmYw[lia * dim1 + components[1]] * lrvs[2]->XmYw[ljb * dim2 + components[2]]
-                               + lrvs[2]->XpYw[lia * dim2 + components[2]] * lrvs[1]->XpYw[ljb * dim1 + components[1]]
-                               - lrvs[2]->XmYw[lia * dim2 + components[2]] * lrvs[1]->XmYw[ljb * dim1 + components[1]]
-                       );
+        float AKp = .0f, AKm = .0f, XpYPpQ = .0f, XmYPmQ = .0f;
 
-                AKm += .25f * (float) lrvs[0]->op_ints_MO[components[0] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * (
-                               lrvs[1]->XpYw[lia * dim1 + components[1]] * lrvs[2]->XmYw[ljb * dim2 + components[2]]
-                               - lrvs[1]->XmYw[lia * dim1 + components[1]] * lrvs[2]->XpYw[ljb * dim2 + components[2]]
-                               + lrvs[2]->XpYw[lia * dim2 + components[2]] * lrvs[1]->XmYw[ljb * dim1 + components[1]]
-                               - lrvs[2]->XmYw[lia * dim2 + components[2]] * lrvs[1]->XpYw[ljb * dim1 + components[1]]
-                       );
+        #pragma omp parallel for reduction(+:AKp) reduction(+:AKm) reduction(+:XpYPpQ) reduction(+:XmYPmQ)
+        for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
+            size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt;
 
-                XpYPpQ -= lrvs[0]->XpYw[lia * dim0 + components[0]] * (
-                        (float) lrvs[1]->op_ints_MO[components[1] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(j, i)] * lrvs[2]->XpYw[ljb * dim2 + components[2]]
-                        + (float) lrvs[2]->op_ints_MO[components[2] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(j, i)] * lrvs[1]->XpYw[ljb * dim1 + components[1]]
-                );
+            float Rg = lrvs[0]->XpYw[lia * dim0 + zeta], Lg = lrvs[0]->XmYw[lia * dim0 + zeta], Ra = e1->lrv->XpYw[lia * dim1 + sigma], La = e1->lrv->XmYw[lia * dim1 + sigma];
 
-                XmYPmQ += lrvs[0]->XmYw[lia * dim0 + components[0]] * (
-                        (float) lrvs[1]->op_ints_MO[components[1] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(j, i)] *  lrvs[2]->XmYw[ljb * dim2 + components[2]]
-                        + (float) lrvs[2]->op_ints_MO[components[2] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(j, i)] * lrvs[1]->XmYw[ljb * dim1 + components[1]]
-                );
-            }
+            for (size_t ljb = 0; ljb < ctx->ncsfs; ++ljb) {
+                size_t j = ctx->csfs[ljb] / nvirt, b = ctx->csfs[ljb] % nvirt;
+                float Rb = e2->lrv->XpYw[ljb * dim2 + tau], Lb = e2->lrv->XmYw[ljb * dim2 + tau];
 
-            if(i == j) { // ia,ib
-                AKp += .25f * (float) lrvs[0]->op_ints_MO[components[0] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(a, b)] * (
-                        lrvs[1]->XpYw[lia * dim1 + components[1]] * lrvs[2]->XpYw[ljb * dim2 + components[2]]
-                        - lrvs[1]->XmYw[lia * dim1 + components[1]] * lrvs[2]->XmYw[ljb * dim2 + components[2]]
-                        + lrvs[2]->XpYw[lia * dim2 + components[2]] * lrvs[1]->XpYw[ljb * dim1 + components[1]]
-                        - lrvs[2]->XmYw[lia * dim2 + components[2]] * lrvs[1]->XmYw[ljb * dim1 + components[1]]
-                );
+                if(a == b) { // ia,ja
+                    AKp -= .25f * (float) lrvs[0]->op_ints_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * (Ra * Rb - La * Lb);
+                    AKm += .25f * (float) lrvs[0]->op_ints_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * (La * Rb - Ra * Lb);
+                    XpYPpQ -= .5f * (float) e1->lrv->op_ints_MO[sigma * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * Rg * (STDL_OPERATOR_ISSYM[e2->lrv->op]? Rb : -Lb);
+                    XmYPmQ -= .5f * (float) e1->lrv->op_ints_MO[sigma * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * Lg * (STDL_OPERATOR_ISSYM[e2->lrv->op]? Lb : -Rb);
+                }
 
-                AKm += .25f * (float) lrvs[0]->op_ints_MO[components[0] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(a, b)] * (
-                        lrvs[1]->XpYw[lia * dim1 + components[1]] * lrvs[2]->XmYw[ljb * dim2 + components[2]]
-                        - lrvs[1]->XmYw[lia * dim1 + components[1]] * lrvs[2]->XpYw[ljb * dim2 + components[2]]
-                        + lrvs[2]->XpYw[lia * dim2 + components[2]] * lrvs[1]->XmYw[ljb * dim1 + components[1]]
-                        - lrvs[2]->XmYw[lia * dim2 + components[2]] * lrvs[1]->XpYw[ljb * dim1 + components[1]]
-                );
-
-                XpYPpQ += lrvs[0]->XpYw[lia * dim0 + components[0]] * (
-                        (float) lrvs[1]->op_ints_MO[components[1] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(a, b)] * lrvs[2]->XpYw[ljb * dim2 + components[2]]
-                        + (float) lrvs[2]->op_ints_MO[components[2] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(a, b)] * lrvs[1]->XpYw[ljb * dim1 + components[1]]
-                );
-
-                XmYPmQ += - lrvs[0]->XmYw[lia * dim0 + components[0]] * (
-                        (float) lrvs[1]->op_ints_MO[components[1] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(a, b)] * lrvs[2]->XmYw[ljb * dim2 + components[2]]
-                        + (float) lrvs[2]->op_ints_MO[components[2] * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(a, b)] * lrvs[1]->XmYw[ljb * dim1 + components[1]]
-                );
+                if(i == j) { // ia,ib
+                    AKp += .25f * (float) lrvs[0]->op_ints_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)] * (Ra * Rb - La * Lb);
+                    AKm += .25f * (float) lrvs[0]->op_ints_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)] * (La * Rb - Ra * Lb);
+                    XpYPpQ += .5f * (float) e1->lrv->op_ints_MO[sigma * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)] * Rg * (STDL_OPERATOR_ISSYM[e2->lrv->op]? Rb : -Lb);
+                    XmYPmQ += .5f * (float) e1->lrv->op_ints_MO[sigma * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)] * Lg * (STDL_OPERATOR_ISSYM[e2->lrv->op]? Lb : -Rb);
+                }
             }
         }
+
+        (*value) += AKp + AKm + XpYPpQ + XmYPmQ;
+        current = current->next;
     }
 
-    printf("AK+ = %.3f, AK- = %.3f\n", AKp, AKm);
-    printf("(X+Y)(P+Q) = %.3f, (X-Y)(P-Q) = %.3f\n", XpYPpQ, XmYPmQ);
-
-    *value = AKp + XpYPpQ + XmYPmQ;
+    err = stdl_permutations_delete(set);
+    STDL_ERROR_CODE_HANDLE(err, return err);
 
     return STDL_ERR_OK;
 }

@@ -492,7 +492,7 @@ void test_response_first_polarizability_TD_ok() {
 
     // solve response
     size_t nw = 3;
-    float w[] = {0, 4.282270E-2f, 4.282270E-2f * 2};
+    float w[] = {0, STDL_CONST_HC / 1064.f, STDL_CONST_HC / 1064.f * 2};
 
     float* XpY = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
     TEST_ASSERT_NOT_NULL(XpY);
@@ -505,9 +505,9 @@ void test_response_first_polarizability_TD_ok() {
     // compute polarizabilities
     float beta[27];
 
-    stdl_lrv lrv0 = {STDL_OP_DIPL, dipoles_mat, 0, XpY, XmY};
-    stdl_lrv lrv1 = {STDL_OP_DIPL, dipoles_mat, 0, XpY + 1 * 3 * ctx->ncsfs, XmY + 1 * 3 * ctx->ncsfs};
-    stdl_lrv lrv2 = {STDL_OP_DIPL, dipoles_mat, 0, XpY + 2 * 3 * ctx->ncsfs, XmY + 2 * 3 * ctx->ncsfs};
+    stdl_lrv lrv0 = {STDL_OP_DIPL, dipoles_mat, w[0], XpY, XmY};
+    stdl_lrv lrv1 = {STDL_OP_DIPL, dipoles_mat, w[1], XpY + 1 * 3 * ctx->ncsfs, XmY + 1 * 3 * ctx->ncsfs};
+    stdl_lrv lrv2 = {STDL_OP_DIPL, dipoles_mat, w[2], XpY + 2 * 3 * ctx->ncsfs, XmY + 2 * 3 * ctx->ncsfs};
 
     ASSERT_STDL_OK(stdl_property_tensor_quadratic(
             ctx,
