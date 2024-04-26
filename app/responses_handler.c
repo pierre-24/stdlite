@@ -496,6 +496,19 @@ int stdl_response_handler_compute_properties(stdl_responses_handler* rh, stdl_us
                     inp->res_w[req->iw[1]],
                     inp->res_w[req->iw[2]]
                     );
+
+            req->property_tensor = malloc(STDL_OPERATOR_DIM[lrvs[0]->op] * STDL_OPERATOR_DIM[lrvs[1]->op] * STDL_OPERATOR_DIM[lrvs[2]->op] * sizeof(float ));
+            STDL_ERROR_HANDLE_AND_REPORT(req->property_tensor == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
+
+            err = stdl_property_tensor_quadratic(ctx, lrvs, req->property_tensor);
+            STDL_ERROR_CODE_HANDLE(err, goto _end);
+            STDL_ERROR_CODE_HANDLE(err, goto _end);
+
+            if(req->ops[0] == STDL_OP_DIPL && req->ops[1] == STDL_OP_DIPL && req->ops[2] == STDL_OP_DIPL)
+                stdl_log_property_first_hyperpolarizability(req, req->property_tensor, inp->res_w[req->iw[1]], inp->res_w[req->iw[2]]);
+            else
+                stdl_log_property_quadratic_tensor(req, req->property_tensor, inp->res_w[req->iw[1]], inp->res_w[req->iw[2]]);
+
         } else if(req->resp_order == 1 && req->res_order == 1) { // linear SR
             req->property_tensor = malloc(rh->nexci * (STDL_OPERATOR_DIM[req->ops[0]] +  STDL_OPERATOR_DIM[req->ops[1]]) * sizeof(float ));
             STDL_ERROR_HANDLE_AND_REPORT(req->property_tensor == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");

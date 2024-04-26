@@ -13,22 +13,22 @@ e2thr=1e-4
 [responses]
 
 linear = [
-    {opA = 'dipl', opB = 'dipl', wB = 0}, # polarizability
+    {opA = 'dipl', opB = 'dipv', wB = 0}, # polarizability
     {opA = 'dipl', opB = 'dipl', wB = '1064nm'},
     {opA = 'dipl', opB = 'dipl', wB = '532nm'},
     # {target = 'electric_polarizability', w = '1064nm'}, # alternate notation
 ]
 
 quadratic = [
- #   {opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = 0, wC = 0},  # SHG first hyperpolarizability
- #   {opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = '1064nm', wC = '1064nm'},
+    {opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = 0, wC = 0},  # SHG first hyperpolarizability
+    {opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = '1064nm', wC = '1064nm'},
     # {target = 'first_hyperpolarizability_SHG', w = '800nm'}, # alternate notation
 ]
 
 linear_sr = [
-    {opA = 'dipl', nroots = 10},  # transition dipole
-    {opA = 'dipv', nroots = 10},  # transition dipole
-    {opA = 'dipl', opB = 'angm', nroots = 10},  # transition dipole
+    {opA = 'dipl', nroots = 5},  # transition dipole
+    {opA = 'dipv', nroots = 5},  # transition dipole
+    {opA = 'dipl', opB = 'angm', nroots = 5},  # transition dipole
     {opA = 'dipv', opB = 'angm', nroots = 5},  # transition dipole
 ]
 

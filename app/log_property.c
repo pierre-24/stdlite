@@ -9,7 +9,7 @@
 int stdl_log_property_polarizability(stdl_response_request* req, float* alpha, float w) {
     assert(req != NULL && alpha != NULL);
 
-    stdl_log_msg(0, "** alpha(-w;w) @ w=%f (%.2f nm)\n", w, STDL_CONST_HC / w);
+    stdl_log_msg(0, "** alpha(-w;w) @ w=%f Eh (%.2f nm)\n", w, STDL_CONST_HC / w);
     stdl_log_msg(0, "         x            y            z\n");
 
     for (size_t zeta = 0; zeta < 3; ++zeta) {
@@ -37,13 +37,13 @@ int stdl_log_property_polarizability(stdl_response_request* req, float* alpha, f
     return STDL_ERR_OK;
 }
 
-int stdl_log_property_linear_tensor(stdl_response_request* req, float* tensor, float w) {
+int stdl_log_property_linear_tensor(stdl_response_request* req, float* tensor, float wB) {
     assert(req != NULL && tensor != NULL);
 
     size_t dim0 = STDL_OPERATOR_DIM[req->ops[0]], dim1 = STDL_OPERATOR_DIM[req->ops[1]];
     float trs = STDL_OPERATOR_TRS[req->ops[0]] * STDL_OPERATOR_TRS[req->ops[1]];
 
-    stdl_log_msg(0, "** -%s<<%s;%s>>_w @ w=%f Eh (%.2f nm)\n", trs < 0? "Im": "", STDL_OPERATOR_NAME[req->ops[0]], STDL_OPERATOR_NAME[req->ops[1]], w, STDL_CONST_HC / w);
+    stdl_log_msg(0, "** -%s<<%s;%s>>_w @ wB=%f Eh (%.2f nm)\n", trs < 0? "Im": "", STDL_OPERATOR_NAME[req->ops[0]], STDL_OPERATOR_NAME[req->ops[1]], wB, STDL_CONST_HC / wB);
 
     stdl_log_msg(0, "    ");
     for (size_t sigma = 0; sigma < dim1; ++sigma)
@@ -62,19 +62,18 @@ int stdl_log_property_linear_tensor(stdl_response_request* req, float* tensor, f
     return STDL_ERR_OK;
 }
 
-
-/*int stdl_log_property_first_hyperpolarizability(stdl_response_request* req, float beta[3][3][3]) {
+int stdl_log_property_first_hyperpolarizability(stdl_response_request* req, float* beta, float wB, float wC) {
     assert(req != NULL && beta != NULL);
 
-    stdl_log_msg(0,
-                 "** beta(-w1-w2;w1,w2), w1=%f (%.2f nm), w2=%f (%.2f nm)\n",
-                 req->lrvreqs[1]->w[req->wpos[1]], STDL_CONST_HC / req->lrvreqs[1]->w[req->wpos[1]],
-                 req->lrvreqs[2]->w[req->wpos[2]], STDL_CONST_HC / req->lrvreqs[2]->w[req->wpos[2]]
-    );
+    size_t dim0 = STDL_OPERATOR_DIM[req->ops[0]], dim1 = STDL_OPERATOR_DIM[req->ops[1]], dim2 = STDL_OPERATOR_DIM[req->ops[2]];
+    float trs = STDL_OPERATOR_TRS[req->ops[0]] * STDL_OPERATOR_TRS[req->ops[1]] * STDL_OPERATOR_TRS[req->ops[2]];
+
+    stdl_log_msg(0, "** beta(-wB-wC;wB,wC) @ wB=%f Eh (%.2f nm), wC=%f Eh (%.2f nm)\n", trs < 0? "Im": "", STDL_OPERATOR_NAME[req->ops[0]], STDL_OPERATOR_NAME[req->ops[1]], STDL_OPERATOR_NAME[req->ops[2]], wB, STDL_CONST_HC / wB, wC, STDL_CONST_HC / wC);
 
     stdl_log_msg(0, "          x            y            z\n");
-    for (size_t zeta = 0; zeta < 3; ++zeta) {
-        for (size_t sigma = 0; sigma < 3; ++sigma) {
+
+    for (size_t zeta = 0; zeta < dim0; ++zeta) {
+        for (size_t sigma = 0; sigma < dim1; ++sigma) {
             switch (zeta) {
                 case 0:
                     stdl_log_msg(0, "x");
@@ -97,16 +96,14 @@ int stdl_log_property_linear_tensor(stdl_response_request* req, float* tensor, f
                     stdl_log_msg(0, "z");
                     break;
             }
-
-            for (size_t tau = 0; tau < 3; ++tau) {
-                stdl_log_msg(0, " % 12.5f", beta[zeta][sigma][tau]);
+            for (size_t tau = 0; tau < dim2; ++tau) {
+                stdl_log_msg(0, " % 12.5f", beta[zeta * dim0 * dim1 + sigma * dim1 + tau]);
             }
-
             stdl_log_msg(0, "\n");
         }
     }
 
-    if(stdl_float_equals(req->lrvreqs[1]->w[req->wpos[1]], req->lrvreqs[2]->w[req->wpos[2]], 1e-6)) {
+    if(stdl_float_equals(wB, wC, 1e-6f)) {
         float b2ZZZ, b2ZXX;
         stdl_qexp_first_hyperpolarizability_hrs(beta, &b2ZZZ, &b2ZXX);
         stdl_log_msg(0, "<B2ZZZ> = % 12.5f\n<B2ZXX> = % 12.5f\nBHRS    = % 12.5f\nDR      = % 12.5f\n", b2ZZZ, b2ZXX, sqrtf(b2ZZZ +  b2ZXX), b2ZZZ / b2ZXX);
@@ -114,7 +111,34 @@ int stdl_log_property_linear_tensor(stdl_response_request* req, float* tensor, f
     }
 
     return STDL_ERR_OK;
-}*/
+}
+
+int stdl_log_property_quadratic_tensor(stdl_response_request* req, float* tensor, float wB, float wC) {
+    assert(req != NULL && tensor != NULL);
+
+    size_t dim0 = STDL_OPERATOR_DIM[req->ops[0]], dim1 = STDL_OPERATOR_DIM[req->ops[1]], dim2 = STDL_OPERATOR_DIM[req->ops[2]];
+    float trs = STDL_OPERATOR_TRS[req->ops[0]] * STDL_OPERATOR_TRS[req->ops[1]] * STDL_OPERATOR_TRS[req->ops[2]];
+
+    stdl_log_msg(0, "** -%s<<%s;%s,%s>>_wB,wC @ wB=%f Eh (%.2f nm), wC=%f Eh (%.2f nm)\n", trs < 0? "Im": "", STDL_OPERATOR_NAME[req->ops[0]], STDL_OPERATOR_NAME[req->ops[1]], STDL_OPERATOR_NAME[req->ops[2]], wB, STDL_CONST_HC / wB, wC, STDL_CONST_HC / wC);
+
+    stdl_log_msg(0, "        ");
+    for (size_t tau = 0; tau < dim2; ++tau)
+        stdl_log_msg(0, "     %3d     ", tau);
+
+    stdl_log_msg(0, "\n");
+
+    for (size_t zeta = 0; zeta < dim0; ++zeta) {
+        for (size_t sigma = 0; sigma < dim1; ++sigma) {
+            stdl_log_msg(0, "%3d,%-3d ", zeta, sigma);
+            for (size_t tau = 0; tau < dim2; ++tau) {
+                stdl_log_msg(0, " % 12.5f", tensor[zeta * dim0 * dim1 + sigma *dim1 + tau]);
+            }
+            stdl_log_msg(0, "\n");
+        }
+    }
+
+    return STDL_ERR_OK;
+}
 
 void stdl_log_property_amplitude_contributions(stdl_responses_handler *rh, stdl_context *ctx, float thresh) {
     assert(rh != NULL && ctx != NULL && thresh > 0);
