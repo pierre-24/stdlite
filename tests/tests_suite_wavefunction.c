@@ -170,7 +170,7 @@ void test_molden_dalton() {
         }
     }
 
-    TEST_ASSERT_DOUBLE_WITHIN(1e-6, -0.67508, dipz1);
+    TEST_ASSERT_DOUBLE_WITHIN(1e-6, -0.675073, dipz1);
     STDL_FREE_ALL(dipoles_sp);
 
     ASSERT_STDL_OK(stdl_basis_delete(bs));

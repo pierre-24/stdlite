@@ -143,4 +143,13 @@ int stdl_basis_load_h5(hid_t file_id, stdl_basis **bs_ptr);
  */
 int stdl_basis_approximate_size(stdl_basis *bs, size_t *sz);
 
+/**
+ * Set the common origin for libcint
+ * @param bs a valid basis set
+ * @param Rc `double[3]` the origin
+ * @return error code
+ * @ingroup basis
+ */
+int stdl_basis_set_Rc(stdl_basis* bs, double Rc[3]);
+
 #endif //STDLITE_BASIS_H

@@ -33,7 +33,8 @@ void test_user_input_context_fill_from_toml_ok() {
           "e2thr=1e-3\n"
           "ax = 1.0\n"
           "gammaJ=1.0\n"
-          "gammaK=0.5",
+          "gammaK=0.5 \n"
+          "gauge_origin=[1.0, 1.0, 1.0]",
           stream);
     rewind(stream);
 
@@ -51,6 +52,8 @@ void test_user_input_context_fill_from_toml_ok() {
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 1.0, inp->ctx_ax);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 1.0, inp->ctx_gammaJ);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 0.5, inp->ctx_gammaK);
+    TEST_ASSERT_EQUAL(inp->ctx_gauge_origin, STDL_GAUGE_ORIGIN_CUSTOM);
+    TEST_ASSERT_DOUBLE_ARRAY_WITHIN(1e-6, inp->ctx_gauge_origin_custom, ((double []) {1. / STDL_CONST_AU_TO_ANG, 1. / STDL_CONST_AU_TO_ANG, 1. / STDL_CONST_AU_TO_ANG}), 3);
 
     ASSERT_STDL_OK(stdl_user_input_handler_delete(inp));
 }
@@ -85,6 +88,7 @@ void test_user_input_context_fill_from_args_ok() {
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 1e-3, inp->ctx_e2thr);
     TEST_ASSERT_FLOAT_WITHIN(1e-4, 1.0, inp->ctx_ax);
     TEST_ASSERT_EQUAL(0, inp->ctx_tda);
+    TEST_ASSERT_EQUAL(inp->ctx_gauge_origin, STDL_GAUGE_ORIGIN_CM);
 
     ASSERT_STDL_OK(stdl_user_input_handler_delete(inp));
 }

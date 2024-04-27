@@ -38,6 +38,7 @@ int stdl_user_input_handler_new(stdl_user_input_handler** inp_ptr) {
     (*inp_ptr)->ctx_ethr = 7.f / STDL_CONST_AU_TO_EV;
     (*inp_ptr)->ctx_e2thr = 1e-4f;
     (*inp_ptr)->ctx_ax = 0.5f;
+    (*inp_ptr)->ctx_gauge_origin = STDL_GAUGE_ORIGIN_CM;
 
     // -- response:
     (*inp_ptr)->res_resreqs = NULL;
@@ -262,6 +263,18 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
         if(ctx_ax.ok) {
             STDL_DEBUG("- ax");
             inp->ctx_ax = (float) ctx_ax.u.d;
+        }
+
+        toml_array_t* gauge_origin = toml_array_in(ctx, "gauge_origin");
+        if(gauge_origin != NULL) {
+            STDL_DEBUG("- gauge_origin");
+            toml_datum_t elm0 = toml_double_at(gauge_origin, 0), elm1 = toml_double_at(gauge_origin, 1), elm2 = toml_double_at(gauge_origin, 2), elm3 = toml_double_at(gauge_origin, 3);
+            STDL_ERROR_HANDLE_AND_REPORT(!(elm0.ok && elm1.ok && elm2.ok) || elm3.ok, err = STDL_ERR_INPUT; goto _end, "context.gauge_origin must have 3 elements");
+
+            inp->ctx_gauge_origin = STDL_GAUGE_ORIGIN_CUSTOM;
+            inp->ctx_gauge_origin_custom[0] = elm0.u.d / STDL_CONST_AU_TO_ANG;
+            inp->ctx_gauge_origin_custom[1] = elm1.u.d / STDL_CONST_AU_TO_ANG;
+            inp->ctx_gauge_origin_custom[2] = elm2.u.d / STDL_CONST_AU_TO_ANG;
         }
     }
 
@@ -680,6 +693,11 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
         stdl_log_msg(0, "tda = %d\n", inp->ctx_tda);
         stdl_log_msg(0, "gammaJ = %f\ngammaK = %f\nax = %f\n", inp->ctx_gammaJ, inp->ctx_gammaK, inp->ctx_ax);
         stdl_log_msg(0, "ethr = %f # au\ne2thr = %e # au\n", inp->ctx_ethr, inp->ctx_e2thr);
+
+        if(inp->ctx_gauge_origin != STDL_GAUGE_ORIGIN_CM) {
+            stdl_log_msg(0, "gauge_origin = [%f, %f, %f]\n", inp->ctx_gauge_origin_custom[0] * STDL_CONST_AU_TO_ANG, inp->ctx_gauge_origin_custom[1] * STDL_CONST_AU_TO_ANG, inp->ctx_gauge_origin_custom[2] * STDL_CONST_AU_TO_ANG);
+        }
+
     } else {
         stdl_log_msg(0, "# A' and B' are obtained from %s\n", inp->ctx_source);
     }
@@ -816,6 +834,13 @@ int stdl_user_input_handler_make_context(stdl_user_input_handler* inp, stdl_cont
         // create context
         err = stdl_context_new(wf, bs, inp->ctx_gammaJ, inp->ctx_gammaK, inp->ctx_ethr, inp->ctx_e2thr, inp->ctx_ax, ctx_ptr);
         STDL_ERROR_CODE_HANDLE(err, *ctx_ptr = NULL; return err);
+
+        // set gauge
+        if(inp->ctx_gauge_origin != STDL_GAUGE_ORIGIN_CM) {
+            stdl_basis_set_Rc((*ctx_ptr)->bs, inp->ctx_gauge_origin_custom);
+        }
+
+        stdl_log_msg(0, "Gauge origin is set to: (%.4f a0, %.4f a0, %.4f a0)\n", (*ctx_ptr)->bs->env[PTR_COMMON_ORIG + 0],(*ctx_ptr)->bs->env[PTR_COMMON_ORIG + 1],(*ctx_ptr)->bs->env[PTR_COMMON_ORIG + 2]);
 
         // select and build A' and B'
         if(inp->ctx_method == STDL_METHOD_MONOPOLE)

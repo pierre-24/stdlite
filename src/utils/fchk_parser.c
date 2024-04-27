@@ -479,6 +479,9 @@ int stdl_basis_data_to_basis(stdl_basis_data *dt, size_t natm, double *atm, stdl
     size_t base_offset = PTR_ENV_START;
 
     // atoms
+    double center_of_mass[3] = {.0, .0, .0};
+    double mass = .0;
+
     for(size_t i=0; i < natm; i++) {
         (*bs_ptr)->atm[i * 6 + 0] = (int) atm[i * 4 + 0];
         (*bs_ptr)->atm[i * 6 + 1] = (int) (base_offset + i * 3);
@@ -486,7 +489,18 @@ int stdl_basis_data_to_basis(stdl_basis_data *dt, size_t natm, double *atm, stdl
         (*bs_ptr)->env[base_offset + i * 3 + 0] = atm[i * 4 + 1];
         (*bs_ptr)->env[base_offset + i * 3 + 1] = atm[i * 4 + 2];
         (*bs_ptr)->env[base_offset + i * 3 + 2] = atm[i * 4 + 3];
+
+        mass += atm[i * 4 + 0];
+        center_of_mass[0] += atm[i * 4 + 0] * atm[i * 4 + 1];
+        center_of_mass[1] += atm[i * 4 + 0] * atm[i * 4 + 2];
+        center_of_mass[2] += atm[i * 4 + 0] * atm[i * 4 + 3];
     }
+
+    center_of_mass[0] /= mass;
+    center_of_mass[1] /= mass;
+    center_of_mass[2] /= mass;
+
+    stdl_basis_set_Rc(*bs_ptr, center_of_mass);
 
     // copy exps and coefs
     size_t offset_exps = base_offset + 3 * natm, offset_coefs = base_offset +3 * natm + dt->nprim, offset_coefs_sp = base_offset + 3 * natm + 2 * dt->nprim;

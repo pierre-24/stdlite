@@ -203,3 +203,12 @@ int stdl_basis_approximate_size(stdl_basis *bs, size_t *sz) {
     return STDL_ERR_OK;
 }
 
+int stdl_basis_set_Rc(stdl_basis *bs, double *Rc) {
+    assert(bs != NULL && Rc != NULL);
+
+    STDL_DEBUG("set COMMON_ORIG to center of mass = {%.3f, %.3f, %.3f}", Rc[0], Rc[1], Rc[2]);
+
+    memcpy(bs->env + PTR_COMMON_ORIG, Rc, 3 * sizeof(double ));
+    return STDL_ERR_OK;
+}
+

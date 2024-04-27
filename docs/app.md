@@ -160,6 +160,14 @@ These are the keywords related to the creation of the context, *i.e.*, the selec
 
     Assuming a global hybrid, amount of Hartree-Fock exchange, between 0 and 1.
 
+!!! abstract "Gauge origin"
+
+    **Type**: `list`
+    **Keyword**: `gauge_origin`
+    **Default**: the center of mass of the molecule
+
+    Set the gauge origin for the angular momentum (`angm`) operator.
+
 ### Responses (`[responses]`)
 
 These are the keywords related to the calculation of responses, their residues, and the related properties.
@@ -167,6 +175,8 @@ These are the keywords related to the calculation of responses, their residues, 
 In the following, `wX` is a frequency, thus following the syntax for energy mentioned in the preamble. `opX` is an operator, which should be one of:
 
 + `"dipl"`: dipole length operator;
++ `"dipv"`: dipole velocity operator;
++ `"angm"`: angular momentum operator.
 
 Other operators will be added in the future.
 

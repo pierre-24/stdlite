@@ -33,6 +33,20 @@ enum stdl_method_ {
 
 typedef enum stdl_method_ stdl_method;
 
+/**
+ * Gauge origin for basis set
+ * @ingroup user_input_handler
+ */
+enum  stdl_gauge_origin_ {
+    /// Origin at center of mass (default)
+    STDL_GAUGE_ORIGIN_CM,
+
+    /// Custom
+    STDL_GAUGE_ORIGIN_CUSTOM,
+};
+
+typedef enum stdl_gauge_origin_ stdl_gauge_origin;
+
 
 /**
  * User input structure
@@ -72,6 +86,12 @@ struct stdl_user_input_handler_ {
 
     /// Amount of HF exchange
     float ctx_ax;
+
+    /// Common basis origin
+    stdl_gauge_origin ctx_gauge_origin;
+
+    /// custom basis origin, valid if `ctx_gauge_origin` is `STDL_GAUGE_ORIGIN_CUSTOM`
+    double ctx_gauge_origin_custom[3];
 
     // ----- responses:
     /// Response requests
