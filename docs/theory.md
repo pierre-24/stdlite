@@ -386,7 +386,7 @@ Linear and quadratic response functions are generally noted $\braket{\braket{\ha
 Linear responses result in a rank-2 tensor, ${}^{AB}\mathcal{T}$.
 As discussed in [10.1016/S1380-7323(02)80033-4](https://dx.doi.org/10.1016/S1380-7323(02)80033-4), the time-reversal symmetry [and thus the symmetric or antisymmetric nature of $\mathbf t(\omega)$ and $\mathbf u(\omega)$ with respect to a change to the change of sign of $\omega$] can be exploited to compute the linear response:
 
-$$
+$$\tag{5}
 {}^{AB}\mathcal{T}_{\zeta\sigma} = -\braket{\braket{\hat A_\zeta;\hat B_\sigma}}_\omega
 = -2 \sum_{ia}^{CSFs} A_{ia,\zeta}\,{}^B\kappa_{ia,\sigma}(\omega),$$
 
@@ -409,27 +409,27 @@ where ${}^B\mathbf \kappa(\omega)$ is computed from the linear response vectors 
 A rank-3 tensor, ${}^{ABC}\mathcal{T}$ is the result of a quadratic response function.
 Following [10.1021/acs.jctc.7b01008](https://dx.doi.org/10.1021/acs.jctc.7b01008) but neglecting the response of the XC kernel (*i.e.*, $f_{XC}$ and $g_{XC}$, which results in an "unrelaxed" expression), one gets:
 
-$${}^{ABC}\mathcal{T}_{\zeta\sigma\tau} = \braket{\braket{\hat A_\zeta;\hat B_\sigma,\hat C_\tau}}_{\omega_B,\omega_C} = {}^{ABC}\mathcal{A}_{\zeta\sigma\tau} + {}^{ABC}\mathcal{B}_{\zeta\sigma\tau},$$
+$$\tag{6}{}^{ABC}\mathcal{T}_{\zeta\sigma\tau} = \braket{\braket{\hat A_\zeta;\hat B_\sigma,\hat C_\tau}}_{\omega_B,\omega_C} = {}^{ABC}\mathcal{M}_{\zeta\sigma\tau} + {}^{ABC}\mathcal{N}_{\zeta\sigma\tau},$$
 
 where:
 
-$${}^{ABC}\mathcal{A}_{\zeta\sigma\tau} = \sum_{[B,C]}\sum_{ia,ja} \frac{1}{4}\,A_{ij,\zeta}\,{}^{BC}\mathcal{K}_{ia,ja} 
+$${}^{ABC}\mathcal{M}_{\zeta\sigma\tau} = \sum_{[B,C]}\sum_{ia,ja} \frac{1}{4}\,A_{ij,\zeta}\,{}^{BC}\mathcal{K}_{ia,ja} 
 - \frac{1}{2}\,B_{ij,\sigma}\,\left\{\begin{array}{}^At_{ia,\zeta}(\omega_B+\omega_C)\,{}^C\kappa^+_{ja,\tau}(\omega_C)\\ + {}^Au_{ia,\zeta}(\omega_B+\omega_C)\,{}^C\kappa^-_{ja,\tau}(\omega_C)\end{array}\right\},$$
 
 with:
 
-$${}^{BC}\mathcal{K}_{ia,ja} = \left\{\begin{array} {}^Bu_{ia}(\omega_B)\,{}^Cu_{ja}(\omega_C) - {}^Bt_{ia}(\omega_B)\,{}^Ct_{ja}(\omega_C) \\+ {}^Bu_{ia}(\omega_B)\,{}^Ct_{ja}(\omega_C) - {}^Bt_{ia}(\omega_B)\,{}^Cu_{ja}(\omega_C)\end{array}\right\},$$
+$${}^{BC}\mathcal{K}_{ia,ja} = {}^Bu_{ia,\sigma}(\omega_B)\,{}^Cu_{ja,\tau}(\omega_C) - {}^Bt_{ia,\sigma}(\omega_B)\,{}^Ct_{ja,\tau}(\omega_C) ,$$
 
 and:
 
-$${}^{ABC}\mathcal{B}_{\zeta\sigma\tau} =\sum_{[B,C]}\sum_{ia,ib} \frac{1}{4}\,A_{ab,\zeta}\,{}^{BC}\mathcal{K}_{ia,ib} 
+$${}^{ABC}\mathcal{N}_{\zeta\sigma\tau} =\sum_{[B,C]}\sum_{ia,ib} \frac{1}{4}\,A_{ab,\zeta}\,{}^{BC}\mathcal{K}_{ia,ib} 
 + \frac{1}{2}\,B_{ab,\sigma}\,\left\{\begin{array}{}^At_{ia,\zeta}(\omega_B+\omega_C)\,{}^C\kappa^+_{ib,\tau}(\omega_C)\\ + {}^Au_{ia,\zeta}(\omega_B+\omega_C)\,{}^C\kappa^-_{ib,\tau}(\omega_C)\end{array}\right\}$$
 
 with:
 
-$${}^{BC}\mathcal{K}_{ia,ib} = \left\{\begin{array} {}^Bt_{ia}(\omega_B)\,{}^Ct_{ib}(\omega_C) - {}^Bu_{ia}(\omega_B)\,{}^Cu_{ib}(\omega_C) \\+ {}^Bu_{ia}(\omega_B)\,{}^Ct_{ib}(\omega_C) - {}^Bt_{ia}(\omega_B)\,{}^Cu_{ib}(\omega_C)\end{array}\right\}.$$
+$${}^{BC}\mathcal{K}_{ia,ib} = {}^Bt_{ia,\sigma}(\omega_B)\,{}^Ct_{ib,\tau}(\omega_C) - {}^Bu_{ia,\sigma}(\omega_B)\,{}^Cu_{ib,\tau}(\omega_C).$$
 
-In both expressions, $\sum_{[B,C]}$ is a sum over the permutation of the pairs of operator and corresponding frequencies, $\{(\hat B,\omega_B), (\hat C,\omega_C)\}$, and, using the time-reversal symmetry,
+In both expressions, $\sum_{[B,C]}$ is a sum over the permutation of the pairs of a given operator and its corresponding frequency, $\{(\hat B_\sigma,\omega_B), (\hat C_\tau,\omega_C)\}$, and, using the time-reversal symmetry,
 
 $${}^C\kappa^+_{jb,\tau}(\omega) = \begin{cases} {}^Ct_{jb,\tau}(\omega) & \text{if } \theta_B = 1,\\-{}^Cu_{jb,\tau}(\omega) & \text{otherwise}.\end{cases}$$ 
 
@@ -442,7 +442,8 @@ In the case of the SHG first hyperpolarizability (so, $\braket{\braket{\hat\mu;\
 ### Residues
 
 Residue of the response functions provide information on the (excited states of the) unperturbed system.
-For example, the linear response function might be extended in the following spectral representation:
+
+Assuming an exact wavefunction, the linear response function might be extended in:
 
 $$\braket{\braket{\hat A; \hat B}}_{\omega_B} = \sum_{\ket{m}} \frac{\braket{0|\hat A|m}\braket{m|\hat B|0}}{\omega_B-\omega_m} - \frac{\braket{0|\hat B|m}\braket{m|\hat A|0}}{\omega_B+\omega_m},$$
 
@@ -451,12 +452,31 @@ and a corresponding single residue might be:
 $$\lim_{\omega_B\to\omega_m} (\omega_B-\omega_m)\,\braket{\braket{\hat A; \hat B}}_{\omega_B} = \braket{0|\hat A|m}\braket{m|\hat B|0},$$
 
 which provides access to transition matrix elements $\braket{0|\hat A|m}$ between the ground state $\ket{0}$ and an excited state $\ket{m}$. 
+
 In practice, such residues are thus evaluated thanks to amplitude vectors through the spectral representation of linear responses, which gives (assuming that we have a singlet wavefunction):
 
 $$A_{0m,\zeta} = \braket{0|\hat A_\zeta|m} = \sqrt{2}\,\sum_{ia}^{CSF} A_{ia,\zeta}\,\kappa_{ia}^m, \text{ with } \kappa^m_{ia} = \begin{cases}
 t^m_{ia} & \text{if } {}^A\theta = 1, \\
 u^m_{ia} & \text{otherwise}.
 \end{cases}$$
+
+??? note "Details"
+    
+    This expression was obtained using: 
+
+    $$\begin{aligned}
+    \lim_{\omega_B\to\omega_n}\,(\omega_B-\omega_m)\,{}^Bx_{ia,\sigma}(\omega_B) &= B_{ia,\sigma}\,(x^{m}_{ia} + y^{m}_{ia})\,(x_{ia}^m), \\
+	\lim_{\omega_B\to\omega_n}\,(\omega_B-\omega_m)\,{}^By_{ia,\sigma}(\omega_B) &= B_{ia,\sigma}\,(x^{m}_{ia} + y^{m}_{ia})\,(y_{ia}^m),
+    \end{aligned}$$
+
+    or equivalently,
+
+    $$\begin{aligned}
+    \lim_{\omega_B\to\omega_m}\,(\omega_B-\omega_m)\,{}^Bt_{ia,\sigma}(\omega_B) &= B_{ia,\sigma}\,[t^{m}_{ia}]^2, \\
+	\lim_{\omega_B\to\omega_m}\,(\omega_B-\omega_m)\,{}^Bu_{ia,\sigma}(\omega_B) &= B_{ia,\sigma}\,t^{m}_{ia}\,u^{m}_{ia},
+    \end{aligned}$$
+    
+    on Eq. (5).
 
 Different ground to excited moments, related to experimentally measurable properties, can be extracted (all given in atomic units):
 
@@ -466,6 +486,40 @@ Different ground to excited moments, related to experimentally measurable proper
 | Rotatory strength   | $R^L_{0m} = -\frac{1}{2}\, \Im(\vec\mu^L_{0m}\cdot\vec m_{0m})$ | $R^V_{0m} = -\frac{1}{2\,\omega_m}\,\Re(\vec\mu^V_{0m}\cdot\vec m_{0m})$ | 
 
 See, *e.g.*, [10.1016/j.comptc.2014.02.023](https://doi.org/10.1016/j.comptc.2014.02.023), for a discussion on the differences between the two formalisms.
+
+For an exact wavefunction, quadratic responses are given by:
+
+$$\braket{\braket{\hat A; \hat B, \hat C}} = \sum_{[A,B,C]} \sum_{\ket{m}, \ket{n}} \frac{\braket{0|\hat A|m}\braket{m|\hat B - \delta_{mn}\,\braket{0|\hat B|0}|n}\braket{n|\hat C|0}}{(\omega_A+\omega_m)\,(\omega_C-\omega_n)},$$
+
+where $\omega_A = -\omega_B-\omega_C$ and $\sum_{[A,B,C]}$ is a sum over all permutation of the pairs of a given operator and its corresponding frequency, $\{(\hat A, \omega_A), (\hat B, \omega_B), (\hat C, \omega_C)\}$.
+
+A possible double residue is:
+
+$$\begin{aligned} \lim_{\omega_B\to-\omega_m,\omega_C\to\omega_n} &(\omega_B+\omega_m)\,(\omega_C-\omega_n)\,\braket{\braket{\hat A_\zeta;\hat B_\sigma,\hat C_\tau}}{\omega_B,\omega_C} \\
+&= \braket{0|\hat B_\sigma|m}\,\braket{m|\hat A_\zeta - \delta_{mn}\,\braket{0|\hat A_\zeta|0}|n}\,\braket{n|\hat C_\tau|0}.
+\end{aligned}$$
+
+Therefore, one gets:
+
+$$\begin{aligned}
+&\braket{m|\hat\mu_\zeta - \delta_{mn}\,\braket{0|\hat\mu_\zeta|0}|n}\\
+&\hspace{2em}= \frac{1}{4}\sum_{[m,n]}\left\{ \sum_{ia,ib} A_{ab,\zeta}\,[t^m_{ia}\,t^n_{ib} + u^m_{ia}\,u^n_{ib}]  - \sum_{ia,ja} A_{ij,\zeta}\,[t^m_{ia}\,t^n_{ja} + u^m_{ia}\,u^n_{ja}] \right\}.
+\end{aligned}$$
+
+which is equal to the fluctuation operator if $m = n$.
+
+??? note "Details"
+
+    This expression was obtained using
+
+    $$\begin{aligned}
+    \lim_{\omega_B\to-\omega_m}\,(\omega_B+\omega_m)\,{}^Bt_{ia,\sigma}(\omega_B) &= -B_{ia,\sigma}\,[t^{m}_{ia}]^2, \\
+	\lim_{\omega_B\to-\omega_m}\,(\omega_B+\omega_m)\,{}^Bu_{ia,\sigma}(\omega_B) &= B_{ia,\sigma}\,t^{m}_{ia}\,u^{m}_{ia},\\
+    \lim_{\omega_C\to\omega_n}\,(\omega_C-\omega_n)\,{}^Ct_{ia,\sigma}(\omega_C) &= C_{ia,\tau}\,[t^{m}_{ia}]^2, \\
+	\lim_{\omega_C\to\omega_n}\,(\omega_C-\omega_n)\,{}^Cu_{ia,\sigma}(\omega_C) &= C_{ia,\tau}\,t^{m}_{ia}\,u^{m}_{ia},
+    \end{aligned}$$
+    
+    on Eq. (6), and recognising the expression of $\braket{0|\hat B|m}$ and $\braket{n|\hat C|0}$ given above.
 
 ## Sources and references
 

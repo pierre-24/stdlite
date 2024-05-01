@@ -7,7 +7,6 @@
 #include <stdlite/helpers.h>
 #include <stdlite/utils/fchk_parser.h>
 #include <stdlite/utils/molden_parser.h>
-#include <stdlite/property.h>
 #include <stdlite/property_tensor.h>
 
 #include "user_input_handler.h"

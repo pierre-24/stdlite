@@ -89,6 +89,7 @@ int main(int argc, char* argv[]) {
 
     title("Properties");
     if(input->res_resreqs != NULL) {
+        stdl_log_msg(0, "Note: unless otherwise mentioned, everything is given in atomic units.\n");
         err = stdl_response_handler_compute_properties(rh, input, ctx);
         STDL_ERROR_CODE_HANDLE(err, goto _end);
     } else {

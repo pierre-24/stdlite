@@ -26,7 +26,6 @@ tests_to_run = [
     'utils_fchk_parser',
     'utils_molden_parser',
     'utils_permutations',
-    'property',
     'property_tensor',
     'wavefunction',
 ]
