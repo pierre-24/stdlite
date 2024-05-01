@@ -151,35 +151,31 @@ int _property_tensor_quadratic_element(size_t components[3], stdl_context* ctx, 
         _l_elm * e1 = (_l_elm *) current->perm, *e2 = e1 + 1;
         size_t sigma = e1->cpt, tau = e2->cpt, dim1 = STDL_OPERATOR_DIM[e1->lrv->op], dim2 = STDL_OPERATOR_DIM[e2->lrv->op];
 
-        float AKp = .0f, AKm = .0f, XpYPpQ = .0f, XmYPmQ = .0f;
+        float Ap = .0f, Bp = .0f;
 
-        #pragma omp parallel for reduction(+:AKp) reduction(+:AKm) reduction(+:XpYPpQ) reduction(+:XmYPmQ)
+        #pragma omp parallel for reduction(+:Ap) reduction(+:Bp)
         for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
             size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt;
 
-            float Rg = lrvs[0]->XpYw[lia * dim0 + zeta], Lg = lrvs[0]->XmYw[lia * dim0 + zeta], Ra = e1->lrv->XpYw[lia * dim1 + sigma], La = e1->lrv->XmYw[lia * dim1 + sigma];
+            float Ta = lrvs[0]->XpYw[lia * dim0 + zeta], Ua = lrvs[0]->XmYw[lia * dim0 + zeta], Tb = e1->lrv->XpYw[lia * dim1 + sigma], Ub = e1->lrv->XmYw[lia * dim1 + sigma];
 
             for (size_t ljb = 0; ljb < ctx->ncsfs; ++ljb) {
                 size_t j = ctx->csfs[ljb] / nvirt, b = ctx->csfs[ljb] % nvirt;
-                float Rb = e2->lrv->XpYw[ljb * dim2 + tau], Lb = e2->lrv->XmYw[ljb * dim2 + tau];
+                float Tc = e2->lrv->XpYw[ljb * dim2 + tau], Uc = e2->lrv->XmYw[ljb * dim2 + tau];
 
-                if(a == b) { // ia,ja
-                    AKp -= .25f * (float) lrvs[0]->op_ints_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * (Ra * Rb - La * Lb);
-                    AKm += .25f * (float) lrvs[0]->op_ints_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * (La * Rb - Ra * Lb);
-                    XpYPpQ -= .5f * (float) e1->lrv->op_ints_MO[sigma * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * Rg * (STDL_OPERATOR_ISSYM[e2->lrv->op]? Rb : -Lb);
-                    XmYPmQ -= .5f * (float) e1->lrv->op_ints_MO[sigma * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * Lg * (STDL_OPERATOR_ISSYM[e2->lrv->op]? Lb : -Rb);
+                if(a == b) { // ia,ja → A
+                    Ap += .25f * (float) lrvs[0]->op_ints_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * (!STDL_OPERATOR_ISSYM[lrvs[0]->op] && i < j ? -1.f: 1.f) * (Ub * Uc - Tb * Tc + Ub * Tc - Tb * Uc);
+                    Ap -= .5f * (float) e1->lrv->op_ints_MO[sigma * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * (!STDL_OPERATOR_ISSYM[e1->lrv->op] && i < j ? -1.f: 1.f) * (Ta * (STDL_OPERATOR_ISSYM[e1->lrv->op] ? Tc : -Uc) + Ua * (STDL_OPERATOR_ISSYM[e1->lrv->op] ? Uc : -Tc));
                 }
 
-                if(i == j) { // ia,ib
-                    AKp += .25f * (float) lrvs[0]->op_ints_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)] * (Ra * Rb - La * Lb);
-                    AKm += .25f * (float) lrvs[0]->op_ints_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)] * (La * Rb - Ra * Lb);
-                    XpYPpQ += .5f * (float) e1->lrv->op_ints_MO[sigma * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)] * Rg * (STDL_OPERATOR_ISSYM[e2->lrv->op]? Rb : -Lb);
-                    XmYPmQ += .5f * (float) e1->lrv->op_ints_MO[sigma * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)] * Lg * (STDL_OPERATOR_ISSYM[e2->lrv->op]? Lb : -Rb);
+                if(i == j) { // ia,ib → B
+                    Bp += .25f * (float) lrvs[0]->op_ints_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)] * (!STDL_OPERATOR_ISSYM[lrvs[0]->op] && a < b ? -1.f: 1.f) * (Tb * Tc - Ub * Uc + Ub * Tc - Tb * Uc);
+                    Bp += .5f * (float) e1->lrv->op_ints_MO[sigma * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)] * (!STDL_OPERATOR_ISSYM[e1->lrv->op] && a < b ? -1.f: 1.f) * (Ta * (STDL_OPERATOR_ISSYM[e1->lrv->op] ? Tc : -Uc) + Ua * (STDL_OPERATOR_ISSYM[e1->lrv->op] ? Uc : -Tc));
                 }
             }
         }
 
-        (*value) += AKp + AKm + XpYPpQ + XmYPmQ;
+        (*value) += Ap + Bp;
         current = current->next;
     }
 

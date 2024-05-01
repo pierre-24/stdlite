@@ -515,7 +515,7 @@ void test_response_first_polarizability_TD_ok() {
             beta
     ));
 
-    stdl_matrix_sge_print(0, 9, 3, beta, "beta(0)");
+    stdl_matrix_sge_print(2, 9, 3, beta, "beta(0)");
     stdl_qexp_first_hyperpolarizability_hrs(beta, &beta2_ZZZ, &beta2_ZXX, &beta2_J1, &beta2_J3);
 
     TEST_ASSERT_FLOAT_WITHIN(1e-2, 68.606, beta2_ZZZ);
@@ -529,7 +529,7 @@ void test_response_first_polarizability_TD_ok() {
             beta
     ));
 
-    stdl_matrix_sge_print(0, 9, 3, beta, "beta(-2w;w,w)");
+    stdl_matrix_sge_print(2, 9, 3, beta, "beta(-2w;w,w)");
     stdl_qexp_first_hyperpolarizability_hrs(beta, &beta2_ZZZ, &beta2_ZXX, &beta2_J1, &beta2_J3);
 
     TEST_ASSERT_FLOAT_WITHIN(1e-2, 77.871, beta2_ZZZ);
@@ -538,6 +538,90 @@ void test_response_first_polarizability_TD_ok() {
     TEST_ASSERT_FLOAT_WITHIN(1e-2, 659.151, beta2_J3);
 
     STDL_FREE_ALL(dipoles_mat, egrad, XpY, XmY);
+
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
+}
+
+void test_response_antisym_TD_ok() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_molden("../tests/test_files/chiral_sto3g.molden", &wf, &bs);
+
+    stdl_context* ctx = NULL;
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 4.0, 2.0, 40. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
+
+    size_t nw = 3;
+    float w[] = {0, STDL_CONST_HC / 1064.f, STDL_CONST_HC / 532.f};
+
+    // compute dipole integrals and convert to MO, then solve response
+    double* dipl_mat = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipl_mat);
+
+    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipl_mat);
+
+    float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(egrad);
+
+    stdl_response_perturbed_gradient(ctx, 3, 1, dipl_mat, egrad);
+
+    float* XpY_dipl = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(XpY_dipl);
+
+    float* XmY_dipl = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(XmY_dipl);
+
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 1, egrad, XpY_dipl, XmY_dipl));
+
+    // compute angm integrals and convert to MO, then solve response
+    double* angm_mat = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(angm_mat );
+
+    make_int1e_MO(wf, bs, STDL_OP_ANGM, 1., ctx, angm_mat );
+
+    stdl_response_perturbed_gradient(ctx, 3, 1, angm_mat , egrad);
+
+    float* XpY_angm = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(XpY_angm);
+
+    float* XmY_angm = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(XmY_angm);
+
+    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 0, egrad, XpY_angm, XmY_angm));
+
+    // compute tensor
+    float tensor[27];
+
+    stdl_lrv lrv0_dipl = {STDL_OP_DIPL, dipl_mat, w[0], XpY_dipl, XmY_dipl};
+    stdl_lrv lrv1_dipl = {STDL_OP_DIPL, dipl_mat, w[1], XpY_dipl + 1 * 3 * ctx->ncsfs, XmY_dipl + 1 * 3 * ctx->ncsfs};
+    stdl_lrv lrv2_dipl = {STDL_OP_DIPL, dipl_mat, w[2], XpY_dipl + 2 * 3 * ctx->ncsfs, XmY_dipl + 2 * 3 * ctx->ncsfs};
+    stdl_lrv lrv0_angm = {STDL_OP_ANGM, angm_mat, w[0], XpY_angm, XmY_angm};
+
+    ASSERT_STDL_OK(stdl_property_tensor_quadratic(
+            ctx,
+            (stdl_lrv*[]) {&lrv0_dipl, &lrv0_dipl, &lrv0_angm},
+            tensor
+    ));
+
+    stdl_matrix_sge_print(0, 9, 3, tensor, "<<dipl;dipl,angm>>(0)");
+
+    ASSERT_STDL_OK(stdl_property_tensor_quadratic(
+            ctx,
+            (stdl_lrv*[]) {&lrv1_dipl, &lrv1_dipl, &lrv0_angm},
+            tensor
+    ));
+
+    stdl_matrix_sge_print(0, 9, 3, tensor, "<<dipl;dipl,angm>>(w)");
+
+    ASSERT_STDL_OK(stdl_property_tensor_quadratic(
+            ctx,
+            (stdl_lrv*[]) {&lrv2_dipl, &lrv2_dipl, &lrv0_angm},
+            tensor
+    ));
+
+    stdl_matrix_sge_print(0, 9, 3, tensor, "<<dipl;dipl,angm>>(2w)");
+
+    STDL_FREE_ALL(dipl_mat, angm_mat, egrad, XpY_dipl, XmY_dipl, XmY_angm, XpY_angm);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }

@@ -383,11 +383,11 @@ $\hat p = -i\vec\nabla$, being a purely imaginary operator, is an example of the
 
 Linear and quadratic response functions are generally noted $\braket{\braket{\hat A; \hat B}}_{\omega_B}$ and $\braket{\braket{\hat A; \hat B, \hat C}}_{\omega_B,\omega_C}$, which describes how the expectation value of $\hat A$ (at frequency $\omega_A = -\omega_B - \omega_C$) responds to a set of perturbation to first and second order in perturbation.
 
-Linear responses result in a rank-2 tensor, $\mathcal{T}^{(2)}$.
+Linear responses result in a rank-2 tensor, ${}^{AB}\mathcal{T}$.
 As discussed in [10.1016/S1380-7323(02)80033-4](https://dx.doi.org/10.1016/S1380-7323(02)80033-4), the time-reversal symmetry [and thus the symmetric or antisymmetric nature of $\mathbf t(\omega)$ and $\mathbf u(\omega)$ with respect to a change to the change of sign of $\omega$] can be exploited to compute the linear response:
 
 $$
-\mathcal{T}^{(2)}_{\zeta\sigma} = -\braket{\braket{\hat A_\zeta;\hat B_\sigma}}_\omega
+{}^{AB}\mathcal{T}_{\zeta\sigma} = -\braket{\braket{\hat A_\zeta;\hat B_\sigma}}_\omega
 = -2 \sum_{ia}^{CSFs} A_{ia,\zeta}\,{}^B\kappa_{ia,\sigma}(\omega),$$
 
 with:
@@ -406,8 +406,38 @@ where ${}^B\mathbf \kappa(\omega)$ is computed from the linear response vectors 
     + hermitian (and real) if both $\hat A$ and $\hat B$ have the same symmetry with respect to time reversal, or 
     + anti-hermitian (and thus imaginary) if not. This further implies that $\lim_{\omega\to 0} {}^B\kappa(\omega)=0$.
 
-A rank-3 tensor, $\mathcal{T}^{(3)}$ is the result of a quadratic response function.
+A rank-3 tensor, ${}^{ABC}\mathcal{T}$ is the result of a quadratic response function.
+Following [10.1021/acs.jctc.7b01008](https://dx.doi.org/10.1021/acs.jctc.7b01008) but neglecting the response of the XC kernel (*i.e.*, $f_{XC}$ and $g_{XC}$, which results in an "unrelaxed" expression), one gets:
 
+$${}^{ABC}\mathcal{T}_{\zeta\sigma\tau} = \braket{\braket{\hat A_\zeta;\hat B_\sigma,\hat C_\tau}}_{\omega_B,\omega_C} = {}^{ABC}\mathcal{A}_{\zeta\sigma\tau} + {}^{ABC}\mathcal{B}_{\zeta\sigma\tau},$$
+
+where:
+
+$${}^{ABC}\mathcal{A}_{\zeta\sigma\tau} = \sum_{[B,C]}\sum_{ia,ja} \frac{1}{4}\,A_{ij,\zeta}\,{}^{BC}\mathcal{K}_{ia,ja} 
+- \frac{1}{2}\,B_{ij,\sigma}\,\left\{\begin{array}{}^At_{ia,\zeta}(\omega_B+\omega_C)\,{}^C\kappa^+_{ja,\tau}(\omega_C)\\ + {}^Au_{ia,\zeta}(\omega_B+\omega_C)\,{}^C\kappa^-_{ja,\tau}(\omega_C)\end{array}\right\},$$
+
+with:
+
+$${}^{BC}\mathcal{K}_{ia,ja} = \left\{\begin{array} {}^Bu_{ia}(\omega_B)\,{}^Cu_{ja}(\omega_C) - {}^Bt_{ia}(\omega_B)\,{}^Ct_{ja}(\omega_C) \\+ {}^Bu_{ia}(\omega_B)\,{}^Ct_{ja}(\omega_C) - {}^Bt_{ia}(\omega_B)\,{}^Cu_{ja}(\omega_C)\end{array}\right\},$$
+
+and:
+
+$${}^{ABC}\mathcal{B}_{\zeta\sigma\tau} =\sum_{[B,C]}\sum_{ia,ib} \frac{1}{4}\,A_{ab,\zeta}\,{}^{BC}\mathcal{K}_{ia,ib} 
++ \frac{1}{2}\,B_{ab,\sigma}\,\left\{\begin{array}{}^At_{ia,\zeta}(\omega_B+\omega_C)\,{}^C\kappa^+_{ib,\tau}(\omega_C)\\ + {}^Au_{ia,\zeta}(\omega_B+\omega_C)\,{}^C\kappa^-_{ib,\tau}(\omega_C)\end{array}\right\}$$
+
+with:
+
+$${}^{BC}\mathcal{K}_{ia,ib} = \left\{\begin{array} {}^Bt_{ia}(\omega_B)\,{}^Ct_{ib}(\omega_C) - {}^Bu_{ia}(\omega_B)\,{}^Cu_{ib}(\omega_C) \\+ {}^Bu_{ia}(\omega_B)\,{}^Ct_{ib}(\omega_C) - {}^Bt_{ia}(\omega_B)\,{}^Cu_{ib}(\omega_C)\end{array}\right\}.$$
+
+In both expressions, $\sum_{[B,C]}$ is a sum over the permutation of the pairs of operator and corresponding frequencies, $\{(\hat B,\omega_B), (\hat C,\omega_C)\}$, and, using the time-reversal symmetry,
+
+$${}^C\kappa^+_{jb,\tau}(\omega) = \begin{cases} {}^Ct_{jb,\tau}(\omega) & \text{if } \theta_B = 1,\\-{}^Cu_{jb,\tau}(\omega) & \text{otherwise}.\end{cases}$$ 
+
+and
+
+$${}^C\kappa^-_{jb,\tau}(\omega) = \begin{cases} {}^Cu_{jb,\tau}(\omega) & \text{if } \theta_B = 1,\\-{}^Ct_{jb,\tau}(\omega) & \text{otherwise}.\end{cases}$$
+
+In the case of the SHG first hyperpolarizability (so, $\braket{\braket{\hat\mu;\hat\mu,\hat\mu}}_{\omega,\omega}$), these (rather long) expressions are equivalent to the one reported in [10.1002/wcms.1695](https://dx.doi.org/10.1002/wcms.1695).
 
 ### Residues
 
@@ -442,6 +472,7 @@ See, *e.g.*, [10.1016/j.comptc.2014.02.023](https://doi.org/10.1016/j.comptc.201
 + J. Toulouse, [Introduction to the calculation of molecular properties by response theory](https://www.lct.jussieu.fr/pagesperso/toulouse/enseignement/molecular_properties.pdf) (last consultation: January 2023). 
 + E. Fromager, [Linear response time-dependent density functional theory](https://quantique.u-strasbg.fr/lib/exe/fetch.php?media=fr:pageperso:ef:lecture_rctf_tddft_e_fromager.pdf)  (last consultation: January 2023).
 + G. P. Chen, V. K. Voora, M. M. Agee, S. G. Balasubramani, and F. Furche, Random-Phase Approximation Methods. *Annu. Rev. Phys. Chem.* **2017**, 68, 421 ([10.1146/annurev-physchem-040215-112308](https://doi.org/10.1146/annurev-physchem-040215-112308))
++ S. M. Parker, D. Rappoport, and F. Furche, Quadratic Response Properties from TDDFT: Trials and Tribulations. *J. Chem. Theor. Comput.* **2018**, 14, 807 ([10.1021/acs.jctc.7b01008](https://dx.doi.org/10.1021/acs.jctc.7b01008))
 + M. E. Casida, Time-Dependent Density Functional Response Theory for Molecules. In D. E. Chong (ed.), *Recent Advances in Density Functional Methods*. World Scientific, **1995** ([10.1142/9789812830586_0005](https://doi.org/10.1142/9789812830586_0005)).
 + S. Hirata, M. Head-Gordon, Time-dependent density functional theory within the Tamm–Dancoff approximation. *Chem. Phys. Lett.*, **1999**, 314, 291 ([10.1016/S0009-2614(99)01149-5](https://doi.org/10.1016/S0009-2614(99)01149-5))
 + S. Löffelsender, P. Beaujean, M. de Wergifosse, Simplified quantum chemistry methods to evaluate non-linear optical properties of large systems. *WIREs Comput. Mol. Sci.* **2023**, 2023, e1695 ([10.1002/wcms.1695](https://dx.doi.org/10.1002/wcms.1695)) [and references therein]. 
