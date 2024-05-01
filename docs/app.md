@@ -205,17 +205,27 @@ Other operators will be added in the future.
     **Keyword**: `linear_sr`
     **Default**: `[]`
 
-    List the ground-to-excited states properties to compute.
-    Each request for $\braket{0|\hat A|m}$ is to be given as: `{opA = "A", root = N}`.
-    `N` is the number of excited states, `\ket{m}`, to consider.
+    List the single residue of the linear response functions, i.e., the ground-to-excited states properties, to compute.
+    Each request for $\braket{0|\hat A|m}\braket{m|\hat B|B}$ is to be given as: `{opA = "A", opB = "B", root = N}`.
+    `N` is the number of excited states, $\ket{m}$, to consider.
     If `N` < 0, all possible excited states (*i.e.*, corresponding to the number of CSFs) are computed.
+    `opB` is optional: it will be assumed that `opB` = `opA` if not provided. 
 
-    For example, the following input will compute the transition dipole moments for the 15 first excited states:
+    For example, the following input will compute the transition dipole moments (and corresponding oscillator strength) for the 15 first excited states (dipole length formalism):
 
     ```toml
     [responses]
     linear_sr = [
         {opA = 'dipl', root = 15}
+    ]
+    ```
+
+    The following input will compute the rotatory strength (velocity formalism) for all excited states:
+
+    ```toml
+    [responses]
+    linear_sr = [
+        {opA = 'dipv', opB = 'angm', root = -1}
     ]
     ```
 

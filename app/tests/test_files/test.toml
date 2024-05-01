@@ -1,5 +1,5 @@
 title = "test calculation"
-data_output = "water_631g.h5"
+data_output = "stdlite_calculation.h5"
 
 [context]
 source = "../tests/test_files/chiral_sto3g.molden"
