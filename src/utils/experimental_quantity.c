@@ -28,17 +28,36 @@ int stdl_qexp_polarizability(float * alpha, float* iso, float* aniso)  {
     return STDL_ERR_OK;
 }
 
-int stdl_qexp_first_hyperpolarizability_hrs(float beta[3][3][3], float* beta2_ZZZ, float* beta2_ZXX)  {
-    assert(beta != NULL && beta2_ZZZ != NULL && beta2_ZXX);
+int stdl_qexp_first_hyperpolarizability(float beta[27], float beta_vec[3]) {
+    assert(beta != NULL && beta_vec != NULL);
+
+    for (int i = 0; i < 3; ++i) {
+        beta_vec[i] = 0;
+        for (int j = 0; j < 3; ++j) {
+            beta_vec[i] += beta[i*9 + j*3 + j] + beta[j*9 + i*3 + j] + beta[j*9 + j*3 + i];
+        }
+        beta_vec[i] *= 1.f/3;
+    }
+
+    return STDL_ERR_OK;
+}
+
+
+int stdl_qexp_first_hyperpolarizability_hrs(float beta[27], float *beta2_ZZZ, float *beta2_ZXX, float *beta2_J1, float *beta2_J3) {
+    assert(beta != NULL && beta2_ZZZ != NULL && beta2_ZXX && beta2_J1 != NULL && beta2_J3 != NULL);
 
     *beta2_ZZZ = .0f;
     *beta2_ZXX = .0f;
+    *beta2_J1 = .0f;
+    *beta2_J3 = .0f;
 
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
             for (int k = 0; k < 3; ++k) {
-                *beta2_ZZZ += 2 * powf(beta[i][j][k], 2) + 1 * beta[i][j][j] * beta[i][k][k] + 4 * (beta[i][i][j] * beta[j][k][k] + beta[i][i][j] * beta[k][j][k] + beta[i][j][k] * beta[j][i][k]);
-                *beta2_ZXX += 6 * powf(beta[i][j][k], 2) + 3 * beta[i][j][j] * beta[i][k][k] - 2 * (beta[i][i][j] * beta[j][k][k] + beta[i][i][j] * beta[k][j][k] + beta[i][j][k] * beta[j][i][k]);
+                *beta2_ZZZ += 2 * powf(beta[i*9 + j*3 + k], 2) + 1 * beta[i*9 + j*3 + j] * beta[i*9 + k*3 + k] + 4 * (beta[i*9 + i*3 + j] * beta[j*9 + k*3 + k] + beta[i*9 + i*3 + j] * beta[k*9 + j*3 + k] + beta[i*9 + j*3 + k] * beta[j*9 + i*3 + k]);
+                *beta2_ZXX += 6 * powf(beta[i*9 + j*3 + k], 2) + 3 * beta[i*9 + j*3 + j] * beta[i*9 + k*3 + k] - 2 * (beta[i*9 + i*3 + j] * beta[j*9 + k*3 + k] + beta[i*9 + i*3 + j] * beta[k*9 + j*3 + k] + beta[i*9 + j*3 + k] * beta[j*9 + i*3 + k]);
+                *beta2_J1 += .6f * beta[i*9 + j*3 + j] * beta[i*9 + k*3 + k];
+                *beta2_J3 += powf(beta[i*9 + j*3 + k], 2) - .6f * beta[i*9 + j*3 + j] * beta[i*9 + k*3 + k];
             }
         }
     }

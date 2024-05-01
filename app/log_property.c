@@ -9,7 +9,7 @@
 int stdl_log_property_polarizability(stdl_response_request* req, float* alpha, float w) {
     assert(req != NULL && alpha != NULL);
 
-    stdl_log_msg(0, "** alpha(-w;w) @ w=%f Eh (%.2f nm)\n", w, STDL_CONST_HC / w);
+    stdl_log_msg(0, "** alpha(-wB;wB) @ wB=%f Eh (%.2f nm)\n", w, STDL_CONST_HC / w);
     stdl_log_msg(0, "         x            y            z\n");
 
     for (size_t zeta = 0; zeta < 3; ++zeta) {
@@ -32,7 +32,7 @@ int stdl_log_property_polarizability(stdl_response_request* req, float* alpha, f
 
     float iso, aniso;
     stdl_qexp_polarizability(alpha, &iso, &aniso);
-    stdl_log_msg(0, "iso =   % 12.5f\naniso = % 12.5f\n", iso, aniso);
+    stdl_log_msg(0, "# iso   = % 12.5f\n# aniso = % 12.5f\n", iso, aniso);
 
     return STDL_ERR_OK;
 }
@@ -43,7 +43,7 @@ int stdl_log_property_linear_tensor(stdl_response_request* req, float* tensor, f
     size_t dim0 = STDL_OPERATOR_DIM[req->ops[0]], dim1 = STDL_OPERATOR_DIM[req->ops[1]];
     float trs = STDL_OPERATOR_TRS[req->ops[0]] * STDL_OPERATOR_TRS[req->ops[1]];
 
-    stdl_log_msg(0, "** -%s<<%s;%s>>_w @ wB=%f Eh (%.2f nm)\n", trs < 0? "Im": "", STDL_OPERATOR_NAME[req->ops[0]], STDL_OPERATOR_NAME[req->ops[1]], wB, STDL_CONST_HC / wB);
+    stdl_log_msg(0, "** -%s<<%s;%s>>_wB @ wB=%f Eh (%.2f nm)\n", trs < 0? "Im": "", STDL_OPERATOR_NAME[req->ops[0]], STDL_OPERATOR_NAME[req->ops[1]], wB, STDL_CONST_HC / wB);
 
     stdl_log_msg(0, "    ");
     for (size_t sigma = 0; sigma < dim1; ++sigma)
@@ -103,10 +103,32 @@ int stdl_log_property_first_hyperpolarizability(stdl_response_request* req, floa
         }
     }
 
-    if(stdl_float_equals(wB, wC, 1e-6f)) {
-        float b2ZZZ, b2ZXX;
-        stdl_qexp_first_hyperpolarizability_hrs(beta, &b2ZZZ, &b2ZXX);
-        stdl_log_msg(0, "<B2ZZZ> = % 12.5f\n<B2ZXX> = % 12.5f\nBHRS    = % 12.5f\nDR      = % 12.5f\n", b2ZZZ, b2ZXX, sqrtf(b2ZZZ +  b2ZXX), b2ZZZ / b2ZXX);
+    float beta_vec[3] = {.0f};
+    stdl_qexp_first_hyperpolarizability(beta, beta_vec);
+    stdl_log_msg(0, "# Bvec    = (%.4f, %.4f, %.4f)\n# |Bvec|  = %12.5f\n",
+                 beta_vec[0], beta_vec[1], beta_vec[2],
+                 sqrtf(powf(beta_vec[0], 2) + powf(beta_vec[1], 2) + powf(beta_vec[2], 2))
+                 );
+
+    if(stdl_float_equals(wB, wC, 1e-6f)) { // SHG hyperpolarizability
+        float b2ZZZ, b2ZXX, b2J1, b2J3;
+        stdl_qexp_first_hyperpolarizability_hrs(beta, &b2ZZZ, &b2ZXX, &b2J1, &b2J3);
+        stdl_log_msg(0,
+                     "# <B2ZZZ> = % 12.5f\n"
+                     "# <B2ZXX> = % 12.5f\n"
+                     "# BHRS    = % 12.5f\n"
+                     "# DR      = % 12.5f\n"
+                     "# |Bj=1|  = % 12.5f\n"
+                     "# |Bj=3|  = % 12.5f\n"
+                     "# rho     = % 12.5f\n",
+                     b2ZZZ,
+                     b2ZXX,
+                     sqrtf(b2ZZZ +  b2ZXX),
+                     b2ZZZ / b2ZXX,
+                     sqrtf(b2J1),
+                     sqrtf(b2J3),
+                     sqrtf(b2J3 / b2J1)
+                     );
 
     }
 

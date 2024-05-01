@@ -345,7 +345,7 @@ void test_ao_to_mo_hermitian() {
     ASSERT_STDL_OK(stdl_wavefunction_delete(wf));
 }
 
-void test_ao_to_mo_anti_hermitian() {
+void test_ao_to_mo_antisymmetric() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
@@ -355,7 +355,7 @@ void test_ao_to_mo_anti_hermitian() {
 
     stdl_operator_int1e_dsp(bs, STDL_OP_DIPV, 1, prop_ao_sp);
 
-    // only use xdipv
+    // only use xdipv, which is purely imaginary
     double* prop_mo_sp = malloc(STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(prop_mo_sp);
 
@@ -368,7 +368,7 @@ void test_ao_to_mo_anti_hermitian() {
     for (size_t mu = 0; mu < wf->nao; ++mu) {
         for (size_t nu = 0; nu <= mu; ++nu) {
             TEST_ASSERT_EQUAL_DOUBLE(prop_ao_sp[STDL_MATRIX_SP_IDX(mu, nu)], prop_ao_ge[mu * wf->nao + nu]);
-            TEST_ASSERT_EQUAL_DOUBLE(prop_ao_sp[STDL_MATRIX_SP_IDX(mu, nu)], -prop_ao_ge[nu * wf->nao + mu]); // antihermitian
+            TEST_ASSERT_EQUAL_DOUBLE(prop_ao_sp[STDL_MATRIX_SP_IDX(mu, nu)], -prop_ao_ge[nu * wf->nao + mu]); // antisymmetric
         }
     }
 
@@ -385,7 +385,7 @@ void test_ao_to_mo_anti_hermitian() {
     for (size_t p = 0; p < wf->nmo; ++p) {
         for (size_t q = 0; q <= p; ++q) {
             TEST_ASSERT_FLOAT_WITHIN(1e-8, prop_mo_sp[STDL_MATRIX_SP_IDX(p, q)], prop_mo_ge[p * wf->nmo + q]);
-            TEST_ASSERT_FLOAT_WITHIN(1e-8, prop_mo_sp[STDL_MATRIX_SP_IDX(p, q)], -prop_mo_ge[q * wf->nmo + p]); // antihermitian as well
+            TEST_ASSERT_FLOAT_WITHIN(1e-8, prop_mo_sp[STDL_MATRIX_SP_IDX(p, q)], -prop_mo_ge[q * wf->nmo + p]); // antisymmetric as well
         }
     }
 
@@ -458,8 +458,7 @@ void test_dipole() {
     double* dipole_z_mo_sp = malloc(STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipole_z_mo_sp);
 
-    ASSERT_STDL_OK(stdl_wavefunction_dsp_ao_to_dsp_mo(wf->nao, wf->nmo, 1, wf->C,
-                                                      dipoles_sp + 2 * STDL_MATRIX_SP_SIZE(wf->nao), dipole_z_mo_sp));
+    ASSERT_STDL_OK(stdl_wavefunction_dsp_ao_to_dsp_mo(wf->nao, wf->nmo, 1, wf->C,dipoles_sp + 2 * STDL_MATRIX_SP_SIZE(wf->nao), dipole_z_mo_sp));
 
     double dipz3 = .0;
     for (size_t p = 0; p < wf->nocc; ++p) {

@@ -862,13 +862,14 @@ int stdl_user_input_handler_make_context(stdl_user_input_handler* inp, stdl_cont
     return err;
 }
 
-int stdl_user_input_handler_approximate_size(stdl_user_input_handler *inp, size_t *sz, size_t *respreq_sz) {
+int
+stdl_user_input_handler_approximate_size(stdl_user_input_handler *inp, size_t nexci, size_t *sz, size_t *respreq_sz) {
     assert(inp != NULL && sz != NULL);
 
     *respreq_sz = 0;
 
     if(inp->res_resreqs != NULL)
-        stdl_response_request_approximate_size(inp->res_resreqs, respreq_sz);
+        stdl_response_request_approximate_size(inp->res_resreqs, nexci, respreq_sz);
 
     *sz = sizeof(stdl_user_input_handler)
             + *respreq_sz;

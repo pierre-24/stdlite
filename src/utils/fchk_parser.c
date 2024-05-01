@@ -500,6 +500,7 @@ int stdl_basis_data_to_basis(stdl_basis_data *dt, size_t natm, double *atm, stdl
     center_of_mass[1] /= mass;
     center_of_mass[2] /= mass;
 
+    STDL_DEBUG("Set common (i.e., gauge) origin at (%.3f, %.3f, %.3f)", center_of_mass[0], center_of_mass[1], center_of_mass[2]);
     stdl_basis_set_Rc(*bs_ptr, center_of_mass);
 
     // copy exps and coefs

@@ -11,7 +11,7 @@
 
 void setUp() {
     stdl_set_debug_level(-1);
-    stdl_set_log_level(1);
+    stdl_set_log_level(0);
 }
 
 void _tensor_sos2(stdl_operator ops[2], float w, size_t nexci, float* e, float* tg2e, float* tensor_sos) {
@@ -502,8 +502,8 @@ void test_response_first_polarizability_TD_ok() {
 
     ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 1, egrad, XpY, XmY));
 
-    // compute polarizabilities
-    float beta[27];
+    // compute first hyperpolarizabilities
+    float beta[27], beta2_ZZZ, beta2_ZXX, beta2_J1, beta2_J3;
 
     stdl_lrv lrv0 = {STDL_OP_DIPL, dipoles_mat, w[0], XpY, XmY};
     stdl_lrv lrv1 = {STDL_OP_DIPL, dipoles_mat, w[1], XpY + 1 * 3 * ctx->ncsfs, XmY + 1 * 3 * ctx->ncsfs};
@@ -516,6 +516,12 @@ void test_response_first_polarizability_TD_ok() {
     ));
 
     stdl_matrix_sge_print(0, 9, 3, beta, "beta(0)");
+    stdl_qexp_first_hyperpolarizability_hrs(beta, &beta2_ZZZ, &beta2_ZXX, &beta2_J1, &beta2_J3);
+
+    TEST_ASSERT_FLOAT_WITHIN(1e-2, 68.606, beta2_ZZZ);
+    TEST_ASSERT_FLOAT_WITHIN(1e-2, 25.955, beta2_ZXX);
+    TEST_ASSERT_FLOAT_WITHIN(1e-2, 178.042, beta2_J1);
+    TEST_ASSERT_FLOAT_WITHIN(1e-2, 577.453, beta2_J3);
 
     ASSERT_STDL_OK(stdl_property_tensor_quadratic(
             ctx,
@@ -524,6 +530,12 @@ void test_response_first_polarizability_TD_ok() {
     ));
 
     stdl_matrix_sge_print(0, 9, 3, beta, "beta(-2w;w,w)");
+    stdl_qexp_first_hyperpolarizability_hrs(beta, &beta2_ZZZ, &beta2_ZXX, &beta2_J1, &beta2_J3);
+
+    TEST_ASSERT_FLOAT_WITHIN(1e-2, 77.871, beta2_ZZZ);
+    TEST_ASSERT_FLOAT_WITHIN(1e-2, 29.350, beta2_ZXX);
+    TEST_ASSERT_FLOAT_WITHIN(1e-2, 199.166, beta2_J1);
+    TEST_ASSERT_FLOAT_WITHIN(1e-2, 659.151, beta2_J3);
 
     STDL_FREE_ALL(dipoles_mat, egrad, XpY, XmY);
 

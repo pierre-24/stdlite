@@ -212,6 +212,7 @@ int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, std
  * @return error code
  * @ingroup user_input_handler
  */
-int stdl_user_input_handler_approximate_size(stdl_user_input_handler *inp, size_t *sz, size_t *respreq_sz);
+int
+stdl_user_input_handler_approximate_size(stdl_user_input_handler *inp, size_t nexci, size_t *sz, size_t *respreq_sz);
 
 #endif //STDLITE_USER_INPUT_HANDLER_H

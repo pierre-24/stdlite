@@ -73,8 +73,8 @@ typedef struct stdl_basis_ stdl_basis;
  * Create a new basis set.
  * Initialize all the arrays.
  *
- * @warning According to [this](https://github.com/sunqm/libcint/issues/76), the first 20 values of `env` are reserved.
- *          One should thus account for that when computing `env_size` (20 should be added to what is required) and when filling it (first 20th values should be zero, and the first non-zero value should be at `env[20]`).
+ * @warning According to [this](https://github.com/sunqm/libcint/issues/76), the first 20 values (the value of `PTR_ENV_START`) of `env` are reserved for different purpose (among other, setting the common origin)
+ *          One should thus account for that when computing `env_size` (`> PTR_ENV_START`) and when filling it (first `PTR_ENV_START`th values should be zero, and the first non-zero value should be at `env[PTR_ENV_START]`).
  *
  * @param natm Number of atoms
  * @param nbas Number of basis functions

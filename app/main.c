@@ -107,12 +107,11 @@ int main(int argc, char* argv[]) {
         // report memory usage
         size_t user_input_sz = 0, ctx_sz = 0, res_sz = 0;
 
-        stdl_log_msg(0, "Note: temporary memory allocated during run\n (including by linear algebra libraries)\n is not reported in the table below.\n RSS will be larger.\n");
         stdl_log_msg(0, "** Approximate memory usage ---\n");
 
         if(input != NULL) {
             size_t  resreq_sz;
-            stdl_user_input_handler_approximate_size(input, &user_input_sz, &resreq_sz);
+            stdl_user_input_handler_approximate_size(input, rh != NULL ? rh->nexci : 0, &user_input_sz, &resreq_sz);
 
             double user_input_asz, resreq_asz;
             char* user_input_usz, *resreq_usz;
@@ -120,6 +119,7 @@ int main(int argc, char* argv[]) {
             stdl_convert_size(resreq_sz, &resreq_asz, &resreq_usz);
             stdl_log_msg(0, "User input      REQ %8.1f%s\n", resreq_asz, resreq_usz);
             stdl_log_msg(0, "                OTH %8.1f%s\n", user_input_asz, user_input_usz);
+
         }
 
         if (ctx != NULL) {
@@ -140,11 +140,11 @@ int main(int argc, char* argv[]) {
         }
 
         if(rh != NULL) {
-            size_t ev_sz, ops_sz, amp_sz;
+            size_t ops_sz, amp_sz;
             stdl_responses_handler_approximate_size(rh, ctx->nmo, ctx->ncsfs, &res_sz, &ops_sz, &amp_sz);
 
-            double res_asz, ev_asz, lrv_asz, amp_asz;
-            char *res_usz, *ev_usz, *lrv_usz, *amp_usz;
+            double res_asz, lrv_asz, amp_asz;
+            char *res_usz, *lrv_usz, *amp_usz;
 
             stdl_convert_size(res_sz - ops_sz - amp_sz, &res_asz, &res_usz);
             stdl_convert_size(ops_sz, &lrv_asz, &lrv_usz);
@@ -162,6 +162,7 @@ int main(int argc, char* argv[]) {
         stdl_log_msg(0, "--------------  --- -----------\n");
         stdl_log_msg(0, "Total               %8.1f%s\n", tot_asz, tot_usz);
 
+        stdl_log_msg(0, "Note: temporary memory allocated during run is not reported in this table.\n");
     }
 
     if(input != NULL)

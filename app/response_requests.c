@@ -51,17 +51,34 @@ int stdl_response_request_delete(stdl_response_request* req) {
     return STDL_ERR_OK;
 }
 
-int stdl_response_request_approximate_size(stdl_response_request *req, size_t *sz) {
+int stdl_response_request_approximate_size(stdl_response_request *req, size_t nexci, size_t *sz) {
     assert(req != NULL && sz != NULL);
 
-    size_t next_sz = 0;
+    size_t next_sz = 0, tensor_sz = 0;
 
     if(req->next != NULL)
-        stdl_response_request_approximate_size(req->next, &next_sz);
+        stdl_response_request_approximate_size(req->next, nexci, &next_sz);
+
+    if(req->property_tensor != NULL) {
+        if(req->res_order == 0) {
+            for (size_t iop = 0; iop < req->nops; ++iop) {
+                tensor_sz *= STDL_OPERATOR_DIM[iop];
+            }
+        } else {
+            for (size_t iop = 0; iop < req->nops; ++iop) {
+                tensor_sz += STDL_OPERATOR_DIM[iop];
+            }
+
+            tensor_sz *= (req->nroots < 0 ? nexci : (size_t) req->nroots);
+        }
+
+        tensor_sz *= sizeof(float);
+    }
 
     *sz = sizeof(stdl_response_request)
             + req->nops * sizeof(size_t) // ops
             + req->nlrvs * (sizeof(size_t) + sizeof(stdl_lrv)) // iw + lrvs
+            + tensor_sz
             + next_sz;
 
     return STDL_ERR_OK;

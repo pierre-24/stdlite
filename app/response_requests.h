@@ -72,7 +72,7 @@ int stdl_response_request_delete(stdl_response_request* req);
  * @return error code
  * @ingroup requests
  */
-int stdl_response_request_approximate_size(stdl_response_request* req, size_t* sz);
+int stdl_response_request_approximate_size(stdl_response_request *req, size_t nexci, size_t *sz);
 
 /**
  * Dump the tensor in H5.
