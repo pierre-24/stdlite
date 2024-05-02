@@ -56,7 +56,7 @@ int stdl_log_property_first_hyperpolarizability(stdl_response_request* req, floa
  * @param rh a valid responses handler
  * @param ctx a valid context
  * @param ops `stdl_operator[2]` the operators
- * @param tg2e `float[rh->nexci * dim0 +  rh->nexci * dim1]` transition moments for both operators
+ * @param tg2e `float[(dim0 + dim1), nexci]` transition moments for both operators
  * @return error code
  * @ingroup log_property
  */
@@ -71,5 +71,17 @@ int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx,
  * @ingroup log_property
  */
 void stdl_log_property_amplitude_contributions(stdl_responses_handler *rh, stdl_context *ctx, float thresh);
+
+/**
+ * Print the excited to excited moments for `ops`.
+ *
+ * @param rh a valid responses handler
+ * @param ctx a valid context
+ * @param ops `stdl_operator[3]` the operators
+ * @param tg2e `float[(dim0 + dim1 + dim2), STDL_MATRIX_SP_SIZE(nexci)]` transition moments for all operators
+ * @return error code
+ * @ingroup log_property
+ */
+int stdl_log_property_e2e_moments(stdl_responses_handler *rh, stdl_context *ctx, stdl_operator ops[3], size_t nexci, float *te2e);
 
 #endif //STDLITE_LOG_PROPERTY_H

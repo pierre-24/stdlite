@@ -544,9 +544,7 @@ int stdl_response_handler_compute_properties(stdl_responses_handler* rh, stdl_us
                     req->property_tensor);
             STDL_ERROR_CODE_HANDLE(err, goto _end);
 
-            printf("** e2e\n");
-
-            // stdl_log_property_g2e_moments(rh, ctx, req->ops, req->nroots < 0 ? rh->nexci : req->nroots, req->property_tensor);
+            stdl_log_property_e2e_moments(rh, ctx, req->ops, nexci, req->property_tensor);
 
             sprintf(buffattr, "lim_w1,w2 <<%s;%s,%s>>",
                     STDL_OPERATOR_NAME[req->ops[0]],

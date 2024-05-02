@@ -1,6 +1,7 @@
 #include <stdlite/logging.h>
 #include <stdlite/helpers.h>
 #include <stdlite/utils/experimental_quantity.h>
+#include <stdlite/utils/matrix.h>
 #include <assert.h>
 
 #include "log_property.h"
@@ -225,10 +226,10 @@ int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx,
 
     if(ops[0] != ops[1]) {
         stdl_log_msg(0, " ");
-        for (size_t cpt = 0; cpt < dim0 * 2; ++cpt)
+        for (size_t cpt = 0; cpt < dim1 * 2; ++cpt)
             stdl_log_msg(0, "-");
         stdl_log_msg(0, " <0|%4s|m> ", STDL_OPERATOR_NAME[ops[1]]);
-        for (size_t cpt = 0; cpt < dim0 * 7 - 13; ++cpt)
+        for (size_t cpt = 0; cpt < dim1 * 7 - 13; ++cpt)
             stdl_log_msg(0, "-");
     }
 
@@ -306,5 +307,140 @@ int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx,
     }
 
     return STDL_ERR_OK;
+}
+
+size_t _biops(size_t op0, size_t op1) {
+    return (op0 < op1) ? op0 * STDL_OP_COUNT + op1 : op1 * STDL_OP_COUNT + op0;
+}
+
+int stdl_log_property_e2e_moments(stdl_responses_handler *rh, stdl_context *ctx, stdl_operator ops[3], size_t nexci, float *te2e) {
+    assert(rh != NULL && ctx != NULL && te2e != NULL && nexci > 0);
+
+    size_t dims[] = {STDL_OPERATOR_DIM[ops[0]], STDL_OPERATOR_DIM[ops[1]], STDL_OPERATOR_DIM[ops[2]]};
+    int show[] =  {1, ops[1] != ops[0], ops[2] != ops[0] && ops[2] != ops[1]};
+
+    // headers
+    stdl_log_msg(0, "**  ");
+    for (size_t iop = 0; iop < 3; ++iop) {
+        if(show[iop]) {
+            stdl_log_msg(0, " ");
+            for (size_t cpt = 0; cpt < dims[iop] * 2; ++cpt)
+                stdl_log_msg(0, "-");
+            stdl_log_msg(0, " fluct. %4s ", STDL_OPERATOR_NAME[ops[iop]]);
+            for (size_t cpt = 0; cpt < dims[iop] * 7 - 14; ++cpt)
+                stdl_log_msg(0, "-");
+        }
+    }
+
+    stdl_log_msg(0, "\n");
+    stdl_log_msg(0, "    ");
+
+    for (size_t iop = 0; iop < 3; ++iop) {
+        if(show[iop]) {
+            for (size_t cpt = 0; cpt < dims[iop]; ++cpt)
+                stdl_log_msg(0, "   %-3d   ", cpt);
+        }
+    }
+    stdl_log_msg(0, "\n");
+
+    for(size_t iexci=0; iexci < nexci; iexci++) {
+        stdl_log_msg(0, "%4ld", iexci + 1);
+
+        size_t shift = 0;
+        for (int iop = 0; iop < 3; ++iop) {
+            if(show[iop]) {
+                for (size_t cpt = 0; cpt < dims[0]; ++cpt) {
+                    stdl_log_msg(0, " % 8.5f", te2e[(shift + cpt) * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(iexci, iexci)]);
+                }
+            }
+
+            shift += dims[iop];
+        }
+
+        stdl_log_msg(0, "\n");
+    }
+
+    size_t biops[] = {_biops(ops[0], ops[1]), _biops(ops[0], ops[2]), _biops(ops[1], ops[2])};
+    int show_biops[] = {dims[0] == dims[1], dims[0] == dims[2] && biops[1] != biops[0], dims[1] == dims[2] && biops[2] != biops[0] && biops[2] != biops[1]};
+
+    // headers
+    stdl_log_msg(0, "**         -------- Energy -------");
+    for (size_t iop = 0; iop < 3; ++iop) {
+        if(show[iop]) {
+            stdl_log_msg(0, " ");
+            for (size_t cpt = 0; cpt < dims[iop] * 2; ++cpt)
+                stdl_log_msg(0, "-");
+            stdl_log_msg(0, " <m|%4s|n> ", STDL_OPERATOR_NAME[ops[iop]]);
+            for (size_t cpt = 0; cpt < dims[iop] * 7 - 13; ++cpt)
+                stdl_log_msg(0, "-");
+        }
+    }
+
+    for (size_t biop = 0; biop < 3; ++biop) {
+        if(show_biops[biop]) {
+            stdl_log_msg(0, " --------");
+            if(biops[biop] == _biops(STDL_OP_DIPL, STDL_OP_DIPL))
+                stdl_log_msg(0, "---------");
+        }
+    }
+
+    stdl_log_msg(0, "\n");
+
+    stdl_log_msg(0, "   m    n   (Eh)     (eV)    (nm) ");
+    for (size_t iop = 0; iop < 3; ++iop) {
+        if(show[iop]) {
+            for (size_t cpt = 0; cpt < dims[iop]; ++cpt)
+                stdl_log_msg(0, "   %-3d   ", cpt);
+        }
+    }
+
+    for (size_t biop = 0; biop < 3; ++biop) {
+        if(show_biops[biop]) {
+            stdl_log_msg(0, "   %c·%c   ",  biop == 0 ? 'A': 'B', biop == 0 ? 'B': 'C');
+            if(biops[biop] == _biops(STDL_OP_DIPL, STDL_OP_DIPL))
+                stdl_log_msg(0, "   fL    ");
+        }
+    }
+
+
+    stdl_log_msg(0, "\n");
+
+
+    for(size_t iexci=0; iexci < nexci - 1; iexci++) {
+        for(size_t jexci=iexci + 1; jexci < nexci; jexci++) {
+            float ediff = rh->eexci[jexci] - rh->eexci[iexci];
+            stdl_log_msg(0, "%4ld %4ld %8.5f %7.3f %7.2f",iexci + 1, jexci + 1, ediff, ediff * STDL_CONST_AU_TO_EV, STDL_CONST_HC / ediff);
+
+            size_t shift = 0;
+            for (int iop = 0; iop < 3; ++iop) {
+                if(show[iop]) {
+                    for (size_t cpt = 0; cpt < dims[0]; ++cpt) {
+                        stdl_log_msg(0, " % 8.5f", te2e[(shift + cpt) * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(iexci, jexci)]);
+                    }
+                }
+
+                shift += dims[iop];
+            }
+
+            for (size_t biop = 0; biop < 3; ++biop) {
+                if(show_biops[biop]) {
+                    size_t xop = biop == 0 ? 0 :1, yop = biop == 0 ? 1 : 2;
+                    float dotp = 0;
+                    for (size_t cpt = 0; cpt < dims[xop]; ++cpt) {
+                        dotp += te2e[cpt * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(iexci, jexci)] *  te2e[cpt * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(iexci, jexci)];
+                    }
+
+                    stdl_log_msg(0, " % 8.5f", dotp);
+                    if(biops[biop] == _biops(STDL_OP_DIPL, STDL_OP_DIPL))
+                        stdl_log_msg(0, " % 8.5f", 2.f/3 * ediff * dotp);
+                }
+            }
+
+            stdl_log_msg(0, "\n");
+        }
+    }
+
+    return STDL_ERR_OK;
+
 }
 

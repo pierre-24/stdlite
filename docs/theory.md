@@ -509,11 +509,15 @@ $$\begin{aligned} \lim_{\omega_B\to-\omega_m,\omega_C\to\omega_n} &(\omega_B+\om
 Therefore, one gets:
 
 $$\begin{aligned}
-&\braket{m|\hat\mu_\zeta - \delta_{mn}\,\braket{0|\hat\mu_\zeta|0}|n}\\
+&\braket{m|\hat A_\zeta - \delta_{mn}\,\braket{0|\hat A_\zeta|0}|n}\\
 &\hspace{2em}= \frac{1}{8}\sum_{[m,n]}\left\{ \sum_{ia,ib} A_{ab,\zeta}\,[t^m_{ia}\,t^n_{ib} + u^m_{ia}\,u^n_{ib}]  - \sum_{ia,ja} A_{ij,\zeta}\,[t^m_{ia}\,t^n_{ja} + u^m_{ia}\,u^n_{ja}] \right\}.
 \end{aligned}$$
 
-which is equal to the fluctuation operator if $m = n$.
+which is therefore equal to the fluctuation operator if $m = n$.
+
+!!! warning 
+    
+    This expression is only valid for $\theta_A=1$.
 
 ??? note "Details"
 
