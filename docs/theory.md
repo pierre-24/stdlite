@@ -413,31 +413,38 @@ $$\tag{6}{}^{ABC}\mathcal{T}_{\zeta\sigma\tau} = \braket{\braket{\hat A_\zeta;\h
 
 where:
 
-$${}^{ABC}\mathcal{M}_{\zeta\sigma\tau} = \sum_{[B,C]}\sum_{ia,ja} \frac{1}{4}\,A_{ij,\zeta}\,{}^{BC}\mathcal{K}_{ia,ja} 
-- \frac{1}{2}\,B_{ij,\sigma}\,\left\{\begin{array}{}^At_{ia,\zeta}(\omega_B+\omega_C)\,{}^C\kappa^+_{ja,\tau}(\omega_C)\\ + {}^Au_{ia,\zeta}(\omega_B+\omega_C)\,{}^C\kappa^-_{ja,\tau}(\omega_C)\end{array}\right\},$$
+$${}^{ABC}\mathcal{M}_{\zeta\sigma\tau} = \sum_{[B,C]}\sum_{ia,ja} \frac{1}{4}\,A_{ij,\zeta}\,{}^{ABC}\mathcal{K}_{ia,ja} 
+- \frac{1}{2}\,B_{ij,\sigma}\,{}^{ABC}\mathcal{L}_{ia,ja},$$
+
 
 with:
 
-$${}^{BC}\mathcal{K}_{ia,ja} = {}^Bu_{ia,\sigma}(\omega_B)\,{}^Cu_{ja,\tau}(\omega_C) - {}^Bt_{ia,\sigma}(\omega_B)\,{}^Ct_{ja,\tau}(\omega_C) ,$$
+$${}^{ABC}\mathcal{K}_{ia,ja} = \begin{cases} {}^Bu_{ia,\sigma}(\omega_B)\,{}^Cu_{ja,\tau}(\omega_C) - {}^Bt_{ia,\sigma}(\omega_B)\,{}^Ct_{ja,\tau}(\omega_C) & \text{if } \theta_A = 1,\\
+{}^Bu_{ia,\sigma}(\omega_B)\,{}^Ct_{ja,\tau}(\omega_C) - {}^Bt_{ia,\sigma}(\omega_B)\,{}^Cu_{ja,\tau}(\omega_C) & \text{otherwise}.
+\end{cases}$$
 
 and:
 
-$${}^{ABC}\mathcal{N}_{\zeta\sigma\tau} =\sum_{[B,C]}\sum_{ia,ib} \frac{1}{4}\,A_{ab,\zeta}\,{}^{BC}\mathcal{K}_{ia,ib} 
-+ \frac{1}{2}\,B_{ab,\sigma}\,\left\{\begin{array}{}^At_{ia,\zeta}(\omega_B+\omega_C)\,{}^C\kappa^+_{ib,\tau}(\omega_C)\\ + {}^Au_{ia,\zeta}(\omega_B+\omega_C)\,{}^C\kappa^-_{ib,\tau}(\omega_C)\end{array}\right\}$$
+$${}^{ABC}\mathcal{N}_{\zeta\sigma\tau} =\sum_{[B,C]}\sum_{ia,ib} \frac{1}{4}\,A_{ab,\zeta}\,{}^{ABC}\mathcal{K}_{ia,ib} 
++ \frac{1}{2}\,B_{ab,\sigma}\,{}^{ABC}\mathcal{L}_{ia,ib}$$
 
 with:
 
-$${}^{BC}\mathcal{K}_{ia,ib} = {}^Bt_{ia,\sigma}(\omega_B)\,{}^Ct_{ib,\tau}(\omega_C) - {}^Bu_{ia,\sigma}(\omega_B)\,{}^Cu_{ib,\tau}(\omega_C).$$
+$${}^{ABC}\mathcal{K}_{ia,ib} = \begin{cases}
+{}^Bt_{ia,\sigma}(\omega_B)\,{}^Ct_{ib,\tau}(\omega_C) - {}^Bu_{ia,\sigma}(\omega_B)\,{}^Cu_{ib,\tau}(\omega_C) &  \text{if } \theta_A = 1 \\
+{}^Bu_{ia,\sigma}(\omega_B)\,{}^Ct_{ja,\tau}(\omega_C) - {}^Bt_{ia,\sigma}(\omega_B)\,{}^Cu_{ja,\tau}(\omega_C) & \text{otherwise}.
+\end{cases}$$
 
-In both expressions, $\sum_{[B,C]}$ is a sum over the permutation of the pairs of a given operator and its corresponding frequency, $\{(\hat B_\sigma,\omega_B), (\hat C_\tau,\omega_C)\}$, and, using the time-reversal symmetry,
+In both expressions, $\sum_{[B,C]}$ is a sum over the permutation of the pairs of a given operator and its corresponding frequency, $\{(\hat B_\sigma,\omega_B), (\hat C_\tau,\omega_C)\}$, and:
 
-$${}^C\kappa^+_{jb,\tau}(\omega) = \begin{cases} {}^Ct_{jb,\tau}(\omega) & \text{if } \theta_B = 1,\\-{}^Cu_{jb,\tau}(\omega) & \text{otherwise}.\end{cases}$$ 
+$$ {}^{ABC}\mathcal{L}_{ia,jb} = \begin{cases}
+^At_{ia,\zeta}(-\omega_A)\,{}^Ct_{jb,\tau}(\omega_C) + {}^Au_{ia,\zeta}(-\omega_A)\,{}^Cu_{jb,\tau}(\omega_C) & \text{if } \theta_B = 1,\\
+-^At_{ia,\zeta}(-\omega_A)\,{}^Cu_{jb,\tau}(\omega_C) - {}^Au_{ia,\zeta}(-\omega_A)\,{}^Ct_{jb,\tau}(\omega_C) & \text{otherwise},
+\end{cases}
+$$
 
-and
-
-$${}^C\kappa^-_{jb,\tau}(\omega) = \begin{cases} {}^Cu_{jb,\tau}(\omega) & \text{if } \theta_B = 1,\\-{}^Ct_{jb,\tau}(\omega) & \text{otherwise}.\end{cases}$$
-
-In the case of the SHG first hyperpolarizability (so, $\braket{\braket{\hat\mu;\hat\mu,\hat\mu}}_{\omega,\omega}$), these (rather long) expressions are equivalent to the one reported in [10.1002/wcms.1695](https://dx.doi.org/10.1002/wcms.1695).
+with $\omega_A = -\omega_B - \omega_C$. Thus, the evaluation of these (rather long) expressions requires linear response vectors for the 3 operators.
+Note that in the case of the SHG first hyperpolarizability (so, $\braket{\braket{\hat\mu;\hat\mu,\hat\mu}}_{\omega,\omega}$), this is equivalent to the ones reported in [10.1002/wcms.1695](https://dx.doi.org/10.1002/wcms.1695).
 
 ### Residues
 
@@ -495,7 +502,7 @@ where $\omega_A = -\omega_B-\omega_C$ and $\sum_{[A,B,C]}$ is a sum over all per
 
 A possible double residue is:
 
-$$\begin{aligned} \lim_{\omega_B\to-\omega_m,\omega_C\to\omega_n} &(\omega_B+\omega_m)\,(\omega_C-\omega_n)\,\braket{\braket{\hat A_\zeta;\hat B_\sigma,\hat C_\tau}}{\omega_B,\omega_C} \\
+$$\begin{aligned} \lim_{\omega_B\to-\omega_m,\omega_C\to\omega_n} &(\omega_B+\omega_m)\,(\omega_C-\omega_n)\,\braket{\braket{\hat A_\zeta;\hat B_\sigma,\hat C_\tau}}_{\omega_B,\omega_C} \\
 &= \braket{0|\hat B_\sigma|m}\,\braket{m|\hat A_\zeta - \delta_{mn}\,\braket{0|\hat A_\zeta|0}|n}\,\braket{n|\hat C_\tau|0}.
 \end{aligned}$$
 
@@ -503,7 +510,7 @@ Therefore, one gets:
 
 $$\begin{aligned}
 &\braket{m|\hat\mu_\zeta - \delta_{mn}\,\braket{0|\hat\mu_\zeta|0}|n}\\
-&\hspace{2em}= \frac{1}{4}\sum_{[m,n]}\left\{ \sum_{ia,ib} A_{ab,\zeta}\,[t^m_{ia}\,t^n_{ib} + u^m_{ia}\,u^n_{ib}]  - \sum_{ia,ja} A_{ij,\zeta}\,[t^m_{ia}\,t^n_{ja} + u^m_{ia}\,u^n_{ja}] \right\}.
+&\hspace{2em}= \frac{1}{8}\sum_{[m,n]}\left\{ \sum_{ia,ib} A_{ab,\zeta}\,[t^m_{ia}\,t^n_{ib} + u^m_{ia}\,u^n_{ib}]  - \sum_{ia,ja} A_{ij,\zeta}\,[t^m_{ia}\,t^n_{ja} + u^m_{ia}\,u^n_{ja}] \right\}.
 \end{aligned}$$
 
 which is equal to the fluctuation operator if $m = n$.

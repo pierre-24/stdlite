@@ -97,7 +97,7 @@ int stdl_property_tensor_g2e_moments(stdl_context *ctx, stdl_operator ops[2], do
     assert(ctx != NULL && nexci > 0 && ops_ints_MO != NULL && XpYamp != NULL && tg2e != NULL);
 
     stdl_log_msg(1, "+ ");
-    stdl_log_msg(0, "Compute ground to excited transition moments for `%s` and `%s` >", STDL_OPERATOR_NAME[ops[0]], STDL_OPERATOR_NAME[ops[1]]);
+    stdl_log_msg(0, "Compute %ld ground to excited transition moments for `%s` and `%s` >", nexci, STDL_OPERATOR_NAME[ops[0]], STDL_OPERATOR_NAME[ops[1]]);
     stdl_log_msg(1, "\n  | Looping through CSFs ");
 
     size_t nvirt = ctx->nmo - ctx->nocc, dim0 = STDL_OPERATOR_DIM[ops[0]], dim1 = STDL_OPERATOR_DIM[ops[1]];
@@ -151,9 +151,9 @@ int _property_tensor_quadratic_element(size_t components[3], stdl_context* ctx, 
         _l_elm * e1 = (_l_elm *) current->perm, *e2 = e1 + 1;
         size_t sigma = e1->cpt, tau = e2->cpt, dim1 = STDL_OPERATOR_DIM[e1->lrv->op], dim2 = STDL_OPERATOR_DIM[e2->lrv->op];
 
-        float Ap = .0f, Bp = .0f;
+        float Mp = .0f, Np = .0f;
 
-        #pragma omp parallel for reduction(+:Ap) reduction(+:Bp)
+        #pragma omp parallel for reduction(+:Mp) reduction(+:Np)
         for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
             size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt;
 
@@ -164,18 +164,18 @@ int _property_tensor_quadratic_element(size_t components[3], stdl_context* ctx, 
                 float Tc = e2->lrv->XpYw[ljb * dim2 + tau], Uc = e2->lrv->XmYw[ljb * dim2 + tau];
 
                 if(a == b) { // ia,ja → A
-                    Ap += .25f * (float) lrvs[0]->op_ints_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * (!STDL_OPERATOR_ISSYM[lrvs[0]->op] && i < j ? -1.f: 1.f) * (Ub * Uc - Tb * Tc /*+ Ub * Tc - Tb * Uc*/);
-                    Ap -= .5f * (float) e1->lrv->op_ints_MO[sigma * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * (!STDL_OPERATOR_ISSYM[e1->lrv->op] && i < j ? -1.f: 1.f) * (Ta * (STDL_OPERATOR_ISSYM[e1->lrv->op] ? Tc : -Uc) + Ua * (STDL_OPERATOR_ISSYM[e1->lrv->op] ? Uc : -Tc));
+                    Mp += .25f * (float) lrvs[0]->op_ints_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * (!STDL_OPERATOR_ISSYM[lrvs[0]->op] && i < j ? -1.f : 1.f) * (STDL_OPERATOR_ISSYM[lrvs[0]->op] ? Ub * Uc - Tb * Tc : Ub * Tc - Tb * Uc);
+                    Mp -= .5f * (float) e1->lrv->op_ints_MO[sigma * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * (!STDL_OPERATOR_ISSYM[e1->lrv->op] && i < j ? -1.f : 1.f) * (Ta * (STDL_OPERATOR_ISSYM[e1->lrv->op] ? Tc : -Uc) + Ua * (STDL_OPERATOR_ISSYM[e1->lrv->op] ? Uc : -Tc));
                 }
 
                 if(i == j) { // ia,ib → B
-                    Bp += .25f * (float) lrvs[0]->op_ints_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)] * (!STDL_OPERATOR_ISSYM[lrvs[0]->op] && a < b ? -1.f: 1.f) * (Tb * Tc - Ub * Uc /*+ Ub * Tc - Tb * Uc*/);
-                    Bp += .5f * (float) e1->lrv->op_ints_MO[sigma * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)] * (!STDL_OPERATOR_ISSYM[e1->lrv->op] && a < b ? -1.f: 1.f) * (Ta * (STDL_OPERATOR_ISSYM[e1->lrv->op] ? Tc : -Uc) + Ua * (STDL_OPERATOR_ISSYM[e1->lrv->op] ? Uc : -Tc));
+                    Np += .25f * (float) lrvs[0]->op_ints_MO[zeta * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)] * (!STDL_OPERATOR_ISSYM[lrvs[0]->op] && a < b ? -1.f : 1.f) * (STDL_OPERATOR_ISSYM[lrvs[0]->op] ? Tb * Tc - Ub * Uc : Ub * Tc - Tb * Uc);
+                    Np += .5f * (float) e1->lrv->op_ints_MO[sigma * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)] * (!STDL_OPERATOR_ISSYM[e1->lrv->op] && a < b ? -1.f : 1.f) * (Ta * (STDL_OPERATOR_ISSYM[e1->lrv->op] ? Tc : -Uc) + Ua * (STDL_OPERATOR_ISSYM[e1->lrv->op] ? Uc : -Tc));
                 }
             }
         }
 
-        (*value) += Ap + Bp;
+        (*value) += Mp + Np;
         current = current->next;
     }
 
@@ -253,58 +253,76 @@ int stdl_property_tensor_quadratic(stdl_context *ctx, stdl_lrv *lrvs[3], float *
 int stdl_property_tensor_e2e_moments(stdl_context *ctx, stdl_operator ops[3], double* ops_ints_MO[3], size_t nexci, float* XpYamp, float* XmYamp, float * te2e) {
     assert(ops != NULL && ops_ints_MO != NULL && nexci > 0 &&  XpYamp != NULL && te2e != NULL);
 
-    size_t nvirt = ctx->nmo - ctx->nocc;
+    size_t nvirt = ctx->nmo - ctx->nocc, dims[3] = {STDL_OPERATOR_DIM[ops[0]], STDL_OPERATOR_DIM[ops[1]], STDL_OPERATOR_DIM[ops[2]]};
 
     stdl_log_msg(1, "+ ");
-    stdl_log_msg(0, "Compute excited to excited transition dipole moments >");
+    stdl_log_msg(0, "Compute %ld excited to excited transition moments for `%s`, `%s`, and `%s` >", STDL_MATRIX_SP_SIZE(nexci), STDL_OPERATOR_NAME[ops[0]], STDL_OPERATOR_NAME[ops[1]], STDL_OPERATOR_NAME[ops[2]]);
     stdl_log_msg(1, "\n  | Looping through CSFs ");
+
+    float* tmp = calloc(dims[0] + dims[1] + dims[2], sizeof(float ));
+    STDL_ERROR_HANDLE_AND_REPORT(tmp == NULL, return STDL_ERR_MALLOC, "malloc");
 
     #pragma omp parallel for schedule(guided)
     for (size_t m = 0; m < nexci; ++m) {
         for (size_t n = 0; n <= m; ++n) {
-            float a_[3] = {0}, b_[3] = {0};
 
             for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
+                size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt;
+
                 float tm_ia = XpYamp[m * ctx->ncsfs + lia];
                 float tn_ia = XpYamp[n * ctx->ncsfs + lia];
-                float um_ia, un_ia = .0f;
+                float um_ia = tm_ia, un_ia = tn_ia;
 
                 if(XmYamp != NULL) {
                     um_ia = XmYamp[m * ctx->ncsfs + lia];
                     un_ia = XmYamp[n * ctx->ncsfs + lia];
-
                 }
-                size_t i = ctx->csfs[lia] / nvirt, a = ctx->csfs[lia] % nvirt;
 
                 for (size_t ljb = 0; ljb < ctx->ncsfs; ++ljb) {
+                    size_t j = ctx->csfs[ljb] / nvirt, b = ctx->csfs[ljb] % nvirt;
+
                     float tm_jb = XpYamp[m * ctx->ncsfs + ljb];
                     float tn_jb = XpYamp[n * ctx->ncsfs + ljb];
-                    float um_jb = .0f, un_jb = .0f;
+                    float um_jb = tm_jb, un_jb = tn_jb;
 
                     if(XmYamp != NULL) {
                         um_jb = XmYamp[m * ctx->ncsfs + ljb];
                         un_jb = XmYamp[n * ctx->ncsfs + ljb];
                     }
 
-                    size_t j = ctx->csfs[ljb] / nvirt, b = ctx->csfs[ljb] % nvirt;
+                    float amplitude = tm_ia * tn_jb + um_ia * un_jb + tn_ia * tm_jb + un_ia * um_jb;
 
-                    if(b == a) { // jb == ja
-                        for (int cpt = 0; cpt < 3; ++cpt)
-                            a_[cpt] += (float) ops_ints_MO[0][cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * (tm_ia * tn_jb + um_ia * un_jb + tn_ia * tm_jb + un_ia * um_jb);
+                    if(b == a) { // ia,ja
+                        size_t shift = 0;
+                        for (size_t iop = 0; iop < 3; ++iop) {
+                            for (size_t cpt = 0; cpt < dims[iop]; ++cpt)
+                                tmp[shift + cpt] -= (float) ops_ints_MO[iop][cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(i, j)] * amplitude;
+
+                            shift += dims[iop];
+                        }
                     }
 
-                    if(j == i) {// jb == ib
-                        for (int cpt = 0; cpt < 3; ++cpt)
-                            b_[cpt] += (float) ops_ints_MO[0][cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a, ctx->nocc + b)] * (tm_ia * tn_jb + um_ia * un_jb + tn_ia * tm_jb + un_ia * um_jb);
+                    if(j == i) {// ia,ib
+                        size_t shift = 0;
+                        for (size_t iop = 0; iop < 3; ++iop) {
+                            for (size_t cpt = 0; cpt < dims[iop]; ++cpt) {
+                                tmp[shift + cpt] += (float) ops_ints_MO[iop][cpt * STDL_MATRIX_SP_SIZE(ctx->nmo) + STDL_MATRIX_SP_IDX(ctx->nocc + a,ctx->nocc + b)] * amplitude;
+                            }
+
+                            shift += dims[iop];
+                        }
                     }
                 }
             }
 
-            for (int cpt = 0; cpt < 3; ++cpt) {
-                te2e[cpt * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(m, n)] = .25f * (b_[cpt] - a_[cpt]);
+            for (size_t cpt = 0; cpt < (dims[0] + dims[1] + dims[2]); ++cpt) {
+                te2e[cpt * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(m, n)] = .125f * tmp[cpt];
+                tmp[cpt] = .0f;
             }
         }
     }
+
+    STDL_FREE_IF_USED(tmp);
 
     stdl_log_msg(0, "< done\n");
 

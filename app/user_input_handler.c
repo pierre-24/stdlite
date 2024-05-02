@@ -390,7 +390,7 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
             int i = 0;
             toml_table_t* t = toml_table_at(lresp_sr, i);
             while (t != NULL) {
-                STDL_DEBUG("lresp_sr[%d]", i);
+                STDL_DEBUG("linear_sr[%d]", i);
 
                 stdl_operator opA;
                 err = _operator_in(t, "opA", &opA, &isset);
@@ -425,7 +425,56 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
             }
         }
 
-        // TODO: quadratic sr and dr
+
+        // single residue of the linear response
+        toml_array_t* qresp_dr = toml_array_in(response, "quadratic_dr");
+        if(qresp_dr != NULL) {
+            STDL_DEBUG("- quadratic_sr");
+            int i = 0;
+            toml_table_t* t = toml_table_at(qresp_dr, i);
+            while (t != NULL) {
+                STDL_DEBUG("quadratic_dr[%d]", i);
+
+                stdl_operator opA;
+                err = _operator_in(t, "opA", &opA, &isset);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+                STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `opA` in `quadratic_dr[%d]`", i);
+
+                stdl_operator opB;
+                err = _operator_in(t, "opB", &opB, &isset);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+                if(!isset)
+                    opB = opA;
+
+                stdl_operator opC;
+                err = _operator_in(t, "opC", &opC, &isset);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+                if(!isset)
+                    opC = opA;
+
+                int nroots;
+                toml_datum_t root = toml_int_in(t, "nroots");
+                STDL_ERROR_HANDLE_AND_REPORT(!root.ok, err = STDL_ERR_INPUT; goto _end, "missing `nroots` in `quadratic_dr[%d]`", i);
+                nroots = (int) root.u.i;
+
+                stdl_response_request* req = NULL;
+                err = stdl_response_request_new(2, 2, (stdl_operator[]) {opA, opB, opC}, NULL, nroots, &req);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+
+                if(prev == NULL) {
+                    inp->res_resreqs = req;
+                } else {
+                    prev->next = req;
+                }
+
+                prev = req;
+
+                i += 1;
+                t = toml_table_at(qresp_dr, i);
+            }
+        }
+
+        // TODO: quadratic sr
 
         struct _w_list* elm = wlist, *prevw = NULL;
         while (elm != NULL) {
@@ -642,16 +691,7 @@ int stdl_user_input_handler_new_from_args(int argc, char* argv[], stdl_user_inpu
 }
 
 void _op_log(char* name, stdl_operator op) {
-    stdl_log_msg(0, "%s=\"", name);
-    switch (op) {
-        case STDL_OP_DIPL:
-            stdl_log_msg(0, "dipl");
-            break;
-        default:
-            stdl_log_msg(0, "unk");
-    }
-
-    stdl_log_msg(0, "\"");
+    stdl_log_msg(0, "%s=\"%s\"", name, STDL_OPERATOR_NAME[op]);
 }
 
 int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
@@ -745,6 +785,25 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
             if(req->resp_order == 1 && req->res_order == 1) {
                 stdl_log_msg(0, "  {");
                 _op_log("opA", req->ops[0]);
+                stdl_log_msg(0, ", ");
+                _op_log("opB", req->ops[1]);
+                stdl_log_msg(0, ", nroots=%d},\n", req->nroots);
+            }
+            req = req->next;
+        }
+        stdl_log_msg(0, "]\n");
+
+        // quadratic_dr
+        stdl_log_msg(0, "quadratic_dr = [\n");
+        req = inp->res_resreqs;
+        while(req != NULL) {
+            if(req->resp_order == 2 && req->res_order == 2) {
+                stdl_log_msg(0, "  {");
+                _op_log("opA", req->ops[0]);
+                stdl_log_msg(0, ", ");
+                _op_log("opB", req->ops[1]);
+                stdl_log_msg(0, ", ");
+                _op_log("opC", req->ops[2]);
                 stdl_log_msg(0, ", nroots=%d},\n", req->nroots);
             }
             req = req->next;
@@ -861,8 +920,7 @@ int stdl_user_input_handler_make_context(stdl_user_input_handler* inp, stdl_cont
     return err;
 }
 
-int
-stdl_user_input_handler_approximate_size(stdl_user_input_handler *inp, size_t nexci, size_t *sz, size_t *respreq_sz) {
+int stdl_user_input_handler_approximate_size(stdl_user_input_handler *inp, size_t nexci, size_t *sz, size_t *respreq_sz) {
     assert(inp != NULL && sz != NULL);
 
     *respreq_sz = 0;

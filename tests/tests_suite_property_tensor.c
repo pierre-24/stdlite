@@ -549,7 +549,7 @@ void test_response_antisym_TD_ok() {
             tensor
     ));
 
-    stdl_matrix_sge_print(0, 9, 3, tensor, "<<dipl;dipl,angm>>(0)");
+    stdl_matrix_sge_print(2, 9, 3, tensor, "<<dipl;dipl,angm>>(0)");
 
     ASSERT_STDL_OK(stdl_property_tensor_quadratic(
             ctx,
@@ -557,7 +557,7 @@ void test_response_antisym_TD_ok() {
             tensor
     ));
 
-    stdl_matrix_sge_print(0, 9, 3, tensor, "<<dipl;dipl,angm>>(w)");
+    stdl_matrix_sge_print(2, 9, 3, tensor, "<<dipl;dipl,angm>>(w)");
 
     ASSERT_STDL_OK(stdl_property_tensor_quadratic(
             ctx,
@@ -565,9 +565,70 @@ void test_response_antisym_TD_ok() {
             tensor
     ));
 
-    stdl_matrix_sge_print(0, 9, 3, tensor, "<<dipl;dipl,angm>>(2w)");
+    stdl_matrix_sge_print(2, 9, 3, tensor, "<<dipl;dipl,angm>>(2w)");
 
     STDL_FREE_ALL(dipl_mat, angm_mat, egrad, XpY_dipl, XmY_dipl, XmY_angm, XpY_angm);
 
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
+}
+
+float oscillator_strength(size_t shift, size_t m, size_t n, size_t nexci, float* e, float * e2etdips) {
+    float x = .0f;
+    for (int cpt = 0; cpt < 3; ++cpt) {
+        // printf("%ld→%ld[%d] = %f\n", m, n, cpt, e2etdips[cpt * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(m, n)]);
+        x += powf(e2etdips[(shift+cpt) * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(m, n)], 2);
+    }
+
+    return 2.f / 3 * (e[n] - e[m]) * x;
+}
+
+void test_property_e2e_ok() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_molden("../tests/test_files/chiral_sto3g.molden", &wf, &bs);
+
+    stdl_context* ctx = NULL;
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 20. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
+
+    // fetch excitations
+    float* etd = malloc(ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(etd);
+
+    float* XpYamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(XpYamptd);
+
+    float* XmYamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(XmYamptd);
+
+    ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, etd, XpYamptd, XmYamptd));
+
+    // compute dipole integrals and convert to MO
+    double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+    TEST_ASSERT_NOT_NULL(dipoles_mat);
+
+    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_mat);
+
+    // get g2e dipoles
+    float* tg2etd = malloc(ctx->ncsfs * 6 * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(tg2etd);
+    // ASSERT_STDL_OK(stdl_property_tensor_g2e_moments(ctx, (stdl_operator []) {STDL_OP_DIPL, STDL_OP_DIPL}, (double*[]) {dipoles_mat, dipoles_mat}, ctx->ncsfs, XpYamptd, XmYamptd, tg2etd));
+
+    // get ge2e dipoles
+    size_t nexci = 23;
+    float* eg2etd = malloc(9 * STDL_MATRIX_SP_SIZE(nexci) * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(eg2etd);
+    ASSERT_STDL_OK(stdl_property_tensor_e2e_moments(ctx, (stdl_operator []) {STDL_OP_DIPL, STDL_OP_DIPL, STDL_OP_DIPL}, (double*[]) {dipoles_mat, dipoles_mat, dipoles_mat}, nexci, XpYamptd, XmYamptd, eg2etd));
+
+    // oscillator strength
+    for(size_t n = 0; n < nexci; n++) {
+        printf("1→%ld E=%.3f, f=%f\n",
+               n + 1,
+               (etd[n] - etd[0]) * STDL_CONST_AU_TO_EV,
+               oscillator_strength(6, 0, n, nexci, etd, eg2etd)
+               );
+    }
+
+    STDL_FREE_ALL(etd, XpYamptd, XmYamptd, dipoles_mat, tg2etd, eg2etd);
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }

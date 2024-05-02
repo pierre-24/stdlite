@@ -33,7 +33,7 @@ linear_sr = [
 ]
 
 quadratic_dr = [
-    {op = 'dipl', root = -1}  # e2e transition dipoles
+    {opA = 'dipl', nroots = 15}  # e2e transition dipoles
 ]
 
 # [analyses]

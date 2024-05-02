@@ -510,24 +510,49 @@ int stdl_response_handler_compute_properties(stdl_responses_handler* rh, stdl_us
                 stdl_log_property_quadratic_tensor(req, req->property_tensor, inp->res_w[req->iw[1]], inp->res_w[req->iw[2]]);
 
         } else if(req->resp_order == 1 && req->res_order == 1) { // linear SR
-            req->property_tensor = malloc(rh->nexci * (STDL_OPERATOR_DIM[req->ops[0]] +  STDL_OPERATOR_DIM[req->ops[1]]) * sizeof(float ));
+            size_t nexci = req->nroots < 0 ? rh->nexci : req->nroots;
+
+            req->property_tensor = malloc(nexci * (STDL_OPERATOR_DIM[req->ops[0]] +  STDL_OPERATOR_DIM[req->ops[1]]) * sizeof(float ));
             STDL_ERROR_HANDLE_AND_REPORT(req->property_tensor == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
 
             err = stdl_property_tensor_g2e_moments(
                     ctx,
                     req->ops,
                     (double *[]) {rh->lrvs_data[req->ops[0]]->op_ints_MO, rh->lrvs_data[req->ops[1]]->op_ints_MO},
-                    req->nroots < 0 ? rh->nexci : req->nroots,
+                    nexci,
                     rh->XpYamp, rh->XmYamp,
                     req->property_tensor);
             STDL_ERROR_CODE_HANDLE(err, goto _end);
 
-            stdl_log_property_g2e_moments(rh, ctx, req->ops, req->nroots < 0 ? rh->nexci : req->nroots, req->property_tensor);
+            stdl_log_property_g2e_moments(rh, ctx, req->ops, nexci, req->property_tensor);
 
             sprintf(buffattr, "lim_w <<%s;%s>>",
                     STDL_OPERATOR_NAME[req->ops[0]],
                     STDL_OPERATOR_NAME[req->ops[1]]
                     );
+        } else if(req->resp_order == 2 && req->res_order == 2) { // quadratic DR
+            size_t nexci = req->nroots < 0 ? rh->nexci : req->nroots;
+            req->property_tensor = malloc(STDL_MATRIX_SP_SIZE(nexci) * (STDL_OPERATOR_DIM[req->ops[0]] +  STDL_OPERATOR_DIM[req->ops[1]]  +  STDL_OPERATOR_DIM[req->ops[2]]) * sizeof(float ));
+            STDL_ERROR_HANDLE_AND_REPORT(req->property_tensor == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
+
+            err = stdl_property_tensor_e2e_moments(
+                    ctx,
+                    req->ops,
+                    (double *[]) {rh->lrvs_data[req->ops[0]]->op_ints_MO, rh->lrvs_data[req->ops[1]]->op_ints_MO, rh->lrvs_data[req->ops[1]]->op_ints_MO},
+                    nexci,
+                    rh->XpYamp, rh->XmYamp,
+                    req->property_tensor);
+            STDL_ERROR_CODE_HANDLE(err, goto _end);
+
+            printf("** e2e\n");
+
+            // stdl_log_property_g2e_moments(rh, ctx, req->ops, req->nroots < 0 ? rh->nexci : req->nroots, req->property_tensor);
+
+            sprintf(buffattr, "lim_w1,w2 <<%s;%s,%s>>",
+                    STDL_OPERATOR_NAME[req->ops[0]],
+                    STDL_OPERATOR_NAME[req->ops[1]],
+                    STDL_OPERATOR_NAME[req->ops[2]]
+            );
         }
 
         // write in H5

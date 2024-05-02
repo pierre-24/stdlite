@@ -121,6 +121,10 @@ int stdl_response_request_dump_h5(stdl_response_request *req, size_t maxnexci, h
             dims[0] = (hsize_t) (STDL_OPERATOR_DIM[req->ops[0]] + STDL_OPERATOR_DIM[req->ops[1]]);
             dims[1] = (hsize_t) (req->nroots < 0? maxnexci : req->nroots);
             rank = 2;
+        } else if (req->resp_order == 2 && req->res_order == 2) {
+            dims[0] = (hsize_t) (STDL_OPERATOR_DIM[req->ops[0]] + STDL_OPERATOR_DIM[req->ops[1]] + STDL_OPERATOR_DIM[req->ops[2]]);
+            dims[1] = (hsize_t) STDL_MATRIX_SP_SIZE(req->nroots < 0? maxnexci : req->nroots);
+            rank = 2;
         }
 
         // write it

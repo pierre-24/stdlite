@@ -286,7 +286,7 @@ int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx,
         if(dim0 == dim1) {
             float dotp = .0f;
             for (size_t cpt = 0; cpt < dim1; ++cpt) {
-                dotp += tg2e[cpt * rh->nexci + iexci] * tg2e[(dim0 + cpt) * nexci + iexci];
+                dotp += tg2e[cpt * nexci + iexci] * tg2e[(dim0 + cpt) * nexci + iexci];
             }
 
             stdl_log_msg(0, " % 8.5f", dotp);
