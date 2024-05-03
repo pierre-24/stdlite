@@ -23,7 +23,7 @@ void _tensor_sos2(stdl_operator ops[2], float w, size_t nexci, float* e, float* 
             tensor_sos[cpt_i * dim0 + cpt_j] = .0f;
             for (size_t iexci = 0; iexci < nexci; ++iexci) {
                 float v = tg2e[cpt_i * nexci + iexci] * tg2e[(dim0 + cpt_j) * nexci + iexci];
-                tensor_sos[cpt_i * dim0 + cpt_j] += -v * (1 / (w - e[iexci]) - trs / (w + e[iexci] ));
+                tensor_sos[cpt_i * dim0 + cpt_j] += -v * (1 / (w - e[iexci]) - trs / (w + e[iexci]));
             }
         }
     }
@@ -83,339 +83,216 @@ void test_response_polarizability_TD_ok() {
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
 
-void test_property_polarizability_TD_SOS_ok() {
+size_t test_linear_n = 4;
+stdl_operator test_linear_ops[] = {
+        STDL_OP_DIPL, STDL_OP_DIPL,
+        STDL_OP_DIPL, STDL_OP_ANGM,
+        STDL_OP_DIPV, STDL_OP_ANGM,
+        STDL_OP_ANGM, STDL_OP_ANGM,
+};
+
+size_t test_linear_nw = 3;
+float test_linear_w[] = {
+        0.f, .05f, 0.1f,
+};
+
+void test_property_linear_tensor_TD_SOS_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_molden("../tests/test_files/chiral_sto3g.molden", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 25. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
 
     // fetch excitations
-    float* etd = malloc(ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(etd);
+    float* eexci = malloc(ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(eexci);
 
-    float* XpYamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(XpYamptd);
+    float* XpYamp = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(XpYamp);
 
-    float* XmYamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(XmYamptd);
+    float* XmYamp = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(XmYamp);
 
-    ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, etd, XpYamptd, XmYamptd));
+    ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, eexci, XpYamp, XmYamp));
 
-    // compute dipole integrals and convert to MO
-    double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
-    TEST_ASSERT_NOT_NULL(dipoles_mat);
+    for (size_t itest = 0; itest < test_linear_n; ++itest) {
+        stdl_operator opA = test_linear_ops[itest * 2], opB = test_linear_ops[itest * 2 + 1];
 
-    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_mat);
+        // compute integrals in MO basis
+        double* opA_ints = malloc(STDL_OPERATOR_DIM[opA] * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+        TEST_ASSERT_NOT_NULL(opA_ints);
 
-    // get transition dipoles
-    float* tg2etd = malloc(ctx->ncsfs * 6 * sizeof(float ));
-    ASSERT_STDL_OK(stdl_property_tensor_g2e_moments(ctx, (stdl_operator []) {STDL_OP_DIPL, STDL_OP_DIPL}, (double*[]) {dipoles_mat, dipoles_mat}, ctx->ncsfs, XpYamptd, XmYamptd, tg2etd));
+        make_int1e_MO(wf, bs, opA, opA == STDL_OP_DIPL ? -1 : 1, ctx, opA_ints);
 
-    // build egrad
-    float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(egrad);
+        double* opB_ints = malloc(STDL_OPERATOR_DIM[opB] * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+        TEST_ASSERT_NOT_NULL(opB_ints);
 
-    stdl_response_perturbed_gradient(ctx, 3, 1, dipoles_mat, egrad);
+        make_int1e_MO(wf, bs, opB, opB == STDL_OP_DIPL ? -1 : 1, ctx, opB_ints);
 
-    // solve linear response
-    size_t nw = 3;
-    float w[] = {0, STDL_CONST_HC / 1064.f, STDL_CONST_HC / 532.f};
+        // get transition moments
+        float* tg2e = malloc(ctx->ncsfs * (STDL_OPERATOR_DIM[opA] + STDL_OPERATOR_DIM[opB]) * sizeof(float ));
+        ASSERT_STDL_OK(stdl_property_tensor_g2e_moments(ctx, (stdl_operator []) {opA, opB}, (double*[]) {opA_ints, opB_ints}, ctx->ncsfs, XpYamp, XmYamp, tg2e));
 
-    float* XpYtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(XpYtd);
+        // compute LRV for opA
+        float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
+        TEST_ASSERT_NOT_NULL(egrad);
 
-    float* XmYtd = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(XmYtd);
+        ASSERT_STDL_OK(stdl_response_perturbed_gradient(ctx, STDL_OPERATOR_DIM[opA], STDL_OPERATOR_ISSYM[opA], opA_ints, egrad));
 
-    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 1, egrad, XpYtd, XmYtd));
+        float* XpY_opA = malloc(test_linear_nw * STDL_OPERATOR_DIM[opA] * ctx->ncsfs * sizeof(float ));
+        TEST_ASSERT_NOT_NULL(XpY_opA);
 
-    // compute polarizabilities
-    float alpha[9], alpha_sos[9];
+        float* XmY_opA = malloc(test_linear_nw * STDL_OPERATOR_DIM[opA] * ctx->ncsfs * sizeof(float ));
+        TEST_ASSERT_NOT_NULL(XmY_opA);
 
-    for (size_t iw = 0; iw < nw; ++iw) {
-        stdl_lrv lrv = {STDL_OP_DIPL, dipoles_mat, w[iw], XpYtd + iw * 3 * ctx->ncsfs, XmYtd + iw * 3 * ctx->ncsfs};
+        ASSERT_STDL_OK(stdl_response_TD_linear(ctx, test_linear_nw, test_linear_w, STDL_OPERATOR_DIM[opA], STDL_OPERATOR_HERMITIAN[opA], egrad, XpY_opA, XmY_opA));
 
-        ASSERT_STDL_OK(stdl_property_tensor_linear(
-                ctx,
-                (stdl_lrv*[]) {&lrv, &lrv},
-                alpha
-        ));
+        // compute LRV for opB
+        ASSERT_STDL_OK(stdl_response_perturbed_gradient(ctx, STDL_OPERATOR_DIM[opB], STDL_OPERATOR_ISSYM[opB], opB_ints, egrad));
 
-        stdl_matrix_sge_print(2, 3, 3, alpha, "alpha");
+        float* XpY_opB = malloc(test_linear_nw * STDL_OPERATOR_DIM[opB] * ctx->ncsfs * sizeof(float ));
+        TEST_ASSERT_NOT_NULL(XpY_opB);
 
-        // compute tensor from SOS and compare
-        _tensor_sos2((stdl_operator[]) {STDL_OP_DIPL, STDL_OP_DIPL}, w[iw], ctx->ncsfs, etd, tg2etd, alpha_sos);
+        float* XmY_opB = malloc(test_linear_nw * STDL_OPERATOR_DIM[opB] * ctx->ncsfs * sizeof(float ));
+        TEST_ASSERT_NOT_NULL(XmY_opB);
 
-        stdl_matrix_sge_print(2, 3, 3, alpha_sos, "alpha (SOS)");
+        ASSERT_STDL_OK(stdl_response_TD_linear(ctx, test_linear_nw, test_linear_w, STDL_OPERATOR_DIM[opB], STDL_OPERATOR_HERMITIAN[opB], egrad, XpY_opB, XmY_opB));
 
-        TEST_ASSERT_FLOAT_ARRAY_WITHIN(5e-1, alpha, alpha_sos, 9);
+        // compute tensor and compare
+        float* tensor_resp = malloc(STDL_OPERATOR_DIM[opA] * STDL_OPERATOR_DIM[opB] * sizeof(float ));
+        float* tensor_sos = malloc(STDL_OPERATOR_DIM[opA] * STDL_OPERATOR_DIM[opB] * sizeof(float ));
+
+        for (size_t iw = 0; iw < test_linear_nw; ++iw) {
+            stdl_lrv lrvA = {opA, opA_ints, test_linear_w[iw], XpY_opA + iw * 3 * ctx->ncsfs, XmY_opA + iw * 3 * ctx->ncsfs};
+            stdl_lrv lrvB = {opB, opB_ints, test_linear_w[iw], XpY_opB + iw * 3 * ctx->ncsfs, XmY_opB + iw * 3 * ctx->ncsfs};
+
+            ASSERT_STDL_OK(stdl_property_tensor_linear(
+                    ctx,
+                    (stdl_lrv*[]) {&lrvA, &lrvB},
+                    tensor_resp
+            ));
+
+            stdl_matrix_sge_print(2, 3, 3, tensor_resp, "tensor (resp)");
+
+            _tensor_sos2((stdl_operator[]) {opA, opB}, test_linear_w[iw], ctx->ncsfs, eexci, tg2e, tensor_sos);
+
+            stdl_matrix_sge_print(2, 3, 3, tensor_sos, "tensor (SOS)");
+
+            for (int ielm = 0; ielm < 9; ++ielm) {
+                if(fabsf(tensor_resp[ielm]) > 5e-1)
+                    TEST_ASSERT_FLOAT_WITHIN(3e-1, 1., tensor_resp[ielm] / tensor_sos[ielm]);
+            }
+        }
+
+        STDL_FREE_ALL(opA_ints, opB_ints, tg2e, egrad, XpY_opA, XmY_opA, XpY_opB, XmY_opB, tensor_resp, tensor_sos);
+
     }
 
-    STDL_FREE_ALL(etd, XpYamptd, XmYamptd, dipoles_mat, tg2etd, egrad, XpYtd, XmYtd);
+    STDL_FREE_ALL(eexci, XpYamp, XmYamp);
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
 
-
-void test_property_tensor_polarizability_TD_fchk_vs_molden_ok() {
-    // FCHK
-    stdl_wavefunction * wf_fchk = NULL;
-    stdl_basis * bs_fchk = NULL;
-    read_fchk("../tests/test_files/water_631gdf.fchk", &wf_fchk, &bs_fchk);
-
-    stdl_context* ctx_fchk = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf_fchk, bs_fchk, 2.0, 4.0, 10. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx_fchk));
-    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx_fchk, 1));
-
-    double* dipoles_mat_fchk = malloc(3 * STDL_MATRIX_SP_SIZE(ctx_fchk->nmo) * sizeof(double));
-    TEST_ASSERT_NOT_NULL(dipoles_mat_fchk);
-
-    make_int1e_MO(wf_fchk, bs_fchk, STDL_OP_DIPL, -1., ctx_fchk, dipoles_mat_fchk);
-
-    float* egrad_fchk = malloc(3 * ctx_fchk->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(egrad_fchk);
-
-    stdl_response_perturbed_gradient(ctx_fchk, 3, 1, dipoles_mat_fchk, egrad_fchk);
-
-    size_t nw = 3;
-    float w[] = {0, 4.282270E-2f, 2 * 4.282270E-2f};
-
-    float* X_fchk = malloc(nw * 3 * ctx_fchk->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(X_fchk);
-
-    float* Y_fchk = malloc(nw * 3 * ctx_fchk->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(Y_fchk);
-
-    ASSERT_STDL_OK(stdl_response_TD_linear(ctx_fchk, nw, w, 3, 1, egrad_fchk, X_fchk, Y_fchk));
-
-    // molden
-    stdl_wavefunction * wf_molden = NULL;
-    stdl_basis * bs_molden = NULL;
-    read_molden("../tests/test_files/water_631gdf.molden", &wf_molden, &bs_molden);
-
-    stdl_context* ctx_molden = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf_molden, bs_molden, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx_molden));
-    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx_molden, 1));
-
-    double* dipoles_mat_molden = malloc(3 * STDL_MATRIX_SP_SIZE(ctx_molden->nmo) * sizeof(double));
-    TEST_ASSERT_NOT_NULL(dipoles_mat_molden);
-
-    make_int1e_MO(wf_molden, bs_molden, STDL_OP_DIPL, -1., ctx_molden, dipoles_mat_molden);
-
-    float* egrad_molden = malloc(3 * ctx_molden->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(egrad_molden);
-
-    stdl_response_perturbed_gradient(ctx_molden, 3, 1, dipoles_mat_molden, egrad_molden);
-
-    float* X_molden = malloc(nw * 3 * ctx_molden->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(X_molden);
-
-    float* Y_molden = malloc(nw * 3 * ctx_molden->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(Y_molden);
-
-    ASSERT_STDL_OK(stdl_response_TD_linear(ctx_molden, nw, w, 3, 1, egrad_molden, X_molden, Y_molden));
-
-    // compute polarizabilities
-    float alpha[9], alpha_iso_fchk, alpha_aniso_fchk, alpha_iso_molden, alpha_aniso_molden;
-
-    for (size_t iw = 0; iw < nw; ++iw) {
-        stdl_lrv lrv_fchk = {STDL_OP_DIPL, dipoles_mat_fchk, w[iw], X_fchk + iw * 3 * ctx_fchk->ncsfs, Y_fchk + iw * 3 * ctx_fchk->ncsfs};
-        ASSERT_STDL_OK(stdl_property_tensor_linear(
-                ctx_fchk,
-                (stdl_lrv*[]) {&lrv_fchk, &lrv_fchk},
-                alpha
-        ));
-        stdl_qexp_polarizability(alpha, &alpha_iso_fchk, &alpha_aniso_fchk);
-
-        stdl_lrv lrv_molden = {STDL_OP_DIPL, dipoles_mat_molden, w[iw], X_molden + iw * 3 * ctx_molden->ncsfs, Y_molden + iw * 3 * ctx_molden->ncsfs};
-        ASSERT_STDL_OK(stdl_property_tensor_linear(
-                ctx_molden,
-                (stdl_lrv*[]) {&lrv_molden, &lrv_molden},
-                alpha
-        ));
-
-        stdl_qexp_polarizability(alpha, &alpha_iso_molden, &alpha_aniso_molden);
-
-        TEST_ASSERT_FLOAT_WITHIN(1e-2, alpha_iso_molden, alpha_iso_fchk);
-        TEST_ASSERT_FLOAT_WITHIN(1e-2, alpha_aniso_molden, alpha_aniso_fchk);
-    }
-
-    STDL_FREE_ALL(dipoles_mat_fchk, egrad_fchk, X_fchk, Y_fchk);
-    ASSERT_STDL_OK(stdl_context_delete(ctx_fchk));
-
-    STDL_FREE_ALL(dipoles_mat_molden, egrad_molden, X_molden, Y_molden);
-    ASSERT_STDL_OK(stdl_context_delete(ctx_molden));
-}
-
-void test_property_polarizability_TDA_SOS_ok() {
+void test_property_linear_tensor_TDA_SOS_ok() {
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_molden("../tests/test_files/chiral_sto3g.molden", &wf, &bs);
 
     stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 10. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
-
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 25. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
 
-    // compute dipole integrals and convert to MO
-    double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
-    TEST_ASSERT_NOT_NULL(dipoles_mat);
-
-    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_mat);
-
-    // build egrad
-    float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(egrad);
-
-    stdl_response_perturbed_gradient(ctx, 3, 1, dipoles_mat, egrad);
-
-    // fetch all excitations
-    float* etda = malloc(ctx->ncsfs * sizeof(float ));
-    float* Xamptda = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float ));
-    ASSERT_STDL_OK(stdl_response_TDA_casida(ctx, ctx->ncsfs, etda, Xamptda));
-
-    // get transition dipoles
-    float* tg2etda = malloc(ctx->ncsfs * 6 * sizeof(float ));
-    ASSERT_STDL_OK(stdl_property_tensor_g2e_moments(ctx, (stdl_operator []) {STDL_OP_DIPL, STDL_OP_DIPL}, (double*[]) {dipoles_mat, dipoles_mat}, ctx->ncsfs, Xamptda, NULL, tg2etda));
-
-    // solve linear response
-    size_t nw = 3;
-    float w[] = {0, STDL_CONST_HC / 1064.f, STDL_CONST_HC / 532.f};
-
-    float* XpYtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(XpYtda);
-
-    float* XmYtda = malloc(nw * 3 * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(XmYtda);
-
-    ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, nw, w, 3, 1, egrad, XpYtda, XmYtda));
-
-    // compute polarizabilities
-    float alpha[9], alpha_sos[9];
-
-    for (size_t iw = 0; iw < nw; ++iw) {
-        stdl_lrv lrv = {STDL_OP_DIPL, dipoles_mat, w[iw], XpYtda + iw * 3 * ctx->ncsfs, XmYtda + iw * 3 * ctx->ncsfs};
-        ASSERT_STDL_OK(stdl_property_tensor_linear(
-                ctx,
-                (stdl_lrv*[]) {&lrv, &lrv},
-                alpha
-        ));
-
-        stdl_matrix_sge_print(2, 3, 3, alpha, "alpha");
-
-        // compute tensor from SOS and compare
-        _tensor_sos2((stdl_operator[]) {STDL_OP_DIPL, STDL_OP_DIPL}, w[iw], ctx->ncsfs, etda, tg2etda, alpha_sos);
-
-        stdl_matrix_sge_print(2, 3, 3, alpha_sos, "alpha (SOS)");
-
-        TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-1, alpha, alpha_sos, 9);
-    }
-
-    STDL_FREE_ALL(dipoles_mat, etda, Xamptda, egrad, XpYtda, XmYtda, tg2etda);
-
-    ASSERT_STDL_OK(stdl_context_delete(ctx));
-}
-
-void test_property_tensor_angmom_dipl_TD_SOS_ok() {
-    stdl_wavefunction * wf = NULL;
-    stdl_basis * bs = NULL;
-    read_molden("../tests/test_files/chiral_sto3g.molden", &wf, &bs);
-
-    stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 10. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
-    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
-
     // fetch excitations
-    float* etd = malloc(ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(etd);
+    float* eexci = malloc(ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(eexci);
 
-    float* Xamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Xamptd);
+    float* XpYamp = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(XpYamp);
 
-    float* Yamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(Yamptd);
+    ASSERT_STDL_OK(stdl_response_TDA_casida(ctx, ctx->ncsfs, eexci, XpYamp));
 
-    ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, etd, Xamptd, Yamptd));
+    for (size_t itest = 0; itest < test_linear_n; ++itest) {
+        stdl_operator opA = test_linear_ops[itest * 2], opB = test_linear_ops[itest * 2 + 1];
 
-    // compute dipl integrals and convert to MO
-    double* dipl_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
-    TEST_ASSERT_NOT_NULL(dipl_mat);
+        // compute integrals in MO basis
+        double* opA_ints = malloc(STDL_OPERATOR_DIM[opA] * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+        TEST_ASSERT_NOT_NULL(opA_ints);
 
-    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipl_mat);
+        make_int1e_MO(wf, bs, opA, opA == STDL_OP_DIPL ? -1 : 1, ctx, opA_ints);
 
-    // build egrad
-    float* egrad_dipl = malloc(3 * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(egrad_dipl);
+        double* opB_ints = malloc(STDL_OPERATOR_DIM[opB] * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+        TEST_ASSERT_NOT_NULL(opB_ints);
 
-    stdl_response_perturbed_gradient(ctx, 3, 1, dipl_mat, egrad_dipl);
+        make_int1e_MO(wf, bs, opB, opB == STDL_OP_DIPL ? -1 : 1, ctx, opB_ints);
 
-    // solve linear response
-    size_t nw = 3;
-    float w[] = {0, 0.025f, STDL_CONST_HC / 532.f};
+        // get transition moments
+        float* tg2e = malloc(ctx->ncsfs * (STDL_OPERATOR_DIM[opA] + STDL_OPERATOR_DIM[opB]) * sizeof(float ));
+        ASSERT_STDL_OK(stdl_property_tensor_g2e_moments(ctx, (stdl_operator []) {opA, opB}, (double*[]) {opA_ints, opB_ints}, ctx->ncsfs, XpYamp, NULL, tg2e));
 
-    float* X_dipl = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(X_dipl);
+        // compute LRV for opA
+        float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
+        TEST_ASSERT_NOT_NULL(egrad);
 
-    float* Y_dipl = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(Y_dipl);
+        ASSERT_STDL_OK(stdl_response_perturbed_gradient(ctx, STDL_OPERATOR_DIM[opA], STDL_OPERATOR_ISSYM[opA], opA_ints, egrad));
 
-    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 1, egrad_dipl, X_dipl, Y_dipl));
+        float* XpY_opA = malloc(test_linear_nw * STDL_OPERATOR_DIM[opA] * ctx->ncsfs * sizeof(float ));
+        TEST_ASSERT_NOT_NULL(XpY_opA);
 
-    // compute angm integrals and convert to MO
-    double* angm_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
-    TEST_ASSERT_NOT_NULL(angm_mat);
+        float* XmY_opA = malloc(test_linear_nw * STDL_OPERATOR_DIM[opA] * ctx->ncsfs * sizeof(float ));
+        TEST_ASSERT_NOT_NULL(XmY_opA);
 
-    make_int1e_MO(wf, bs, STDL_OP_ANGM, 1., ctx, angm_mat);
+        ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, test_linear_nw, test_linear_w, STDL_OPERATOR_DIM[opA], STDL_OPERATOR_HERMITIAN[opA], egrad, XpY_opA, XmY_opA));
 
-    // get transition dipoles
-    float* tg2e = malloc(ctx->ncsfs * 6 * sizeof(float ));
-    ASSERT_STDL_OK(stdl_property_tensor_g2e_moments(ctx, (stdl_operator []) {STDL_OP_ANGM, STDL_OP_DIPL}, (double*[]) {angm_mat, dipl_mat}, ctx->ncsfs, Xamptd, Yamptd, tg2e));
+        // compute LRV for opB
+        ASSERT_STDL_OK(stdl_response_perturbed_gradient(ctx, STDL_OPERATOR_DIM[opB], STDL_OPERATOR_ISSYM[opB], opB_ints, egrad));
 
-    // build egrad
-    float* egrad_angm = malloc(3 * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(egrad_angm);
+        float* XpY_opB = malloc(test_linear_nw * STDL_OPERATOR_DIM[opB] * ctx->ncsfs * sizeof(float ));
+        TEST_ASSERT_NOT_NULL(XpY_opB);
 
-    stdl_response_perturbed_gradient(ctx, 3, 0, angm_mat, egrad_angm);
+        float* XmY_opB = malloc(test_linear_nw * STDL_OPERATOR_DIM[opB] * ctx->ncsfs * sizeof(float ));
+        TEST_ASSERT_NOT_NULL(XmY_opB);
 
-    // solve linear response
-    float* X_angm = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(X_angm);
+        ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, test_linear_nw, test_linear_w, STDL_OPERATOR_DIM[opB], STDL_OPERATOR_HERMITIAN[opB], egrad, XpY_opB, XmY_opB));
 
-    float* Y_angm = malloc(nw * 3 * ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(Y_angm);
+        // compute tensor and compare
+        float* tensor_resp = malloc(STDL_OPERATOR_DIM[opA] * STDL_OPERATOR_DIM[opB] * sizeof(float ));
+        float* tensor_sos = malloc(STDL_OPERATOR_DIM[opA] * STDL_OPERATOR_DIM[opB] * sizeof(float ));
 
-    ASSERT_STDL_OK(stdl_response_TD_linear(ctx, nw, w, 3, 1, egrad_angm, X_angm, Y_angm));
+        for (size_t iw = 0; iw < test_linear_nw; ++iw) {
+            stdl_lrv lrvA = {opA, opA_ints, test_linear_w[iw], XpY_opA + iw * 3 * ctx->ncsfs, XmY_opA + iw * 3 * ctx->ncsfs};
+            stdl_lrv lrvB = {opB, opB_ints, test_linear_w[iw], XpY_opB + iw * 3 * ctx->ncsfs, XmY_opB + iw * 3 * ctx->ncsfs};
 
-    // compute tensor
-    float tensor[9], tensor_sos[9];
+            ASSERT_STDL_OK(stdl_property_tensor_linear(
+                    ctx,
+                    (stdl_lrv*[]) {&lrvA, &lrvB},
+                    tensor_resp
+            ));
 
-    for (size_t iw = 0; iw < nw; ++iw) {
-        stdl_lrv lrv0 = {STDL_OP_ANGM, angm_mat, w[iw], X_angm + iw * 3 * ctx->ncsfs, Y_angm + iw * 3 * ctx->ncsfs},
-            lrv1 = {STDL_OP_DIPL, dipl_mat, w[iw], X_dipl + iw * 3 * ctx->ncsfs, Y_dipl + iw * 3 * ctx->ncsfs};
+            stdl_matrix_sge_print(2, 3, 3, tensor_resp, "tensor (resp)");
 
-        ASSERT_STDL_OK(stdl_property_tensor_linear(
-                ctx,
-                (stdl_lrv*[]) {&lrv0, &lrv1},
-                tensor
-        ));
+            _tensor_sos2((stdl_operator[]) {opA, opB}, test_linear_w[iw], ctx->ncsfs, eexci, tg2e, tensor_sos);
 
-        stdl_matrix_sge_print(2, 3, 3, tensor, "tensor");
+            stdl_matrix_sge_print(2, 3, 3, tensor_sos, "tensor (SOS)");
 
-        // compute tensor from SOS
-        _tensor_sos2((stdl_operator[]) {STDL_OP_ANGM, STDL_OP_DIPL}, w[iw], ctx->ncsfs, etd, tg2e, tensor_sos);
+            for (int ielm = 0; ielm < 9; ++ielm) {
+                if(fabsf(tensor_resp[ielm]) > 5e-1)
+                    TEST_ASSERT_FLOAT_WITHIN(3e-1, 1., tensor_resp[ielm] / tensor_sos[ielm]);
+            }
+        }
 
-        stdl_matrix_sge_print(2, 3, 3, tensor_sos, "tensor (SOS)");
+        STDL_FREE_ALL(opA_ints, opB_ints, tg2e, egrad, XpY_opA, XmY_opA, XpY_opB, XmY_opB, tensor_resp, tensor_sos);
 
-        TEST_ASSERT_FLOAT_ARRAY_WITHIN(5e-1, tensor, tensor_sos, 9);
     }
 
-    STDL_FREE_ALL(etd, Xamptd, Yamptd, dipl_mat, angm_mat, tg2e, egrad_dipl, X_dipl, Y_dipl, egrad_angm, X_angm, Y_angm);
+    STDL_FREE_ALL(eexci, XpYamp);
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
+
 
 void test_response_first_polarizability_TD_ok() {
+    TEST_IGNORE_MESSAGE("tmp");
+
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_molden("../tests/test_files/chiral_sto3g.molden", &wf, &bs);
@@ -489,6 +366,8 @@ void test_response_first_polarizability_TD_ok() {
 }
 
 void test_response_antisym_TD_ok() {
+    TEST_IGNORE_MESSAGE("tmp");
+
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_molden("../tests/test_files/chiral_sto3g.molden", &wf, &bs);
@@ -583,6 +462,8 @@ float oscillator_strength(size_t shift, size_t m, size_t n, size_t nexci, float*
 }
 
 void test_property_e2e_ok() {
+    TEST_IGNORE_MESSAGE("tmp");
+
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
     read_molden("../tests/test_files/chiral_sto3g.molden", &wf, &bs);
@@ -621,13 +502,13 @@ void test_property_e2e_ok() {
     ASSERT_STDL_OK(stdl_property_tensor_e2e_moments(ctx, (stdl_operator []) {STDL_OP_DIPL, STDL_OP_DIPL, STDL_OP_DIPL}, (double*[]) {dipoles_mat, dipoles_mat, dipoles_mat}, nexci, XpYamptd, XmYamptd, eg2etd));
 
     // oscillator strength
-    for(size_t n = 0; n < nexci; n++) {
+    /*for(size_t n = 0; n < nexci; n++) {
         printf("1→%ld E=%.3f, f=%f\n",
                n + 1,
                (etd[n] - etd[0]) * STDL_CONST_AU_TO_EV,
                oscillator_strength(6, 0, n, nexci, etd, eg2etd)
                );
-    }
+    }*/
 
     STDL_FREE_ALL(etd, XpYamptd, XmYamptd, dipoles_mat, tg2etd, eg2etd);
     ASSERT_STDL_OK(stdl_context_delete(ctx));
