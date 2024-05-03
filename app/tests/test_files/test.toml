@@ -7,7 +7,7 @@ source_type = "MOLDEN"
 method = "monopole"
 ethr = '25eV'
 ax = 1.0
-tda = 0
+tda = 1
 e2thr=1e-4
 
 [responses]
@@ -33,7 +33,7 @@ linear_sr = [
 ]
 
 quadratic_dr = [
-    {opA = 'dipl', nroots = 15}  # e2e transition dipoles
+    {opA = 'dipl', opB = 'angm', nroots = 5}  # e2e transition dipoles
 ]
 
 # [analyses]

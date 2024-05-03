@@ -206,17 +206,18 @@ Other operators will be added in the future.
     **Default**: `[]`
 
     List the single residue of the linear response functions, i.e., the ground-to-excited states properties, to compute.
-    Each request for $\braket{0|\hat A|m}\braket{m|\hat B|B}$ is to be given as: `{opA = "A", opB = "B", root = N}`.
+    Each request for $\braket{0|\hat A|m}\braket{m|\hat B|0}$ is to be given as: `{opA = "A", opB = "B", nroots = N}`.
+
+    `opB` is optional: it will be assumed that `opB` = `opA` if not provided. 
     `N` is the number of excited states, $\ket{m}$, to consider.
     If `N` < 0, all possible excited states (*i.e.*, corresponding to the number of CSFs) are computed.
-    `opB` is optional: it will be assumed that `opB` = `opA` if not provided. 
 
     For example, the following input will compute the transition dipole moments (and corresponding oscillator strength) for the 15 first excited states (dipole length formalism):
 
     ```toml
     [responses]
     linear_sr = [
-        {opA = 'dipl', root = 15}
+        {opA = 'dipl', nroots = 15}
     ]
     ```
 
@@ -225,7 +226,7 @@ Other operators will be added in the future.
     ```toml
     [responses]
     linear_sr = [
-        {opA = 'dipv', opB = 'angm', root = -1}
+        {opA = 'dipv', opB = 'angm', nroots = -1}
     ]
     ```
 
@@ -244,6 +245,29 @@ Other operators will be added in the future.
     [responses]
     quadratic = [
         {opA = 'dipl', opB = 'dipl', opC = 'dipl', wB = '1064nm', wC = '1064nm'}, 
+    ]
+    ```
+
+!!! abstract "Double residue of the quadratic response"
+
+    **Type**: `list`
+    **Keyword**: `quadratic_dr`
+    **Default**: `[]`
+
+    List the double residue of the quadratic response functions, i.e., the excited-to-excited states properties, to compute.
+    Each request for $\braket{m|\hat A-\delta_{mn}\,\braket{0|\hat A|0}|n}$ (and the same for $\hat B$ and $\hat C$) is to be given as: `{opA = "A", opB = "B", opC = "C", nroots = N}`.
+    
+    `opB` and `opC` are optional: it will be assumed that `opB` = `opA` and  `opC` = `opA` if not provided. 
+    `N` is the number of excited states, $\ket{m}, \ket{n}$, to consider, which results in $\frac{N\,(N+1)}{2}$ transitions with $m\leq n$.
+    If `N` < 0, all possible excited-to-excited (*i.e.*, corresponding to the number of CSFs) are computed.
+    Thic can be time consuming, as the number of transitions scales as $\mathcal{O}(N^2)$.
+
+    For example, the following input will compute the fluctuation and excited-to-excited transition dipole moments (and corresponding oscillator strength) for the 5 first excited states (15 possible transitions):
+
+    ```toml
+    [responses]
+    quadratic_dr = [
+        {opA = 'dipl', nroots = 5}
     ]
     ```
 

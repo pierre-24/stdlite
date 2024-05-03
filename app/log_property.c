@@ -211,94 +211,94 @@ void stdl_log_property_amplitude_contributions(stdl_responses_handler *rh, stdl_
     }
 }
 
+static inline size_t _biop(size_t op0, size_t op1) {
+    return (op0 < op1) ? op0 * STDL_OP_COUNT + op1 : op1 * STDL_OP_COUNT + op0;
+}
+
 int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx, stdl_operator ops[2], size_t nexci, float *tg2e) {
     assert(rh != NULL && ctx != NULL && tg2e != NULL && nexci > 0);
 
-    size_t dim0 = STDL_OPERATOR_DIM[ops[0]], dim1 = STDL_OPERATOR_DIM[ops[1]];
+    size_t dims[] = {STDL_OPERATOR_DIM[ops[0]], STDL_OPERATOR_DIM[ops[1]]};
+    int show[] = {1, ops[0] != ops[1]};
+    size_t biop = _biop(ops[0], ops[1]);
+    int show_biop = dims[0] == dims[1];
 
     // headers
-    stdl_log_msg(0, "**    -------- Energy ------- ");
-    for (size_t cpt = 0; cpt < dim0 * 2; ++cpt)
-        stdl_log_msg(0, "-");
-    stdl_log_msg(0, " <0|%4s|m> ", STDL_OPERATOR_NAME[ops[0]]);
-    for (size_t cpt = 0; cpt < dim0 * 7 - 13; ++cpt)
-        stdl_log_msg(0, "-");
-
-    if(ops[0] != ops[1]) {
-        stdl_log_msg(0, " ");
-        for (size_t cpt = 0; cpt < dim1 * 2; ++cpt)
-            stdl_log_msg(0, "-");
-        stdl_log_msg(0, " <0|%4s|m> ", STDL_OPERATOR_NAME[ops[1]]);
-        for (size_t cpt = 0; cpt < dim1 * 7 - 13; ++cpt)
-            stdl_log_msg(0, "-");
+    stdl_log_msg(0, "**    -------- Energy -------");
+    for (size_t iop = 0; iop < 2; ++iop) {
+        if(show[iop]) {
+            stdl_log_msg(0, " ");
+            for (size_t cpt = 0; cpt < dims[iop] * 2; ++cpt)
+                stdl_log_msg(0, "-");
+            stdl_log_msg(0, " <m|%4s|n> ", STDL_OPERATOR_NAME[ops[iop]]);
+            for (size_t cpt = 0; cpt < dims[iop] * 7 - 13; ++cpt)
+                stdl_log_msg(0, "-");
+        }
     }
 
-    if(dim0 == dim1) {
+    if(show_biop) {
         stdl_log_msg(0, " --------");
-        if ((ops[0] == ops[1] && ops[0] == STDL_OP_DIPL) // fL
-            || (ops[0] == ops[1] && ops[0] == STDL_OP_DIPV) // fV
-            || ((ops[0] == STDL_OP_DIPL && ops[1] == STDL_OP_ANGM) || (ops[1] == STDL_OP_DIPL && ops[0] == STDL_OP_ANGM)) // RL
-            || ((ops[0] == STDL_OP_DIPV && ops[1] == STDL_OP_ANGM) || (ops[1] == STDL_OP_DIPV && ops[0] == STDL_OP_ANGM)) // RV
-            )
+        if(biop == _biop(STDL_OP_DIPL, STDL_OP_DIPL)
+           || biop == _biop(STDL_OP_DIPV, STDL_OP_DIPV)
+           || biop == _biop(STDL_OP_DIPL, STDL_OP_ANGM)
+           || biop == _biop(STDL_OP_DIPV, STDL_OP_ANGM)
+                )
             stdl_log_msg(0, "---------");
     }
 
     stdl_log_msg(0, "\n");
 
     stdl_log_msg(0, "       (Eh)     (eV)    (nm) ");
-    for (size_t cpt = 0; cpt < dim0; ++cpt)
-        stdl_log_msg(0, "   %-3d   ", cpt);
-
-    if (ops[0] != ops[1]) {
-        for (size_t cpt = 0; cpt < dim1; ++cpt)
-            stdl_log_msg(0, "   %-3d   ", cpt);
+    for (size_t iop = 0; iop < 2; ++iop) {
+        if(show[iop]) {
+            for (size_t cpt = 0; cpt < dims[iop]; ++cpt)
+                stdl_log_msg(0, "   %-3d   ", cpt);
+        }
     }
 
-    if(dim0 == dim1) {
+    if(show_biop) {
         stdl_log_msg(0, "    A·B  ");
-
-        if (ops[0] == ops[1] && ops[0] == STDL_OP_DIPL)
+        if(biop == _biop(STDL_OP_DIPL, STDL_OP_DIPL))
             stdl_log_msg(0, "    fL   ");
-        else if (ops[0] == ops[1] && ops[0] == STDL_OP_DIPV)
+        else if(biop == _biop(STDL_OP_DIPV, STDL_OP_DIPV))
             stdl_log_msg(0, "    fV   ");
-        else if ((ops[0] == STDL_OP_DIPL && ops[1] == STDL_OP_ANGM) || (ops[1] == STDL_OP_DIPL && ops[0] == STDL_OP_ANGM))
+        else if(biop == _biop(STDL_OP_DIPL, STDL_OP_ANGM))
             stdl_log_msg(0, "    RL   ");
-        else if ((ops[0] == STDL_OP_DIPV && ops[1] == STDL_OP_ANGM) || (ops[1] == STDL_OP_DIPV && ops[0] == STDL_OP_ANGM))
+        else if(biop == _biop(STDL_OP_DIPV, STDL_OP_ANGM))
             stdl_log_msg(0, "    RV   ");
     }
-
     stdl_log_msg(0, "\n");
 
     for (size_t iexci = 0; iexci < nexci; ++iexci) {
         // print energies
         stdl_log_msg(0, "%4ld %8.5f %7.3f %7.2f", iexci + 1, rh->eexci[iexci], rh->eexci[iexci] * STDL_CONST_AU_TO_EV, STDL_CONST_HC / rh->eexci[iexci]);
 
-        for (size_t cpt = 0; cpt < dim0; ++cpt) {
-            stdl_log_msg(0, " % 8.5f",tg2e[cpt * nexci + iexci]);
-        }
-
-        if (ops[0] != ops[1]) {
-            for (size_t cpt = 0; cpt < dim1; ++cpt) {
-                stdl_log_msg(0, " % 8.5f",tg2e[(dim0 + cpt) * nexci + iexci]);
+        size_t shift = 0;
+        for (int iop = 0; iop < 2; ++iop) {
+            if(show[iop]) {
+                for (size_t cpt = 0; cpt < dims[iop]; ++cpt) {
+                    stdl_log_msg(0, " % 8.5f", tg2e[(shift + cpt) * nexci + iexci]);
+                }
             }
 
+            shift += dims[iop];
         }
 
-        if(dim0 == dim1) {
+        if(show_biop) {
             float dotp = .0f;
-            for (size_t cpt = 0; cpt < dim1; ++cpt) {
-                dotp += tg2e[cpt * nexci + iexci] * tg2e[(dim0 + cpt) * nexci + iexci];
+            for (size_t cpt = 0; cpt < dims[1]; ++cpt) {
+                dotp += tg2e[cpt * nexci + iexci] * tg2e[(dims[0] + cpt) * nexci + iexci];
             }
 
             stdl_log_msg(0, " % 8.5f", dotp);
 
-            if(ops[0] == ops[1] && ops[0] == STDL_OP_DIPL)
+            if(biop == _biop(STDL_OP_DIPL, STDL_OP_DIPL))
                 stdl_log_msg(0, " % 8.5f", 2.f/3 * rh->eexci[iexci] * dotp);
-            else if(ops[0] == ops[1] && ops[0] == STDL_OP_DIPV)
+            if(biop == _biop(STDL_OP_DIPV, STDL_OP_DIPV))
                 stdl_log_msg(0, " % 8.5f", 2.f/3 / rh->eexci[iexci] * dotp);
-            else if ((ops[0] == STDL_OP_DIPL && ops[1] == STDL_OP_ANGM) || (ops[1] == STDL_OP_DIPL && ops[0] == STDL_OP_ANGM))
+            if(biop == _biop(STDL_OP_DIPL, STDL_OP_ANGM))
                 stdl_log_msg(0, " % 8.5f", -.5* dotp);
-            else if ((ops[0] == STDL_OP_DIPV && ops[1] == STDL_OP_ANGM) || (ops[1] == STDL_OP_DIPV && ops[0] == STDL_OP_ANGM))
+            if(biop == _biop(STDL_OP_DIPV, STDL_OP_ANGM))
                 stdl_log_msg(0, " % 8.5f", -.5 * 1 / rh->eexci[iexci] * dotp);
 
         }
@@ -307,10 +307,6 @@ int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx,
     }
 
     return STDL_ERR_OK;
-}
-
-size_t _biops(size_t op0, size_t op1) {
-    return (op0 < op1) ? op0 * STDL_OP_COUNT + op1 : op1 * STDL_OP_COUNT + op0;
 }
 
 int stdl_log_property_e2e_moments(stdl_responses_handler *rh, stdl_context *ctx, stdl_operator ops[3], size_t nexci, float *te2e) {
@@ -324,10 +320,10 @@ int stdl_log_property_e2e_moments(stdl_responses_handler *rh, stdl_context *ctx,
     for (size_t iop = 0; iop < 3; ++iop) {
         if(show[iop]) {
             stdl_log_msg(0, " ");
-            for (size_t cpt = 0; cpt < dims[iop] * 2; ++cpt)
+            for (size_t cpt = 0; cpt < dims[iop] * 1; ++cpt)
                 stdl_log_msg(0, "-");
-            stdl_log_msg(0, " fluct. %4s ", STDL_OPERATOR_NAME[ops[iop]]);
-            for (size_t cpt = 0; cpt < dims[iop] * 7 - 14; ++cpt)
+            stdl_log_msg(0, " <m|bar(%4s)|m> ", STDL_OPERATOR_NAME[ops[iop]], STDL_OPERATOR_NAME[ops[iop]]);
+            for (size_t cpt = 0; cpt < dims[iop] * 8 - 18; ++cpt)
                 stdl_log_msg(0, "-");
         }
     }
@@ -360,7 +356,7 @@ int stdl_log_property_e2e_moments(stdl_responses_handler *rh, stdl_context *ctx,
         stdl_log_msg(0, "\n");
     }
 
-    size_t biops[] = {_biops(ops[0], ops[1]), _biops(ops[0], ops[2]), _biops(ops[1], ops[2])};
+    size_t biops[] = {_biop(ops[0], ops[1]), _biop(ops[1], ops[2]), _biop(ops[0], ops[2])};
     int show_biops[] = {dims[0] == dims[1], dims[0] == dims[2] && biops[1] != biops[0], dims[1] == dims[2] && biops[2] != biops[0] && biops[2] != biops[1]};
 
     // headers
@@ -379,7 +375,11 @@ int stdl_log_property_e2e_moments(stdl_responses_handler *rh, stdl_context *ctx,
     for (size_t biop = 0; biop < 3; ++biop) {
         if(show_biops[biop]) {
             stdl_log_msg(0, " --------");
-            if(biops[biop] == _biops(STDL_OP_DIPL, STDL_OP_DIPL))
+            if(biops[biop] == _biop(STDL_OP_DIPL, STDL_OP_DIPL)
+                || biops[biop] == _biop(STDL_OP_DIPV, STDL_OP_DIPV)
+                || biops[biop] == _biop(STDL_OP_DIPL, STDL_OP_ANGM)
+                || biops[biop] == _biop(STDL_OP_DIPV, STDL_OP_ANGM)
+            )
                 stdl_log_msg(0, "---------");
         }
     }
@@ -394,17 +394,21 @@ int stdl_log_property_e2e_moments(stdl_responses_handler *rh, stdl_context *ctx,
         }
     }
 
-    for (size_t biop = 0; biop < 3; ++biop) {
-        if(show_biops[biop]) {
-            stdl_log_msg(0, "   %c·%c   ",  biop == 0 ? 'A': 'B', biop == 0 ? 'B': 'C');
-            if(biops[biop] == _biops(STDL_OP_DIPL, STDL_OP_DIPL))
-                stdl_log_msg(0, "   fL    ");
+    for (size_t ibiop = 0; ibiop < 3; ++ibiop) {
+        if(show_biops[ibiop]) {
+            stdl_log_msg(0, "    %c·%c  ", ibiop == 1 ? 'B' : 'A', ibiop == 0 ? 'B' : 'C');
+            if(biops[ibiop] == _biop(STDL_OP_DIPL, STDL_OP_DIPL))
+                stdl_log_msg(0, "    fL   ");
+            else if(biops[ibiop] == _biop(STDL_OP_DIPV, STDL_OP_DIPV))
+                stdl_log_msg(0, "    fV   ");
+            else if(biops[ibiop] == _biop(STDL_OP_DIPL, STDL_OP_ANGM))
+                stdl_log_msg(0, "    RL   ");
+            else if(biops[ibiop] == _biop(STDL_OP_DIPV, STDL_OP_ANGM))
+                stdl_log_msg(0, "    RV   ");
         }
     }
 
-
     stdl_log_msg(0, "\n");
-
 
     for(size_t iexci=0; iexci < nexci - 1; iexci++) {
         for(size_t jexci=iexci + 1; jexci < nexci; jexci++) {
@@ -414,7 +418,7 @@ int stdl_log_property_e2e_moments(stdl_responses_handler *rh, stdl_context *ctx,
             size_t shift = 0;
             for (int iop = 0; iop < 3; ++iop) {
                 if(show[iop]) {
-                    for (size_t cpt = 0; cpt < dims[0]; ++cpt) {
+                    for (size_t cpt = 0; cpt < dims[iop]; ++cpt) {
                         stdl_log_msg(0, " % 8.5f", te2e[(shift + cpt) * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(iexci, jexci)]);
                     }
                 }
@@ -424,15 +428,22 @@ int stdl_log_property_e2e_moments(stdl_responses_handler *rh, stdl_context *ctx,
 
             for (size_t biop = 0; biop < 3; ++biop) {
                 if(show_biops[biop]) {
-                    size_t xop = biop == 0 ? 0 :1, yop = biop == 0 ? 1 : 2;
+                    size_t xop = biop == 1 ? 1 : 0, yop = biop == 0 ? 1 : 2;
                     float dotp = 0;
                     for (size_t cpt = 0; cpt < dims[xop]; ++cpt) {
-                        dotp += te2e[cpt * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(iexci, jexci)] *  te2e[cpt * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(iexci, jexci)];
+                        dotp += te2e[((xop == 1? dims[0]: 0) + cpt) * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(iexci, jexci)] *
+                                te2e[(dims[0] + (yop == 2? dims[1] : 0) + cpt) * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(iexci, jexci)];
                     }
 
                     stdl_log_msg(0, " % 8.5f", dotp);
-                    if(biops[biop] == _biops(STDL_OP_DIPL, STDL_OP_DIPL))
+                    if(biops[biop] == _biop(STDL_OP_DIPL, STDL_OP_DIPL))
                         stdl_log_msg(0, " % 8.5f", 2.f/3 * ediff * dotp);
+                    else if(biops[biop] == _biop(STDL_OP_DIPV, STDL_OP_DIPV))
+                        stdl_log_msg(0, " % 8.5f", 2.f/3 / ediff * dotp);
+                    else if(biops[biop] == _biop(STDL_OP_DIPL, STDL_OP_ANGM))
+                        stdl_log_msg(0, " % 8.5f", -.5f * dotp);
+                    else if(biops[biop] == _biop(STDL_OP_DIPV, STDL_OP_ANGM))
+                        stdl_log_msg(0, " % 8.5f", .5 * 1 / ediff * dotp);
                 }
             }
 

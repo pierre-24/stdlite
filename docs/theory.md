@@ -485,15 +485,6 @@ u^m_{ia} & \text{otherwise}.
     
     on Eq. (5).
 
-Different ground to excited moments, related to experimentally measurable properties, can be extracted (all given in atomic units):
-
-| Property            | Dipole length                                                   | Dipole velocity                                                          |
-|---------------------|-----------------------------------------------------------------|--------------------------------------------------------------------------|
-| Oscillator strength | $f^L_{0m} = \frac{2}{3}\,\omega_m\, \|\vec\mu^L_{0m} \|^2$      | $f^L_{0m} = \frac{2}{3\,\omega_m}\, \|\vec\mu^V_{0m} \|^2$               |
-| Rotatory strength   | $R^L_{0m} = -\frac{1}{2}\, \Im(\vec\mu^L_{0m}\cdot\vec m_{0m})$ | $R^V_{0m} = -\frac{1}{2\,\omega_m}\,\Re(\vec\mu^V_{0m}\cdot\vec m_{0m})$ | 
-
-See, *e.g.*, [10.1016/j.comptc.2014.02.023](https://doi.org/10.1016/j.comptc.2014.02.023), for a discussion on the differences between the two formalisms.
-
 For an exact wavefunction, quadratic responses are given by:
 
 $$\braket{\braket{\hat A; \hat B, \hat C}} = \sum_{[A,B,C]} \sum_{\ket{m}, \ket{n}} \frac{\braket{0|\hat A|m}\braket{m|\hat B - \delta_{mn}\,\braket{0|\hat B|0}|n}\braket{n|\hat C|0}}{(\omega_A+\omega_m)\,(\omega_C-\omega_n)},$$
@@ -531,6 +522,15 @@ which is therefore equal to the fluctuation operator if $m = n$.
     \end{aligned}$$
     
     on Eq. (6), and recognising the expression of $\braket{0|\hat B|m}$ and $\braket{n|\hat C|0}$ given above.
+
+Different ground (or excited) to excited moments, related to experimentally measurable properties, can be extracted (all given in atomic units):
+
+| Property            | Dipole length                                                         | Dipole velocity                                                                     |
+|---------------------|-----------------------------------------------------------------------|-------------------------------------------------------------------------------------|
+| Oscillator strength | $f^L_{mn} = \frac{2}{3}\,(\omega_n-\omega_m)\, \|\vec\mu^L_{mn} \|^2$ | $f^L_{mn} = \frac{2}{3\,(\omega_n-\omega_m)}\, \|\vec\mu^V_{mn} \|^2$               |
+| Rotatory strength   | $R^L_{mn} = -\frac{1}{2}\, \Im(\vec\mu^L_{mn}\cdot\vec m_{mn})$       | $R^V_{mn} = -\frac{1}{2\,(\omega_n-\omega_m)}\,\Re(\vec\mu^V_{mn}\cdot\vec m_{mn})$ | 
+
+See, *e.g.*, [10.1016/j.comptc.2014.02.023](https://doi.org/10.1016/j.comptc.2014.02.023), for a discussion on the differences between the two formalisms.
 
 ## Sources and references
 
