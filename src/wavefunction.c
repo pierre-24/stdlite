@@ -172,7 +172,7 @@ int stdl_wavefunction_dump_h5(stdl_wavefunction* wf, hid_t file_id) {
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", wf_group_id);
 
     // C
-    status = H5LTmake_dataset(wf_group_id, "C", 2, (hsize_t[]) {wf->nao, wf->nmo}, H5T_NATIVE_DOUBLE, wf->C);
+    status = H5LTmake_dataset(wf_group_id, "C", 2, (hsize_t[]) {wf->nmo, wf->nao}, H5T_NATIVE_DOUBLE, wf->C);
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", wf_group_id);
 
     // e

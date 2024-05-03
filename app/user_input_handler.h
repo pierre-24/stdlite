@@ -194,17 +194,6 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp);
  */
 int stdl_user_input_handler_make_context(stdl_user_input_handler* inp, stdl_context **ctx_ptr);
 
-
-/**
- * Compute (and display) the properties requested by the user.
- *
- * @param inp a valid user input
- * @param ctx a valid context
- * @return error code
- * @ingroup user_input_handler
- */
-int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, stdl_context* ctx);
-
 /**
  * Get the approximate space in memory
  * @param inp a valid user input

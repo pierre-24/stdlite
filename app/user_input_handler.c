@@ -750,7 +750,7 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
         stdl_log_msg(0, "linear = [\n");
         req = inp->res_resreqs;
         while(req != NULL) {
-            if(req->resp_order == 1 && req->res_order == 0) {
+            if(req->resp_order == 1 && req->resi_order == 0) {
                 stdl_log_msg(0, "  {");
                 _op_log("opA", req->ops[0]);
                 stdl_log_msg(0, ", ");
@@ -765,7 +765,7 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
         stdl_log_msg(0, "quadratic = [\n");
         req = inp->res_resreqs;
         while(req != NULL) {
-            if(req->resp_order == 2 && req->res_order == 0) {
+            if(req->resp_order == 2 && req->resi_order == 0) {
                 stdl_log_msg(0, "  {");
                 _op_log("opA", req->ops[0]);
                 stdl_log_msg(0, ", ");
@@ -782,7 +782,7 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
         stdl_log_msg(0, "linear_sr = [\n");
         req = inp->res_resreqs;
         while(req != NULL) {
-            if(req->resp_order == 1 && req->res_order == 1) {
+            if(req->resp_order == 1 && req->resi_order == 1) {
                 stdl_log_msg(0, "  {");
                 _op_log("opA", req->ops[0]);
                 stdl_log_msg(0, ", ");
@@ -797,7 +797,7 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
         stdl_log_msg(0, "quadratic_dr = [\n");
         req = inp->res_resreqs;
         while(req != NULL) {
-            if(req->resp_order == 2 && req->res_order == 2) {
+            if(req->resp_order == 2 && req->resi_order == 2) {
                 stdl_log_msg(0, "  {");
                 _op_log("opA", req->ops[0]);
                 stdl_log_msg(0, ", ");

@@ -15,7 +15,7 @@ int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator
     STDL_DEBUG("create response_request %p", *req_ptr);
 
     (*req_ptr)->resp_order = resp_order;
-    (*req_ptr)->res_order = res_order;
+    (*req_ptr)->resi_order = res_order;
     (*req_ptr)->nroots = nroots;
     (*req_ptr)->nops = resp_order+1;
     (*req_ptr)->nlrvs = (resp_order == res_order) ? 0 : (*req_ptr)->nops;
@@ -60,7 +60,7 @@ int stdl_response_request_approximate_size(stdl_response_request *req, size_t ne
         stdl_response_request_approximate_size(req->next, nexci, &next_sz);
 
     if(req->property_tensor != NULL) {
-        if(req->res_order == 0) {
+        if(req->resi_order == 0) {
             for (size_t iop = 0; iop < req->nops; ++iop) {
                 tensor_sz *= STDL_OPERATOR_DIM[iop];
             }
@@ -91,7 +91,7 @@ int stdl_response_request_dump_h5(stdl_response_request *req, size_t maxnexci, h
     stdl_log_msg(0, "Saving property >");
     stdl_log_msg(1, "\n  | Saving data ");
 
-    herr_t status = H5LTmake_dataset(group_id, "info", 1, (hsize_t[]) {5}, H5T_NATIVE_ULONG, (size_t[]) {req->resp_order, req->res_order,  req->nops, req->nlrvs, req->res_order > 0 ? maxnexci : 0});
+    herr_t status = H5LTmake_dataset(group_id, "info", 1, (hsize_t[]) {5}, H5T_NATIVE_ULONG, (size_t[]) {req->resp_order, req->resi_order, req->nops, req->nlrvs, req->resi_order > 0 ? maxnexci : 0});
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", group_id);
 
     status = H5LTmake_dataset(group_id, "ops", 1, (hsize_t[]) {(hsize_t) req->nops}, H5T_NATIVE_INT, req->ops);
@@ -108,20 +108,20 @@ int stdl_response_request_dump_h5(stdl_response_request *req, size_t maxnexci, h
         hsize_t dims[3] = {0};
         int rank = 0;
 
-        if (req->resp_order == 1 && req->res_order == 0) {
+        if (req->resp_order == 1 && req->resi_order == 0) {
             dims[0] = (hsize_t) STDL_OPERATOR_DIM[req->ops[0]];
             dims[1] = (hsize_t) STDL_OPERATOR_DIM[req->ops[1]];
             rank = 2;
-        } else if (req->resp_order == 2 && req->res_order == 0) {
+        } else if (req->resp_order == 2 && req->resi_order == 0) {
             dims[0] = (hsize_t) STDL_OPERATOR_DIM[req->ops[0]];
             dims[1] = (hsize_t) STDL_OPERATOR_DIM[req->ops[1]];
             dims[2] = (hsize_t) STDL_OPERATOR_DIM[req->ops[2]];
             rank = 3;
-        } else if (req->resp_order == 1 && req->res_order == 1) {
+        } else if (req->resp_order == 1 && req->resi_order == 1) {
             dims[0] = (hsize_t) (STDL_OPERATOR_DIM[req->ops[0]] + STDL_OPERATOR_DIM[req->ops[1]]);
             dims[1] = (hsize_t) (req->nroots < 0? maxnexci : req->nroots);
             rank = 2;
-        } else if (req->resp_order == 2 && req->res_order == 2) {
+        } else if (req->resp_order == 2 && req->resi_order == 2) {
             dims[0] = (hsize_t) (STDL_OPERATOR_DIM[req->ops[0]] + STDL_OPERATOR_DIM[req->ops[1]] + STDL_OPERATOR_DIM[req->ops[2]]);
             dims[1] = (hsize_t) STDL_MATRIX_SP_SIZE(req->nroots < 0? maxnexci : req->nroots);
             rank = 2;

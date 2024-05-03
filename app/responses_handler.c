@@ -106,9 +106,6 @@ int stdl_op_data_dump_h5(stdl_op_data *data, stdl_context *ctx, hid_t group_id) 
         status = H5LTmake_dataset(op_group_id, "w", 1, (hsize_t[]) {data->nlrvs}, H5T_NATIVE_FLOAT, data->w);
         STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", op_group_id);
 
-        status = H5LTmake_dataset(op_group_id, "egrad", 2, (hsize_t[]) {ctx->ncsfs, STDL_OPERATOR_DIM[data->op]}, H5T_NATIVE_FLOAT, data->egrad);
-        STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", op_group_id);
-
         status = H5LTmake_dataset(op_group_id, "X+Y", 3, (hsize_t[]) {data->nlrvs, ctx->ncsfs, STDL_OPERATOR_DIM[data->op]}, H5T_NATIVE_FLOAT, data->XpY);
         STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", op_group_id);
 
@@ -212,7 +209,7 @@ int stdl_responses_handler_new_from_input(stdl_user_input_handler* inp, stdl_con
         }
 
         // check out if it requires amplitudes
-        if(req->res_order > 0) {
+        if(req->resi_order > 0) {
             if(req->nroots < 0)
                 res_nexci = ctx->ncsfs;
             else if((size_t) req->nroots > res_nexci) {
@@ -461,7 +458,7 @@ int stdl_response_handler_compute_properties(stdl_responses_handler* rh, stdl_us
     stdl_response_request* req = inp->res_resreqs;
     char buffattr[256];
     while (req != NULL) {
-        if(req->resp_order == 1 && req->res_order == 0) { // linear
+        if(req->resp_order == 1 && req->resi_order == 0) { // linear
             stdl_lrv* lrvs[] = {NULL, NULL};
 
             err = _find_lrvs(rh, inp, req, lrvs);
@@ -483,7 +480,7 @@ int stdl_response_handler_compute_properties(stdl_responses_handler* rh, stdl_us
                     STDL_OPERATOR_NAME[req->ops[1]],
                     inp->res_w[req->iw[1]]);
 
-        } else if(req->resp_order == 2 && req->res_order == 0) { // quadratic
+        } else if(req->resp_order == 2 && req->resi_order == 0) { // quadratic
             stdl_lrv* lrvs[] = {NULL, NULL, NULL};
 
             err = _find_lrvs(rh, inp, req, lrvs);
@@ -509,7 +506,7 @@ int stdl_response_handler_compute_properties(stdl_responses_handler* rh, stdl_us
             else
                 stdl_log_property_quadratic_tensor(req, req->property_tensor, inp->res_w[req->iw[1]], inp->res_w[req->iw[2]]);
 
-        } else if(req->resp_order == 1 && req->res_order == 1) { // linear SR
+        } else if(req->resp_order == 1 && req->resi_order == 1) { // linear SR
             size_t nexci = req->nroots < 0 ? rh->nexci : req->nroots;
 
             req->property_tensor = malloc(nexci * (STDL_OPERATOR_DIM[req->ops[0]] +  STDL_OPERATOR_DIM[req->ops[1]]) * sizeof(float ));
@@ -530,7 +527,7 @@ int stdl_response_handler_compute_properties(stdl_responses_handler* rh, stdl_us
                     STDL_OPERATOR_NAME[req->ops[0]],
                     STDL_OPERATOR_NAME[req->ops[1]]
                     );
-        } else if(req->resp_order == 2 && req->res_order == 2) { // quadratic DR
+        } else if(req->resp_order == 2 && req->resi_order == 2) { // quadratic DR
             size_t nexci = req->nroots < 0 ? rh->nexci : req->nroots;
             req->property_tensor = malloc(STDL_MATRIX_SP_SIZE(nexci) * (STDL_OPERATOR_DIM[req->ops[0]] +  STDL_OPERATOR_DIM[req->ops[1]]  +  STDL_OPERATOR_DIM[req->ops[2]]) * sizeof(float ));
             STDL_ERROR_HANDLE_AND_REPORT(req->property_tensor == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
@@ -572,7 +569,7 @@ int stdl_response_handler_compute_properties(stdl_responses_handler* rh, stdl_us
     }
 
     // write info in H5
-    status = H5LTmake_dataset(prop_group_id, "info", 1, (hsize_t[]) {1}, H5T_NATIVE_ULONG, (size_t[]) {ireq});
+    status = H5LTmake_dataset(prop_group_id, "info", 1, (hsize_t[]) {2}, H5T_NATIVE_ULONG, (size_t[]) {ireq, inp->res_nw});
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", prop_group_id);
 
     _end:
