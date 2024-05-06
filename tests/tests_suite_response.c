@@ -49,7 +49,7 @@ void _make_response_vector(stdl_context *ctx, float w, int issym, int isherm, do
 void test_response_egrad_antisym_ok() {
     stdl_wavefunction *wf = NULL;
     stdl_basis *bs = NULL;
-    read_fchk("../tests/test_files/water_sto3g.fchk", &wf, &bs);
+    read_molden("../tests/test_files/chiral_sto3g.molden", &wf, &bs);
 
     stdl_context *ctx = NULL;
     ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 20. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
@@ -60,7 +60,7 @@ void test_response_egrad_antisym_ok() {
     double *op_mat_sp = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(op_mat_sp);
 
-    make_int1e_MO(wf, bs, STDL_OP_DIPV, 1., ctx, op_mat_sp);
+    make_int1e_MO(wf, bs, STDL_OP_ANGM, 1., ctx, op_mat_sp);
 
     // build egrad
     float *egrad = malloc(3 * ctx->ncsfs * sizeof(float));
@@ -311,8 +311,6 @@ void test_response_TD_ok() {
 }
 
 void test_response_TD_antisym_ok() {
-
-    // TEST_IGNORE_MESSAGE("latter");
 
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;

@@ -2,6 +2,7 @@
 #include <stdlite/utils/matrix.h>
 #include <stdlite/helpers.h>
 #include <stdlite/utils/experimental_quantity.h>
+#include <stdlite/utils/permutations.h>
 #include <stdlite/property_tensor.h>
 #include <stdlite/integrals.h>
 
@@ -24,6 +25,52 @@ void _tensor_sos2(stdl_operator ops[2], float w, size_t nexci, float* e, float* 
             for (size_t iexci = 0; iexci < nexci; ++iexci) {
                 float v = tg2e[cpt_i * nexci + iexci] * tg2e[(dim0 + cpt_j) * nexci + iexci];
                 tensor_sos[cpt_i * dim0 + cpt_j] += -v * (1 / (w - e[iexci]) - trs / (w + e[iexci]));
+            }
+        }
+    }
+}
+
+struct _perm_beta {
+    float* tg2e;
+    float* te2e;
+    float w;
+};
+
+void _tensor_sos3(stdl_operator ops[3], float w[3], size_t nexci, float* e, float* tg2e, float* te2e, float* tensor_sos) {
+
+    size_t dims[] = {STDL_OPERATOR_DIM[ops[0]], STDL_OPERATOR_DIM[ops[1]], STDL_OPERATOR_DIM[ops[2]]};
+
+    for (size_t cpt_i = 0; cpt_i < dims[0]; ++cpt_i) {
+        for (size_t cpt_j = 0; cpt_j < dims[1]; ++cpt_j) {
+            for (size_t cpt_k = 0; cpt_k < dims[2]; ++cpt_k) {
+                float tv = .0f;
+
+                stdl_permutations* set = NULL;
+                ASSERT_STDL_OK(stdl_permutations_new((struct _perm_beta[]) {
+                        {tg2e + cpt_i * nexci, te2e + cpt_i * STDL_MATRIX_SP_SIZE(nexci), -w[0]},
+                        {tg2e + (dims[0] + cpt_j) * nexci, te2e + (dims[0] + cpt_j) * STDL_MATRIX_SP_SIZE(nexci), w[1]},
+                        {tg2e + (dims[0] + dims[1] + cpt_k) * nexci, te2e + (dims[0] + dims[1] + cpt_k) * STDL_MATRIX_SP_SIZE(nexci), w[2]},
+                }, 3, sizeof(struct _perm_beta), &set));
+
+                stdl_permutations* current = set;
+                while(current != NULL) {
+                    struct _perm_beta* e0 = current->perm, *e1 = e0 + 1, *e2 = e0 + 2;
+                    float* tg2m = e0->tg2e, *tm2n = e1->te2e, *tn2g = e2->tg2e;
+                    float wA = e0->w, wC = e2->w;
+
+                    for (size_t iexci = 0; iexci < nexci; ++iexci) {
+                        for (size_t jexci = 0; jexci < nexci; ++jexci) {
+                            float v = tg2m[iexci] * tm2n[STDL_MATRIX_SP_IDX(iexci, jexci)] * tn2g[jexci];
+                            tv -= v / ((wA + e[iexci]) * (wC - e[jexci]));
+                        }
+                    }
+
+                    current = current->next;
+                }
+
+                tensor_sos[cpt_i * dims[0] * dims[1] + cpt_j * dims[1] + cpt_k] = tv;
+
+                ASSERT_STDL_OK(stdl_permutations_delete(set));
             }
         }
     }
@@ -291,7 +338,6 @@ void test_property_linear_tensor_TDA_SOS_ok() {
 
 
 void test_response_first_polarizability_TD_ok() {
-    TEST_IGNORE_MESSAGE("tmp");
 
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
@@ -365,8 +411,249 @@ void test_response_first_polarizability_TD_ok() {
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
 
+
+size_t test_quadratic_n = 2;
+stdl_operator test_quadratic_ops[] = {
+        STDL_OP_DIPL, STDL_OP_DIPL, STDL_OP_DIPL,
+        STDL_OP_DIPL, STDL_OP_DIPL, STDL_OP_DIPL,
+};
+
+float test_quadratic_w[] = {
+        .0f, .0f, .0f,
+        .1f, .05f, .05f,
+};
+
+void test_property_quadratic_tensor_TD_SOS_ok() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_molden("../tests/test_files/chiral_sto3g.molden", &wf, &bs);
+
+    stdl_context* ctx = NULL;
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 10. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
+
+    // fetch excitations
+    float* eexci = malloc(ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(eexci);
+
+    float* XpYamp = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(XpYamp);
+
+    float* XmYamp = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(XmYamp);
+
+    ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, eexci, XpYamp, XmYamp));
+
+    for (size_t itest = 0; itest < test_quadratic_n; ++itest) {
+        stdl_operator opA = test_quadratic_ops[itest * 3], opB = test_quadratic_ops[itest * 3 + 1], opC = test_quadratic_ops[itest * 3 + 2];
+
+        // compute integrals in MO basis
+        double* opA_ints = malloc(STDL_OPERATOR_DIM[opA] * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+        TEST_ASSERT_NOT_NULL(opA_ints);
+
+        make_int1e_MO(wf, bs, opA, opA == STDL_OP_DIPL ? -1 : 1, ctx, opA_ints);
+
+        double* opB_ints = malloc(STDL_OPERATOR_DIM[opB] * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+        TEST_ASSERT_NOT_NULL(opB_ints);
+
+        make_int1e_MO(wf, bs, opB, opB == STDL_OP_DIPL ? -1 : 1, ctx, opB_ints);
+
+        double* opC_ints = malloc(STDL_OPERATOR_DIM[opC] * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+        TEST_ASSERT_NOT_NULL(opC_ints);
+
+        make_int1e_MO(wf, bs, opC, opC == STDL_OP_DIPL ? -1 : 1, ctx, opC_ints);
+
+        // get transition moments
+        float* tg2e = malloc(ctx->ncsfs * (STDL_OPERATOR_DIM[opA] + STDL_OPERATOR_DIM[opB] + + STDL_OPERATOR_DIM[opC]) * sizeof(float ));
+        ASSERT_STDL_OK(stdl_property_tensor_g2e_moments(ctx, (stdl_operator []) {opA, opB}, (double*[]) {opA_ints, opB_ints}, ctx->ncsfs, XpYamp, XmYamp, tg2e));
+        ASSERT_STDL_OK(stdl_property_tensor_g2e_moments(ctx, (stdl_operator []) {opB, opC}, (double*[]) {opB_ints, opC_ints}, ctx->ncsfs, XpYamp, XmYamp, tg2e + STDL_OPERATOR_DIM[opA] * ctx->ncsfs));
+
+        float* te2e = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * (STDL_OPERATOR_DIM[opA] + STDL_OPERATOR_DIM[opB] + + STDL_OPERATOR_DIM[opC]) * sizeof(float ));
+        ASSERT_STDL_OK(stdl_property_tensor_e2e_moments(ctx, (stdl_operator []) {opA, opB, opC}, (double*[]) {opA_ints, opB_ints, opC_ints}, ctx->ncsfs, XpYamp, XmYamp, te2e));
+
+        // compute LRV for opA
+        float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
+        TEST_ASSERT_NOT_NULL(egrad);
+
+        ASSERT_STDL_OK(stdl_response_perturbed_gradient(ctx, STDL_OPERATOR_DIM[opA], STDL_OPERATOR_ISSYM[opA], opA_ints, egrad));
+
+        float* XpY_opA = malloc(test_linear_nw * STDL_OPERATOR_DIM[opA] * ctx->ncsfs * sizeof(float ));
+        TEST_ASSERT_NOT_NULL(XpY_opA);
+
+        float* XmY_opA = malloc(test_linear_nw * STDL_OPERATOR_DIM[opA] * ctx->ncsfs * sizeof(float ));
+        TEST_ASSERT_NOT_NULL(XmY_opA);
+
+        ASSERT_STDL_OK(stdl_response_TD_linear(ctx, 1, test_quadratic_w + itest * 3 + 0, STDL_OPERATOR_DIM[opA], STDL_OPERATOR_HERMITIAN[opA], egrad, XpY_opA, XmY_opA));
+
+        // compute LRV for opB
+        ASSERT_STDL_OK(stdl_response_perturbed_gradient(ctx, STDL_OPERATOR_DIM[opB], STDL_OPERATOR_ISSYM[opB], opB_ints, egrad));
+
+        float* XpY_opB = malloc(test_linear_nw * STDL_OPERATOR_DIM[opB] * ctx->ncsfs * sizeof(float ));
+        TEST_ASSERT_NOT_NULL(XpY_opB);
+
+        float* XmY_opB = malloc(test_linear_nw * STDL_OPERATOR_DIM[opB] * ctx->ncsfs * sizeof(float ));
+        TEST_ASSERT_NOT_NULL(XmY_opB);
+
+        ASSERT_STDL_OK(stdl_response_TD_linear(ctx, 1, test_quadratic_w + itest * 3 + 1, STDL_OPERATOR_DIM[opB], STDL_OPERATOR_HERMITIAN[opB], egrad, XpY_opB, XmY_opB));
+
+        // compute LRV for opC
+        ASSERT_STDL_OK(stdl_response_perturbed_gradient(ctx, STDL_OPERATOR_DIM[opC], STDL_OPERATOR_ISSYM[opC], opC_ints, egrad));
+
+        float* XpY_opC = malloc(test_linear_nw * STDL_OPERATOR_DIM[opC] * ctx->ncsfs * sizeof(float ));
+        TEST_ASSERT_NOT_NULL(XpY_opC);
+
+        float* XmY_opC = malloc(test_linear_nw * STDL_OPERATOR_DIM[opC] * ctx->ncsfs * sizeof(float ));
+        TEST_ASSERT_NOT_NULL(XmY_opC);
+
+        ASSERT_STDL_OK(stdl_response_TD_linear(ctx, 1, test_quadratic_w + itest * 3 + 2, STDL_OPERATOR_DIM[opC], STDL_OPERATOR_HERMITIAN[opC], egrad, XpY_opC, XmY_opC));
+
+        // compute tensor and compare
+        float* tensor_resp = malloc(STDL_OPERATOR_DIM[opA] * STDL_OPERATOR_DIM[opB] * STDL_OPERATOR_DIM[opC] * sizeof(float ));
+        float* tensor_sos = malloc(STDL_OPERATOR_DIM[opA] * STDL_OPERATOR_DIM[opB] * STDL_OPERATOR_DIM[opC] * sizeof(float ));
+
+        stdl_lrv lrv0 = {STDL_OP_DIPL, opA_ints, test_quadratic_w[itest * 3 + 0], XpY_opA, XmY_opA};
+        stdl_lrv lrv1 = {STDL_OP_DIPL, opB_ints, test_quadratic_w[itest * 3 + 1], XpY_opB, XmY_opB};
+        stdl_lrv lrv2 = {STDL_OP_DIPL, opC_ints, test_quadratic_w[itest * 3 + 2], XpY_opC, XmY_opC};
+
+        ASSERT_STDL_OK(stdl_property_tensor_quadratic(
+                ctx,
+                (stdl_lrv*[]) {&lrv0, &lrv1, &lrv2},
+                tensor_resp
+        ));
+
+        stdl_matrix_sge_print(2, 9, 3, tensor_resp, "tensor (resp)");
+
+        _tensor_sos3((stdl_operator[]) {opA, opB, opC}, test_quadratic_w + itest * 3, ctx->ncsfs, eexci, tg2e, te2e, tensor_sos);
+
+        stdl_matrix_sge_print(2, 9, 3, tensor_sos, "tensor (SOS)");
+
+        for (int ielm = 0; ielm < 27; ++ielm) {
+            if(fabsf(tensor_resp[ielm]) > 5e-1)
+                TEST_ASSERT_FLOAT_WITHIN(3e-1, 1., tensor_resp[ielm] / tensor_sos[ielm]);
+        }
+
+        STDL_FREE_ALL(opA_ints, opB_ints, opC_ints, tg2e, te2e, egrad, XpY_opA, XmY_opA, XpY_opB, XmY_opB, XpY_opC, XmY_opC, tensor_resp, tensor_sos);
+    }
+
+    STDL_FREE_ALL(eexci, XpYamp, XmYamp);
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
+}
+
+void test_property_quadratic_tensor_TDA_SOS_ok() {
+    stdl_wavefunction * wf = NULL;
+    stdl_basis * bs = NULL;
+    read_molden("../tests/test_files/chiral_sto3g.molden", &wf, &bs);
+
+    stdl_context* ctx = NULL;
+    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 10. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
+    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
+
+    // fetch excitations
+    float* eexci = malloc(ctx->ncsfs * sizeof(float ));
+    TEST_ASSERT_NOT_NULL(eexci);
+
+    float* Xamp = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
+    TEST_ASSERT_NOT_NULL(Xamp);
+
+    ASSERT_STDL_OK(stdl_response_TDA_casida(ctx, ctx->ncsfs, eexci, Xamp));
+
+    for (size_t itest = 0; itest < test_quadratic_n; ++itest) {
+        stdl_operator opA = test_quadratic_ops[itest * 3], opB = test_quadratic_ops[itest * 3 + 1], opC = test_quadratic_ops[itest * 3 + 2];
+
+        // compute integrals in MO basis
+        double* opA_ints = malloc(STDL_OPERATOR_DIM[opA] * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+        TEST_ASSERT_NOT_NULL(opA_ints);
+
+        make_int1e_MO(wf, bs, opA, opA == STDL_OP_DIPL ? -1 : 1, ctx, opA_ints);
+
+        double* opB_ints = malloc(STDL_OPERATOR_DIM[opB] * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+        TEST_ASSERT_NOT_NULL(opB_ints);
+
+        make_int1e_MO(wf, bs, opB, opB == STDL_OP_DIPL ? -1 : 1, ctx, opB_ints);
+
+        double* opC_ints = malloc(STDL_OPERATOR_DIM[opC] * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
+        TEST_ASSERT_NOT_NULL(opC_ints);
+
+        make_int1e_MO(wf, bs, opC, opC == STDL_OP_DIPL ? -1 : 1, ctx, opC_ints);
+
+        // get transition moments
+        float* tg2e = malloc(ctx->ncsfs * (STDL_OPERATOR_DIM[opA] + STDL_OPERATOR_DIM[opB] + + STDL_OPERATOR_DIM[opC]) * sizeof(float ));
+        ASSERT_STDL_OK(stdl_property_tensor_g2e_moments(ctx, (stdl_operator []) {opA, opB}, (double*[]) {opA_ints, opB_ints}, ctx->ncsfs, Xamp, NULL, tg2e));
+        ASSERT_STDL_OK(stdl_property_tensor_g2e_moments(ctx, (stdl_operator []) {opB, opC}, (double*[]) {opB_ints, opC_ints}, ctx->ncsfs, Xamp, NULL, tg2e + STDL_OPERATOR_DIM[opA] * ctx->ncsfs));
+
+        float* te2e = malloc(STDL_MATRIX_SP_SIZE(ctx->ncsfs) * (STDL_OPERATOR_DIM[opA] + STDL_OPERATOR_DIM[opB] + + STDL_OPERATOR_DIM[opC]) * sizeof(float ));
+        ASSERT_STDL_OK(stdl_property_tensor_e2e_moments(ctx, (stdl_operator []) {opA, opB, opC}, (double*[]) {opA_ints, opB_ints, opC_ints}, ctx->ncsfs, Xamp, NULL, te2e));
+
+        // compute LRV for opA
+        float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
+        TEST_ASSERT_NOT_NULL(egrad);
+
+        ASSERT_STDL_OK(stdl_response_perturbed_gradient(ctx, STDL_OPERATOR_DIM[opA], STDL_OPERATOR_ISSYM[opA], opA_ints, egrad));
+
+        float* XpY_opA = malloc(test_linear_nw * STDL_OPERATOR_DIM[opA] * ctx->ncsfs * sizeof(float ));
+        TEST_ASSERT_NOT_NULL(XpY_opA);
+
+        float* XmY_opA = malloc(test_linear_nw * STDL_OPERATOR_DIM[opA] * ctx->ncsfs * sizeof(float ));
+        TEST_ASSERT_NOT_NULL(XmY_opA);
+
+        ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, 1, test_quadratic_w + itest * 3 + 0, STDL_OPERATOR_DIM[opA], STDL_OPERATOR_HERMITIAN[opA], egrad, XpY_opA, XmY_opA));
+
+        // compute LRV for opB
+        ASSERT_STDL_OK(stdl_response_perturbed_gradient(ctx, STDL_OPERATOR_DIM[opB], STDL_OPERATOR_ISSYM[opB], opB_ints, egrad));
+
+        float* XpY_opB = malloc(test_linear_nw * STDL_OPERATOR_DIM[opB] * ctx->ncsfs * sizeof(float ));
+        TEST_ASSERT_NOT_NULL(XpY_opB);
+
+        float* XmY_opB = malloc(test_linear_nw * STDL_OPERATOR_DIM[opB] * ctx->ncsfs * sizeof(float ));
+        TEST_ASSERT_NOT_NULL(XmY_opB);
+
+        ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, 1, test_quadratic_w + itest * 3 + 1, STDL_OPERATOR_DIM[opB], STDL_OPERATOR_HERMITIAN[opB], egrad, XpY_opB, XmY_opB));
+
+        // compute LRV for opC
+        ASSERT_STDL_OK(stdl_response_perturbed_gradient(ctx, STDL_OPERATOR_DIM[opC], STDL_OPERATOR_ISSYM[opC], opC_ints, egrad));
+
+        float* XpY_opC = malloc(test_linear_nw * STDL_OPERATOR_DIM[opC] * ctx->ncsfs * sizeof(float ));
+        TEST_ASSERT_NOT_NULL(XpY_opC);
+
+        float* XmY_opC = malloc(test_linear_nw * STDL_OPERATOR_DIM[opC] * ctx->ncsfs * sizeof(float ));
+        TEST_ASSERT_NOT_NULL(XmY_opC);
+
+        ASSERT_STDL_OK(stdl_response_TDA_linear(ctx, 1, test_quadratic_w + itest * 3 + 2, STDL_OPERATOR_DIM[opC], STDL_OPERATOR_HERMITIAN[opC], egrad, XpY_opC, XmY_opC));
+
+        // compute tensor and compare
+        float* tensor_resp = malloc(STDL_OPERATOR_DIM[opA] * STDL_OPERATOR_DIM[opB] * STDL_OPERATOR_DIM[opC] * sizeof(float ));
+        float* tensor_sos = malloc(STDL_OPERATOR_DIM[opA] * STDL_OPERATOR_DIM[opB] * STDL_OPERATOR_DIM[opC] * sizeof(float ));
+
+        stdl_lrv lrv0 = {STDL_OP_DIPL, opA_ints, test_quadratic_w[itest * 3 + 0], XpY_opA, XmY_opA};
+        stdl_lrv lrv1 = {STDL_OP_DIPL, opB_ints, test_quadratic_w[itest * 3 + 1], XpY_opB, XmY_opB};
+        stdl_lrv lrv2 = {STDL_OP_DIPL, opC_ints, test_quadratic_w[itest * 3 + 2], XpY_opC, XmY_opC};
+
+        ASSERT_STDL_OK(stdl_property_tensor_quadratic(
+                ctx,
+                (stdl_lrv*[]) {&lrv0, &lrv1, &lrv2},
+                tensor_resp
+        ));
+
+        stdl_matrix_sge_print(2, 9, 3, tensor_resp, "tensor (resp)");
+
+        _tensor_sos3((stdl_operator[]) {opA, opB, opC}, test_quadratic_w + itest * 3, ctx->ncsfs, eexci, tg2e, te2e, tensor_sos);
+
+        stdl_matrix_sge_print(2, 9, 3, tensor_sos, "tensor (SOS)");
+
+        for (int ielm = 0; ielm < 27; ++ielm) {
+            if(fabsf(tensor_resp[ielm]) > 5e-1)
+                TEST_ASSERT_FLOAT_WITHIN(3e-1, 1., tensor_resp[ielm] / tensor_sos[ielm]);
+        }
+
+        STDL_FREE_ALL(opA_ints, opB_ints, opC_ints, tg2e, te2e, egrad, XpY_opA, XmY_opA, XpY_opB, XmY_opB, XpY_opC, XmY_opC, tensor_resp, tensor_sos);
+    }
+
+    STDL_FREE_ALL(eexci, Xamp);
+    ASSERT_STDL_OK(stdl_context_delete(ctx));
+}
+
 void test_response_antisym_TD_ok() {
-    TEST_IGNORE_MESSAGE("tmp");
+    TEST_IGNORE_MESSAGE("temporary disabled");
 
     stdl_wavefunction * wf = NULL;
     stdl_basis * bs = NULL;
@@ -448,68 +735,5 @@ void test_response_antisym_TD_ok() {
 
     STDL_FREE_ALL(dipl_mat, angm_mat, egrad, XpY_dipl, XmY_dipl, XmY_angm, XpY_angm);
 
-    ASSERT_STDL_OK(stdl_context_delete(ctx));
-}
-
-float oscillator_strength(size_t shift, size_t m, size_t n, size_t nexci, float* e, float * e2etdips) {
-    float x = .0f;
-    for (int cpt = 0; cpt < 3; ++cpt) {
-        // printf("%ld→%ld[%d] = %f\n", m, n, cpt, e2etdips[cpt * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(m, n)]);
-        x += powf(e2etdips[(shift+cpt) * STDL_MATRIX_SP_SIZE(nexci) + STDL_MATRIX_SP_IDX(m, n)], 2);
-    }
-
-    return 2.f / 3 * (e[n] - e[m]) * x;
-}
-
-void test_property_e2e_ok() {
-    TEST_IGNORE_MESSAGE("tmp");
-
-    stdl_wavefunction * wf = NULL;
-    stdl_basis * bs = NULL;
-    read_molden("../tests/test_files/chiral_sto3g.molden", &wf, &bs);
-
-    stdl_context* ctx = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf, bs, 2.0, 4.0, 20. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx));
-    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 1));
-
-    // fetch excitations
-    float* etd = malloc(ctx->ncsfs * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(etd);
-
-    float* XpYamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(XpYamptd);
-
-    float* XmYamptd = malloc(ctx->ncsfs * ctx->ncsfs * sizeof(float));
-    TEST_ASSERT_NOT_NULL(XmYamptd);
-
-    ASSERT_STDL_OK(stdl_response_TD_casida(ctx, ctx->ncsfs, etd, XpYamptd, XmYamptd));
-
-    // compute dipole integrals and convert to MO
-    double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
-    TEST_ASSERT_NOT_NULL(dipoles_mat);
-
-    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_mat);
-
-    // get g2e dipoles
-    float* tg2etd = malloc(ctx->ncsfs * 6 * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(tg2etd);
-    // ASSERT_STDL_OK(stdl_property_tensor_g2e_moments(ctx, (stdl_operator []) {STDL_OP_DIPL, STDL_OP_DIPL}, (double*[]) {dipoles_mat, dipoles_mat}, ctx->ncsfs, XpYamptd, XmYamptd, tg2etd));
-
-    // get ge2e dipoles
-    size_t nexci = 23;
-    float* eg2etd = malloc(9 * STDL_MATRIX_SP_SIZE(nexci) * sizeof(float ));
-    TEST_ASSERT_NOT_NULL(eg2etd);
-    ASSERT_STDL_OK(stdl_property_tensor_e2e_moments(ctx, (stdl_operator []) {STDL_OP_DIPL, STDL_OP_DIPL, STDL_OP_DIPL}, (double*[]) {dipoles_mat, dipoles_mat, dipoles_mat}, nexci, XpYamptd, XmYamptd, eg2etd));
-
-    // oscillator strength
-    /*for(size_t n = 0; n < nexci; n++) {
-        printf("1→%ld E=%.3f, f=%f\n",
-               n + 1,
-               (etd[n] - etd[0]) * STDL_CONST_AU_TO_EV,
-               oscillator_strength(6, 0, n, nexci, etd, eg2etd)
-               );
-    }*/
-
-    STDL_FREE_ALL(etd, XpYamptd, XmYamptd, dipoles_mat, tg2etd, eg2etd);
     ASSERT_STDL_OK(stdl_context_delete(ctx));
 }
