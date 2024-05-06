@@ -521,11 +521,11 @@ void test_property_quadratic_tensor_TD_SOS_ok() {
                 tensor_resp
         ));
 
-        stdl_matrix_sge_print(2, 9, 3, tensor_resp, "tensor (resp)");
+        stdl_matrix_sge_print(0, 9, 3, tensor_resp, "tensor (resp)");
 
         _tensor_sos3((stdl_operator[]) {opA, opB, opC}, test_quadratic_w + itest * 3, ctx->ncsfs, eexci, tg2e, te2e, tensor_sos);
 
-        stdl_matrix_sge_print(2, 9, 3, tensor_sos, "tensor (SOS)");
+        stdl_matrix_sge_print(0, 9, 3, tensor_sos, "tensor (SOS)");
 
         for (int ielm = 0; ielm < 27; ++ielm) {
             if(fabsf(tensor_resp[ielm]) > 5e-1)

@@ -3,6 +3,8 @@
 #include "stdlite/utils/permutations.h"
 #include "stdlite/helpers.h"
 
+#include <omp.h>
+
 typedef struct _l_elm_ {
     stdl_lrv* lrv;
     size_t cpt;
@@ -254,16 +256,31 @@ int stdl_property_tensor_e2e_moments(stdl_context *ctx, stdl_operator ops[3], do
     assert(ops != NULL && ops_ints_MO != NULL && nexci > 0 &&  XpYamp != NULL && te2e != NULL);
 
     size_t nvirt = ctx->nmo - ctx->nocc, dims[3] = {STDL_OPERATOR_DIM[ops[0]], STDL_OPERATOR_DIM[ops[1]], STDL_OPERATOR_DIM[ops[2]]};
+    size_t nthreads = 1;
+
+    #pragma omp parallel
+    {
+        if(omp_get_thread_num() == 0)
+            nthreads = omp_get_num_threads();
+    }
+
+    size_t sz = (dims[0] + dims[1] + dims[2]) * nthreads;
+    double wrk_asz;
+    char* wrk_usz;
+    stdl_convert_size(sz * sizeof(float), &wrk_asz, &wrk_usz);
+    stdl_log_msg(0, "Extra memory required (components): %.1f%s\n", wrk_asz, wrk_usz);
+
+    float * buff = calloc(sz, sizeof(float ));
+    STDL_ERROR_HANDLE_AND_REPORT(buff == NULL, return STDL_ERR_MALLOC, "malloc");
 
     stdl_log_msg(1, "+ ");
     stdl_log_msg(0, "Compute %ld excited to excited transition moments for `%s`, `%s`, and `%s` >", STDL_MATRIX_SP_SIZE(nexci), STDL_OPERATOR_NAME[ops[0]], STDL_OPERATOR_NAME[ops[1]], STDL_OPERATOR_NAME[ops[2]]);
     stdl_log_msg(1, "\n  | Looping through CSFs ");
 
-    float* tmp = calloc(dims[0] + dims[1] + dims[2], sizeof(float ));
-    STDL_ERROR_HANDLE_AND_REPORT(tmp == NULL, return STDL_ERR_MALLOC, "malloc");
-
     #pragma omp parallel for schedule(guided)
     for (size_t m = 0; m < nexci; ++m) {
+        float* tmp = buff + omp_get_thread_num() * (dims[0] + dims[1] + dims[2]);
+
         for (size_t n = 0; n <= m; ++n) {
 
             for (size_t lia = 0; lia < ctx->ncsfs; ++lia) {
@@ -322,7 +339,7 @@ int stdl_property_tensor_e2e_moments(stdl_context *ctx, stdl_operator ops[3], do
         }
     }
 
-    STDL_FREE_IF_USED(tmp);
+    STDL_FREE_IF_USED(buff);
 
     stdl_log_msg(0, "< done\n");
 
