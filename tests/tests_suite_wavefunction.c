@@ -158,7 +158,7 @@ void test_molden_dalton() {
     TEST_ASSERT_NOT_NULL(dipoles_sp);
 
     // compute dipole integrals
-    ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_DIPL, -1, dipoles_sp));
+    ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_DIPL, dipoles_sp));
 
     // compute explicitly the electronic dipole moment along z
     double dipz1 = .0;
@@ -302,7 +302,7 @@ void test_ao_to_mo_hermitian() {
     double* prop_ao_sp = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(prop_ao_sp);
 
-    stdl_operator_int1e_dsp(bs, STDL_OP_DIPL, -1, prop_ao_sp);
+    stdl_operator_int1e_dsp(bs, STDL_OP_DIPL, prop_ao_sp);
 
     // only use xdipl (it should be the same for the others)
     double* prop_mo_sp = malloc(STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
@@ -353,7 +353,7 @@ void test_ao_to_mo_antisymmetric() {
     double* prop_ao_sp = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(prop_ao_sp);
 
-    stdl_operator_int1e_dsp(bs, STDL_OP_DIPV, 1, prop_ao_sp);
+    stdl_operator_int1e_dsp(bs, STDL_OP_DIPV, prop_ao_sp);
 
     // only use xdipv, which is purely imaginary
     double* prop_mo_sp = malloc(STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
@@ -404,7 +404,7 @@ void test_dipole() {
     TEST_ASSERT_NOT_NULL(dipoles_sp);
 
     // compute dipole integrals
-    ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_DIPL, -1, dipoles_sp));
+    ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_DIPL, dipoles_sp));
 
     // compute explicitly the electronic dipole moment along z
     double dipz1 = .0;

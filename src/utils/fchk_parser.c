@@ -796,7 +796,7 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
     stdl_log_msg(0, "< done\n");
 
     // create the S matrix
-    error = stdl_operator_int1e_dsp((*bs_ptr), STDL_OP_OVLP, 1., (*wf_ptr)->S);
+    error = stdl_operator_int1e_dsp((*bs_ptr), STDL_OP_OVLP, (*wf_ptr)->S);
 
     // and done!
     stdl_log_msg(0, "Got %d atoms, %d AOs (%d primitives in %d basis functions), and %d MOs\n", natm, nao, nprim, (*bs_ptr)->nbas, nmo);

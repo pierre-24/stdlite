@@ -7,15 +7,15 @@ source_type = "MOLDEN"
 method = "monopole"
 ethr = '25eV'
 ax = 1.0
-tda = 1
+tda = 0
 e2thr=1e-4
 
 [responses]
 
 linear = [
-    {opA = 'dipl', opB = 'dipv', wB = 0}, # polarizability
-    {opA = 'dipl', opB = 'dipl', wB = '1064nm'},
-    {opA = 'dipl', opB = 'dipl', wB = '532nm'},
+    {opA = 'dipv', opB = 'angm', wB = 0}, # polarizability
+    {opA = 'dipv', opB = 'angm', wB = '1064nm'},
+    {opA = 'dipv', opB = 'angm', wB = '532nm'},
     # {target = 'electric_polarizability', w = '1064nm'}, # alternate notation
 ]
 
@@ -33,7 +33,8 @@ linear_sr = [
 ]
 
 quadratic_dr = [
-    {opA = 'dipl', opB = 'angm', nroots = 5}  # e2e transition dipoles
+    {opA = 'dipl', opB = 'angm', nroots = 5},  # e2e transition dipoles
+    {opA = 'dipv', opB = 'angm', nroots = 5}  # e2e transition dipoles
 ]
 
 # [analyses]

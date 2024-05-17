@@ -60,7 +60,7 @@ void test_response_egrad_antisym_ok() {
     double *op_mat_sp = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(op_mat_sp);
 
-    make_int1e_MO(wf, bs, STDL_OP_ANGM, 1., ctx, op_mat_sp);
+    make_int1e_MO(wf, bs, STDL_OP_ANGM, ctx, op_mat_sp);
 
     // build egrad
     float *egrad = malloc(3 * ctx->ncsfs * sizeof(float));
@@ -110,7 +110,7 @@ void test_response_TDA_ok() {
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_mat);
 
-    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_mat);
+    make_int1e_MO(wf, bs, STDL_OP_DIPL, ctx, dipoles_mat);
 
     // build egrad
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
@@ -189,7 +189,7 @@ void test_response_TDA_antisym_ok() {
     double* op_ints_MO = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(op_ints_MO);
 
-    make_int1e_MO(wf, bs, STDL_OP_ANGM, 1., ctx, op_ints_MO);
+    make_int1e_MO(wf, bs, STDL_OP_ANGM, ctx, op_ints_MO);
 
     // build egrad
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
@@ -264,7 +264,7 @@ void test_response_TD_ok() {
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_mat);
 
-    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_mat);
+    make_int1e_MO(wf, bs, STDL_OP_DIPL, ctx, dipoles_mat);
 
     // build egrad
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
@@ -337,7 +337,7 @@ void test_response_TD_antisym_ok() {
     double* op_ints_MO = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(op_ints_MO);
 
-    make_int1e_MO(wf, bs, STDL_OP_ANGM, 1., ctx, op_ints_MO);
+    make_int1e_MO(wf, bs, STDL_OP_ANGM, ctx, op_ints_MO);
 
     // build egrad
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));

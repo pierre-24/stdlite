@@ -89,7 +89,7 @@ void test_response_polarizability_TD_ok() {
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_mat);
 
-    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_mat);
+    make_int1e_MO(wf, bs, STDL_OP_DIPL, ctx, dipoles_mat);
 
     // build egrad
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
@@ -171,12 +171,12 @@ void test_property_linear_tensor_TD_SOS_ok() {
         double* opA_ints = malloc(STDL_OPERATOR_DIM[opA] * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
         TEST_ASSERT_NOT_NULL(opA_ints);
 
-        make_int1e_MO(wf, bs, opA, opA == STDL_OP_DIPL ? -1 : 1, ctx, opA_ints);
+        make_int1e_MO(wf, bs, opA, ctx, opA_ints);
 
         double* opB_ints = malloc(STDL_OPERATOR_DIM[opB] * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
         TEST_ASSERT_NOT_NULL(opB_ints);
 
-        make_int1e_MO(wf, bs, opB, opB == STDL_OP_DIPL ? -1 : 1, ctx, opB_ints);
+        make_int1e_MO(wf, bs, opB, ctx, opB_ints);
 
         // get transition moments
         float* tg2e = malloc(ctx->ncsfs * (STDL_OPERATOR_DIM[opA] + STDL_OPERATOR_DIM[opB]) * sizeof(float ));
@@ -266,12 +266,12 @@ void test_property_linear_tensor_TDA_SOS_ok() {
         double* opA_ints = malloc(STDL_OPERATOR_DIM[opA] * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
         TEST_ASSERT_NOT_NULL(opA_ints);
 
-        make_int1e_MO(wf, bs, opA, opA == STDL_OP_DIPL ? -1 : 1, ctx, opA_ints);
+        make_int1e_MO(wf, bs, opA, ctx, opA_ints);
 
         double* opB_ints = malloc(STDL_OPERATOR_DIM[opB] * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
         TEST_ASSERT_NOT_NULL(opB_ints);
 
-        make_int1e_MO(wf, bs, opB, opB == STDL_OP_DIPL ? -1 : 1, ctx, opB_ints);
+        make_int1e_MO(wf, bs, opB, ctx, opB_ints);
 
         // get transition moments
         float* tg2e = malloc(ctx->ncsfs * (STDL_OPERATOR_DIM[opA] + STDL_OPERATOR_DIM[opB]) * sizeof(float ));
@@ -351,7 +351,7 @@ void test_response_first_polarizability_TD_ok() {
     double* dipoles_mat = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipoles_mat);
 
-    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipoles_mat);
+    make_int1e_MO(wf, bs, STDL_OP_DIPL, ctx, dipoles_mat);
 
     // build egrad
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
@@ -451,17 +451,17 @@ void test_property_quadratic_tensor_TD_SOS_ok() {
         double* opA_ints = malloc(STDL_OPERATOR_DIM[opA] * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
         TEST_ASSERT_NOT_NULL(opA_ints);
 
-        make_int1e_MO(wf, bs, opA, opA == STDL_OP_DIPL ? -1 : 1, ctx, opA_ints);
+        make_int1e_MO(wf, bs, opA, ctx, opA_ints);
 
         double* opB_ints = malloc(STDL_OPERATOR_DIM[opB] * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
         TEST_ASSERT_NOT_NULL(opB_ints);
 
-        make_int1e_MO(wf, bs, opB, opB == STDL_OP_DIPL ? -1 : 1, ctx, opB_ints);
+        make_int1e_MO(wf, bs, opB, ctx, opB_ints);
 
         double* opC_ints = malloc(STDL_OPERATOR_DIM[opC] * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
         TEST_ASSERT_NOT_NULL(opC_ints);
 
-        make_int1e_MO(wf, bs, opC, opC == STDL_OP_DIPL ? -1 : 1, ctx, opC_ints);
+        make_int1e_MO(wf, bs, opC, ctx, opC_ints);
 
         // get transition moments
         float* tg2e = malloc(ctx->ncsfs * (STDL_OPERATOR_DIM[opA] + STDL_OPERATOR_DIM[opB] + + STDL_OPERATOR_DIM[opC]) * sizeof(float ));
@@ -564,17 +564,17 @@ void test_property_quadratic_tensor_TDA_SOS_ok() {
         double* opA_ints = malloc(STDL_OPERATOR_DIM[opA] * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
         TEST_ASSERT_NOT_NULL(opA_ints);
 
-        make_int1e_MO(wf, bs, opA, opA == STDL_OP_DIPL ? -1 : 1, ctx, opA_ints);
+        make_int1e_MO(wf, bs, opA, ctx, opA_ints);
 
         double* opB_ints = malloc(STDL_OPERATOR_DIM[opB] * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
         TEST_ASSERT_NOT_NULL(opB_ints);
 
-        make_int1e_MO(wf, bs, opB, opB == STDL_OP_DIPL ? -1 : 1, ctx, opB_ints);
+        make_int1e_MO(wf, bs, opB, ctx, opB_ints);
 
         double* opC_ints = malloc(STDL_OPERATOR_DIM[opC] * STDL_MATRIX_SP_SIZE(wf->nmo) * sizeof(double));
         TEST_ASSERT_NOT_NULL(opC_ints);
 
-        make_int1e_MO(wf, bs, opC, opC == STDL_OP_DIPL ? -1 : 1, ctx, opC_ints);
+        make_int1e_MO(wf, bs, opC, ctx, opC_ints);
 
         // get transition moments
         float* tg2e = malloc(ctx->ncsfs * (STDL_OPERATOR_DIM[opA] + STDL_OPERATOR_DIM[opB] + + STDL_OPERATOR_DIM[opC]) * sizeof(float ));
@@ -670,7 +670,7 @@ void test_response_antisym_TD_ok() {
     double* dipl_mat = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipl_mat);
 
-    make_int1e_MO(wf, bs, STDL_OP_DIPL, -1., ctx, dipl_mat);
+    make_int1e_MO(wf, bs, STDL_OP_DIPL, ctx, dipl_mat);
 
     float* egrad = malloc(3 * ctx->ncsfs * sizeof(float));
     TEST_ASSERT_NOT_NULL(egrad);
@@ -689,7 +689,7 @@ void test_response_antisym_TD_ok() {
     double* angm_mat = malloc(3 * STDL_MATRIX_SP_SIZE(ctx->nmo) * sizeof(double));
     TEST_ASSERT_NOT_NULL(angm_mat );
 
-    make_int1e_MO(wf, bs, STDL_OP_ANGM, 1., ctx, angm_mat );
+    make_int1e_MO(wf, bs, STDL_OP_ANGM, ctx, angm_mat);
 
     stdl_response_perturbed_gradient(ctx, 3, 1, angm_mat , egrad);
 

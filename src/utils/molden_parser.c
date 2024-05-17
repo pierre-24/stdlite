@@ -683,7 +683,7 @@ int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction** wf_ptr, stdl_
     stdl_log_msg(0, "< done\n");
 
     // create the S matrix
-    err = stdl_operator_int1e_dsp((*bs_ptr), STDL_OP_OVLP, 1., (*wf_ptr)->S);
+    err = stdl_operator_int1e_dsp((*bs_ptr), STDL_OP_OVLP, (*wf_ptr)->S);
     STDL_ERROR_CODE_HANDLE(err, goto _end);
 
     // and done!

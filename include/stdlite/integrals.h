@@ -121,6 +121,6 @@ static _int1e_f STDL_OPERATOR_TO_CINT_SPH[STDL_OP_COUNT] = {
  * @return error code.
  * @ingroup integrals
  */
-int stdl_operator_int1e_dsp(stdl_basis *bs, stdl_operator op, double fac, double *values);
+int stdl_operator_int1e_dsp(stdl_basis *bs, stdl_operator op, double *values);
 
 #endif //STDLITE_INTEGRALS_H

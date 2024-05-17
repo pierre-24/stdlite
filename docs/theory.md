@@ -361,11 +361,11 @@ $$O_{pq} = \sum^{AO}_{\mu\nu} C_{p\mu} O_{\mu\nu} C_{q\nu}.$$
 
 For the moment, the following operators are handled by `stdlite`:
 
-| Operator                  | Expression                                 | Dimensionality | Symmetry      | Hermitian | [Time-Reversal symmetry](https://en.wikipedia.org/wiki/T-symmetry) |
-|---------------------------|--------------------------------------------|----------------|---------------|-----------|--------------------------------------------------------------------|
-| Dipole length (`dipl`)    | $\hat\mu^L = e\,(\vec r - R_0)$            | 3 (x, y, z)    | Symmetric     | Yes       | Even                                                               |
-| Dipole velocity (`dipv`)  | $\hat\mu^V = i\vec\nabla$                  | 3 (x, y, z)    | Antisymmetric | Yes       | Odd                                                                |
-| Angular momentum (`angm`) | $\hat m = i(\hat r - R_0)\times\vec\nabla$ | 3 (x, y, z)    | Antisymmetric | Yes       | Odd                                                                |
+| Operator                  | Expression                                            | Dimensionality | Symmetry      | Hermitian | [Time-Reversal symmetry](https://en.wikipedia.org/wiki/T-symmetry) |
+|---------------------------|-------------------------------------------------------|----------------|---------------|-----------|--------------------------------------------------------------------|
+| Dipole length (`dipl`)    | $\hat\mu^L = -(\vec r - R_0)$                         | 3 (x, y, z)    | Symmetric     | Yes       | Even                                                               |
+| Dipole velocity (`dipv`)  | $\hat\mu^V = i\vec\nabla$                             | 3 (x, y, z)    | Antisymmetric | Yes       | Odd                                                                |
+| Angular momentum (`angm`) | $\hat m = -\frac{i}{2}(\hat r - R_0)\times\vec\nabla$ | 3 (x, y, z)    | Antisymmetric | Yes       | Odd                                                                |
 
 An [even time-reversal symmetry](https://en.wikipedia.org/wiki/T-symmetry#Even) operator, $\hat A$, do not change upon time reversal.
 Indeed, given $\hat\theta$ the so-called [time-reversal operator](https://bohr.physics.berkeley.edu/classes/221/9697/timerev.pdf) so that $\hat\theta\psi(t) = \psi(-t)^\star$,
@@ -525,10 +525,10 @@ which is therefore equal to the fluctuation operator if $m = n$.
 
 Different ground (or excited) to excited moments, related to experimentally measurable properties, can be extracted (all given in atomic units):
 
-| Property            | Dipole length                                                         | Dipole velocity                                                                     |
-|---------------------|-----------------------------------------------------------------------|-------------------------------------------------------------------------------------|
-| Oscillator strength | $f^L_{mn} = \frac{2}{3}\,(\omega_n-\omega_m)\, \|\vec\mu^L_{mn} \|^2$ | $f^L_{mn} = \frac{2}{3\,(\omega_n-\omega_m)}\, \|\vec\mu^V_{mn} \|^2$               |
-| Rotatory strength   | $R^L_{mn} = -\frac{1}{2}\, \Im(\vec\mu^L_{mn}\cdot\vec m_{mn})$       | $R^V_{mn} = -\frac{1}{2\,(\omega_n-\omega_m)}\,\Re(\vec\mu^V_{mn}\cdot\vec m_{mn})$ | 
+| Property            | Dipole length                                                         | Dipole velocity                                                                |
+|---------------------|-----------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| Oscillator strength | $f^L_{mn} = \frac{2}{3}\,(\omega_n-\omega_m)\, \|\vec\mu^L_{mn} \|^2$ | $f^L_{mn} = \frac{2}{3\,(\omega_n-\omega_m)}\, \|\vec\mu^V_{mn} \|^2$          |
+| Rotatory strength   | $R^L_{mn} = \Im(\vec\mu^L_{mn}\cdot\vec m_{mn})$                      | $R^V_{mn} = -\frac{1}{\omega_n-\omega_m}\,\Re(\vec\mu^V_{mn}\cdot\vec m_{mn})$ | 
 
 See, *e.g.*, [10.1016/j.comptc.2014.02.023](https://doi.org/10.1016/j.comptc.2014.02.023), for a discussion on the differences between the two formalisms.
 

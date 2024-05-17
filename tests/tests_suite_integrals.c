@@ -27,7 +27,7 @@ void test_ovlp_ok() {
     double* S = malloc(STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(S);
 
-    ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_OVLP, 1., S));
+    ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_OVLP, S));
 
     stdl_matrix_dsp_print(2, wf->nao, S, "S");
 
@@ -43,7 +43,7 @@ void test_diplens_ok() {
     double* diplens = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(diplens);
 
-    ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_DIPL, -1., diplens));
+    ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_DIPL, diplens));
 
     stdl_matrix_dsp_print(2, wf->nao, diplens + 0 * STDL_MATRIX_SP_SIZE(wf->nao), "xdipl");
     stdl_matrix_dsp_print(2, wf->nao, diplens + 1 * STDL_MATRIX_SP_SIZE(wf->nao), "ydipl");
@@ -56,7 +56,7 @@ void test_dipvels_ok() {
     double* dipvels = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipvels);
 
-    ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_DIPV, 1., dipvels));
+    ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_DIPV, dipvels));
 
     stdl_matrix_dsp_print(2, wf->nao, dipvels + 0 * STDL_MATRIX_SP_SIZE(wf->nao), "xdipv");
     stdl_matrix_dsp_print(2, wf->nao, dipvels + 1 * STDL_MATRIX_SP_SIZE(wf->nao), "ydipv");
@@ -70,7 +70,7 @@ void test_angmoms_ok() {
     double* angmoms = malloc(3 * STDL_MATRIX_SP_SIZE(wf->nao) * sizeof(double));
     TEST_ASSERT_NOT_NULL(angmoms);
 
-    ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_ANGM, 1., angmoms));
+    ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_ANGM, angmoms));
 
     stdl_matrix_dsp_print(2, wf->nao, angmoms + 0 * STDL_MATRIX_SP_SIZE(wf->nao), "xangm");
     stdl_matrix_dsp_print(2, wf->nao, angmoms + 1 * STDL_MATRIX_SP_SIZE(wf->nao), "yangm");

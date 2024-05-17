@@ -297,9 +297,9 @@ int stdl_log_property_g2e_moments(stdl_responses_handler *rh, stdl_context *ctx,
             if(biop == _biop(STDL_OP_DIPV, STDL_OP_DIPV))
                 stdl_log_msg(0, " % 8.5f", 2.f/3 / rh->eexci[iexci] * dotp);
             if(biop == _biop(STDL_OP_DIPL, STDL_OP_ANGM))
-                stdl_log_msg(0, " % 8.5f", -.5* dotp);
+                stdl_log_msg(0, " % 8.5f", dotp);
             if(biop == _biop(STDL_OP_DIPV, STDL_OP_ANGM))
-                stdl_log_msg(0, " % 8.5f", -.5 * 1 / rh->eexci[iexci] * dotp);
+                stdl_log_msg(0, " % 8.5f", -1.f / rh->eexci[iexci] * dotp);
 
         }
 
@@ -441,9 +441,9 @@ int stdl_log_property_e2e_moments(stdl_responses_handler *rh, stdl_context *ctx,
                     else if(biops[biop] == _biop(STDL_OP_DIPV, STDL_OP_DIPV))
                         stdl_log_msg(0, " % 8.5f", 2.f/3 / ediff * dotp);
                     else if(biops[biop] == _biop(STDL_OP_DIPL, STDL_OP_ANGM))
-                        stdl_log_msg(0, " % 8.5f", -.5f * dotp);
+                        stdl_log_msg(0, " % 8.5f", dotp);
                     else if(biops[biop] == _biop(STDL_OP_DIPV, STDL_OP_ANGM))
-                        stdl_log_msg(0, " % 8.5f", .5 * 1 / ediff * dotp);
+                        stdl_log_msg(0, " % 8.5f", -1.f / ediff * dotp);
                 }
             }
 

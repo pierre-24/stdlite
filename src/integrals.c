@@ -48,10 +48,17 @@ void _compute_renormalization(stdl_basis* bs, double* renorm, double* buff) {
     }
 }
 
-int stdl_operator_int1e_dsp(stdl_basis *bs, stdl_operator op, double fac, double *values) {
+int stdl_operator_int1e_dsp(stdl_basis *bs, stdl_operator op, double *values) {
     assert(bs != NULL && values != NULL && op < STDL_OP_COUNT);
 
     stdl_log_msg(0, "Computing 1e integral elements for `%s` (dim=%d) >", STDL_OPERATOR_NAME[op], STDL_OPERATOR_DIM[op]);
+
+    double fac = 1.0;
+
+    if(op == STDL_OP_DIPL || op == STDL_OP_DIPV)
+        fac = -1.;
+    else if(op == STDL_OP_ANGM)
+        fac = -.5;
 
     size_t nao = 0;
     for(int ibas=0; ibas < bs->nbas; ibas++) {

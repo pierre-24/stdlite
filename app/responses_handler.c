@@ -358,7 +358,7 @@ int stdl_responses_handler_compute(stdl_responses_handler *rh, stdl_user_input_h
         double* op_ints_AO = malloc(ints_AO_sz);
         STDL_ERROR_HANDLE_AND_REPORT(op_ints_AO == NULL, err = STDL_ERR_MALLOC; goto _end, "malloc");
 
-        err = stdl_operator_int1e_dsp(ctx->bs, op_data->op, (op_data->op == STDL_OP_DIPL? -1. :1.), op_ints_AO);
+        err = stdl_operator_int1e_dsp(ctx->bs, op_data->op, op_ints_AO);
         STDL_ERROR_CODE_HANDLE(err, free(op_ints_AO); goto _end);
 
         for (size_t cpt = 0; cpt < STDL_OPERATOR_DIM[op_data->op]; ++cpt) {

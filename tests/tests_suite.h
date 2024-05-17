@@ -16,8 +16,7 @@
 void read_fchk(char* fchk_path, stdl_wavefunction** wf, stdl_basis** bs);
 void read_molden(char* molden_path, stdl_wavefunction** wf, stdl_basis** bs);
 
-void make_int1e_MO(stdl_wavefunction *wf, stdl_basis *bs, stdl_operator op, double fac, stdl_context *ctx,
-                   double *dipoles_sp_MO);
+void make_int1e_MO(stdl_wavefunction *wf, stdl_basis *bs, stdl_operator op, stdl_context *ctx, double *dipoles_sp_MO);
 
 
 #endif //TESTS_SUITE_H
