@@ -8,7 +8,15 @@
  * @ingroup matrix
  */
 #ifndef STDL_MATRIX_MAX_COLS
-#define STDL_MATRIX_MAX_COLS 5
+#define STDL_MATRIX_MAX_COLS 10
+#endif
+
+#ifndef STDL_MATRIX_FMT_HEADERS
+#define STDL_MATRIX_FMT_HEADERS "    %4ld    "
+#endif
+
+#ifndef STDL_MATRIX_FMT_NUMBERS
+#define STDL_MATRIX_FMT_NUMBERS " % .4e"
 #endif
 
 /**
@@ -37,7 +45,7 @@ static inline size_t STDL_MATRIX_SP_SIZE(size_t nx) {
  * @return `STDL_ERR_OK`
  * @ingroup matrix
  */
-int stdl_matrix_dge_print(size_t rows, size_t columns, double *matrix, char *title);
+int stdl_matrix_dge_print(int loglevel, size_t rows, size_t columns, double *matrix, char *title);
 
 /**
  * Print a single precision matrix.
@@ -48,7 +56,7 @@ int stdl_matrix_dge_print(size_t rows, size_t columns, double *matrix, char *tit
  * @return `STDL_ERR_OK`
  * @ingroup matrix
  */
-int stdl_matrix_sge_print(size_t rows, size_t columns, float *matrix, char *title);
+int stdl_matrix_sge_print(int loglevel, size_t rows, size_t columns, float *matrix, char *title);
 
 /**
  * Print a symmetric (thus square) packed matrix.
@@ -59,7 +67,7 @@ int stdl_matrix_sge_print(size_t rows, size_t columns, float *matrix, char *titl
  * @return `STDL_ERR_OK`
  * @ingroup matrix
  */
-int stdl_matrix_dsp_print(size_t n, double *matrix, char *title);
+int stdl_matrix_dsp_print(int loglevel, size_t n, double *matrix, char *title);
 
 /**
  * Print a symmetric (thus square) packed matrix.
@@ -70,7 +78,7 @@ int stdl_matrix_dsp_print(size_t n, double *matrix, char *title);
  * @return `STDL_ERR_OK`
  * @ingroup matrix
  */
-int stdl_matrix_ssp_print(size_t n, float *matrix, char *title);
+int stdl_matrix_ssp_print(int loglevel, size_t n, float *matrix, char *title);
 
 
 /**
@@ -168,7 +176,7 @@ int stdl_matrix_dsp_blowsy(size_t n, char uplo, double *in, double *out);
  * @return error code
  * @ingroup matrix
  */
-int stdl_matrix_dsp_blowge(int issym, size_t n, double *in, double *out);
+int stdl_matrix_dsp_blowge(size_t n, int issym, double *in, double *out);
 
 /**
  * Blow a (single-precision) symmetry packed matrix (`in`) into a full storage (symmetric, `sy`) matrix (`out`).

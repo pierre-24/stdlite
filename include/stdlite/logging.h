@@ -70,25 +70,27 @@ enum stdl_error_code_ {
     /// Everything went well
     STDL_ERR_OK = 0,
 
+    /// Unspecified error
+    STDL_ERR_ANY = 1,
+
     /// `malloc()` failure
-    STDL_ERR_MALLOC = 1,
+    STDL_ERR_MALLOC = 2,
 
     /// Open error
-    STDL_ERR_OPEN = 2,
+    STDL_ERR_OPEN = 3,
 
     /// Read error
-    STDL_ERR_READ = 3,
+    STDL_ERR_READ = 4,
 
     /// Write error
-    STDL_ERR_WRITE = 4,
+    STDL_ERR_WRITE = 5,
 
     /// Input error
-    STDL_ERR_INPUT = 5,
+    STDL_ERR_INPUT = 6,
 
     /// error in context
-    STDL_ERR_CONTEXT = 6,
+    STDL_ERR_CONTEXT = 7,
 
-    STDL_UNUSED7 = 7,
     STDL_UNUSED8 = 8,
     STDL_UNUSED9 = 9,
     STDL_UNUSED10 = 10,
@@ -191,7 +193,7 @@ void stdl_warning_msg(char *file, int line, char *format, ...);
  * @param ... extra parameters
  * @ingroup logging
  */
-void stdl_error_msg(char *file, int line, char *format, ...) ;
+void stdl_error_msg(char *file, int line, char *format, ...);
 
 
 #endif //STDL_LOGGING_H

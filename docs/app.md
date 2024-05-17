@@ -122,10 +122,7 @@ These are the keywords related to the creation of the context, *i.e.*, the selec
     Method for the calculation of the elements of the  $\mathbf A'$ and $\mathbf B'$ super-matrices. 
     Currently the possible values are:
 
-    + `"monopole"` ([default sTD-DFT procedure](theory.md#std-dft-or-the-monopole-approximation), *i.e.*, the monopole approximation), 
-    + `"monopole_direct"` (same as default, but the integrals are evaluated on demand).
-
-    The `"xxx_direct"` version requires less memory.
+    + `"monopole"` ([default sTD-DFT procedure](theory.md#std-dft-or-the-monopole-approximation), *i.e.*, the monopole approximation).
 
 !!! abstract "Tamm-Dancoff approximation"
 
@@ -136,7 +133,7 @@ These are the keywords related to the creation of the context, *i.e.*, the selec
 
     If different from 0, use the [Tamm-Dancoff approximation](theory.md#application-to-dft-td-dft).
 
-!!! abstract "Parameter for Coulomb integrals"
+!!! abstract "Parameter for Coulomb ops_integrals"
 
     **Type**: `float`
     **Keyword**: `gammaJ`
@@ -145,7 +142,7 @@ These are the keywords related to the creation of the context, *i.e.*, the selec
 
     Parameters for the Coulomb integral, $\gamma_J$, in the [monopole approximation](theory.md#std-dft-or-the-monopole-approximation).
 
-!!! abstract "Parameter for exchange integrals"
+!!! abstract "Parameter for exchange ops_integrals"
 
     **Type**: `float`
     **Keyword**: `gammaK`
@@ -163,6 +160,14 @@ These are the keywords related to the creation of the context, *i.e.*, the selec
 
     Assuming a global hybrid, amount of Hartree-Fock exchange, between 0 and 1.
 
+!!! abstract "Gauge origin"
+
+    **Type**: `list`
+    **Keyword**: `gauge_origin`
+    **Default**: the center of mass of the molecule
+
+    Set the gauge origin for the angular momentum (`angm`) operator.
+
 ### Responses (`[responses]`)
 
 These are the keywords related to the calculation of responses, their residues, and the related properties.
@@ -170,6 +175,8 @@ These are the keywords related to the calculation of responses, their residues, 
 In the following, `wX` is a frequency, thus following the syntax for energy mentioned in the preamble. `opX` is an operator, which should be one of:
 
 + `"dipl"`: dipole length operator;
++ `"dipv"`: dipole velocity operator;
++ `"angm"`: angular momentum operator.
 
 Other operators will be added in the future.
 
@@ -198,17 +205,28 @@ Other operators will be added in the future.
     **Keyword**: `linear_sr`
     **Default**: `[]`
 
-    List the ground-to-excited states properties to compute.
-    Each request for $\braket{0|\hat A|m}$ is to be given as: `{opA = "A", root = N}`.
-    `N` is the number of excited states, `\ket{m}`, to consider.
+    List the single residue of the linear response functions, i.e., the ground-to-excited states properties, to compute.
+    Each request for $\braket{0|\hat A|m}\braket{m|\hat B|0}$ is to be given as: `{opA = "A", opB = "B", nroots = N}`.
+
+    `opB` is optional: it will be assumed that `opB` = `opA` if not provided. 
+    `N` is the number of excited states, $\ket{m}$, to consider.
     If `N` < 0, all possible excited states (*i.e.*, corresponding to the number of CSFs) are computed.
 
-    For example, the following input will compute the transition dipole moments for the 15 first excited states:
+    For example, the following input will compute the transition dipole moments (and corresponding oscillator strength) for the 15 first excited states (dipole length formalism):
 
     ```toml
     [responses]
     linear_sr = [
-        {opA = 'dipl', root = 15}
+        {opA = 'dipl', nroots = 15}
+    ]
+    ```
+
+    The following input will compute the rotatory strength (velocity formalism) for all excited states:
+
+    ```toml
+    [responses]
+    linear_sr = [
+        {opA = 'dipv', opB = 'angm', nroots = -1}
     ]
     ```
 
@@ -230,13 +248,37 @@ Other operators will be added in the future.
     ]
     ```
 
+!!! abstract "Double residue of the quadratic response"
+
+    **Type**: `list`
+    **Keyword**: `quadratic_dr`
+    **Default**: `[]`
+
+    List the double residue of the quadratic response functions, i.e., the excited-to-excited states properties, to compute.
+    Each request for $\braket{m|\hat A-\delta_{mn}\,\braket{0|\hat A|0}|n}$ (and the same for $\hat B$ and $\hat C$) is to be given as: `{opA = "A", opB = "B", opC = "C", nroots = N}`.
+    
+    `opB` and `opC` are optional: it will be assumed that `opB` = `opA` and  `opC` = `opA` if not provided. 
+    `N` is the number of excited states, $\ket{m}, \ket{n}$, to consider, which results in $\frac{N\,(N+1)}{2}$ transitions with $m\leq n$.
+    If `N` < 0, all possible excited-to-excited (*i.e.*, corresponding to the number of CSFs) are computed.
+    Thic can be time consuming, as the number of transitions scales as $\mathcal{O}(N^2)$.
+
+    For example, the following input will compute the fluctuation and excited-to-excited transition dipole moments (and corresponding oscillator strength) for the 5 first excited states (15 possible transitions):
+
+    ```toml
+    [responses]
+    quadratic_dr = [
+        {opA = 'dipl', nroots = 5}
+    ]
+    ```
+
 ## Outputs
 
 Log messages are written in `stdout`, while errors are given in `stderr`.
 
-### Data
-
 After run, all data are saved in a [HDF5 file](https://en.wikipedia.org/wiki/Hierarchical_Data_Format) (by default, `stdlite_calculation.h5`).
+It is a hierarchical format designed to store scientific data, which stores datasets (i.e., array of data) in groups (i.e., "folders").
+It can be opened and manipulated in a bunch of programming languages (including, [Python](http://www.h5py.org/)), probably including your favorite one.
+
 
 You can re-use the context (e.g., to compute other responses) with:
 
@@ -245,3 +287,126 @@ You can re-use the context (e.g., to compute other responses) with:
 source = "stdlite_calculation.h5"
 source_type = "STDL_CTX"
 ```
+
+!!! warning
+    
+    A few consistency checks are made, but the data are mostly used as is, so be carefull if you alter the file before running a calculation.
+
+Furthermore, if you need to extract data from a calculation, the output is generally truncated for reading purposes, so it is advised to get them from this file.
+
+### General overview of the HDF5 output file
+
+An overview of its content is:
+
+![](assets/ouput_H5/1_overview.svg)
+
+The 2 first groups (`wavefunction`, `data`) contains data obtained from a ground state calculation.
+From there, `stdlite_run` generate the context (selection of MO and CSFs), which is stored in the `context` group.
+Then, response/amplitude vectors are computed (together with AO integrals), and the resulting property tensors are generated.
+
+!!! note
+
+    In the following, the notation ${}^TN$ means that only the lower triangular part of the $N\times N$ matrix is stored (in a flattened form, so $A_{00}, A_{10}, A_{11}, A_{20}, \dots$), thus resulting in $\frac{N\,(N+1)}{2}$ elements.
+
+### `wavefunction` group
+
+This group contains the orbital energies (`e`), coefficients (`C`) and overlap between AO (`S`).
+
+![](assets/ouput_H5/2_wavefunction.svg)
+
+where $N_{atm}$ is the number of atoms, $N_{occ}$ is the number of occupied MO, $N_{AO}$ is the number of AO, and $N_{MO}$ is the number of MO.
+
+!!! warning
+
+    It is assumed that:
+
+    + MO are given in increasing energy order, and
+    + AO in a subshell follows the order given by `libcint` (see [there](API/utilities/fchk_parser/index.md)).
+
+### `basis` group
+
+This group follows the organisation of [libcint](https://github.com/sunqm/libcint/tree/master) for the data of the basis sets.
+In particular, the content of `env` is not fixed, and depends on the content of `bas` and `atm`.
+However, `stdlite` will probably store the atomic position first, followed by basis functions' exponents, then coefficients.
+
+![](assets/ouput_H5/3_basis.svg)
+
+where $N_{bas}$ is the number of basis functions ($\geq N_{AO}$) and $N_{env}$ ($\geq 20$) is the number of data in `env`.
+*sph?* indicates whether spherical basis functions (5d, 7f ...) should be assumed or not (6d, 10f, ...).
+
+### `context` group
+
+This group contains the $\mathbf A'+\mathbf B'$ and $\mathbf A'-\mathbf B'$ matrices that resulted [from the selection of CSFs](theory.md#the-simplified-approaches-to-td-dft) (using the values defined in `parameters`), as well as the orthogonal LCAO coefficients (`C`) for the active MO space.
+
+![](assets/ouput_H5/4_context.svg)
+
+where $N_{core} + N'_{occ} = N_{occ}$, so $N_{core}$ is the number of occupied orbitals (with largely negative $\varepsilon_i$) that are not part of the active MO space, while $N'_{occ}$ is the number of occupied orbitals that are part of the active subspace, $N'_{MO}$ ($\leq N_{MO}$) is the size of the active space, $N_{CSF}$ is the number of CSFs that were selected within this active space, and *sTD* indicates whether sTD-DFT or sTDA-DFT is to be used.
+
+!!! warning
+    
+    If *sTD?* in `info` is set to `0`, then `A-B`  is not created and `A+B` is replaced by an equivalent dataset called `A`, since $\mathbf B'=0$ in the Tamm-Dancoff approximation.
+
+!!! info "About `csfs`"
+
+    The `csfs` dataset contains all configuration state functions, $\ket{\Psi_i^a}$, that were selected, stored as a single integer $k_{ia} = i\times (N'_{MO}-N'_{occ}) + a - N'_{occ}$, where $i$ and $a$ are **0-based** indices ($i=0$ is the MO  with the lowest energy in the active space, and $a\geq N'_{occ}$).
+
+    For example, if the active space contains $N'_{MO}=28$ orbitals and $N'_{occ}=14$ occupied, then:
+
+    + the CSF for an excitation from MO 14 to MO 15 (HOMO→LUMO) is encoded $k_{ia} = (14-1)\times (N'_{MO}-N'_{occ}) + (15-1-N'_{occ})=182$,
+    + the CSF for 13→15 is encoded $k_{ia} = (13-1)\times (N'_{MO}-N'_{occ}) + (15-1-N'_{occ})=168$, or
+    + the CSF for 14→16 is encoded $k_{ia} = (14-1)\times (N'_{MO}-N'_{occ}) + (16-1-N'_{occ})=183$.
+
+    A modulo operation allows to extract $i$ and $a$ from $k_{ia}$.
+
+    While it is not required, CSFs are stored by `stdlite` in increasing energy order (given by $E_{ia} = A_{ia,ia}$).
+
+
+### `responses` group
+
+This group contains the amplitude and linear response vectors (LRVs).
+
+![](assets/ouput_H5/5_responses.svg)
+
+where:
+
++ In the `amplitudes` group, $N_{exci}$ is the number of excitation, and
++ a group `{op}` is created for each operator (`dipl`, `dipv`, etc) that was requested, and which contains the $N_{LRV}$ LRVs computed with that operator at the energies indicated in `w`. *dim* is the [dimensionality](theory.md#ao-integrals) of the operator and *sym?* indicates whether this operator is symmetric or not.
+
+!!! note "Tamm-Dancoff approximation"
+
+    Following the behavior of `/context`, if the Tamm-Dancoff approximation was selected, `X-Y` in `/responses/amplitudes` is not created, and `X+Y` is replaced by `X`, of equivalent shape. 
+
+### `properties` group
+
+This group contains the resulting tensors.
+This is generally what people are ultimately interested in.
+
+![](assets/ouput_H5/6_properties.svg)
+
+where $N_w$ is the number of energies and $N_{prop}$ is the number of properties.
+
+The structure of this group reflect the diversity of properties that `stdlite` can compute. 
+For each property tensor, a `prop{n}` group [with $n\in[0,N_{prop})$] is created, which is defined by $O_{resp}$ and $O_{resi}$ the order of the response (`1` = linear, `2` = quadratic) and the order of the residue of that response (`0` = no, `1` = single, `2` = double), respectively.
+These two quantities dictates the others, as reported in this table:
+
+| $O_{resp}$ | $O_{resi}$ | Corresponding property                                           | Corresponding shape  of `property_tensor` | Corresponding $N'_{LRV}$ |
+|------------|------------|------------------------------------------------------------------|-------------------------------------------|--------------------------|
+| 1          | 0          | Linear response $\braket{\braket{A;B}}_{\omega_B}$               | $(dim_A, dim_B)$                          | 2                        |
+| 1          | 1          | Single residue of the linear response                            | $(dim_A + dim_B, N'_{exci})$              | 0                        |  
+| 2          | 0          | Quadratic response $\braket{\braket{A;B,C}}_{\omega_B,\omega_C}$ | $(dim_A, dim_B, dim_C)$                   | 3                        |
+| 2          | 2          | Double residue of the quadratic response                         | $(dim_A + dim_B + dim_C, {}^TN'_{exci})$  | 0                        |
+
+where $dim_A$ is the dimensionality of $A$.
+$N'_{LRV}$ is then the number of LRVs used to build this property, and $N'_{exci}$ indicates the number of excited states (if $O_{res} > 0$).
+
+
+!!! info "What about `/properties/w` ?"
+
+    To avoid computing the same LRV multiple times, the set of energies is stored in `/properties/w`, and referred to in `/properties/prop{n}/w`.
+    Furthermore, the code is written to handle the transformation $\omega \leftrightarrow -\omega$, and to avoid to compute the latter.
+
+    For example, if `/properties/w = [0, 0.1, 0.2]`, then (say) `/properties/propx/w` will be equal to `[0, 0]` for the static polarizability tensor, and (say) `/properties/propy/w` will be `[2, 2]` for the dynamic polarizability tensor at $\omega = 0.2 E_h$.
+
+!!! info "`name` attribute"
+
+    The `name` attribute available for each `prop{n}` gives a human-readable version of the property tensor stored in the group, but this is subject to change, and thus the combination of `info` and `ops` should be prefered to uniquely determine which property is being stored.

@@ -54,11 +54,11 @@ struct stdlite_context_ {
     /// `NULL` as long as no CSFs has been selected.
     size_t* csfs;
 
-    /// `float[STDL_MATRIX_SP_SIZE(ncfs)]`, part of the electronic Hessian matrix. `NULL` as long as no CSFs has been selected.
-    float* A;
+    /// `float[STDL_MATRIX_SP_SIZE(ncfs)]`, $\mathbf A+\mathbf B$. `NULL` as long as no CSFs has been selected.
+    float* ApB;
 
-    /// `float[STDL_MATRIX_SP_SIZE(ncfs)]`, part of the electronic Hessian matrix. Might be `NULL` if only `A` is required.
-    float* B;
+    /// `float[STDL_MATRIX_SP_SIZE(ncfs)]`, $\mathbf A-\mathbf B$. Might be `NULL` if only $\mathbf A$ (and thus `ApB` already contains $\mathbf A$) is required.
+    float* AmB;
 };
 
 typedef struct stdlite_context_ stdl_context;
@@ -91,32 +91,11 @@ int stdl_context_delete(stdl_context* ctx);
  * If `B` is set to `NULL`, then only $\mathbf A$ is filled (Tamm-Dancoff approximation).
  *
  * @param ctx a valid context
- * @param[out] nselected number of CSFs that were selected. If equals to 0, then `csfs` and `A` are not initialized.
- * @param[out] csfs `size_t[nselected]`, the indices (`i*ctx->nvirt + a`) of each selected CSF `i→a`, as `i = csfs[k] / ctx->nvirt; a = csfs[k] % ctx->nvirt`.
- *             They are sorted in increasing energy order, the energy being available at `A[k * nselected + k]`.
- * @param[out] A `float[STDL_MATRIX_SP_SIZE(nslected)]`, part of the electronic Hessian matrix, in `sp` format, to be created. Caller is responsible for free'ing it.
- * @param[out] B `float[STDL_MATRIX_SP_SIZE(nslected)]`, part of the electronic Hessian matrix, in `sp` format, to be created. Might be `NULL` if only `A` is required. If not, caller is responsible for free'ing it.
+ * @param compute_B whether $\mathbf B$ is required (`1`) or not (`0`)
  * @return error code
  * @ingroup context
  */
 int stdl_context_select_csfs_monopole(stdl_context *ctx, int compute_B);
-
-
-/**
- * Select CSFs and build the $\mathbf A$ and $\mathbf B$ matrices, using the monopole approximation (original sTD-DFT).
- * If `B` is set to `NULL`, then only $\mathbf A$ is filled (Tamm-Dancoff approximation).
- * Use less memory but takes more time than the non-direct version.
- *
- * @param ctx a valid context
- * @param[out] nselected number of CSFs that were selected. If equals to 0, then `csfs` and `A` are not initialized.
- * @param[out] csfs `size_t[nselected]`, the indices (`i*ctx->nvirt + a`) of each selected CSF `i→a`, as `i = csfs[k] / ctx->nvirt; a = csfs[k] % ctx->nvirt`.
- *             They are sorted in increasing energy order, the energy being available at `A[k * nselected + k]`.
- * @param[out] A `float[STDL_MATRIX_SP_SIZE(nslected)]`, part of the electronic Hessian matrix, in `sp` format, to be created. Caller is responsible for free'ing it.
- * @param[out] B `float[STDL_MATRIX_SP_SIZE(nslected)]`, part of the electronic Hessian matrix, in `sp` format, to be created. Might be `NULL` if only `A` is required. If not, caller is responsible for free'ing it.
- * @return error code
- * @ingroup context
- */
-int stdl_context_select_csfs_monopole_direct(stdl_context *ctx, int compute_B);
 
 
 /**
@@ -138,6 +117,17 @@ int stdl_context_dump_h5(stdl_context* ctx, hid_t file_id);
  * @ingroup context
  */
 int stdl_context_load_h5(hid_t file_id, stdl_context** ctx_ptr);
+
+/**
+ * Get the approximate space in memory
+ * @param ctx a valid context
+ * @param[out] sz the total size (including basis set and wavefunction)
+ * @param[out] bs_sz the size of the contained basis set
+ * @param[out] wf_sz the size of the contained wavefunction
+ * @return error code
+ * @ingroup context
+ */
+int stdl_context_approximate_size(stdl_context* ctx, size_t* sz, size_t* bs_sz, size_t* wf_sz);
 
 
 #endif //STDLITE_CONTEXT_H

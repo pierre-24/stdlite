@@ -108,7 +108,7 @@ void test_dipole() {
     TEST_ASSERT_NOT_NULL(dipoles_sp);
 
     // compute dipole integrals
-    ASSERT_STDL_OK(stdl_basis_dsp_dipole(bs, dipoles_sp));
+    ASSERT_STDL_OK(stdl_operator_int1e_dsp(bs, STDL_OP_DIPL, dipoles_sp));
 
     // compute explicitly the electronic dipole moment along z
     double dipz1 = .0;
@@ -124,7 +124,7 @@ void test_dipole() {
     double* dipole_z_ge = malloc(wf->nao * wf->nao * sizeof(double));
     TEST_ASSERT_NOT_NULL(dipole_z_ge);
 
-    stdl_matrix_dsp_blowge(1, wf->nao, dipoles_sp + 2 * STDL_MATRIX_SP_SIZE(wf->nao), dipole_z_ge);
+    stdl_matrix_dsp_blowge(wf->nao, 1, dipoles_sp + 2 * STDL_MATRIX_SP_SIZE(wf->nao), dipole_z_ge);
 
     // compute through density
     // dipz = tr(P*D)
@@ -136,16 +136,16 @@ void test_dipole() {
     double* Pge = malloc(wf->nao * wf->nao * sizeof(double ));
     TEST_ASSERT_NOT_NULL(Pge);
 
-    stdl_matrix_dsp_blowge(1, wf->nao, P, Pge);
+    stdl_matrix_dsp_blowge(wf->nao, 1, P, Pge);
 
     double* result = malloc(wf->nao * wf->nao * sizeof(double ));
     TEST_ASSERT_NOT_NULL(result);
 
     cblas_dsymm(CblasRowMajor, CblasRight, CblasLower,
-                (int) wf->nao, (int) wf->nao,
-                1.f, dipole_z_ge, (int) wf->nao,
-                Pge, (int) wf->nao,
-                .0, result, (int) wf->nao
+                (STDL_LA_INT) wf->nao, (STDL_LA_INT) wf->nao,
+                1.f, dipole_z_ge, (STDL_LA_INT) wf->nao,
+                Pge, (STDL_LA_INT) wf->nao,
+                .0, result, (STDL_LA_INT) wf->nao
     );
 
     double dipz2 = .0;
@@ -161,7 +161,8 @@ void test_dipole() {
     TEST_ASSERT_NOT_NULL(dipole_z_mo);
 
     // only use occupied MOs!
-    ASSERT_STDL_OK(stdl_wavefunction_dsp_ao_to_dsp_mo(wf->nao, ctx->nocc, ctx->C_ptr, dipoles_sp + 2 * STDL_MATRIX_SP_SIZE(wf->nao), dipole_z_mo));
+    ASSERT_STDL_OK(stdl_wavefunction_dsp_ao_to_dsp_mo(wf->nao, ctx->nocc, 1, ctx->C_ptr,
+                                                      dipoles_sp + 2 * STDL_MATRIX_SP_SIZE(wf->nao), dipole_z_mo));
 
     double dipz3 = .0;
     for (size_t p = 0; p < ctx->nocc; ++p) {
@@ -192,48 +193,18 @@ void test_context_select_csfs_ok() {
     ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx, 0));
 
     TEST_ASSERT_EQUAL_INT(10, ctx->ncsfs);
-    TEST_ASSERT_NULL(ctx->B);
+    TEST_ASSERT_NULL(ctx->AmB);
 
     // stdl_matrix_ssp_print(ctx->ncsfs, ctx->A, "A");
 
     // check that energies are in increasing order
     for (size_t lia = 1; lia < ctx->ncsfs; ++lia) {
-        TEST_ASSERT_TRUE(ctx->A[STDL_MATRIX_SP_IDX(lia - 1, lia - 1)] <= ctx->A[STDL_MATRIX_SP_IDX(lia, lia)]);
+        TEST_ASSERT_TRUE(ctx->ApB[STDL_MATRIX_SP_IDX(lia - 1, lia - 1)] <= ctx->ApB[STDL_MATRIX_SP_IDX(lia, lia)]);
     }
 
     // stdl_matrix_ssp_print(ctx->ncsfs, ctx->A, "A");
 
     ASSERT_STDL_OK(stdl_context_delete(ctx));
-}
-
-
-void test_context_select_csfs_direct_ok() {
-    stdl_wavefunction * wf1 = NULL;
-    stdl_basis * bs1 = NULL;
-    read_fchk("../tests/test_files/water_631g.fchk", &wf1, &bs1);
-
-    stdl_context* ctx1 = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf1, bs1, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx1));
-    ASSERT_STDL_OK(stdl_context_select_csfs_monopole(ctx1, 1));
-
-    stdl_wavefunction * wf2 = NULL;
-    stdl_basis * bs2 = NULL;
-    read_fchk("../tests/test_files/water_631g.fchk", &wf2, &bs2);
-
-    stdl_context* ctx2 = NULL;
-    ASSERT_STDL_OK(stdl_context_new(wf2, bs2, 2.0, 4.0, 12. / STDL_CONST_AU_TO_EV, 1e-4, 1.0, &ctx2));
-    ASSERT_STDL_OK(stdl_context_select_csfs_monopole_direct(ctx2, 1));
-
-    // check that both matrix are identical
-    for (size_t kia = 0; kia < ctx1->ncsfs; ++kia) {
-        for (size_t kjb = 0; kjb < ctx1->ncsfs; ++kjb) {
-            TEST_ASSERT_FLOAT_WITHIN(1e-6, ctx1->A[STDL_MATRIX_SP_IDX(kia, kjb)], ctx2->A[STDL_MATRIX_SP_IDX(kia, kjb)]);
-            TEST_ASSERT_FLOAT_WITHIN(1e-6, ctx1->B[STDL_MATRIX_SP_IDX(kia, kjb)], ctx2->B[STDL_MATRIX_SP_IDX(kia, kjb)]);
-        }
-    }
-
-    ASSERT_STDL_OK(stdl_context_delete(ctx1));
-    ASSERT_STDL_OK(stdl_context_delete(ctx2));
 }
 
 
@@ -284,8 +255,8 @@ void test_context_dump_load_h5_ok() {
     TEST_ASSERT_EQUAL(ctx1->ncsfs, ctx2->ncsfs);
 
     TEST_ASSERT_EQUAL_INT_ARRAY(ctx1->csfs, ctx2->csfs, ctx1->ncsfs);
-    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, ctx1->A, ctx2->A, STDL_MATRIX_SP_SIZE(ctx1->ncsfs));
-    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, ctx1->B, ctx2->B, STDL_MATRIX_SP_SIZE(ctx1->ncsfs));
+    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, ctx1->ApB, ctx2->ApB, STDL_MATRIX_SP_SIZE(ctx1->ncsfs));
+    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-6, ctx1->AmB, ctx2->AmB, STDL_MATRIX_SP_SIZE(ctx1->ncsfs));
     TEST_ASSERT_DOUBLE_ARRAY_WITHIN(1e-12, ctx1->C, ctx2->C, ctx1->nmo * ctx1->original_wf->nao);
 
     ASSERT_STDL_OK(stdl_context_delete(ctx1));

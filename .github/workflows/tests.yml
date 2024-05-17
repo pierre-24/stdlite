@@ -42,8 +42,8 @@ jobs:
       - name: Install OpenBLAS & Lapack(e) & configure
         if: ${{ matrix.la_backend == 'openblas' }}
         run: |
-          sudo apt-get install libopenblas-dev liblapack-dev liblapacke-dev
-          meson setup ${{ env.BUILD_DIR }} -Dla_backend=openblas --buildtype=debug
+          sudo apt-get install libopenblas-openmp-dev liblapack-dev liblapacke-dev
+          meson setup ${{ env.BUILD_DIR }} -Dla_backend=openblas+netlib --buildtype=debug
       - name: Install MKL & configure
         if: ${{ matrix.la_backend == 'mkl' }}
         run: |
@@ -66,5 +66,6 @@ jobs:
         run: >-
           OMP_NUM_THREADS=1 meson test
           --print-errorlogs
+          --timeout-multiplier 0
           --wrap='valgrind --leak-check=full --error-exitcode=1'
           -C ${{ env.BUILD_DIR }}

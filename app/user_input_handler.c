@@ -7,12 +7,9 @@
 #include <stdlite/helpers.h>
 #include <stdlite/utils/fchk_parser.h>
 #include <stdlite/utils/molden_parser.h>
-#include <stdlite/property.h>
-#include <stdlite/utils/matrix.h>
-#include <stdlite/utils/experimental_quantity.h>
+#include <stdlite/property_tensor.h>
 
 #include "user_input_handler.h"
-#include "log_property.h"
 
 int stdl_user_input_handler_new(stdl_user_input_handler** inp_ptr) {
     assert(inp_ptr != NULL);
@@ -40,9 +37,12 @@ int stdl_user_input_handler_new(stdl_user_input_handler** inp_ptr) {
     (*inp_ptr)->ctx_ethr = 7.f / STDL_CONST_AU_TO_EV;
     (*inp_ptr)->ctx_e2thr = 1e-4f;
     (*inp_ptr)->ctx_ax = 0.5f;
+    (*inp_ptr)->ctx_gauge_origin = STDL_GAUGE_ORIGIN_CM;
 
     // -- response:
     (*inp_ptr)->res_resreqs = NULL;
+    (*inp_ptr)->res_nw = 0;
+    (*inp_ptr)->res_w = NULL;
 
     return STDL_ERR_OK;
 }
@@ -55,7 +55,7 @@ int stdl_user_input_handler_delete(stdl_user_input_handler* inp) {
     if(inp->res_resreqs != NULL)
         stdl_response_request_delete(inp->res_resreqs);
 
-    STDL_FREE_ALL(inp->title, inp->ctx_source, inp->data_output, inp);
+    STDL_FREE_ALL(inp->title, inp->ctx_source, inp->data_output, inp->res_w, inp);
 
     return STDL_ERR_OK;
 }
@@ -92,17 +92,78 @@ int _operator_in(toml_table_t* table, char* field, stdl_operator * result, int* 
 
     if(op.ok) {
         STDL_DEBUG("- (operator) %s", field);
-        if(strcmp(op.u.s, "dipl") == 0) {
-            *result = STDL_OP_DIPL;
-            *isset = 1;
-        } else {
-            err = STDL_ERR_INPUT;
+        for (int iop = 0; iop < STDL_OP_COUNT; ++iop) {
+            if(strcmp(op.u.s, STDL_OPERATOR_NAME[iop]) == 0) {
+                *result = iop;
+                *isset = 1;
+                STDL_DEBUG(STDL_OPERATOR_NAME[iop]);
+                break;
+            }
         }
 
         free(op.u.s);
     }
 
     return err;
+}
+
+struct _w_list {
+    float w;
+    struct _w_list* next;
+};
+
+int _w_list_new(float w, struct _w_list** elm) {
+    *elm = malloc(sizeof(struct _w_list));
+    STDL_ERROR_HANDLE_AND_REPORT(*elm == NULL, return STDL_ERR_MALLOC, "malloc");
+
+    (*elm)->w = w;
+    (*elm)->next = NULL;
+    return STDL_ERR_OK;
+}
+
+int _w_list_get_id(struct _w_list** first, float w, size_t* id) {
+    *id = 0;
+    int err;
+    struct _w_list* elm = *first;
+
+    if(*first == NULL) {
+        err = _w_list_new(w, &elm);
+        STDL_ERROR_CODE_HANDLE(err, return err);
+        *first = elm;
+    } else {
+        struct _w_list* prev = NULL;
+        int found = 0;
+
+        while (elm != NULL && found == 0) {
+            if (stdl_float_equals(elm->w, w, 1e-6f))
+                found = 1;
+            else {
+                (*id)++;
+                prev = elm;
+                elm = elm->next;
+            }
+        }
+
+        if(!found) {
+            struct _w_list* last = NULL;
+            err = _w_list_new(w, &last);
+            STDL_ERROR_CODE_HANDLE(err, return err);
+            prev->next = last;
+        }
+    }
+
+    return STDL_ERR_OK;
+}
+
+int _w_list_delete(struct _w_list* lst) {
+    assert(lst != NULL);
+
+    if(lst->next != NULL)
+        _w_list_delete(lst->next);
+
+    STDL_FREE_IF_USED(lst);
+
+    return STDL_ERR_OK;
 }
 
 int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f) {
@@ -166,8 +227,6 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
             STDL_DEBUG("- method");
             if(strcmp(ctx_method.u.s, "monopole") == 0) {
                 inp->ctx_method = STDL_METHOD_MONOPOLE;
-            } else if(strcmp(ctx_method.u.s, "monopole_direct") == 0) {
-                inp->ctx_method = STDL_METHOD_MONOPOLE_DIRECT;
             } else {
                 STDL_ERROR_HANDLE_AND_REPORT(1, free(ctx_method.u.s); goto _end, "unknown value for `context.method`");
             }
@@ -204,6 +263,18 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
             STDL_DEBUG("- ax");
             inp->ctx_ax = (float) ctx_ax.u.d;
         }
+
+        toml_array_t* gauge_origin = toml_array_in(ctx, "gauge_origin");
+        if(gauge_origin != NULL) {
+            STDL_DEBUG("- gauge_origin");
+            toml_datum_t elm0 = toml_double_at(gauge_origin, 0), elm1 = toml_double_at(gauge_origin, 1), elm2 = toml_double_at(gauge_origin, 2), elm3 = toml_double_at(gauge_origin, 3);
+            STDL_ERROR_HANDLE_AND_REPORT(!(elm0.ok && elm1.ok && elm2.ok) || elm3.ok, err = STDL_ERR_INPUT; goto _end, "context.gauge_origin must have 3 elements");
+
+            inp->ctx_gauge_origin = STDL_GAUGE_ORIGIN_CUSTOM;
+            inp->ctx_gauge_origin_custom[0] = elm0.u.d / STDL_CONST_AU_TO_ANG;
+            inp->ctx_gauge_origin_custom[1] = elm1.u.d / STDL_CONST_AU_TO_ANG;
+            inp->ctx_gauge_origin_custom[2] = elm2.u.d / STDL_CONST_AU_TO_ANG;
+        }
     }
 
     toml_table_t* response = toml_table_in(conf, "responses");
@@ -211,6 +282,7 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
         STDL_DEBUG("Read [responses]");
 
         stdl_response_request* prev = NULL;
+        struct _w_list* wlist = NULL;
 
         // linear response
         toml_array_t* lresp = toml_array_in(response, "linear");
@@ -230,13 +302,18 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
                 STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `opB` in `linear[%d]`", i);
 
-                float w;
-                err = _energy_in(t, "wB", &w, &isset);
+                float wB;
+                err = _energy_in(t, "wB", &wB, &isset);
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
-                STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `w` in `linear[%d]`", i);
+                STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `wB` in `linear[%d]`", i);
+
+                size_t iwA, iwB;
+                err = _w_list_get_id(&wlist, wB, &iwA) ||
+                        _w_list_get_id(&wlist, wB, &iwB);
+                STDL_ERROR_CODE_HANDLE(err, _w_list_delete(wlist); goto _end);
 
                 stdl_response_request* req = NULL;
-                err = stdl_response_request_new(1, 0, (stdl_operator[]) {opA, opB}, (float[]) {w, w}, 0, &req);
+                err = stdl_response_request_new(1, 0, (stdl_operator[]) {opA, opB}, (size_t[]) {iwA, iwB}, 0, &req);
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
 
                 if(prev == NULL) {
@@ -283,8 +360,14 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
                 STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `wC` in `quadratic[%d]`", i);
 
+                size_t iwA, iwB, iwC;
+                err = _w_list_get_id(&wlist, wB + wC, &iwA)
+                        || _w_list_get_id(&wlist, wB, &iwB)
+                        || _w_list_get_id(&wlist, wC, &iwC);
+                STDL_ERROR_CODE_HANDLE(err, _w_list_delete(wlist); goto _end);
+
                 stdl_response_request* req = NULL;
-                err = stdl_response_request_new(2, 0, (stdl_operator[]) {opA, opB, opC}, (float[]) {wB + wC, wB, wC}, 0, &req);
+                err = stdl_response_request_new(2, 0, (stdl_operator[]) {opA, opB, opC}, (size_t[]) {iwA, iwB, iwC}, 0, &req);
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
 
                 if(prev == NULL) {
@@ -307,12 +390,18 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
             int i = 0;
             toml_table_t* t = toml_table_at(lresp_sr, i);
             while (t != NULL) {
-                STDL_DEBUG("lresp_sr[%d]", i);
+                STDL_DEBUG("linear_sr[%d]", i);
 
                 stdl_operator opA;
                 err = _operator_in(t, "opA", &opA, &isset);
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
-                STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `op` in `linear_sr[%d]`", i);
+                STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `opA` in `linear_sr[%d]`", i);
+
+                stdl_operator opB;
+                err = _operator_in(t, "opB", &opB, &isset);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+                if(!isset)
+                    opB = opA;
 
                 int nroots;
                 toml_datum_t root = toml_int_in(t, "nroots");
@@ -320,7 +409,7 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
                 nroots = (int) root.u.i;
 
                 stdl_response_request* req = NULL;
-                err = stdl_response_request_new(1, 1, (stdl_operator[]) {opA}, NULL, nroots, &req);
+                err = stdl_response_request_new(1, 1, (stdl_operator[]) {opA, opB}, NULL, nroots, &req);
                 STDL_ERROR_CODE_HANDLE(err, goto _end);
 
                 if(prev == NULL) {
@@ -333,6 +422,81 @@ int stdl_user_input_handler_fill_from_toml(stdl_user_input_handler* inp, FILE *f
 
                 i += 1;
                 t = toml_table_at(lresp_sr, i);
+            }
+        }
+
+
+        // single residue of the linear response
+        toml_array_t* qresp_dr = toml_array_in(response, "quadratic_dr");
+        if(qresp_dr != NULL) {
+            STDL_DEBUG("- quadratic_sr");
+            int i = 0;
+            toml_table_t* t = toml_table_at(qresp_dr, i);
+            while (t != NULL) {
+                STDL_DEBUG("quadratic_dr[%d]", i);
+
+                stdl_operator opA;
+                err = _operator_in(t, "opA", &opA, &isset);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+                STDL_ERROR_HANDLE_AND_REPORT(!isset, err = STDL_ERR_INPUT; goto _end, "missing `opA` in `quadratic_dr[%d]`", i);
+
+                stdl_operator opB;
+                err = _operator_in(t, "opB", &opB, &isset);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+                if(!isset)
+                    opB = opA;
+
+                stdl_operator opC;
+                err = _operator_in(t, "opC", &opC, &isset);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+                if(!isset)
+                    opC = opA;
+
+                int nroots;
+                toml_datum_t root = toml_int_in(t, "nroots");
+                STDL_ERROR_HANDLE_AND_REPORT(!root.ok, err = STDL_ERR_INPUT; goto _end, "missing `nroots` in `quadratic_dr[%d]`", i);
+                nroots = (int) root.u.i;
+
+                stdl_response_request* req = NULL;
+                err = stdl_response_request_new(2, 2, (stdl_operator[]) {opA, opB, opC}, NULL, nroots, &req);
+                STDL_ERROR_CODE_HANDLE(err, goto _end);
+
+                if(prev == NULL) {
+                    inp->res_resreqs = req;
+                } else {
+                    prev->next = req;
+                }
+
+                prev = req;
+
+                i += 1;
+                t = toml_table_at(qresp_dr, i);
+            }
+        }
+
+        // TODO: quadratic sr
+
+        struct _w_list* elm = wlist, *prevw = NULL;
+        while (elm != NULL) {
+            inp->res_nw++;
+            elm = elm->next;
+        }
+
+        if(inp->res_nw > 0) {
+            inp->res_w = malloc(inp->res_nw * sizeof(float));
+            STDL_ERROR_HANDLE_AND_REPORT(inp->res_w == NULL, _w_list_delete(wlist); err = STDL_ERR_MALLOC; goto _end, "malloc");
+
+            size_t iw = 0;
+            elm = wlist;
+            while (elm != NULL) {
+                inp->res_w[iw] = elm->w;
+
+                prevw = elm;
+                elm = elm->next;
+                iw++;
+
+                prevw->next = NULL;
+                _w_list_delete(prevw);
             }
         }
     }
@@ -481,8 +645,6 @@ int stdl_user_input_handler_fill_from_args(stdl_user_input_handler* inp, int arg
     if(arg_ctx_method->count > 0) {
         if(strcmp(arg_ctx_method->sval[0], "monopole") == 0) {
             inp->ctx_method = STDL_METHOD_MONOPOLE;
-        } else if(strcmp(arg_ctx_method->sval[0], "monopole_direct") == 0) {
-            inp->ctx_method = STDL_METHOD_MONOPOLE_DIRECT;
         } else {
             STDL_ERROR_HANDLE_AND_REPORT(1, err = STDL_ERR_INPUT; goto _end, "unknown method `%s`", arg_ctx_method->sval[0]);
         }
@@ -529,16 +691,7 @@ int stdl_user_input_handler_new_from_args(int argc, char* argv[], stdl_user_inpu
 }
 
 void _op_log(char* name, stdl_operator op) {
-    stdl_log_msg(0, "%s=\"", name);
-    switch (op) {
-        case STDL_OP_DIPL:
-            stdl_log_msg(0, "dipl");
-            break;
-        default:
-            stdl_log_msg(0, "unk");
-    }
-
-    stdl_log_msg(0, "\"");
+    stdl_log_msg(0, "%s=\"%s\"", name, STDL_OPERATOR_NAME[op]);
 }
 
 int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
@@ -574,14 +727,16 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
             case STDL_METHOD_MONOPOLE:
                 stdl_log_msg(0, "method = \"monopole\"\n");
                 break;
-            case STDL_METHOD_MONOPOLE_DIRECT:
-                stdl_log_msg(0, "method = \"monopole_direct\"\n");
-                break;
         }
 
         stdl_log_msg(0, "tda = %d\n", inp->ctx_tda);
         stdl_log_msg(0, "gammaJ = %f\ngammaK = %f\nax = %f\n", inp->ctx_gammaJ, inp->ctx_gammaK, inp->ctx_ax);
         stdl_log_msg(0, "ethr = %f # au\ne2thr = %e # au\n", inp->ctx_ethr, inp->ctx_e2thr);
+
+        if(inp->ctx_gauge_origin != STDL_GAUGE_ORIGIN_CM) {
+            stdl_log_msg(0, "gauge_origin = [%f, %f, %f]\n", inp->ctx_gauge_origin_custom[0] * STDL_CONST_AU_TO_ANG, inp->ctx_gauge_origin_custom[1] * STDL_CONST_AU_TO_ANG, inp->ctx_gauge_origin_custom[2] * STDL_CONST_AU_TO_ANG);
+        }
+
     } else {
         stdl_log_msg(0, "# A' and B' are obtained from %s\n", inp->ctx_source);
     }
@@ -595,12 +750,12 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
         stdl_log_msg(0, "linear = [\n");
         req = inp->res_resreqs;
         while(req != NULL) {
-            if(req->resp_order == 1 && req->res_order == 0) {
+            if(req->resp_order == 1 && req->resi_order == 0) {
                 stdl_log_msg(0, "  {");
                 _op_log("opA", req->ops[0]);
                 stdl_log_msg(0, ", ");
                 _op_log("opB", req->ops[1]);
-                stdl_log_msg(0, ", wB=%f},\n", req->w[1]);
+                stdl_log_msg(0, ", wB=%f},\n", inp->res_w[req->iw[1]]);
             }
             req = req->next;
         }
@@ -610,14 +765,14 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
         stdl_log_msg(0, "quadratic = [\n");
         req = inp->res_resreqs;
         while(req != NULL) {
-            if(req->resp_order == 2 && req->res_order == 0) {
+            if(req->resp_order == 2 && req->resi_order == 0) {
                 stdl_log_msg(0, "  {");
                 _op_log("opA", req->ops[0]);
                 stdl_log_msg(0, ", ");
                 _op_log("opB", req->ops[1]);
                 stdl_log_msg(0, ", ");
                 _op_log("opC", req->ops[2]);
-                stdl_log_msg(0, ", wB=%f, wC=%f},\n", req->w[1], req->w[2]);
+                stdl_log_msg(0, ", wB=%f, wC=%f},\n", inp->res_w[req->iw[1]], inp->res_w[req->iw[2]]);
             }
             req = req->next;
         }
@@ -627,9 +782,28 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp) {
         stdl_log_msg(0, "linear_sr = [\n");
         req = inp->res_resreqs;
         while(req != NULL) {
-            if(req->resp_order == 1 && req->res_order == 1) {
+            if(req->resp_order == 1 && req->resi_order == 1) {
                 stdl_log_msg(0, "  {");
                 _op_log("opA", req->ops[0]);
+                stdl_log_msg(0, ", ");
+                _op_log("opB", req->ops[1]);
+                stdl_log_msg(0, ", nroots=%d},\n", req->nroots);
+            }
+            req = req->next;
+        }
+        stdl_log_msg(0, "]\n");
+
+        // quadratic_dr
+        stdl_log_msg(0, "quadratic_dr = [\n");
+        req = inp->res_resreqs;
+        while(req != NULL) {
+            if(req->resp_order == 2 && req->resi_order == 2) {
+                stdl_log_msg(0, "  {");
+                _op_log("opA", req->ops[0]);
+                stdl_log_msg(0, ", ");
+                _op_log("opB", req->ops[1]);
+                stdl_log_msg(0, ", ");
+                _op_log("opC", req->ops[2]);
                 stdl_log_msg(0, ", nroots=%d},\n", req->nroots);
             }
             req = req->next;
@@ -717,13 +891,18 @@ int stdl_user_input_handler_make_context(stdl_user_input_handler* inp, stdl_cont
 
         // create context
         err = stdl_context_new(wf, bs, inp->ctx_gammaJ, inp->ctx_gammaK, inp->ctx_ethr, inp->ctx_e2thr, inp->ctx_ax, ctx_ptr);
-        STDL_ERROR_CODE_HANDLE(err, stdl_basis_delete(bs); stdl_wavefunction_delete(wf); return err);
+        STDL_ERROR_CODE_HANDLE(err, *ctx_ptr = NULL; return err);
+
+        // set gauge
+        if(inp->ctx_gauge_origin != STDL_GAUGE_ORIGIN_CM) {
+            stdl_basis_set_Rc((*ctx_ptr)->bs, inp->ctx_gauge_origin_custom);
+        }
+
+        stdl_log_msg(0, "Gauge origin is set to: (%.4f a0, %.4f a0, %.4f a0)\n", (*ctx_ptr)->bs->env[PTR_COMMON_ORIG + 0],(*ctx_ptr)->bs->env[PTR_COMMON_ORIG + 1],(*ctx_ptr)->bs->env[PTR_COMMON_ORIG + 2]);
 
         // select and build A' and B'
         if(inp->ctx_method == STDL_METHOD_MONOPOLE)
             err = stdl_context_select_csfs_monopole(*ctx_ptr, !inp->ctx_tda);
-        else if(inp->ctx_method == STDL_METHOD_MONOPOLE_DIRECT)
-            err = stdl_context_select_csfs_monopole_direct(*ctx_ptr, !inp->ctx_tda);
 
         STDL_ERROR_CODE_HANDLE(err, return err);
 
@@ -741,253 +920,16 @@ int stdl_user_input_handler_make_context(stdl_user_input_handler* inp, stdl_cont
     return err;
 }
 
-struct _w_list {
-    float w;
-    struct _w_list* next;
-};
+int stdl_user_input_handler_approximate_size(stdl_user_input_handler *inp, size_t nexci, size_t *sz, size_t *respreq_sz) {
+    assert(inp != NULL && sz != NULL);
 
-int _w_list_new(float w, struct _w_list** elm) {
-    *elm = malloc(sizeof(struct _w_list));
-    STDL_ERROR_HANDLE_AND_REPORT(*elm == NULL, return STDL_ERR_MALLOC, "malloc");
+    *respreq_sz = 0;
 
-    (*elm)->w = w;
-    (*elm)->next = NULL;
-    return STDL_ERR_OK;
-}
+    if(inp->res_resreqs != NULL)
+        stdl_response_request_approximate_size(inp->res_resreqs, nexci, respreq_sz);
 
-int _w_list_delete(struct _w_list* lst) {
-    assert(lst != NULL);
-
-    if(lst->next != NULL)
-        _w_list_delete(lst->next);
-
-    STDL_FREE_IF_USED(lst);
-
-    return STDL_ERR_OK;
-}
-
-int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl_context *ctx, stdl_responses_handler **rh_ptr) {
-    assert(inp != NULL && ctx != NULL && inp->res_resreqs != NULL && rh_ptr != NULL);
-
-    int err;
-
-    stdl_log_msg(1, "+ ");
-    stdl_log_msg(0, "Preparing responses >");
-    stdl_log_msg(1, "\n  | Count requests ");
-
-    // count the number of operators, LRV requests, amplitudes, and freqs.
-    size_t res_nops = 0, res_nlrvreq = 0, res_nexci = 0, totnw = 0;
-
-    short operators[STDL_OP_COUNT] = {0};
-    short islrvs[STDL_OP_COUNT] = {0};
-    struct _w_list* lrvs_w[STDL_OP_COUNT] = {NULL};
-
-    stdl_response_request* req = inp->res_resreqs;
-    while (req != NULL) {
-        // check out if it contains a new operator
-        size_t nops = req->resp_order - req->res_order + 1;
-        for (size_t iop = 0; iop < nops; ++iop) {
-            stdl_operator op = req->ops[iop];
-            if(!operators[op])
-                res_nops += 1;
-
-            if(!islrvs[op] && req->res_order < req->resp_order) {
-                islrvs[op] = 1;
-                res_nlrvreq += 1;
-            }
-
-            operators[op] = 1;
-        }
-
-        // if LRV is required, add frequency
-        size_t nw = (req->resp_order == req->res_order)? 0: req->resp_order-req->res_order+1;
-        for (size_t iw = 0; iw < nw; ++iw) {
-            stdl_operator op = req->ops[iw];
-            struct _w_list* elm = NULL;
-            err = _w_list_new(req->w[iw], &elm);
-            STDL_ERROR_CODE_HANDLE(err, return err);
-
-            if(lrvs_w[op] == NULL) {
-                lrvs_w[op] = elm;
-            } else {
-                struct _w_list* last = lrvs_w[op];
-                int already_in = 0;
-                while (last->next != NULL && !already_in) {
-                    if(stdl_float_equals(req->w[iw], last->w, 1e-6f)) {
-                        already_in = 1;
-                    }
-
-                    last = last->next;
-                }
-
-                if(!already_in && !stdl_float_equals(req->w[iw], last->w, 1e-6f)) {
-                    last->next = elm;
-                }
-                else
-                    _w_list_delete(elm);
-            }
-        }
-
-        // check out if it requires amplitudes
-        if(req->res_order > 0) {
-            if(req->nroots < 0)
-                res_nexci = ctx->ncsfs;
-            else if((size_t) req->nroots > res_nexci) {
-                if((size_t) req->nroots > ctx->ncsfs) {
-                    STDL_WARN("%ld excited states requested, which is more than the number of CSFs", req->nroots);
-                    req->nroots = (int) ctx->ncsfs;
-                }
-                res_nexci = (size_t) req->nroots;
-            }
-        }
-
-        req = req->next;
-    }
-
-    stdl_log_msg(0, "-");
-    stdl_log_msg(1, "\n  | build requests ");
-
-    err = stdl_responses_handler_new(res_nops, res_nlrvreq, res_nexci, inp->data_output, ctx, rh_ptr);
-    STDL_ERROR_CODE_HANDLE(err, return err);
-
-    // copy operators
-    int ioffset = 0;
-    for (int iop = 0; iop < STDL_OP_COUNT; ++iop) {
-        if(operators[iop]) {
-            (*rh_ptr)->ops[ioffset] = iop;
-            ioffset++;
-        }
-    }
-
-    // create LRV requests
-    stdl_lrv_request* lrvs[STDL_OP_COUNT] = {NULL};
-    ioffset = 0;
-    for (int iop = 0; iop < STDL_OP_COUNT; ++iop) {
-        if(islrvs[iop]) {
-            // count the number of frequencies
-            size_t nw = 0;
-            struct _w_list* last = lrvs_w[iop];
-            while (last != NULL) {
-                nw++;
-                last = last->next;
-            }
-
-            totnw += nw;
-
-            STDL_ERROR_HANDLE_AND_REPORT(nw == 0, return STDL_ERR_INPUT, "LRV but nw=0");
-
-            // create LRV request
-            (*rh_ptr)->lrvreqs[ioffset] = NULL;
-            err = stdl_lrv_request_new(iop, nw, ctx->ncsfs, (*rh_ptr)->lrvreqs + ioffset);
-            STDL_ERROR_CODE_HANDLE(err, return err);
-
-            lrvs[iop] = (*rh_ptr)->lrvreqs[ioffset];
-
-            // copy frequencies
-            nw = 0;
-            struct _w_list* curr = lrvs_w[iop];
-            struct _w_list* prev = NULL;
-            while (curr != NULL) {
-                (*rh_ptr)->lrvreqs[ioffset]->w[nw] = curr->w;
-
-                nw++;
-
-                prev = curr;
-                curr = curr->next;
-                prev->next = NULL;
-                _w_list_delete(prev);
-            }
-
-            ioffset++;
-        }
-    }
-
-    stdl_log_msg(0, "-");
-    stdl_log_msg(1, "\n  | assign each response to its request ");
-
-    req = inp->res_resreqs;
-    while (req != NULL) {
-        if(req->resp_order != req->res_order) {
-            size_t nops = req->resp_order - req->res_order + 1;
-            for (size_t iop = 0; iop < nops; ++iop) {
-                stdl_lrv_request *lrvreq = lrvs[req->ops[iop]];
-                req->lrvreqs[iop] = lrvreq;
-                for (size_t jw = 0; jw < lrvreq->nw; ++jw) {
-                    if (stdl_float_equals(req->w[iop], lrvreq->w[jw], 1e-6f)) {
-                        req->wpos[iop] = jw;
-                        break;
-                    }
-                }
-            }
-        }
-
-        req = req->next;
-    }
-
-    stdl_log_msg(0, "< done\n");
-    stdl_log_msg(0, "Will compute %ld EV matrix(ces), %ld response vector(s), and %ld amplitude vector(s)\n", (*rh_ptr)->nops, totnw, (*rh_ptr)->nexci);
-
-    return STDL_ERR_OK;
-}
-
-int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, stdl_context* ctx, stdl_responses_handler* rh) {
-    assert(inp != NULL && ctx != NULL && rh != NULL);
-
-    stdl_response_request* req = inp->res_resreqs;
-    while (req != NULL) {
-
-        if(req->resp_order == 1 && req->res_order == 0) { // linear
-            size_t dim0 = 1, dim1 = 1;
-            stdl_operator_dim(req->lrvreqs[0]->op, &dim0);
-            stdl_operator_dim(req->lrvreqs[1]->op, &dim1);
-
-            // TODO: it should be more general than that!
-            float alpha[6];
-            stdl_property_polarizability(
-                    ctx,
-                    req->lrvreqs[0]->eta_MO,
-                    req->lrvreqs[1]->X + req->wpos[1] * dim1 * ctx->ncsfs,
-                    req->lrvreqs[1]->Y + req->wpos[1] * dim1 * ctx->ncsfs,
-                    alpha
-                    );
-
-            if(req->ops[0] == STDL_OP_DIPL && req->ops[1] == STDL_OP_DIPL)
-                stdl_log_property_polarizability(req, alpha);
-
-        } else if(req->resp_order == 2 && req->res_order == 0) { // quadratic
-            size_t dim0 = 3, dim1 = 3, dim2 = 3;
-            stdl_operator_dim(req->lrvreqs[0]->op, &dim0);
-            stdl_operator_dim(req->lrvreqs[1]->op, &dim1);
-            stdl_operator_dim(req->lrvreqs[2]->op, &dim2);
-
-            // TODO: it should be more general than that!
-            float beta[3][3][3];
-            stdl_property_first_hyperpolarizability(
-                    ctx,
-                    req->lrvreqs[1]->eta_MO,
-                    (float*[]) {req->lrvreqs[0]->Y + req->wpos[0] * dim0 * ctx->ncsfs, req->lrvreqs[1]->X + req->wpos[1] * dim1 * ctx->ncsfs,req->lrvreqs[2]->X + req->wpos[2] * dim2 * ctx->ncsfs},
-                    (float*[]) {req->lrvreqs[0]->X + req->wpos[0] * dim0 * ctx->ncsfs, req->lrvreqs[1]->Y + req->wpos[1] * dim1 * ctx->ncsfs,req->lrvreqs[2]->Y + req->wpos[2] * dim2 * ctx->ncsfs},
-                    beta
-                    );
-
-            if(req->ops[0] == STDL_OP_DIPL && req->ops[1] == STDL_OP_DIPL && req->ops[2] == STDL_OP_DIPL)
-                stdl_log_property_first_hyperpolarizability(req, beta);
-
-        } else if(req->resp_order == 1 && req->res_order == 1) { // linear SR
-
-            float* tdips = malloc(rh->nexci * 3 * sizeof(float ));
-            STDL_ERROR_HANDLE_AND_REPORT(tdips == NULL, return STDL_ERR_MALLOC, "malloc");
-
-            // TODO: it should be more general than that!
-            stdl_property_transition_dipoles(ctx, rh->nexci, rh->ev_matrices[0] /* <- !!!! */, rh->Xamp, rh->Yamp, tdips);
-
-            stdl_log_property_g2e_dipoles(rh, ctx, tdips, 1e-3f);
-
-            STDL_FREE_IF_USED(tdips);
-        }
-
-        req = req->next;
-    }
+    *sz = sizeof(stdl_user_input_handler)
+            + *respreq_sz;
 
     return STDL_ERR_OK;
 }

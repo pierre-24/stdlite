@@ -1,11 +1,11 @@
 title = "test calculation"
-data_output = "water_631g.h5"
+data_output = "stdlite_calculation.h5"
 
 [context]
-source = "../tests/test_files/water_631g.fchk"
-source_type = "FCHK"
+source = "../tests/test_files/chiral_sto3g.molden"
+source_type = "MOLDEN"
 method = "monopole"
-ethr = '12eV'
+ethr = '25eV'
 ax = 1.0
 tda = 0
 e2thr=1e-4
@@ -13,9 +13,9 @@ e2thr=1e-4
 [responses]
 
 linear = [
-    {opA = 'dipl', opB = 'dipl', wB = 0}, # polarizability
-    {opA = 'dipl', opB = 'dipl', wB = '1064nm'},
-    {opA = 'dipl', opB = 'dipl', wB = '532nm'},
+    {opA = 'dipv', opB = 'angm', wB = 0}, # polarizability
+    {opA = 'dipv', opB = 'angm', wB = '1064nm'},
+    {opA = 'dipv', opB = 'angm', wB = '532nm'},
     # {target = 'electric_polarizability', w = '1064nm'}, # alternate notation
 ]
 
@@ -26,12 +26,16 @@ quadratic = [
 ]
 
 linear_sr = [
-    {opA = 'dipl', nroots = -1},  # transition dipole
+    {opA = 'dipl', nroots = 5},  # transition dipole
+    {opA = 'dipv', nroots = 5},  # transition dipole
+    {opA = 'dipl', opB = 'angm', nroots = 5},  # transition dipole
+    {opA = 'dipv', opB = 'angm', nroots = 5},  # transition dipole
 ]
 
-#quadratic_dr = [
-#    {op = 'dipl', root = -1}  # e2e transition dipoles
-#]
+quadratic_dr = [
+    {opA = 'dipl', opB = 'angm', nroots = 5},  # e2e transition dipoles
+    {opA = 'dipv', opB = 'angm', nroots = 5}  # e2e transition dipoles
+]
 
 # [analyses]
 # sos_linear = true

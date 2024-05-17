@@ -5,6 +5,7 @@
 #include "stdlite/utils/molden_parser.h"
 #include "stdlite/logging.h"
 #include "stdlite/helpers.h"
+#include "stdlite/integrals.h"
 
 int stdl_molden_parser_read_section_title(stdl_lexer* lx, char** title) {
 
@@ -610,6 +611,7 @@ int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction** wf_ptr, stdl_
             } else {
                 STDL_DEBUG("switching to spherical basis functions");
                 _use_spherical(dt);
+                stdl_basis_data_count_nao(dt, &nao); // recount NAO
             }
 
             err = stdl_molden_parser_skip_section(lx);
@@ -678,14 +680,13 @@ int stdl_molden_parser_extract(stdl_lexer* lx, stdl_wavefunction** wf_ptr, stdl_
 
     stdl_basis_reorder_C(nmo, nao, (*wf_ptr)->C, *bs_ptr, 4, transpose);
 
-    stdl_log_msg(0, "-");
-    stdl_log_msg(1, "\n  | Create S ");
+    stdl_log_msg(0, "< done\n");
 
     // create the S matrix
-    err = stdl_basis_dsp_ovlp((*bs_ptr), (*wf_ptr)->S);
+    err = stdl_operator_int1e_dsp((*bs_ptr), STDL_OP_OVLP, (*wf_ptr)->S);
     STDL_ERROR_CODE_HANDLE(err, goto _end);
 
-    stdl_log_msg(0, "< done\n");
+    // and done!
     stdl_log_msg(0, "Got %d atoms, %d AOs (%d primitives in %d basis functions), and %d MOs\n", natm, nao, nprim, (*bs_ptr)->nbas, nmo);
 
     _end:

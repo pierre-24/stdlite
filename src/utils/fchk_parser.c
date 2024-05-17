@@ -7,6 +7,7 @@
 #include "stdlite/utils/fchk_parser.h"
 #include "stdlite/basis.h"
 #include "stdlite/helpers.h"
+#include "stdlite/integrals.h"
 
 int stdl_fchk_parser_get_section_info(stdl_lexer* lx, char** name, char* type, int* is_scalar) {
     assert(lx != NULL && name != NULL && type != NULL && is_scalar != NULL);
@@ -478,6 +479,9 @@ int stdl_basis_data_to_basis(stdl_basis_data *dt, size_t natm, double *atm, stdl
     size_t base_offset = PTR_ENV_START;
 
     // atoms
+    double center_of_mass[3] = {.0, .0, .0};
+    double mass = .0;
+
     for(size_t i=0; i < natm; i++) {
         (*bs_ptr)->atm[i * 6 + 0] = (int) atm[i * 4 + 0];
         (*bs_ptr)->atm[i * 6 + 1] = (int) (base_offset + i * 3);
@@ -485,7 +489,19 @@ int stdl_basis_data_to_basis(stdl_basis_data *dt, size_t natm, double *atm, stdl
         (*bs_ptr)->env[base_offset + i * 3 + 0] = atm[i * 4 + 1];
         (*bs_ptr)->env[base_offset + i * 3 + 1] = atm[i * 4 + 2];
         (*bs_ptr)->env[base_offset + i * 3 + 2] = atm[i * 4 + 3];
+
+        mass += atm[i * 4 + 0];
+        center_of_mass[0] += atm[i * 4 + 0] * atm[i * 4 + 1];
+        center_of_mass[1] += atm[i * 4 + 0] * atm[i * 4 + 2];
+        center_of_mass[2] += atm[i * 4 + 0] * atm[i * 4 + 3];
     }
+
+    center_of_mass[0] /= mass;
+    center_of_mass[1] /= mass;
+    center_of_mass[2] /= mass;
+
+    STDL_DEBUG("Set common (i.e., gauge) origin at (%.3f, %.3f, %.3f)", center_of_mass[0], center_of_mass[1], center_of_mass[2]);
+    stdl_basis_set_Rc(*bs_ptr, center_of_mass);
 
     // copy exps and coefs
     size_t offset_exps = base_offset + 3 * natm, offset_coefs = base_offset +3 * natm + dt->nprim, offset_coefs_sp = base_offset + 3 * natm + 2 * dt->nprim;
@@ -775,15 +791,14 @@ int stdl_fchk_parser_extract(stdl_lexer *lx, stdl_wavefunction **wf_ptr, stdl_ba
         transpose = STDL_G16_TRANSPOSE_SPH;
 
     stdl_basis_reorder_C(nmo, nao, (*wf_ptr)->C, *bs_ptr, 4, transpose);
-
-    stdl_log_msg(0, "-");
-    stdl_log_msg(1, "\n  | create S ");
-
-    // create the S matrix
-    error = stdl_basis_dsp_ovlp((*bs_ptr), (*wf_ptr)->S);
     STDL_ERROR_CODE_HANDLE(error, goto _end);
 
     stdl_log_msg(0, "< done\n");
+
+    // create the S matrix
+    error = stdl_operator_int1e_dsp((*bs_ptr), STDL_OP_OVLP, (*wf_ptr)->S);
+
+    // and done!
     stdl_log_msg(0, "Got %d atoms, %d AOs (%d primitives in %d basis functions), and %d MOs\n", natm, nao, nprim, (*bs_ptr)->nbas, nmo);
 
     // clean up stuffs

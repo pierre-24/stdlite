@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include <stdlite/context.h>
+#include <stdlite/helpers.h>
 
 #include "app.h"
 
@@ -71,10 +72,10 @@ int main(int argc, char* argv[]) {
 
     title("Compute responses");
     if(input->res_resreqs != NULL) {
-        err = stdl_user_input_handler_prepare_responses(input, ctx, &rh);
+        err = stdl_responses_handler_new_from_input(input, ctx, &rh);
         STDL_ERROR_CODE_HANDLE(err, goto _end);
 
-        err = stdl_responses_handler_compute(rh, ctx);
+        err = stdl_responses_handler_compute(rh, input, ctx);
         STDL_ERROR_CODE_HANDLE(err, goto _end);
     } else {
         stdl_log_msg(0, "No response requested.\n");
@@ -82,14 +83,14 @@ int main(int argc, char* argv[]) {
 
     stdl_log_msg(0, "Elapsed time in responses: %.2f secs\n", stdl_timer_stop(&elapsed_time_response));
 
-
     // compute properties
     struct timespec elapsed_time_properties;
     stdl_timer_start(&elapsed_time_properties);
 
     title("Properties");
     if(input->res_resreqs != NULL) {
-        err = stdl_user_input_handler_compute_properties(input, ctx, rh);
+        stdl_log_msg(0, "Note: unless otherwise mentioned, everything is given in atomic units.\n");
+        err = stdl_response_handler_compute_properties(rh, input, ctx);
         STDL_ERROR_CODE_HANDLE(err, goto _end);
     } else {
         stdl_log_msg(0, "No properties.\n");
@@ -101,6 +102,68 @@ int main(int argc, char* argv[]) {
     _end:
     if(err < STDL_ERR_LAST) {
         title("End");
+    }
+
+    if(err == STDL_ERR_OK) {
+        // report memory usage
+        size_t user_input_sz = 0, ctx_sz = 0, res_sz = 0;
+
+        stdl_log_msg(0, "** Approximate memory usage ---\n");
+
+        if(input != NULL) {
+            size_t  resreq_sz;
+            stdl_user_input_handler_approximate_size(input, rh != NULL ? rh->nexci : 0, &user_input_sz, &resreq_sz);
+
+            double user_input_asz, resreq_asz;
+            char* user_input_usz, *resreq_usz;
+            stdl_convert_size(user_input_sz - resreq_sz, &user_input_asz, &user_input_usz);
+            stdl_convert_size(resreq_sz, &resreq_asz, &resreq_usz);
+            stdl_log_msg(0, "User input      REQ %8.1f%s\n", resreq_asz, resreq_usz);
+            stdl_log_msg(0, "                OTH %8.1f%s\n", user_input_asz, user_input_usz);
+
+        }
+
+        if (ctx != NULL) {
+            size_t wf_sz, bs_sz;
+            stdl_context_approximate_size(ctx, &ctx_sz, &bs_sz, &wf_sz);
+
+            double ctx_asz, wf_asz, bs_asz;
+            char *ctx_usz, *wf_usz, *bs_usz;
+
+            stdl_convert_size(ctx_sz - wf_sz - bs_sz, &ctx_asz, &ctx_usz);
+            stdl_convert_size(wf_sz, &wf_asz, &wf_usz);
+            stdl_convert_size(bs_sz, &bs_asz, &bs_usz);
+
+            stdl_log_msg(0, "--------------  --- -----------\n");
+            stdl_log_msg(0, "Context         WF  %8.1f%s\n", wf_asz, wf_usz);
+            stdl_log_msg(0, "                BS  %8.1f%s\n", bs_asz, bs_usz);
+            stdl_log_msg(0, "                OTH %8.1f%s\n", ctx_asz, ctx_usz);
+        }
+
+        if(rh != NULL) {
+            size_t ops_sz, amp_sz;
+            stdl_responses_handler_approximate_size(rh, ctx->nmo, ctx->ncsfs, &res_sz, &ops_sz, &amp_sz);
+
+            double res_asz, lrv_asz, amp_asz;
+            char *res_usz, *lrv_usz, *amp_usz;
+
+            stdl_convert_size(res_sz - ops_sz - amp_sz, &res_asz, &res_usz);
+            stdl_convert_size(ops_sz, &lrv_asz, &lrv_usz);
+            stdl_convert_size(amp_sz, &amp_asz, &amp_usz);
+
+            stdl_log_msg(0, "--------------  --- -----------\n");
+            stdl_log_msg(0, "Responses       LRV %8.1f%s\n", lrv_asz, lrv_usz);
+            stdl_log_msg(0, "                AMP %8.1f%s\n", amp_asz, amp_usz);
+            stdl_log_msg(0, "                OTH %8.1f%s\n", res_asz, res_usz);
+        }
+
+        double tot_asz;
+        char* tot_usz;
+        stdl_convert_size(user_input_sz + ctx_sz + res_sz, &tot_asz, &tot_usz);
+        stdl_log_msg(0, "--------------  --- -----------\n");
+        stdl_log_msg(0, "Total               %8.1f%s\n", tot_asz, tot_usz);
+
+        stdl_log_msg(0, "Note: temporary memory allocated during run is not reported in this table.\n");
     }
 
     if(input != NULL)

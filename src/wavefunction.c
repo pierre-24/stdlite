@@ -1,16 +1,11 @@
 #include <assert.h>
 #include <string.h>
 
-#ifdef USE_MKL
-#include <mkl.h>
-#else
-#include <cblas.h>
-#endif
-
 #include "stdlite/wavefunction.h"
 #include "stdlite/logging.h"
 #include "stdlite/helpers.h"
 #include "stdlite/utils/matrix.h"
+#include "stdlite/linear_algebra.h"
 
 int stdl_wavefunction_new(size_t natm, size_t nocc, size_t nao, size_t nmo, stdl_wavefunction **wf_ptr) {
     assert(wf_ptr != NULL && natm > 0 && nao > 0 && nmo > 0 && nmo <= nao && nmo >= nocc);
@@ -73,10 +68,10 @@ int stdl_wavefunction_orthogonalize_C_dge(size_t nmo, size_t nao, double *S, dou
     STDL_ERROR_HANDLE_AND_REPORT(tmp == NULL, STDL_FREE_ALL(sqrtS); return STDL_ERR_MALLOC, "malloc");
 
     cblas_dsymm(CblasRowMajor, CblasRight, CblasLower,
-                (int) nmo, (int) nao,
-                1.f, sqrtS, (int) nao,
-                C, (int) nao,
-                .0, tmp, (int) nao
+                (STDL_LA_INT) nmo, (STDL_LA_INT) nao,
+                1.f, sqrtS, (STDL_LA_INT) nao,
+                C, (STDL_LA_INT) nao,
+                .0, tmp, (STDL_LA_INT) nao
     );
 
     memcpy(C, tmp, nmo * nao * sizeof(double));
@@ -106,7 +101,7 @@ int stdl_wavefunction_compute_density_dsp(size_t nocc, size_t nmo, size_t nao, d
     return STDL_ERR_OK;
 }
 
-int stdl_wavefunction_dsp_ao_to_dsp_mo(size_t nao, size_t nmo, double* C, double* X_AO, double* X_MO) {
+int stdl_wavefunction_dsp_ao_to_dsp_mo(size_t nao, size_t nmo, int issym, double *C, double *X_AO, double *X_MO) {
     assert(C != NULL && X_AO != NULL && nmo > 0 && nao > 0 && X_MO != NULL);
 
     STDL_DEBUG("AO to MO");
@@ -117,7 +112,7 @@ int stdl_wavefunction_dsp_ao_to_dsp_mo(size_t nao, size_t nmo, double* C, double
             double sum = 0;
             for (size_t mu = 0; mu < nao; ++mu) {
                 for (size_t nu = 0; nu < nao; ++nu) {
-                    sum += C[p * nao + mu] * X_AO[STDL_MATRIX_SP_IDX(mu, nu)] * C[q * nao + nu];
+                    sum += (!issym && mu < nu ? -1:1) * C[p * nao + mu] * X_AO[STDL_MATRIX_SP_IDX(mu, nu)] * C[q * nao + nu];
                 }
             }
 
@@ -177,7 +172,7 @@ int stdl_wavefunction_dump_h5(stdl_wavefunction* wf, hid_t file_id) {
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", wf_group_id);
 
     // C
-    status = H5LTmake_dataset(wf_group_id, "C", 2, (hsize_t[]) {wf->nao, wf->nmo}, H5T_NATIVE_DOUBLE, wf->C);
+    status = H5LTmake_dataset(wf_group_id, "C", 2, (hsize_t[]) {wf->nmo, wf->nao}, H5T_NATIVE_DOUBLE, wf->C);
     STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", wf_group_id);
 
     // e
@@ -248,4 +243,14 @@ int stdl_wavefunction_load_h5(hid_t file_id, stdl_wavefunction **wf_ptr) {
         stdl_wavefunction_delete(*wf_ptr);
 
     return err;
+}
+
+int stdl_wavefunction_approximate_size(stdl_wavefunction *wf, size_t *sz) {
+    assert(wf != NULL && sz != NULL);
+
+    *sz = sizeof(stdl_wavefunction)
+            + (wf->natm * 4 + wf->nao + STDL_MATRIX_SP_SIZE(wf->nao)
+            + wf->nao * wf->nmo + wf->nmo) * sizeof(double );
+
+    return STDL_ERR_OK;
 }

@@ -11,8 +11,8 @@ The goal of `stdlite` is to compute properties within the simplified TDA/TD-DFT 
     
     1. Extract data (*i.e.*, the atomic orbitals, as well as the MO energies, $\varepsilon$, and LCAO coefficients, $\mathbf C$) from a QC calculation;
     2. Select configuration state functions (CSFs, $\ket{\Psi_i^a}$, or singly excited determinants) using [a set of rules](#the-simplified-approaches-to-td-dft) and build the corresponding electronic hessian (super-)matrices $\mathbf A'$ and $\mathbf B'$ (might be zero);
-    3. Using said matrices, compute the [linear response](#linear-response) or [amplitude](#excitations) vectors. This generally requires to compute extra [expectation values](#expectation-values-and-others) matrices in MO basis, such as the [dipole moment](#dipole-moment);
-    4. Use said response/amplitude vectors to compute actual [properties](#properties).
+    3. Using said matrices, compute the [linear response](#linear-response) or [amplitude](#excitations) vectors. This generally requires to compute extra [AO integrals](#ao-integrals);
+    4. Use said response/amplitude vectors to compute actual [properties](##linear-and-quadratic-response-functions).
 
 
 ## Response function theory
@@ -45,14 +45,14 @@ The second-order derivative is obtained from differentiating the Hellman-Feynman
 
 $$\tag{1}\frac{d^2 E}{d\lambda^2} =
 \sum_i \left.\frac{\partial^2 E(\{\kappa_i\},\lambda)}{\partial\lambda\partial\kappa_i}\right|_{\lambda=0}\,\frac{\partial\kappa_i}{\partial\lambda} 
-\Leftrightarrow \braket{\braket{\hat V; \hat V}} = (\mathbf\kappa^\lambda)^T\,\eta^\lambda$$
+\Leftrightarrow \braket{\braket{\hat V; \hat V}} = ({}^\lambda\kappa)^T\,{}^\lambda\eta$$
 
-where $\braket{\braket{\hat V; \hat V}}$ is the linear response function, $\mathbf\eta^\lambda$ is the perturbed electronic gradient, and $\mathbf\kappa^\lambda$, the first-order response vector to $\lambda$, containing all $\partial\kappa_i/\partial\lambda$.
-$\kappa^\lambda$ is computed thanks to the following set of equations (derivative of the stationary condition):
+where $\braket{\braket{\hat V; \hat V}}$ is the linear response function, ${}^\lambda\eta$ is the perturbed electronic gradient, and ${}^\lambda\kappa$, the first-order response vector to $\lambda$, containing all $\partial\kappa_i/\partial\lambda$.
+${}^\lambda\kappa$ is computed thanks to the following set of equations (derivative of the stationary condition):
 
-$$\tag{2}\sum_j \left.\frac{\partial^2 E(\{\kappa_i\},\lambda)}{\partial\kappa_i\partial\kappa_j}\right|_{\lambda=0}\,\frac{\partial\kappa_j}{\partial\lambda} = -\left.\frac{\partial^2 E(\{\kappa_i\},\lambda)}{\partial\lambda\partial\kappa_i}\right|_{\lambda=0}  \Leftrightarrow \mathbf{E}^\lambda\,\mathbf\kappa^\lambda = -\mathbf\eta^\lambda$$
+$$\tag{2}\sum_j \left.\frac{\partial^2 E(\{\kappa_i\},\lambda)}{\partial\kappa_i\partial\kappa_j}\right|_{\lambda=0}\,\frac{\partial\kappa_j}{\partial\lambda} = -\left.\frac{\partial^2 E(\{\kappa_i\},\lambda)}{\partial\lambda\partial\kappa_i}\right|_{\lambda=0}  \Leftrightarrow {}^\lambda\mathbf E\,{}^\lambda\kappa = -{}^\lambda\eta$$
  
-where $\mathbf E^\lambda$ is the electronic Hessian. Evaluating the elements of $\mathbf E^\lambda$ and $\mathbf\eta^\lambda$ actually result in new kinds of (bielectronic) integrals to evaluate (*vide supra*), while $\kappa^\lambda$ has to be computed by solving this equation.
+where ${}^\lambda\mathbf E$ is the electronic Hessian. Evaluating the elements of ${}^\lambda\mathbf E$ and ${}^\lambda\eta$ actually result in new kinds of (bielectronic) integrals to evaluate (*vide supra*), while ${}^\lambda\kappa$ has to be computed by solving this equation.
 Thanks to the [2n+1 rule](https://doi.org/10.1007/s10910-008-9497-x), the response vector can be used to access the quadratic response function (*i.e.*, the third derivative of the energy w.r.t. $\lambda$) as well.
 
 The dynamic case is similar. 
@@ -89,7 +89,7 @@ Using a Fourier series of $\hat V$, one can obtain a TD version of the linear re
 ### Linear response
 
 Under the conditions of the [Runge and Gross theorem](https://en.wikipedia.org/wiki/Runge%E2%80%93Gross_theorem), this theory can be applied to DFT.
-For a time-dependent perturbation at frequency $\omega$, and assuming the Hermicity of the different matrices and real orbitals, Eq. (2) can be written (the superscripts $\lambda$ have been dropped for clarity):
+For a time-dependent perturbation at frequency $\omega$, and assuming  real orbitals, Eq. (2) can be written (the superscripts $\lambda$ have been dropped for clarity):
 
 $$\tag{3}\left[\begin{pmatrix}
 \mathbf A & \mathbf B \\
@@ -100,35 +100,50 @@ $$\tag{3}\left[\begin{pmatrix}
 \end{pmatrix}\right]\,\begin{pmatrix}
 \mathbf x_\zeta(\omega)\\ \mathbf y_\zeta(\omega)
 \end{pmatrix}=-\begin{pmatrix}
-\mathbf \eta_\zeta\\ \mathbf \eta_\zeta
+\mathbf \eta_\zeta\\ \mathbf \eta_\zeta^\star
 \end{pmatrix},$$
 
 where $\mathbf x_\zeta(\omega)$ and $\mathbf y_\zeta(\omega)$ are the frequency-dependent linear response vectors (to be determined) in direction $\zeta$.
-The $\mathbf A$ and $\mathbf B$ are electronic Hessian (super-)matrices (related to orbital rotations).
-The perturbed electronic gradient vector elements $\eta_{ia,\zeta} = \braket{i|\hat\eta_\zeta|a}$ are elements of the expectation value matrix corresponding to the perturbation (e.g., when the perturbation is an electric field, $\hat\eta$ corresponds to the dipole moment operator).
+The $\mathbf A$ and $\mathbf B$ are electronic Hessian (super-)matrices (related to orbital rotations), which are the occ-unocc parts of ${}^\lambda\mathbf E$.
+The perturbed electronic gradient vector elements $\eta_{ia,\zeta} = \braket{i|\hat\eta_\zeta|a}$ are MO integral elements of the operator corresponding to the perturbation (e.g., when the perturbation is an electric field, $\hat\eta$ corresponds to the dipole moment operator, $\hat\mu$).
 
-To solve this problem, Eq. (3) can be turned into a linear equation of the form:
-    
-$$[(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}]\,[\mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)] = -2\mathbf\eta_\zeta.$$
+To solve this problem, Eq. (3) can be turned into a linear equation. 
+Adding and subtracting the two lines of the system given in Eq. (3) results in:
 
-??? note "Detailed solution"
-    
-    The previous equation is easier seen as a linear system written in the following form:
+$$
+\begin{pmatrix}
+\mathbf A+ \mathbf B & -\omega \\
+-\omega & \mathbf A - \mathbf B
+\end{pmatrix}\,\begin{pmatrix}
+\mathbf t_\zeta(\omega)\\ \mathbf u_\zeta(\omega)
+\end{pmatrix}=-2\,\begin{pmatrix}
+\mathbf \eta_\zeta + \mathbf \eta_\zeta^\star \\ \mathbf \eta_\zeta - \mathbf \eta_\zeta^\star
+\end{pmatrix},
+$$
 
-    $$\mathbf L(\omega)\,\mathbf u_{\zeta}(\omega) = -2\mathbf\eta_\zeta,$$
-    
-    where $\mathbf L(\omega) = (\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}$ and $\mathbf u_{\zeta}(\omega)  = \mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)$, and which is solved using any of the usual methods for linear systems (worst case scenario: $\mathbf u_\zeta(\omega) = -2\mathbf L^{-1}(\omega)\,\eta_\zeta$).
-    Then, since, from Eq. (3),
-    
-    $$\mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega) = \omega\,(\mathbf A-\mathbf B)^{-1}\,[\mathbf x_\zeta(\omega) + \mathbf y_\zeta(\omega)],$$
-    
-    one can define $\mathbf v_{\zeta}(\omega)$ as:
+where $\mathbf t_\zeta(\omega) = \mathbf x_\zeta(\omega)+\mathbf y_\zeta(\omega)$ and $\mathbf u_\zeta(\omega) = \mathbf x_\zeta(\omega)-\mathbf y_\zeta(\omega)$.
 
-    $$\mathbf v_{\zeta}(\omega)  =\mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega) =  \omega\,(\mathbf A-\mathbf B)^{-1}\,\mathbf u_{\zeta}(\omega),$$
+In the case where $\eta^\star = \eta \Leftrightarrow \mathbf \eta_\zeta - \mathbf \eta_\zeta^\star = 0$ (hermitian operator), then:
     
-    the response vector are obtained: $\mathbf x_{\zeta}(\omega) = \frac{1}{2}[\mathbf u_{\zeta}(\omega)  + \mathbf v_{\zeta}(\omega)]$ and $\mathbf y_{\zeta}(\omega) = \frac{1}{2}[\mathbf u_{\zeta}(\omega)  - \mathbf v_{\zeta}(\omega)]$.
+$$[(\mathbf{A} + \mathbf{B}) - \omega^2(\mathbf{A}-\mathbf{B})^{-1}]\,\mathbf t_\zeta(\omega) = -2\mathbf\eta_\zeta,$$
+
+which is to be solved, and then:
+
+$$\mathbf u_{\zeta}(\omega) =  \omega\,(\mathbf A-\mathbf B)^{-1}\,\mathbf t_{\zeta}(\omega).$$
+
+
+??? note "If $\hat\eta$ is anti-hermitian"
+
+    On the other hand, in the case where $\eta = -\eta^\star \Leftrightarrow \mathbf \eta_\zeta + \mathbf \eta_\zeta^\star = 0$ (anti-hermitian operator), then:
+    
+    $$[(\mathbf{A} - \mathbf{B}) - \omega^2(\mathbf{A}+\mathbf{B})^{-1}]\,[\mathbf x_\zeta(\omega) - \mathbf y_\zeta(\omega)] = -2\Im(\mathbf\eta_\zeta).$$
 
 The [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) (setting $\mathbf B = \mathbf 0$ in all previous equations) can also be used.
+
+
+??? note "Implementation details"
+
+    For efficiency reasons, $\mathbf t_\zeta(\omega)$ and $\mathbf u_\zeta(\omega)$ are actually used by `stdlite`, rather than $\mathbf x_\zeta(\omega)$ and $\mathbf y_\zeta(\omega)$.
 
 ### Excitations
 
@@ -148,23 +163,33 @@ $$\tag{4}\begin{pmatrix}
 
 which is generally referred to as the Casida equation. 
 In this case, each $\omega_m$ (eigenvalue, corresponding to the transition energy bewteen $\ket{0}$ and $\ket{m}$) is associated to one $\mathbf x^m$ and one $\mathbf y^m$ ("eigenfunction"), might be seen as amplitude vectors associated to excitation and de-excitation, respectively. 
+They satisfy $(\mathbf x^m + \mathbf y^m)\cdot(\mathbf x^m - \mathbf y^m) = |\mathbf x^m|^2-|\mathbf y^m|^2=1$.
 Solving this problem is done using two approaches.
 
 On the one hand, Eq. (4) can be rewritten in a true eigenvalue problem, namely:
 
-$$(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}+\mathbf{B})\,(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,\mathbf{z}^m = \omega^2\,\mathbf{z}^m, \text{ with } \mathbf{z}^m = (\mathbf{A}-\mathbf{B})^{-\frac{1}{2}} (\mathbf x^m + \mathbf y^m).$$
+$$
+\begin{pmatrix}
+\mathbf A+ \mathbf B & -\omega \\
+-\omega & \mathbf A - \mathbf B
+\end{pmatrix}\,\begin{pmatrix}
+\mathbf t^m\\ \mathbf u^m
+\end{pmatrix}= \mathbf 0,
+$$
 
-??? note "Detailed solution"
+with $\mathbf t^m = \mathbf x^m + \mathbf y^m$ and $\mathbf u^m = \mathbf x^m - \mathbf y^m$.
+This turns, according to [10.1063/1.4867271](https://dx.doi.org/10.1063/1.4867271), in:
 
-    In this case, after $\mathbf z^m$ have been obtained, one extract using the following procedure. First, from previous expression, one can obtain:
-    
-    $$ \mathbf u^m = \mathbf x^m + \mathbf y^m = \frac{1}{\sqrt\omega}\,(\mathbf A-\mathbf B)^\frac{1}{2}\,\mathbf z^m.$$
-    
-    Now, since $(\mathbf A + \mathbf B)\,(\mathbf x^m+\mathbf y^m) = \omega\,(\mathbf x^m-\mathbf y^m)$ [obtained from Eq. (4)], one has:
-    
-    $$\mathbf v^m = \mathbf x^m-\mathbf y^m = \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,(\mathbf x^m+\mathbf y^m)  = \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,\mathbf u^m,$$
-    
-    and therefore the response vector are obtained: $\mathbf x^m = \frac{1}{2}(\mathbf u^m + \mathbf v^m)$ and $\mathbf y^m = \frac{1}{2}(\mathbf u^m - \mathbf v^m)$.
+$$(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,(\mathbf{A}+\mathbf{B})\,(\mathbf{A}-\mathbf{B})^\frac{1}{2}\,\mathbf{z}^m = \omega^2\,\mathbf{z}^m, \text{ with } \mathbf{z}^m = (\mathbf{A}-\mathbf{B})^{-\frac{1}{2}} \mathbf t^m,$$
+
+to be solved.
+After $\mathbf z^m$ have been obtained, one can then extract:
+
+$$\begin{aligned}
+\mathbf t^m &= \frac{1}{\sqrt\omega}\,(\mathbf A-\mathbf B)^\frac{1}{2}\,\mathbf z^m,\\
+\mathbf u^m &= \frac{1}{\omega}\,(\mathbf A + \mathbf B)\,\mathbf t^m.
+\end{aligned}
+$$
 
 On the other hand, the [Tamm-Dancoff approximation](https://doi.org/10.1016/S0009-2614(99)01149-5) ($\mathbf B = \mathbf 0$ and thus $\mathbf y^m = 0$) simply leads to:
 
@@ -172,27 +197,48 @@ $$\mathbf A\,\mathbf x^m = \omega_m\,\mathbf x^m.$$
 
 In this case, $\ket{m} = \sum_{ia}\,x^m_{ia}\,\ket{\Psi_i^a}$, where $\ket{\Psi_i^a}$ is a **configuration state function**, *i.e.*, a singly-excited determinant where an electron has been moved from $i$ to $a$.
 
-In both cases, these amplitude vectors are linked to their linear response counterparts through the following spectral representation:
+??? note "Implementation details"
+
+    For efficiency reasons, $\mathbf t^m$ and $\mathbf u^m$ are actually used by `stdlite`, rather than $\mathbf x^m$ and $\mathbf y^m$.
+
+
+### Spectral representations and their implications
+
+These amplitude vectors are linked to their linear response counterparts through what is called their spectral representation. In particular, if $\hat\eta$ is hermitian:
 
 $$\begin{aligned}
-x_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,\left[\frac{x_{ia}^{m}}{\omega-\omega_m}-\frac{y_{ia}^{m}}{\omega+\omega_m}\right],\\
-y_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,\left[\frac{y_{ia}^{m}}{\omega-\omega_m}-\frac{x_{ia}^{m}}{\omega+\omega_m}\right],
+x_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,\left[\frac{x_{ia}^{m}}{\omega-\omega_m}-\frac{y_{ia}^{m}}{\omega+\omega_m}\right],\\ 
+y_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} + y^{m}_{ia})\,\left[\frac{y_{ia}^{m}}{\omega-\omega_m}-\frac{x_{ia}^{m}}{\omega+\omega_m}\right], 
 \end{aligned}$$
 
-where these expression involves a summation over the manifold $\{\ket{m}\}$ of excited states (and one can set $\mathbf y^m = 0$ to get the TDA version).
-These representations lead to simplification when taking residue of response functions.
+which implies:
 
-!!! info "Implications"
+$$\mathbf x_\zeta(-\omega) = \mathbf y_\zeta(\omega) \land \mathbf y_\zeta(-\omega) = \mathbf x_\zeta(\omega) \Rightarrow \mathbf x_\zeta(0) = \mathbf y_\zeta(0).$$
 
-    From the spectral representations of $x_{ia,\zeta}(\omega)$ and $y_{ia,\zeta}(\omega)$, it is easy to see that:
+These expression involves a summation over the manifold $\{\ket{m}\}$ of excited states (and one can set $\mathbf y^m = 0$ to get the TDA version).
+Furthermore,
 
-    $$x_{ia,\zeta}(0) = y_{ia,\zeta}(0),$$
+$$\begin{aligned}
+t_{ia,\zeta}(\omega) &= x_{ia,\zeta}(\omega) + y_{ia,\zeta}(\omega) =  \sum_{\ket{m}} \eta_{ia,\zeta}\,[t^{m}_{ia}]^2\,\left[\frac{1}{\omega-\omega_m}-\frac{1}{\omega+\omega_m}\right],\\
+u_{ia,\zeta}(\omega) &= x_{ia,\zeta}(\omega) - y_{ia,\zeta}(\omega) = \sum_{\ket{m}} \eta_{ia,\zeta}\,t^{m}_{ia}\,u_{ia}^{m}\,\left[\frac{1}{\omega-\omega_m}+\frac{1}{\omega+\omega_m}\right],
+\end{aligned}$$
 
-    and:
-    
-    $$x_{ia,\zeta}(-\omega) = y_{ia,\zeta}(\omega) \land y_{ia,\zeta}(-\omega) = x_{ia,\zeta}(\omega).$$
+which implies that $\mathbf u_\zeta(\omega)$ is symmetric with respect to a change of the sign of the energy, while $\mathbf t_\zeta(\omega)$ is antisymmetric, since:
 
-    The latter is usefull to evaluate linear and quadratic response properties at the same time.
+$$\mathbf t_\zeta(-\omega) = \mathbf t_\zeta(\omega) \land \mathbf u_\zeta(-\omega) = -\mathbf u_\zeta(\omega) \Rightarrow \mathbf u_\zeta(0) = \mathbf 0.$$
+
+??? note "If $\hat\eta$ is anti-hermitian"
+
+    $$\begin{aligned}
+    x_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} - y^{m}_{ia})\,\left[\frac{x_{ia}^{m}}{\omega-\omega_m}+\frac{y_{ia}^{m}}{\omega+\omega_m}\right],\\
+    y_{ia,\zeta}(\omega) &= \sum_{\ket{m}} \eta_{ia,\zeta}\,(x^{m}_{ia} - y^{m}_{ia})\,\left[\frac{y_{ia}^{m}}{\omega-\omega_m}+\frac{x_{ia}^{m}}{\omega+\omega_m}\right],
+    \end{aligned}$$
+
+    which implies:
+
+    $$\mathbf x(-\omega) = -\mathbf y(\omega) \land \mathbf y(-\omega) = -\mathbf x(\omega).$$
+
+These representations help in obtaining expressions when taking residues of response functions.
 
 ## The simplified approaches to TD-DFT
 
@@ -216,6 +262,10 @@ The simplified TD-DFT methods root in 3 approximations which simplify the conten
 3. the [zero-differential overlap](https://en.wikipedia.org/wiki/Zero_differential_overlap) (ZDO) approximation is used for two-electron integrals which built $\mathbf A$ and $\mathbf B$. Different approximations for the remaining integrals define different flavors of simplified TD-DFT (see below).
 
 Then, using those approximated $\mathbf A'$ and $\mathbf B'$ matrices, the linear response or Casida equations presented above are solved.
+
+??? note "Implementation details"
+
+    For efficiency reasons, $\mathbf A'+\mathbf B'$ and $\mathbf A'-\mathbf B'$ are actually used by `stdlite` rather than $\mathbf A'$ and $\mathbf B'$.
 
 ### Truncation of the active space
 
@@ -281,7 +331,8 @@ A'_{ia,jb} =& \delta_{ij}\delta_{ab} (\varepsilon_a - \varepsilon_i) + 2\,(ia|jb
 B'_{ia,jb} =& 2\,(ia|bj)' -a_x\,(ib|aj)'.
 \end{aligned}$$
 
-??? note "Implementation detail"
+??? note "Implementation details"
+
     In order to be computationally efficient, these element can be evaluated by precomputing three kind of transition charges: $q_A^{ij}$, $q_A^{ia}$, and $q_A^{ab}$, and two intermediates:
     
     $$(ij|BB)_J = \sum_A^N q_A^{ij}\,(AA|BB)_J \text{ and } (ia|BB)_K = \sum_A^N q_A^{ia}\,(AA|BB)_K,$$
@@ -289,8 +340,6 @@ B'_{ia,jb} =& 2\,(ia|bj)' -a_x\,(ib|aj)'.
     so that a scalar product leads to the value of the different integrals. For example,
     
     $$(ia|jb)' \approx \sum_{B}^N (ia|BB)_K\,q_B^{jb}.$$
-    
-    However, these intermediates have a huge memory cost [$\mathcal O (N_{atm}\times N_{MO}^2)$ altogether], so a direct version (integrals are evaluated when requested) is also available.
 
 
 ### XsTD-DFT
@@ -299,129 +348,196 @@ B'_{ia,jb} =& 2\,(ia|bj)' -a_x\,(ib|aj)'.
     
     The publication describing the XsTD-DFT implementation is not yet available. Thus, this approach is not yet implemented.
 
-## Expectation values and others
+## Properties
 
-Things that can be obtained without solving the linear response equation.
+### AO integrals
 
-!!! note
+The AO integral elements of an operator, $\hat O$, are denoted $O_{\mu\nu} = \braket{\mu|\hat O|\nu}$.
+Operator are either hermitian (which results in a [hermitian](https://en.wikipedia.org/wiki/Hermitian_matrix) matrix, $O_{\mu\nu} = O^\star_{\nu\mu}$ with real values on the diagonal) or anti-hermitian (which results in a [skew-symmetric](https://en.wikipedia.org/wiki/Skew-Hermitian_matrix) matrix, $O_{\mu\nu} = -O_{\nu\mu}^\star$).
+
+A conversion of $A$ from the AO to the MO basis is done using:
+
+$$O_{pq} = \sum^{AO}_{\mu\nu} C_{p\mu} O_{\mu\nu} C_{q\nu}.$$
+
+For the moment, the following operators are handled by `stdlite`:
+
+| Operator                  | Expression                                            | Dimensionality | Symmetry      | Hermitian | [Time-Reversal symmetry](https://en.wikipedia.org/wiki/T-symmetry) |
+|---------------------------|-------------------------------------------------------|----------------|---------------|-----------|--------------------------------------------------------------------|
+| Dipole length (`dipl`)    | $\hat\mu^L = -(\vec r - R_0)$                         | 3 (x, y, z)    | Symmetric     | Yes       | Even                                                               |
+| Dipole velocity (`dipv`)  | $\hat\mu^V = i\vec\nabla$                             | 3 (x, y, z)    | Antisymmetric | Yes       | Odd                                                                |
+| Angular momentum (`angm`) | $\hat m = -\frac{i}{2}(\hat r - R_0)\times\vec\nabla$ | 3 (x, y, z)    | Antisymmetric | Yes       | Odd                                                                |
+
+An [even time-reversal symmetry](https://en.wikipedia.org/wiki/T-symmetry#Even) operator, $\hat A$, do not change upon time reversal.
+Indeed, given $\hat\theta$ the so-called [time-reversal operator](https://bohr.physics.berkeley.edu/classes/221/9697/timerev.pdf) so that $\hat\theta\psi(t) = \psi(-t)^\star$,
+one has:
+
+$${}^A\theta = \hat\theta\hat A \hat\theta^\dagger = 1.$$
+
+If, on the other hand, an operator $\hat B$ has an odd time-reversal symmetry, then:
+
+$${}^B\theta = \hat\theta\hat B \hat\theta^\dagger = -1.$$
+
+$\hat p = -i\vec\nabla$, being a purely imaginary operator, is an example of the latter. 
+
+### Linear and quadratic response functions
+
+Linear and quadratic response functions are generally noted $\braket{\braket{\hat A; \hat B}}_{\omega_B}$ and $\braket{\braket{\hat A; \hat B, \hat C}}_{\omega_B,\omega_C}$, which describes how the expectation value of $\hat A$ (at frequency $\omega_A = -\omega_B - \omega_C$) responds to a set of perturbation to first and second order in perturbation.
+
+Linear responses result in a rank-2 tensor, ${}^{AB}\mathcal{T}$.
+As discussed in [10.1016/S1380-7323(02)80033-4](https://dx.doi.org/10.1016/S1380-7323(02)80033-4), the time-reversal symmetry [and thus the symmetric or antisymmetric nature of $\mathbf t(\omega)$ and $\mathbf u(\omega)$ with respect to a change to the change of sign of $\omega$] can be exploited to compute the linear response:
+
+$$\tag{5}
+{}^{AB}\mathcal{T}_{\zeta\sigma} = -\braket{\braket{\hat A_\zeta;\hat B_\sigma}}_\omega
+= -2 \sum_{ia}^{CSFs} A_{ia,\zeta}\,{}^B\kappa_{ia,\sigma}(\omega),$$
+
+with:
+
+$${}^B\kappa_{ia,\sigma}(\omega) = \begin{cases}
+{}^Bt_{ia,\sigma}(\omega) & \text{ if } {}^A\theta{}^B\theta = 1, \\
+{}^Bu_{ia,\sigma}(\omega) & \text{ otherwise},
+\end{cases}$$
+
+where ${}^B\mathbf \kappa(\omega)$ is computed from the linear response vectors ${}^B\mathbf x(\omega)$ and ${}^B\mathbf y(\omega)$, obtained using Eq. (3) with $\hat\eta = \hat B$.
+
+??? note "Consequence of the spectral representation"
+
+    If $\hat B$ is hermitian, then, from the spectral representations of the linear response vectors, it can be seen that ${}^B\kappa(\omega)$ is either:
+
+    + hermitian (and real) if both $\hat A$ and $\hat B$ have the same symmetry with respect to time reversal, or 
+    + anti-hermitian (and thus imaginary) if not. This further implies that $\lim_{\omega\to 0} {}^B\kappa(\omega)=0$.
+
+A rank-3 tensor, ${}^{ABC}\mathcal{T}$ is the result of a quadratic response function.
+Following [10.1021/acs.jctc.7b01008](https://dx.doi.org/10.1021/acs.jctc.7b01008) but neglecting the response of the XC kernel (*i.e.*, $f_{XC}$ and $g_{XC}$, which results in an "unrelaxed" expression), one gets:
+
+$$\tag{6}{}^{ABC}\mathcal{T}_{\zeta\sigma\tau} = \braket{\braket{\hat A_\zeta;\hat B_\sigma,\hat C_\tau}}_{\omega_B,\omega_C} = {}^{ABC}\mathcal{M}_{\zeta\sigma\tau} + {}^{ABC}\mathcal{N}_{\zeta\sigma\tau},$$
+
+where:
+
+$${}^{ABC}\mathcal{M}_{\zeta\sigma\tau} = \sum_{[B,C]}\sum_{ia,ja} \frac{1}{4}\,A_{ij,\zeta}\,{}^{ABC}\mathcal{K}_{ia,ja} 
+- \frac{1}{2}\,B_{ij,\sigma}\,{}^{ABC}\mathcal{L}_{ia,ja},$$
+
+
+with:
+
+$${}^{ABC}\mathcal{K}_{ia,ja} = \begin{cases} {}^Bu_{ia,\sigma}(\omega_B)\,{}^Cu_{ja,\tau}(\omega_C) - {}^Bt_{ia,\sigma}(\omega_B)\,{}^Ct_{ja,\tau}(\omega_C) & \text{if } \theta_A = 1,\\
+{}^Bu_{ia,\sigma}(\omega_B)\,{}^Ct_{ja,\tau}(\omega_C) - {}^Bt_{ia,\sigma}(\omega_B)\,{}^Cu_{ja,\tau}(\omega_C) & \text{otherwise}.
+\end{cases}$$
+
+and:
+
+$${}^{ABC}\mathcal{N}_{\zeta\sigma\tau} =\sum_{[B,C]}\sum_{ia,ib} \frac{1}{4}\,A_{ab,\zeta}\,{}^{ABC}\mathcal{K}_{ia,ib} 
++ \frac{1}{2}\,B_{ab,\sigma}\,{}^{ABC}\mathcal{L}_{ia,ib}$$
+
+with:
+
+$${}^{ABC}\mathcal{K}_{ia,ib} = \begin{cases}
+{}^Bt_{ia,\sigma}(\omega_B)\,{}^Ct_{ib,\tau}(\omega_C) - {}^Bu_{ia,\sigma}(\omega_B)\,{}^Cu_{ib,\tau}(\omega_C) &  \text{if } \theta_A = 1 \\
+{}^Bu_{ia,\sigma}(\omega_B)\,{}^Ct_{ja,\tau}(\omega_C) - {}^Bt_{ia,\sigma}(\omega_B)\,{}^Cu_{ja,\tau}(\omega_C) & \text{otherwise}.
+\end{cases}$$
+
+In both expressions, $\sum_{[B,C]}$ is a sum over the permutation of the pairs of a given operator and its corresponding frequency, $\{(\hat B_\sigma,\omega_B), (\hat C_\tau,\omega_C)\}$, and:
+
+$$ {}^{ABC}\mathcal{L}_{ia,jb} = \begin{cases}
+^At_{ia,\zeta}(-\omega_A)\,{}^Ct_{jb,\tau}(\omega_C) + {}^Au_{ia,\zeta}(-\omega_A)\,{}^Cu_{jb,\tau}(\omega_C) & \text{if } \theta_B = 1,\\
+-^At_{ia,\zeta}(-\omega_A)\,{}^Cu_{jb,\tau}(\omega_C) - {}^Au_{ia,\zeta}(-\omega_A)\,{}^Ct_{jb,\tau}(\omega_C) & \text{otherwise},
+\end{cases}
+$$
+
+with $\omega_A = -\omega_B - \omega_C$. Thus, the evaluation of these (rather long) expressions requires linear response vectors for the 3 operators.
+Note that in the case of the SHG first hyperpolarizability (so, $\braket{\braket{\hat\mu;\hat\mu,\hat\mu}}_{\omega,\omega}$), this is equivalent to the ones reported in [10.1002/wcms.1695](https://dx.doi.org/10.1002/wcms.1695).
+
+### Residues
+
+Residue of the response functions provide information on the (excited states of the) unperturbed system.
+
+Assuming an exact wavefunction, the linear response function might be extended in:
+
+$$\braket{\braket{\hat A; \hat B}}_{\omega_B} = \sum_{\ket{m}} \frac{\braket{0|\hat A|m}\braket{m|\hat B|0}}{\omega_B-\omega_m} - \frac{\braket{0|\hat B|m}\braket{m|\hat A|0}}{\omega_B+\omega_m},$$
+
+and a corresponding single residue might be:
+
+$$\lim_{\omega_B\to\omega_m} (\omega_B-\omega_m)\,\braket{\braket{\hat A; \hat B}}_{\omega_B} = \braket{0|\hat A|m}\braket{m|\hat B|0},$$
+
+which provides access to transition matrix elements $\braket{0|\hat A|m}$ between the ground state $\ket{0}$ and an excited state $\ket{m}$. 
+
+In practice, such residues are thus evaluated thanks to amplitude vectors through the spectral representation of linear responses, which gives (assuming that we have a singlet wavefunction):
+
+$$A_{0m,\zeta} = \braket{0|\hat A_\zeta|m} = \sqrt{2}\,\sum_{ia}^{CSF} A_{ia,\zeta}\,\kappa_{ia}^m, \text{ with } \kappa^m_{ia} = \begin{cases}
+t^m_{ia} & \text{if } {}^A\theta = 1, \\
+u^m_{ia} & \text{otherwise}.
+\end{cases}$$
+
+??? note "Details"
     
-    When required, conversion of $X$ from the AO to the MO basis is done using:
+    This expression was obtained using: 
 
-    $$X^{MO}_{pq} = \sum^{AO}_{\mu\nu} C_{p\mu} X_{\mu\nu} C_{q\nu}.$$
+    $$\begin{aligned}
+    \lim_{\omega_B\to\omega_n}\,(\omega_B-\omega_m)\,{}^Bx_{ia,\sigma}(\omega_B) &= B_{ia,\sigma}\,(x^{m}_{ia} + y^{m}_{ia})\,(x_{ia}^m), \\
+	\lim_{\omega_B\to\omega_n}\,(\omega_B-\omega_m)\,{}^By_{ia,\sigma}(\omega_B) &= B_{ia,\sigma}\,(x^{m}_{ia} + y^{m}_{ia})\,(y_{ia}^m),
+    \end{aligned}$$
 
-### Density matrix
+    or equivalently,
 
-The density matrix elements are defined as:
-
-$$P_{\mu\nu} = \sum^{MO}_p n_p\,C^\star_{p\mu}\,C_{p\nu},$$
-
-where $n_p$ is the occupancy of $p$. If this is a closed shell calculation, occupied MO have an occupancy of 2, 0 otherwise.
-
-### Dipole moment
-
-The total dipole moment is obtained as:
-
-$$\vec\mu = \vec\mu_e + \sum^{N_{nuc}}_A Z_A\,\vec r_A,$$
-
-where $Z_A$ and $\vec r_A$ are the charge and position of nuclei $A$, respectively.
-The electronic dipole moment, $\vec\mu_e$, is an expectation value of the wavefunction.
-The electric dipole moment matrix elements (in AO basis) are computed as:
-
-$$D_{\mu\nu} = \braket{\mu|\hat\mu|\nu} = -\,\braket{\mu|\vec{r}-\vec R_0|\nu},$$
-
-where the dipole moment integral have been multiplied by the value of the electronic charge (-1 in atomic units) and $\vec R_0$ is the origin.
-The electronic dipole moment is computed via:
-
-$$\vec\mu_e = \sum^{AO}_{\mu\nu} P_{\mu\nu}\,D_{\nu\mu} = tr(\mathbf P\mathbf D),$$
-
-where $\mathbf P$ is the density matrix. Alternatively, in MO basis:
-
-$$\vec\mu_e = \sum^{MO}_p n_p\,\vec\mu_{pp},$$
-
-where $\vec\mu_{pp}$ is a shorthand for $D^{MO}_{pp}$.
-
-## Responses (properties)
-
-Things that can be obtained thanks to the amplitude/linear response vectors.
-
-!!! note
+    $$\begin{aligned}
+    \lim_{\omega_B\to\omega_m}\,(\omega_B-\omega_m)\,{}^Bt_{ia,\sigma}(\omega_B) &= B_{ia,\sigma}\,[t^{m}_{ia}]^2, \\
+	\lim_{\omega_B\to\omega_m}\,(\omega_B-\omega_m)\,{}^Bu_{ia,\sigma}(\omega_B) &= B_{ia,\sigma}\,t^{m}_{ia}\,u^{m}_{ia},
+    \end{aligned}$$
     
-    Linear and quadratic response functions are generally noted $\braket{\braket{\hat A; \hat B}}_{\omega_B}$ and $\braket{\braket{\hat A; \hat B, \hat C}}_{\omega_B,\omega_C}$, which describes how the expectation value of $\hat A$ (at frequency $\omega_A = -\omega_B - \omega_C$) responds to a set of perturbation to first and second order in perturbation.
-    Residue of the response functions provide information on the (excited states of the) unperturbed system.
+    on Eq. (5).
 
-    For example, the linear response function might be extended in the following spectral representation:
+For an exact wavefunction, quadratic responses are given by:
 
-    $$\braket{\braket{\hat A; \hat B}}_{\omega_B} = \sum_{\ket{m}} \frac{\braket{0|\hat A|m}\braket{m|\hat B|0}}{\omega_B-\omega_m} + \frac{\braket{0|\hat B|m}\braket{m|\hat A|0}}{\omega_A+\omega_m},$$
+$$\braket{\braket{\hat A; \hat B, \hat C}} = \sum_{[A,B,C]} \sum_{\ket{m}, \ket{n}} \frac{\braket{0|\hat A|m}\braket{m|\hat B - \delta_{mn}\,\braket{0|\hat B|0}|n}\braket{n|\hat C|0}}{(\omega_A+\omega_m)\,(\omega_C-\omega_n)},$$
 
-    and a corresponding single residue might be:
+where $\omega_A = -\omega_B-\omega_C$ and $\sum_{[A,B,C]}$ is a sum over all permutation of the pairs of a given operator and its corresponding frequency, $\{(\hat A, \omega_A), (\hat B, \omega_B), (\hat C, \omega_C)\}$.
 
-    $$\lim_{\omega_B\to\omega_m} (\omega_B-\omega_m)\,\braket{\braket{\hat A; \hat B}}_{\omega_B} = \braket{0|\hat A|m}\braket{m|\hat B|0},$$
+A possible double residue is:
 
-    which provides access to trasition matrix elements $\braket{0|\hat A|m}$ between the ground state $\ket{0}$ and an excited state $\ket{m}$. 
-    In practice, such residues are thus evaluated thanks to amplitude vectors through the spectral representation of linear responses.
-
-### Polarizability
-
-The dynamic (electric) polarizability tensor elements are defined:
-
-$$\alpha_{\zeta\sigma}(-\omega;\omega) = -\braket{\braket{\hat\mu_\zeta;\hat\mu_\sigma}}_\omega = -2\,\sum_{ia}^{CSF} \mu_{ia,\zeta}\,[x_{ia,\sigma}(\omega)+y_{ia,\sigma}(\omega)].$$
-
-### Ground to excited transition dipole moment (and oscillator strength)
-
-From the single residue of the electric polarizability, 
-
-$$\lim_{\omega\to\omega_m} (\omega-\omega_m)\,\braket{\braket{\mu_\zeta;\mu_\sigma}}_\omega =  \braket{0|\hat\mu_\zeta|m}\,\braket{m|\hat\mu_\sigma|0},$$
-
-the transition dipole moment elements (in the dipole length formalism) between ground $\ket{0}$ and excited state $\ket{m}$, associated with energy $\omega_{m}$ are given by:
-
-$$\mu_{0m,\zeta} = \braket{0|\hat\mu_\zeta|m} =  \sqrt{2}\,\sum_{ia}^{CSF} \vec\mu_{ia,\zeta}\,(x^m_{ia}+y^m_{ia}),$$
-
-where $\zeta$ is a cartesian direction and the $\sqrt 2$ factor is required for singlet excitations (it is 0 for triplet).
-The associated [oscillator strength](https://en.wikipedia.org/wiki/Oscillator_strength) is defined by:
-
-$$f_{0m} = \frac{2}{3}\,\omega_m\,|\vec\mu_{0m}|^2.$$
-
-### First hyperpolarizability
-
-By neglecting the response of the XC kernel and the Hartree XC kernel, the element of the first hyperpolarizability tensor in the sTD-DFT framework are:
-
-$$\beta_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) = -\braket{\braket{\hat\mu_\zeta;\hat\mu_\sigma,\hat\mu_\tau}}_{\omega_1,\omega_2} = \mathcal A_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) - \mathcal B_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2),$$
-
-with $\omega_\varsigma = -\omega_1 - \omega_2$, and:
-
-$$\begin{aligned}
-\mathcal A_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) &= \sum_{\mathcal P} \sum_{ia,ja} x_{ia,\zeta}(\omega_\varsigma)\,[-\mu_{ij,\sigma}]\,y_{ja,\tau}(\omega_2), \\
-\mathcal B_{\zeta\sigma\tau}(\omega_\varsigma;\omega_1,\omega_2) &= \sum_{\mathcal P} \sum_{ia,ib} x_{ia,\zeta}(\omega_\varsigma)\,[-\mu_{ab,\sigma}]\,y_{ib,\tau}(\omega_2),
+$$\begin{aligned} \lim_{\omega_B\to-\omega_m,\omega_C\to\omega_n} &(\omega_B+\omega_m)\,(\omega_C-\omega_n)\,\braket{\braket{\hat A_\zeta;\hat B_\sigma,\hat C_\tau}}_{\omega_B,\omega_C} \\
+&= \braket{0|\hat B_\sigma|m}\,\braket{m|\hat A_\zeta - \delta_{mn}\,\braket{0|\hat A_\zeta|0}|n}\,\braket{n|\hat C_\tau|0}.
 \end{aligned}$$
 
-where $\sum_{\mathcal P}$ is the sum over the sequence of permutations of the pairs of components and energies, $\{(\zeta,\omega_\varsigma), (\sigma, \omega_1), (\tau,\omega_2)\}$.
-
-### Excited to excited transition dipole moment (and oscillator strength)
-
-From the double residue of the electric first hyperpolarizability:
+Therefore, one gets:
 
 $$\begin{aligned}
-\lim_{\omega_1\to-\omega_m,\omega_2\to\omega_n} &(\omega_1+\omega_m)\,(\omega_2-\omega_n)\,\braket{\braket{\hat\mu_\zeta;\hat\mu_\sigma,\hat\mu_\tau}}_{\omega_1,\omega_2}\\
-&=  \braket{0|\hat\mu_\zeta|m}\,\braket{m|\hat\mu_\sigma - \delta_{mn}\,\braket{0|\hat\mu_\sigma|0}|n}\,\braket{n|\hat\mu_\tau|0},
+&\braket{m|\hat A_\zeta - \delta_{mn}\,\braket{0|\hat A_\zeta|0}|n}\\
+&\hspace{2em}= \frac{1}{8}\sum_{[m,n]}\left\{ \sum_{ia,ib} A_{ab,\zeta}\,[t^m_{ia}\,t^n_{ib} + u^m_{ia}\,u^n_{ib}]  - \sum_{ia,ja} A_{ij,\zeta}\,[t^m_{ia}\,t^n_{ja} + u^m_{ia}\,u^n_{ja}] \right\}.
 \end{aligned}$$
 
-one extract the (unrelaxed) singlet-to-singlet transition dipole moment from $\ket{m}$ to $\ket{n}$ (see [there](https://github.com/pierre-24/stdlite/blob/master/docs/assets/esa.pdf)):
+which is therefore equal to the fluctuation operator if $m = n$.
 
-$$\begin{aligned}
-&\braket{m|\hat\mu_\zeta - \delta_{mn}\,\braket{0|\hat\mu_\zeta|0}|n}\\
-&\hspace{2em}= \frac{1}{2}\left\{ \sum_{ia,ib} \mu_{ab,\zeta}\,[x^n_{ia}\,x^m_{ib} + y^m_{ia}\,y^n_{ib}]  - \sum_{ia,ja} \mu_{ij,\zeta}\,[x^n_{ia}\,x^m_{ja} + y^m_{ia}\,y^n_{ja}] \right\}.
-\end{aligned}$$
+!!! warning 
+    
+    This expression is only valid for $\theta_A=1$.
 
-which is equal to the fluctuation operator if $m = n$.
-The corresponding oscillator strength is given by:
+??? note "Details"
 
-$$f_{mn} = \frac{2}{3}\,(\omega_n-\omega_m)\,(\vec\mu_{mn}\cdot\vec\mu_{nm}).$$
+    This expression was obtained using
+
+    $$\begin{aligned}
+    \lim_{\omega_B\to-\omega_m}\,(\omega_B+\omega_m)\,{}^Bt_{ia,\sigma}(\omega_B) &= -B_{ia,\sigma}\,[t^{m}_{ia}]^2, \\
+	\lim_{\omega_B\to-\omega_m}\,(\omega_B+\omega_m)\,{}^Bu_{ia,\sigma}(\omega_B) &= B_{ia,\sigma}\,t^{m}_{ia}\,u^{m}_{ia},\\
+    \lim_{\omega_C\to\omega_n}\,(\omega_C-\omega_n)\,{}^Ct_{ia,\sigma}(\omega_C) &= C_{ia,\tau}\,[t^{m}_{ia}]^2, \\
+	\lim_{\omega_C\to\omega_n}\,(\omega_C-\omega_n)\,{}^Cu_{ia,\sigma}(\omega_C) &= C_{ia,\tau}\,t^{m}_{ia}\,u^{m}_{ia},
+    \end{aligned}$$
+    
+    on Eq. (6), and recognising the expression of $\braket{0|\hat B|m}$ and $\braket{n|\hat C|0}$ given above.
+
+Different ground (or excited) to excited moments, related to experimentally measurable properties, can be extracted (all given in atomic units):
+
+| Property            | Dipole length                                                         | Dipole velocity                                                                |
+|---------------------|-----------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| Oscillator strength | $f^L_{mn} = \frac{2}{3}\,(\omega_n-\omega_m)\, \|\vec\mu^L_{mn} \|^2$ | $f^L_{mn} = \frac{2}{3\,(\omega_n-\omega_m)}\, \|\vec\mu^V_{mn} \|^2$          |
+| Rotatory strength   | $R^L_{mn} = \Im(\vec\mu^L_{mn}\cdot\vec m_{mn})$                      | $R^V_{mn} = -\frac{1}{\omega_n-\omega_m}\,\Re(\vec\mu^V_{mn}\cdot\vec m_{mn})$ | 
+
+See, *e.g.*, [10.1016/j.comptc.2014.02.023](https://doi.org/10.1016/j.comptc.2014.02.023), for a discussion on the differences between the two formalisms.
 
 ## Sources and references
 
 + J. Toulouse, [Introduction to the calculation of molecular properties by response theory](https://www.lct.jussieu.fr/pagesperso/toulouse/enseignement/molecular_properties.pdf) (last consultation: January 2023). 
 + E. Fromager, [Linear response time-dependent density functional theory](https://quantique.u-strasbg.fr/lib/exe/fetch.php?media=fr:pageperso:ef:lecture_rctf_tddft_e_fromager.pdf)  (last consultation: January 2023).
 + G. P. Chen, V. K. Voora, M. M. Agee, S. G. Balasubramani, and F. Furche, Random-Phase Approximation Methods. *Annu. Rev. Phys. Chem.* **2017**, 68, 421 ([10.1146/annurev-physchem-040215-112308](https://doi.org/10.1146/annurev-physchem-040215-112308))
++ S. M. Parker, D. Rappoport, and F. Furche, Quadratic Response Properties from TDDFT: Trials and Tribulations. *J. Chem. Theor. Comput.* **2018**, 14, 807 ([10.1021/acs.jctc.7b01008](https://dx.doi.org/10.1021/acs.jctc.7b01008))
 + M. E. Casida, Time-Dependent Density Functional Response Theory for Molecules. In D. E. Chong (ed.), *Recent Advances in Density Functional Methods*. World Scientific, **1995** ([10.1142/9789812830586_0005](https://doi.org/10.1142/9789812830586_0005)).
 + S. Hirata, M. Head-Gordon, Time-dependent density functional theory within the Tamm–Dancoff approximation. *Chem. Phys. Lett.*, **1999**, 314, 291 ([10.1016/S0009-2614(99)01149-5](https://doi.org/10.1016/S0009-2614(99)01149-5))
 + S. Löffelsender, P. Beaujean, M. de Wergifosse, Simplified quantum chemistry methods to evaluate non-linear optical properties of large systems. *WIREs Comput. Mol. Sci.* **2023**, 2023, e1695 ([10.1002/wcms.1695](https://dx.doi.org/10.1002/wcms.1695)) [and references therein]. 

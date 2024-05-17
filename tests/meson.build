@@ -18,15 +18,15 @@ tests_dep += unity_dep
 
 # create tests
 tests_to_run = [
-    'basis',
     'context',
+    'integrals',
     'utils_lexer',
     'response',
     'utils_base_parser',
     'utils_fchk_parser',
     'utils_molden_parser',
     'utils_permutations',
-    'property',
+    'property_tensor',
     'wavefunction',
 ]
 

@@ -2,9 +2,15 @@
 option(
     'la_backend',
     type: 'combo',
-    value: 'default',
-    choices: ['default', 'openblas', 'mkl'],
+    value: 'openblas+netlib',
+    choices: ['openblas+netlib', 'openblas64+netlib64', 'netlib', 'mkl', 'custom'],
     description : 'linear algebra backend'
+)
+
+option(
+    'la_libraries',
+    type: 'array',
+    description : 'Custom libraries to be used if `la_backend=custom`'
 )
 
 option(

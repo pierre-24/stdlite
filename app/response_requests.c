@@ -1,27 +1,13 @@
 #include <assert.h>
 #include <stdlite/logging.h>
 #include <stdlite/helpers.h>
-#include <stdlite/response.h>
+#include <stdlite/utils/matrix.h>
 #include <string.h>
 
 #include "response_requests.h"
 
-int stdl_operator_dim(stdl_operator op, size_t* dim) {
-    assert(op < STDL_OP_COUNT && dim != NULL);
-
-    switch (op) {
-        case STDL_OP_DIPL:
-            *dim = 3;
-            break;
-        default:
-            *dim = 1;
-    }
-
-    return STDL_ERR_OK;
-}
-
-int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator* ops, float* w, int nroots, stdl_response_request** req_ptr) {
-    assert(req_ptr != NULL && resp_order > 0);
+int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator* ops, size_t *iw, int nroots, stdl_response_request** req_ptr) {
+    assert(req_ptr != NULL && resp_order > 0 && res_order <= resp_order);
 
     *req_ptr = malloc(sizeof(stdl_response_request));
     STDL_ERROR_HANDLE_AND_REPORT(*req_ptr == NULL, return STDL_ERR_MALLOC, "malloc");
@@ -29,29 +15,24 @@ int stdl_response_request_new(size_t resp_order, size_t res_order, stdl_operator
     STDL_DEBUG("create response_request %p", *req_ptr);
 
     (*req_ptr)->resp_order = resp_order;
-    (*req_ptr)->res_order = res_order;
+    (*req_ptr)->resi_order = res_order;
     (*req_ptr)->nroots = nroots;
+    (*req_ptr)->nops = resp_order+1;
+    (*req_ptr)->nlrvs = (resp_order == res_order) ? 0 : (*req_ptr)->nops;
+    (*req_ptr)->iw = NULL;
+    (*req_ptr)->property_tensor = NULL;
     (*req_ptr)->next = NULL;
 
-    (*req_ptr)->w = NULL;
-    (*req_ptr)->lrvreqs = NULL;
-    (*req_ptr)->wpos = NULL;
-
-    size_t nops = resp_order-res_order+1;
-    (*req_ptr)->ops = malloc(nops * sizeof(stdl_operator));
+    (*req_ptr)->ops = malloc((*req_ptr)->nops * sizeof(stdl_operator));
     STDL_ERROR_HANDLE_AND_REPORT((*req_ptr)->ops == NULL, stdl_response_request_delete(*req_ptr); return STDL_ERR_MALLOC, "malloc");
-    memcpy((*req_ptr)->ops, ops, nops * sizeof(stdl_operator));
 
-    size_t nw = (resp_order == res_order)? 0: resp_order-res_order+1;
-    if(nw > 0) {
-        (*req_ptr)->w = malloc(nw * sizeof(float));
-        (*req_ptr)->lrvreqs = malloc(nw * sizeof(stdl_lrv_request*));
-        (*req_ptr)->wpos = malloc(nw * sizeof(size_t));
-        STDL_ERROR_HANDLE_AND_REPORT(
-                (*req_ptr)->ops == NULL || (*req_ptr)->w == NULL || (*req_ptr)->lrvreqs == NULL || (*req_ptr)->wpos == NULL,
-                stdl_response_request_delete(*req_ptr); return STDL_ERR_MALLOC, "malloc");
+    memcpy((*req_ptr)->ops, ops, (*req_ptr)->nops * sizeof(stdl_operator));
 
-        memcpy((*req_ptr)->w, w, nw * sizeof(float ));
+    if((*req_ptr)->nlrvs > 0) {
+        (*req_ptr)->iw = malloc((*req_ptr)->nlrvs * sizeof(size_t));
+        STDL_ERROR_HANDLE_AND_REPORT((*req_ptr)->iw == NULL, stdl_response_request_delete(*req_ptr); return STDL_ERR_MALLOC, "malloc");
+
+        memcpy((*req_ptr)->iw, iw, (*req_ptr)->nlrvs * sizeof(size_t ));
     }
 
     return STDL_ERR_OK;
@@ -65,105 +46,92 @@ int stdl_response_request_delete(stdl_response_request* req) {
     if(req->next != NULL)
         stdl_response_request_delete(req->next);
 
-    STDL_FREE_ALL(req->ops, req->w, req->lrvreqs, req->wpos, req);
-
-    return STDL_ERR_OK;
-
-}
-
-int stdl_lrv_request_new(stdl_operator op, size_t nw, size_t ncsfs, stdl_lrv_request **req_ptr) {
-    assert(req_ptr != NULL);
-
-    *req_ptr = malloc(sizeof(stdl_lrv_request));
-    STDL_ERROR_HANDLE_AND_REPORT(*req_ptr == NULL, return STDL_ERR_MALLOC, "malloc");
-
-    STDL_DEBUG("create lrv_request %p", *req_ptr);
-
-    (*req_ptr)->op = op;
-    (*req_ptr)->nw = nw;
-
-    int err = stdl_operator_dim(op, &((*req_ptr)->dim));
-    STDL_ERROR_HANDLE(err, stdl_lrv_request_delete(*req_ptr); return err);
-
-    (*req_ptr)->w = malloc(nw * sizeof(float ));
-    (*req_ptr)->egrad = malloc((*req_ptr)->dim * ncsfs * sizeof(float ));
-    (*req_ptr)->X = malloc(nw * ncsfs * (*req_ptr)->dim * sizeof(float ));
-    (*req_ptr)->Y = malloc(nw * ncsfs * (*req_ptr)->dim * sizeof(float ));
-    STDL_ERROR_HANDLE_AND_REPORT((*req_ptr)->w == NULL || (*req_ptr)->egrad == NULL || (*req_ptr)->X == NULL || (*req_ptr)->Y == NULL, stdl_lrv_request_delete(*req_ptr); return STDL_ERR_MALLOC, "malloc");
+    STDL_FREE_ALL(req->ops, req->iw, req->property_tensor, req);
 
     return STDL_ERR_OK;
 }
 
-int stdl_lrv_request_delete(stdl_lrv_request* req) {
-    assert(req != NULL);
+int stdl_response_request_approximate_size(stdl_response_request *req, size_t nexci, size_t *sz) {
+    assert(req != NULL && sz != NULL);
 
-    STDL_DEBUG("delete lrv_request %p", req);
+    size_t next_sz = 0, tensor_sz = 0;
 
-    STDL_FREE_ALL(req->w, req->egrad, req->X, req->Y, req);
+    if(req->next != NULL)
+        stdl_response_request_approximate_size(req->next, nexci, &next_sz);
+
+    if(req->property_tensor != NULL) {
+        if(req->resi_order == 0) {
+            for (size_t iop = 0; iop < req->nops; ++iop) {
+                tensor_sz *= STDL_OPERATOR_DIM[iop];
+            }
+        } else {
+            for (size_t iop = 0; iop < req->nops; ++iop) {
+                tensor_sz += STDL_OPERATOR_DIM[iop];
+            }
+
+            tensor_sz *= (req->nroots < 0 ? nexci : (size_t) req->nroots);
+        }
+
+        tensor_sz *= sizeof(float);
+    }
+
+    *sz = sizeof(stdl_response_request)
+            + req->nops * sizeof(size_t) // ops
+            + req->nlrvs * (sizeof(size_t) + sizeof(stdl_lrv)) // iw + lrvs
+            + tensor_sz
+            + next_sz;
 
     return STDL_ERR_OK;
 }
 
-int stdl_lrv_request_compute(stdl_lrv_request *lrvreq, stdl_context *ctx) {
-    assert(lrvreq != NULL && ctx != NULL && lrvreq->eta_MO != NULL);
-
-    // get perturbed gradient
-    int err = stdl_response_perturbed_gradient(ctx, lrvreq->dim, lrvreq->eta_MO, lrvreq->egrad);
-    STDL_ERROR_CODE_HANDLE(err, return err);
-
-    // compute response vectors
-    if(ctx->B == NULL)
-        err = stdl_response_TDA_linear(ctx, lrvreq->nw, lrvreq->w, lrvreq->dim, lrvreq->egrad, lrvreq->X, lrvreq->Y);
-    else
-        err = stdl_response_TD_linear(ctx, lrvreq->nw, lrvreq->w, lrvreq->dim, lrvreq->egrad, lrvreq->X, lrvreq->Y);
-
-
-    return err;
-}
-
-int stdl_lrv_request_dump_h5(stdl_lrv_request *req, stdl_context *ctx, hid_t group_id) {
+int stdl_response_request_dump_h5(stdl_response_request *req, size_t maxnexci, hid_t group_id) {
     assert(req != NULL && group_id != H5I_INVALID_HID);
 
     stdl_log_msg(1, "+ ");
+    stdl_log_msg(0, "Saving property >");
+    stdl_log_msg(1, "\n  | Saving data ");
 
-    herr_t status;
+    herr_t status = H5LTmake_dataset(group_id, "info", 1, (hsize_t[]) {5}, H5T_NATIVE_ULONG, (size_t[]) {req->resp_order, req->resi_order, req->nops, req->nlrvs, req->resi_order > 0 ? maxnexci : 0});
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", group_id);
 
-    char* gname;
-    switch (req->op) {
-        case STDL_OP_DIPL:
-            gname = "dipl";
-            break;
-        default:
-            gname = "unk";
-            break;
+    status = H5LTmake_dataset(group_id, "ops", 1, (hsize_t[]) {(hsize_t) req->nops}, H5T_NATIVE_INT, req->ops);
+    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", group_id);
+
+    if(req->nlrvs > 0) {
+        status = H5LTmake_dataset(group_id, "w", 1, (hsize_t[]) {(hsize_t) req->nlrvs}, H5T_NATIVE_ULONG, req->iw);
+        STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", group_id);
     }
 
-    stdl_log_msg(0, "Saving LRV >");
-    stdl_log_msg(1, "\n  | Create group `responses/%s` ", gname);
+    if(req->property_tensor != NULL) {
 
-    hid_t lrv_group_id = H5Gcreate(group_id, gname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    STDL_ERROR_HANDLE_AND_REPORT(lrv_group_id == H5I_INVALID_HID, return STDL_ERR_WRITE, "cannot create group");
+        // get its shape
+        hsize_t dims[3] = {0};
+        int rank = 0;
 
-    stdl_log_msg(0, "-");
-    stdl_log_msg(1, "\n  | Store egrad and LRV ");
+        if (req->resp_order == 1 && req->resi_order == 0) {
+            dims[0] = (hsize_t) STDL_OPERATOR_DIM[req->ops[0]];
+            dims[1] = (hsize_t) STDL_OPERATOR_DIM[req->ops[1]];
+            rank = 2;
+        } else if (req->resp_order == 2 && req->resi_order == 0) {
+            dims[0] = (hsize_t) STDL_OPERATOR_DIM[req->ops[0]];
+            dims[1] = (hsize_t) STDL_OPERATOR_DIM[req->ops[1]];
+            dims[2] = (hsize_t) STDL_OPERATOR_DIM[req->ops[2]];
+            rank = 3;
+        } else if (req->resp_order == 1 && req->resi_order == 1) {
+            dims[0] = (hsize_t) (STDL_OPERATOR_DIM[req->ops[0]] + STDL_OPERATOR_DIM[req->ops[1]]);
+            dims[1] = (hsize_t) (req->nroots < 0? maxnexci : req->nroots);
+            rank = 2;
+        } else if (req->resp_order == 2 && req->resi_order == 2) {
+            dims[0] = (hsize_t) (STDL_OPERATOR_DIM[req->ops[0]] + STDL_OPERATOR_DIM[req->ops[1]] + STDL_OPERATOR_DIM[req->ops[2]]);
+            dims[1] = (hsize_t) STDL_MATRIX_SP_SIZE(req->nroots < 0? maxnexci : req->nroots);
+            rank = 2;
+        }
 
-    status = H5LTmake_dataset(lrv_group_id, "info", 1, (hsize_t[]) {3}, H5T_NATIVE_ULONG, (size_t[]) {req->op, req->dim, req->nw});
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", lrv_group_id);
-
-    status = H5LTmake_dataset(lrv_group_id, "w", 1, (hsize_t[]) {req->nw}, H5T_NATIVE_FLOAT, req->w);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", lrv_group_id);
-
-    status = H5LTmake_dataset(lrv_group_id, "egrad", 2, (hsize_t[]) {ctx->ncsfs, req->dim}, H5T_NATIVE_FLOAT, req->egrad);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", lrv_group_id);
-
-    status = H5LTmake_dataset(lrv_group_id, "X", 3, (hsize_t[]) {req->nw, ctx->ncsfs, req->dim}, H5T_NATIVE_FLOAT, req->X);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", lrv_group_id);
-
-    status = H5LTmake_dataset(lrv_group_id, "Y", 3, (hsize_t[]) {req->nw, ctx->ncsfs, req->dim}, H5T_NATIVE_FLOAT, req->Y);
-    STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", lrv_group_id);
+        // write it
+        status = H5LTmake_dataset(group_id, "property_tensor", rank, dims, H5T_NATIVE_FLOAT, req->property_tensor);
+        STDL_ERROR_HANDLE_AND_REPORT(status < 0, return STDL_ERR_WRITE, "cannot create dataset in group %d", group_id);
+    }
 
     stdl_log_msg(0, "< done\n");
-
-    H5Gclose(lrv_group_id);
     return STDL_ERR_OK;
 }

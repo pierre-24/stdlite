@@ -35,13 +35,36 @@ groups:
     title: Basis set
     description: |
       Describe a set of basis functions, centered on atoms.
-      Also provide functions that computes expectation values (integrals) in AO basis.
       
       ```c
       #include <stdlite/basis.h>
       ```
   
       --8<-- "docs/includes/basis.md"
+  - name: wavefunction
+    title: Wavefunction
+    description: |
+      Store the result of a QC calculation, which is the input for subsequent (s)TD-DFT calculations.
+      
+      ```c
+      #include <stdlite/wavefunction.h>
+      ```
+  - name: integrals
+    title: 1-electron integrals
+    description: |
+      Provide functions to compute AO integrals.
+      
+      ```c
+      #include <stdlite/integrals.h>
+      ```
+      
+      !!! warning
+
+          According to [this comment](https://github.com/sunqm/libcint/issues/22#issuecomment-333268020), cartesian Gaussians are not (correctly) normalized by libcint.
+          Thus every integral $\braket{\mu|\hat A|\nu}$ between $\mu$ and $\nu$ (cartesian AOs) should be multiplied by a (re)normalization constant $N'_{\mu\nu} = N'_\mu\,N'_\nu$ with:
+
+          $$N'_\mu = \frac{1}{\sqrt{\braket{\mu|\mu}}}.$$
+
   - name: context
     title: Context handler
     description: |
@@ -50,13 +73,13 @@ groups:
       ```c
       #include <stdlite/context.h>
       ```
-  - name: property
-    title: Properties
+  - name: property_tensor
+    title: Properties tensor
     description: |
       Use the linear response vectors to compute some properties.
       
       ```c
-      #include <stdlite/property.h>
+      #include <stdlite/property_tensors.h>
       ```
   - name: response
     title: Response functions
@@ -175,7 +198,7 @@ groups:
       - name: requests
         title: Requests for response
         description: |
-          Handle bare response and linear response vector requests.
+          Store user requests and their results.
           
           ```c
           #include "response_requests.h"
@@ -183,7 +206,7 @@ groups:
       - name: responses_handler
         title: Responses handler
         description: |
-          Deals with responses, by computing them.
+          Deals with responses, by computing them and storing results.
           
           ```c
           #include "responses_handler.h"

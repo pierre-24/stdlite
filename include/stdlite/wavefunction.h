@@ -18,8 +18,6 @@
  * Thus, it contains geometrical information, as well as the `S` (overlap), `C` (LCAO coefficients), and `e` (MO energies) matrices.
  * It is assumed that the MO are ordered in increasing energy values, and thus that electrons sits on the lower levels.
  *
- * Note: this structure takes about `(3 * natm + nmo + nao * (nao + nmo)) * sizeof(double) + nao * sizeof(size_t)` bytes of space when correctly allocated.
- *
  * @ingroup wavefunction
  */
 struct stdl_wavefunction_ {
@@ -93,7 +91,7 @@ int stdl_wavefunction_delete(stdl_wavefunction* wf);
 int stdl_wavefunction_orthogonalize_C_dge(size_t nmo, size_t nao, double *S, double *C);
 
 /**
- * Compute the density matrix (`sy` format).
+ * Compute the density matrix.
  *
  * $$P_{\mu\nu} = \sum_r^{MO} n_r\,C_{r\mu}\,C_{r\nu},$$
  *
@@ -111,17 +109,19 @@ int stdl_wavefunction_compute_density_dsp(size_t nocc, size_t nmo, size_t nao, d
 
 
 /**
- * Convert $X$ expressed from AO to MO basis. Assume a **symmetric** property (i.e., `X_AO[i,j] = X_AO[j,i]`).
+ * Convert $X$ expressed in AO basis to MO basis.
+ * The matrix is either symmetric (i.e., `X_AO[i,j] = X_AO[j,i]`) or antisymmetric (i.e., `X_AO[i,j] = -X_AO[j,i]`).
  *
  * @param nao number of AO, must be >0.
  * @param nmo number of MO, must be `0 < nmo <= nao`.
+ * @param issym whether the matrix is symmetric (`1`) or antisymmetric (`0`)
  * @param C the LCAO coefficients
  * @param X_AO `double[STDL_MATRIX_SP_SIZE(nao)]`, the matrix in AO basis
  * @param[out] X_MO `double[STDL_MATRIX_SP_SIZE(nmo)]`, the matrix in MO basis
  * @return error code
  * @ingroup wavefunction
  */
-int stdl_wavefunction_dsp_ao_to_dsp_mo(size_t nao, size_t nmo, double* C, double* X_AO, double* X_MO);
+int stdl_wavefunction_dsp_ao_to_dsp_mo(size_t nao, size_t nmo, int issym, double *C, double *X_AO, double *X_MO);
 
 
 /**
@@ -155,6 +155,16 @@ int stdl_wavefunction_dump_h5(stdl_wavefunction* wf, hid_t file_id);
  * @ingroup wavefunction
  */
 int stdl_wavefunction_load_h5(hid_t file_id, stdl_wavefunction **wf_ptr);
+
+/**
+ * Get the approximate space in memory
+ *
+ * @param wf the wavefunction
+ * @param[out] sz an approximate size (in bytes)
+ * @return error code
+ * @ingroup wavefunction
+ */
+int stdl_wavefunction_approximate_size(stdl_wavefunction* wf, size_t* sz);
 
 
 #endif //STDLITE_WAVEFUNCTION_H

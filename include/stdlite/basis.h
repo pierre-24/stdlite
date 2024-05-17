@@ -55,7 +55,7 @@ struct stdl_basis_ {
      */
     int* bas;
 
-    // size of ´env´, in byte. Must be larger than `3*natm + PTR_ENV_START`
+    /// size of ´env´, in byte. Must be larger than `3*natm + PTR_ENV_START`
     size_t env_size;
 
     /**
@@ -73,8 +73,8 @@ typedef struct stdl_basis_ stdl_basis;
  * Create a new basis set.
  * Initialize all the arrays.
  *
- * @warning According to [this](https://github.com/sunqm/libcint/issues/76), the first 20 values of `env` are reserved.
- *          One should thus account for that when computing `env_size` (20 should be added to what is required) and when filling it (first 20th values should be zero, and the first non-zero value should be at `env[20]`).
+ * @warning According to [this](https://github.com/sunqm/libcint/issues/76), the first 20 values (the value of `PTR_ENV_START`) of `env` are reserved for different purpose (among other, setting the common origin)
+ *          One should thus account for that when computing `env_size` (`> PTR_ENV_START`) and when filling it (first `PTR_ENV_START`th values should be zero, and the first non-zero value should be at `env[PTR_ENV_START]`).
  *
  * @param natm Number of atoms
  * @param nbas Number of basis functions
@@ -114,24 +114,6 @@ int stdl_basis_print(stdl_basis *bs, int denormalize);
  */
 int stdl_basis_reorder_C(size_t nmo, size_t nao, double *C, stdl_basis *bs, size_t maxshell, int **transpose);
 
-/**
- * Compute the overlap matrix, $S_{\mu\nu} = \braket{\mu|\nu}$ (double precision).
- * @param bs a valid basis set
- * @param[out] S `double[STDL_MATRIX_SP_SIZE(nao)]` the resulting overlap matrix.
- * @return error code.
- * @ingroup basis
- */
-int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S);
-
-
-/**
- * Compute the electronic dipole matrix in AO basis, $D_{\mu\nu} = \braket{\mu|e\,(\hat r - R_0)|\nu}$.
- * @param bs a valid basis set
- * @param[out] dipoles `float[3, STDL_MATRIX_SP_SIZE(nao)]` the resulting dipole matrix. The component of the dipole is thus the slowest varying index.
- * @return error code.
- * @ingroup basis
- */
-int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles);
 
 /**
  * Dump a basis in a H5 file
@@ -151,5 +133,23 @@ int stdl_basis_dump_h5(stdl_basis *bs, hid_t file_id);
  * @ingroup basis
  */
 int stdl_basis_load_h5(hid_t file_id, stdl_basis **bs_ptr);
+
+/**
+ * Get the approximate space in memory
+ * @param bs a valid basis set
+ * @param[out] sz the size
+ * @return error code
+ * @ingroup basis
+ */
+int stdl_basis_approximate_size(stdl_basis *bs, size_t *sz);
+
+/**
+ * Set the common origin for libcint
+ * @param bs a valid basis set
+ * @param Rc `double[3]` the origin
+ * @return error code
+ * @ingroup basis
+ */
+int stdl_basis_set_Rc(stdl_basis* bs, double Rc[3]);
 
 #endif //STDLITE_BASIS_H

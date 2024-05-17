@@ -24,7 +24,6 @@ if git_program.found()
   build_args += '-DPROJECT_BUILD_COMMIT="' + run_command(git_program, 'rev-parse', 'HEAD').stdout().substring(0, 7) + '"'
 endif
 
-
 libcint_dep = cc.find_library('libcint', required: false)
 if not libcint_dep.found()
   libcint_proj = subproject('libcint', default_options: [])
@@ -32,19 +31,80 @@ if not libcint_dep.found()
 endif
 project_dep += libcint_dep
 
-if get_option('openmp')
-  build_args += '-DUSE_OPENMP'
-  project_dep += dependency('openmp')
-endif
-
 # note: cannot use flexiblas at the moment
 # see https://github.com/mpimd-csc/flexiblas/issues/2
 la_backend = get_option('la_backend')
-if la_backend == 'openblas' or la_backend == 'default'
-  project_dep += cc.find_library('openblas', required : true)
-  project_dep += cc.find_library('lapack', required : true)
-  project_dep += cc.find_library('lapacke', required : true)
+if la_backend == 'netlib'
+  openblas_dep = dependency('blas', required: false)
+  if openblas_dep.found()
+    project_dep += openblas_dep
+  else
+    project_dep += cc.find_library('blas', required : true)
+  endif
+
+  lapack_dep = dependency('lapack', required: false)
+  if lapack_dep.found()
+    project_dep += lapack_dep
+  else
+    project_dep += cc.find_library('lapack', required : true)
+  endif
+
+  lapacke_dep = dependency('lapacke', required: false)
+  if lapacke_dep.found()
+    project_dep += lapacke_dep
+  else
+    project_dep += cc.find_library('lapacke', required : false)
+  endif
+  build_args += '-DUSE_NETLIB'
+elif la_backend == 'openblas+netlib'
+  openblas_dep = dependency('openblas', required: false)
+  if openblas_dep.found()
+    project_dep += openblas_dep
+  else
+    project_dep += cc.find_library('openblas', required : true)
+    build_args += '-DUSE_OPENBLAS_INC'
+  endif
+
+  lapack_dep = dependency('lapack', required: false)
+  if lapack_dep.found()
+    project_dep += lapack_dep
+  else
+    project_dep += cc.find_library('lapack', required : true)
+  endif
+
+  lapacke_dep = dependency('lapacke', required: false)
+  if lapacke_dep.found()
+    project_dep += lapacke_dep
+  else
+    project_dep += cc.find_library('lapacke', required : false)
+  endif
   build_args += '-DUSE_OPENBLAS'
+elif la_backend == 'openblas64+netlib64'
+  openblas64_dep = dependency('openblas64', required: false)
+  if openblas64_dep.found()
+    project_dep += openblas64_dep
+  else
+    project_dep += cc.find_library('openblas64', required : true)
+    build_args += '-DUSE_OPENBLAS_INC'
+  endif
+
+  lapack64_dep = dependency('lapack64', required: false)
+  if lapack64_dep.found()
+    project_dep += lapack64_dep
+  else
+    project_dep += cc.find_library('lapack64', required : true)
+  endif
+
+  lapacke64_dep = dependency('lapacke64', required: false)
+  if lapacke64_dep.found()
+    project_dep += lapacke64_dep
+  else
+    project_dep += cc.find_library('lapacke64', required : false)
+  endif
+
+  build_args += '-DLAPACK_ILP64'
+  build_args += '-DOPENBLAS_USE64BITINT'
+  build_args += '-DUSE_OPENBLAS64'
 elif la_backend == 'mkl'
   # found using `pkg-config --list-all | grep "mkl"`
   if get_option('openmp')
@@ -69,6 +129,17 @@ elif la_backend == 'mkl'
   endif
   build_args += '-DUSE_MKL'
   build_args += '-DMKL_ILP64'
+elif la_backend == 'custom'
+  foreach lib: get_option('la_libraries')
+    project_dep += cc.find_library(lib, required : true)
+  endforeach
+  build_args += '-DUSE_LA_CUSTOM'
+endif
+
+# add OpenMP if not already included with MKL
+if get_option('openmp') and la_backend != 'mkl'
+  build_args += '-DUSE_OPENMP'
+  project_dep += dependency('openmp')
 endif
 
 h5noserial = cc.find_library('hdf5', required: false)
@@ -76,7 +147,7 @@ if not h5noserial.found()
   project_dep += [cc.find_library('hdf5_serial', required: true), cc.find_library('hdf5_serial_hl', required: true)]
   build_args += ['-DUSE_HDF5_SERIAL']
 else
-  project_dep += [cc.find_library('hdf5', required: true), cc.find_library('hdf5_hl', required: true)]
+  project_dep += [h5noserial, cc.find_library('hdf5_hl', required: true)]
 endif
 
 # fetch sources and includes

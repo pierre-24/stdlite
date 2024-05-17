@@ -68,197 +68,6 @@ char _toc(int i) {
     }
 }
 
-int stdl_basis_print(stdl_basis *bs, int denormalize) {
-    assert(bs != NULL);
-
-    printf("-- basis set containing %d (%s) basis functions, on %d centers --\n", bs->nbas, bs->use_spherical? "spherical": "cartesian", bs->natm);
-    if(denormalize)
-        printf("-- note: coefficients that are printed are denormalized --\n");
-
-    for(int i=0; i < bs->nbas; i++) {
-        int nprim = bs->bas[i*8+2], ncont = bs->bas[i*8+3];
-        printf("%d -- %c-type cGTOs (%d*%d AOs), centered on atom #%d.\n", i + 1, _toc(bs->bas[i*8+1]), ncont, CINTcgtos_cart(i, bs->bas), bs->bas[i*8+0] + 1);
-        printf("  Defines %d cGTOs composed of %d GTOs:\n", ncont, nprim);
-        printf("      (exp)          (conts)\n");
-        for(int j=0; j < bs->bas[i*8+2]; j++){
-            printf("  %.8e", bs->env[bs->bas[i*8+5]+j]);
-            for(int h=0; h < ncont; h++) {
-                printf(" % .8e", bs->env[bs->bas[i*8+6]+j * ncont + h] * (denormalize ? 1. / CINTgto_norm(bs->bas[i*8+1], bs->env[bs->bas[i*8+5]+j]) : 1));
-            }
-            printf("\n");
-        }
-    }
-    printf("-- end --\n");
-
-    return STDL_ERR_OK;
-}
-
-// compute renormalization factors for cartesian functions with l > 1.
-void _compute_renormalization(stdl_basis* bs, double* renorm, double* buff) {
-    int si, ioffset = 0;
-
-    for(int ibas=0; ibas < bs->nbas; ibas++) {
-        int angmom = bs->bas[ibas * 8 + 1];
-
-        if(bs->use_spherical)
-            si = CINTcgto_spheric(ibas, bs->bas);
-        else
-            si = CINTcgtos_cart(ibas, bs->bas);
-
-        if(bs->use_spherical || angmom < 2) {
-            for (int mu = 0; mu < si; ++mu)
-                renorm[ioffset + mu] = 1.;
-        } else if (angmom == 2) { // 6d
-            double vxx = sqrt(1.25 / M_PI), vxy = sqrt(3.75 / M_PI);
-            renorm[ioffset + 0] = vxx;
-            renorm[ioffset + 1] = vxy;
-            renorm[ioffset + 2] = vxy;
-            renorm[ioffset + 3] = vxx;
-            renorm[ioffset + 4] = vxy;
-            renorm[ioffset + 5] = vxx;
-        } else if (angmom == 3) { // 10f
-            double vxxx = sqrt(1.75 / M_PI), vxxy = sqrt(8.75 / M_PI), vxyz = sqrt(26.25 / M_PI);
-            renorm[ioffset + 0] = vxxx;
-            renorm[ioffset + 1] = vxxy;
-            renorm[ioffset + 2] = vxxy;
-            renorm[ioffset + 3] = vxxy;
-            renorm[ioffset + 4] = vxyz;
-            renorm[ioffset + 5] = vxxy;
-            renorm[ioffset + 6] = vxxx;
-            renorm[ioffset + 7] = vxxy;
-            renorm[ioffset + 8] = vxxy;
-            renorm[ioffset + 9] = vxxx;
-        } else {
-            int1e_ovlp_cart(buff, NULL, (int[]) {ibas, ibas}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
-            for (int mu = 0; mu < si; ++mu)
-                renorm[ioffset + mu] = 1 / sqrt(buff[mu * si + mu]);
-        }
-
-        ioffset += si;
-    }
-}
-
-
-int stdl_basis_dsp_ovlp(stdl_basis *bs, double *S) {
-    assert(bs != NULL && S != NULL);
-
-    STDL_DEBUG("Computing <i|j>");
-
-    size_t nao = 0;
-    for(int ibas=0; ibas < bs->nbas; ibas++) {
-        if (bs->use_spherical)
-            nao += CINTcgto_spheric(ibas, bs->bas);
-        else
-            nao += CINTcgtos_cart(ibas, bs->bas);
-    }
-
-    double buff[CART_MAX * CART_MAX];
-    double* renorm = malloc(nao * sizeof(double));
-    STDL_ERROR_HANDLE_AND_REPORT(renorm == NULL, return STDL_ERR_MALLOC, "malloc");
-
-    _compute_renormalization(bs, renorm, buff);
-
-    int si, sj, ioffset = 0, joffset;
-    for(int ibas=0; ibas < bs->nbas; ibas++) {
-        if(bs->use_spherical)
-            si = CINTcgto_spheric(ibas, bs->bas);
-        else
-            si = CINTcgtos_cart(ibas, bs->bas);
-
-        joffset = 0;
-
-        for(int jbas=0; jbas <= ibas; jbas++) {
-            if(bs->use_spherical) {
-                sj = CINTcgto_spheric(jbas, bs->bas);
-                int1e_ovlp_sph(buff, NULL, (int[]) {ibas, jbas}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
-            }
-            else {
-                sj = CINTcgtos_cart(jbas, bs->bas);
-                int1e_ovlp_cart(buff, NULL, (int[]) {ibas, jbas}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
-            }
-
-            for(int iprim=0; iprim < si; iprim++) {
-                for(int jprim=0; jprim < sj && joffset + jprim <= ioffset + iprim; jprim++) {
-                    S[STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = buff[jprim * si + iprim] * renorm[ioffset + iprim] * renorm[joffset + jprim];
-                }
-            }
-
-            joffset += sj;
-        }
-
-        ioffset += si;
-    }
-
-    free(renorm);
-
-    return STDL_ERR_OK;
-}
-
-
-int stdl_basis_dsp_dipole(stdl_basis *bs, double *dipoles) {
-    assert(bs != NULL && dipoles != NULL);
-
-    stdl_log_msg(0, "Computing <µ|µ|ν> elements >");
-
-    size_t nao = 0;
-    for(int ibas=0; ibas < bs->nbas; ibas++) {
-        if (bs->use_spherical)
-            nao += CINTcgto_spheric(ibas, bs->bas);
-        else
-            nao += CINTcgtos_cart(ibas, bs->bas);
-    }
-
-    int si, sj, ioffset=0, joffset;
-
-    double buff[3 * CART_MAX * CART_MAX];
-    double* renorm = malloc(nao * sizeof(double));
-    STDL_ERROR_HANDLE_AND_REPORT(renorm == NULL, return STDL_ERR_MALLOC, "malloc");
-
-    _compute_renormalization(bs, renorm, buff);
-
-    size_t ndips = STDL_MATRIX_SP_SIZE(nao);
-
-    for(int ibas=0; ibas < bs->nbas; ibas++) {
-        if(bs->use_spherical)
-            si = CINTcgto_spheric(ibas, bs->bas);
-        else
-            si = CINTcgtos_cart(ibas, bs->bas);
-
-        joffset = 0;
-
-        for(int jbas=0; jbas <= ibas; jbas++) {
-            if(bs->use_spherical) {
-                sj = CINTcgto_spheric(jbas, bs->bas);
-                int1e_r_sph(buff, NULL, (int[]) {ibas, jbas}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
-            }
-            else {
-                sj = CINTcgtos_cart(jbas, bs->bas);
-                int1e_r_cart(buff, NULL, (int[]) {ibas, jbas}, bs->atm, bs->natm, bs->bas, bs->nbas, bs->env, NULL, NULL);
-            }
-
-            for(int iprim=0; iprim < si; iprim++) {
-                for(int jprim=0; jprim < sj && joffset + jprim <= ioffset + iprim; jprim++) {
-                    dipoles[0 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = -buff[0 * si * sj + jprim * si + iprim] * renorm[ioffset + iprim] * renorm[joffset + jprim];
-                    dipoles[1 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = -buff[1 * si * sj + jprim * si + iprim] * renorm[ioffset + iprim] * renorm[joffset + jprim];
-                    dipoles[2 * ndips + STDL_MATRIX_SP_IDX(ioffset + iprim, joffset + jprim)] = -buff[2 * si * sj + jprim * si + iprim] * renorm[ioffset + iprim] * renorm[joffset + jprim];
-                }
-            }
-
-            joffset += sj;
-        }
-
-        ioffset += si;
-    }
-
-    free(renorm);
-
-    stdl_log_msg(0, "< done\n");
-
-    return STDL_ERR_OK;
-}
-
-
-
 int stdl_basis_reorder_C(size_t nmo, size_t nao, double *C, stdl_basis *bs, size_t maxshell, int **transpose) {
     assert(nao > 0 && nmo <= nao && C != NULL && bs != NULL && maxshell > 0 && transpose != NULL);
 
@@ -382,5 +191,24 @@ int stdl_basis_load_h5(hid_t file_id, stdl_basis **bs_ptr) {
         stdl_basis_delete(*bs_ptr);
 
     return err;
+}
+
+int stdl_basis_approximate_size(stdl_basis *bs, size_t *sz) {
+    assert(bs != NULL && sz != NULL);
+
+    *sz = sizeof(stdl_basis)
+            + (bs->natm * 6 + bs->natm * 8) * sizeof(int)
+            + bs->env_size * sizeof(double);
+
+    return STDL_ERR_OK;
+}
+
+int stdl_basis_set_Rc(stdl_basis *bs, double *Rc) {
+    assert(bs != NULL && Rc != NULL);
+
+    STDL_DEBUG("set COMMON_ORIG to center of mass = {%.3f, %.3f, %.3f}", Rc[0], Rc[1], Rc[2]);
+
+    memcpy(bs->env + PTR_COMMON_ORIG, Rc, 3 * sizeof(double ));
+    return STDL_ERR_OK;
 }
 

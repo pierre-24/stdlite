@@ -11,21 +11,28 @@ A [tutorial](tutorial.md) as well as a [complete description of its inputs](app.
 
 ## What?
 
-My Ph.D. was mainly dedicated to nonlinear optics (in particular the first and second hyperpolarizability) and during a collaboration with [Prof. M. de Wergifossse](https://uclouvain.be/en/research-institutes/imcn/most/prof-marc-de-wergifosse.html), I discovered the simplified approaches developed by [Prof S. Grimme](https://www.uni-bonn.de/en/research-and-teaching/research-profile/transdisciplinary-research-areas/tra-matter/members-directory/stefan-grimme).
+My Ph.D. was mainly dedicated to nonlinear optics (in particular the first and second hyperpolarizabilities) and during a collaboration with [Prof. M. de Wergifossse](https://uclouvain.be/en/research-institutes/imcn/most/prof-marc-de-wergifosse.html), I discovered the simplified approaches developed by [Prof S. Grimme](https://www.uni-bonn.de/en/research-and-teaching/research-profile/transdisciplinary-research-areas/tra-matter/members-directory/stefan-grimme).
 Among other, we computed the first hyperpolarizability of a whole protein with almost 4000 atoms, in good agreement with experimental data (see [10.1021/acs.jpclett.1c02911](https://dx.doi.org/10.1021/acs.jpclett.1c02911)).
 
 The sTDA/sTD-DFT approaches are mainly implement in [`stda`](https://github.com/grimme-lab/stda).
 However, its integration with other quantum chemistry programs is not straightforward.
 Following the example of [`tblite`](https://tblite.readthedocs.io/en/latest/), I thus decided to develop a standalone library.
+Other advantages include:
+
++ equivalent results,
++ smaller memory footprint,
++ extended set of responses available,
++ (hopefully) better documentation,
++ thorough testing.
 
 Contributions are welcomed, as described on [this page](contributing.md).
 
 ## How
 
-Rather than Fortran, this library is developed in C, with [libcint](https://github.com/sunqm/libcint) (used by [pycsf](https://pyscf.org/)) to evaluate the integrals. 
+Rather than Fortran, this library is developed in C, with [libcint](https://github.com/sunqm/libcint) (used by [pycsf](https://pyscf.org/)) to evaluate the AO integrals. 
 
 ## Who?
 
-My name is [Pierre Beaujean](https://pierrebeaujean.net), and I'm a Ph.D. in quantum chemistry from the [University of Namur](https://unamur.be) (Belgium).
+My name is [Pierre Beaujean](https://pierrebeaujean.net), and I have a Ph.D. in quantum chemistry from the [University of Namur](https://unamur.be) (Belgium).
 While now working on batteries, I still continue to look into nonlinear optics in collaboration with other people of my lab... And beyond.
-It is also a good opportunity to improve my skills.
+It is also a good opportunity to improve my programming and QM skills.

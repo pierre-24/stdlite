@@ -6,7 +6,6 @@
 #include <stdlite/context.h>
 
 #include "response_requests.h"
-#include "responses_handler.h"
 
 #define STDL_APP_ARG_DOC "Run a sTDA/sTD-DFT calculation.\n\n"
 
@@ -30,12 +29,23 @@ typedef enum stdl_source_type_ stdl_source_type;
 enum stdl_method_ {
     /// Monopole approximation
     STDL_METHOD_MONOPOLE,
-
-    /// Monopole approximation, direct calculation
-    STDL_METHOD_MONOPOLE_DIRECT,
 };
 
 typedef enum stdl_method_ stdl_method;
+
+/**
+ * Gauge origin for basis set
+ * @ingroup user_input_handler
+ */
+enum  stdl_gauge_origin_ {
+    /// Origin at center of mass (default)
+    STDL_GAUGE_ORIGIN_CM,
+
+    /// Custom
+    STDL_GAUGE_ORIGIN_CUSTOM,
+};
+
+typedef enum stdl_gauge_origin_ stdl_gauge_origin;
 
 
 /**
@@ -77,9 +87,21 @@ struct stdl_user_input_handler_ {
     /// Amount of HF exchange
     float ctx_ax;
 
+    /// Common basis origin
+    stdl_gauge_origin ctx_gauge_origin;
+
+    /// custom basis origin, valid if `ctx_gauge_origin` is `STDL_GAUGE_ORIGIN_CUSTOM`
+    double ctx_gauge_origin_custom[3];
+
     // ----- responses:
     /// Response requests
     stdl_response_request* res_resreqs;
+
+    /// number of frequencies
+    size_t res_nw;
+
+    /// frequencies
+    float* res_w;
 };
 
 typedef struct stdl_user_input_handler_ stdl_user_input_handler;
@@ -173,26 +195,13 @@ int stdl_user_input_handler_log(stdl_user_input_handler* inp);
 int stdl_user_input_handler_make_context(stdl_user_input_handler* inp, stdl_context **ctx_ptr);
 
 /**
- * Prepare response calculations by creating a handler.
- *
+ * Get the approximate space in memory
  * @param inp a valid user input
- * @param ctx a valid context
- * @param[out] rh_ptr resulting responses handler
+ * @param[out] sz the total size
  * @return error code
  * @ingroup user_input_handler
  */
-int stdl_user_input_handler_prepare_responses(stdl_user_input_handler *inp, stdl_context *ctx, stdl_responses_handler **rh_ptr);
-
-
-/**
- * Compute (and display) the properties requested by the user.
- *
- * @param inp a valid user input
- * @param ctx a valid context
- * @param rh a valid responses handler, with all responses computed
- * @return error code
- * @ingroup user_input_handler
- */
-int stdl_user_input_handler_compute_properties(stdl_user_input_handler* inp, stdl_context* ctx, stdl_responses_handler* rh);
+int
+stdl_user_input_handler_approximate_size(stdl_user_input_handler *inp, size_t nexci, size_t *sz, size_t *respreq_sz);
 
 #endif //STDLITE_USER_INPUT_HANDLER_H

@@ -8,8 +8,9 @@ srcs += files(
     'utils/permutations.c',
     'basis.c',
     'context.c',
+    'integrals.c',
     'logging.c',
-    'property.c',
+    'property_tensor.c',
     'response.c',
     'wavefunction.c',
 )

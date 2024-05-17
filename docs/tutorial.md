@@ -52,7 +52,7 @@ Here, the result is:
 
 ```text 
 --- Properties -----------------------------------------------------------------
-Compute polarizability tensor >------< done
+Compute polarizability property_tensor >------< done
 ** alpha(-w;w), w=0.000000 (inf nm)
          x            y            z
 x      1.62024      0.00000     -0.00000
@@ -60,7 +60,7 @@ y      0.00000      7.02043      0.00000
 z     -0.00000      0.00000      3.69417
 iso =        4.11162
 aniso =      4.71843
-Compute polarizability tensor >------< done
+Compute polarizability property_tensor >------< done
 ** alpha(-w;w), w=0.042823 (1064.00 nm)
          x            y            z
 x      1.62570      0.00000     -0.00000
@@ -68,7 +68,7 @@ y      0.00000      7.05151      0.00000
 z     -0.00000      0.00000      3.71297
 iso =        4.13006
 aniso =      4.74035
-Compute polarizability tensor >------< done
+Compute polarizability property_tensor >------< done
 ** alpha(-w;w), w=0.085645 (532.00 nm)
          x            y            z
 x      1.64285      0.00000     -0.00000
@@ -76,7 +76,7 @@ y      0.00000      7.14678      0.00000
 z     -0.00000      0.00000      3.77115
 iso =        4.18692
 aniso =      4.80717
-Compute first hyperpolarizability tensor >------------------< done
+Compute first hyperpolarizability property_tensor >------------------< done
 ** beta(-w1-w2;w1,w2), w1=0.000000 (inf nm), w2=0.000000 (inf nm)
           x            y            z
 xx      0.00000      0.00000      1.17469
@@ -92,7 +92,7 @@ zz     -0.00000      0.00000      9.31467
 <B2ZXX> =     15.77636
 BHRS    =      9.55603
 DR      =      4.78826
-Compute first hyperpolarizability tensor >------------------< done
+Compute first hyperpolarizability property_tensor >------------------< done
 ** beta(-w1-w2;w1,w2), w1=0.042823 (1064.00 nm), w2=0.042823 (1064.00 nm)
           x            y            z
 xx      0.00000      0.00000      1.25188
@@ -157,7 +157,7 @@ This time, once the wavefunction is extracted and $\mathbf A'$ is built, the amp
  
 ### Analysis of the output
 
-The result list each excitation energies with its corresponding transition dipole moment, and the resulting oscillator strength (`fL`), and then the main contribution to each excitation.
+The result list each excitation energies with its corresponding transition dipole moment (in the dipole-length formalism), and the resulting oscillator strength (`fL`).
 
 ```text
 --- Properties -----------------------------------------------------------------
@@ -174,53 +174,7 @@ Compute ground to excited transition dipole moments >< done
    8  1.11337  30.296   40.92  0.11547  0.00000  0.00000 0.00990
    9  1.17348  31.932   38.83 -0.00000  0.73807  0.00000 0.42617
   10  1.21420  33.040   37.53  0.00000  0.00000 -0.16143 0.02110
-**   -- E --- ------- Contributions -------
-   1  0.36143  99.6% ( 0.7055) H→L
-                0.4% (-0.0449) H→L+3
-     -------- -----------------------------
-   2  0.45262  98.5% ( 0.7016) H-1→L
-                0.9% (-0.0658) H-2→L+1
-                0.3% ( 0.0412) H-3→L
-                0.1% (-0.0267) H-1→L+3
-                0.1% (-0.0249) H-2→L+2
-     -------- -----------------------------
-   3  0.45320  99.1% ( 0.7039) H→L+1
-                0.5% ( 0.0524) H→L+2
-                0.4% ( 0.0423) H→L+6
-     -------- -----------------------------
-   4  0.53684  99.2% (-0.7044) H-1→L+1
-                0.3% (-0.0390) H-1→L+2
-                0.1% (-0.0232) H-3→L+1
-                0.3% (-0.0369) H-1→L+6
-     -------- -----------------------------
-   5  0.60510  99.8% (-0.7063) H-2→L
-                0.1% ( 0.0231) H-1→L+2
-     -------- -----------------------------
-   6  0.77077   0.7% ( 0.0573) H-1→L
-               95.1% ( 0.6895) H-2→L+1
-                3.0% ( 0.1227) H-3→L
-                0.6% ( 0.0569) H-1→L+3
-                0.4% (-0.0456) H-2→L+2
-                0.2% (-0.0300) H-3→L+3
-     -------- -----------------------------
-   7  1.08574   0.3% (-0.0381) H→L+1
-               91.4% ( 0.6760) H→L+2
-                8.3% (-0.2037) H→L+6
-     -------- -----------------------------
-   8  1.11337  99.7% (-0.7061) H→L+5
-                0.2% ( 0.0353) H→L+3
-     -------- -----------------------------
-   9  1.17348   0.2% (-0.0315) H-1→L+1
-               91.7% ( 0.6773) H-1→L+2
-                2.0% ( 0.0989) H-3→L+1
-                5.9% (-0.1716) H-1→L+6
-                0.1% ( 0.0226) H-3→L+2
-     -------- -----------------------------
-  10  1.21420  99.5% ( 0.7054) H-1→L+5
-                0.4% (-0.0446) H-1→L+3
 ```
-
-For example, the first excitation has a strong (>99%) HOMO→LUMO character.
 
 ### To go further
 
